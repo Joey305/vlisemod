@@ -124,8 +124,6 @@ At a glance:
 - `assets/vlisemod-protein-query.png` — Query by Protein  
 - `assets/vlisemod-comparison.png` — Example bar chart + 2D molecule
 
-> Place your images in `/assets/` and keep these filenames, or update the paths above.
-
 ---
 
 ## Data & Tools
