@@ -1,0 +1,333 @@
+{% extends "base.html" %}
+
+{% block title %}V-LiSEMOD | Home{% endblock %}
+
+{% block body_class %}app-shell app-shell-home{% endblock %}
+
+{% block head_extra %}
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-beta.1/css/select2.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+{% endblock %}
+
+{% block content %}
+    {% set TUTORIAL_URL = "https://youtu.be/0tyw-ZfJxkk?si=xnDocGriI4OOsamt" %}
+    {% include "_tutorial_flyover.html" %}  
+    
+    <div id="betaModal" class="modal">
+        <div class="modal-content quickstart-modal">
+            <button class="close modal-close-button" type="button" aria-label="Close quick start panel">&times;</button>
+            <span class="page-kicker">Quick Start</span>
+            <h2>Choose a workflow — or build a PyMOL session below.</h2>
+            <p>Start with the main V-LiSEMOD session builder to select a virus, PDB structure, and ligand, then download a PyMOL-ready 3D session with binding pocket, SASA/solvent-exposed atoms, and functional group annotations. You can also jump into ligand comparison or protein-based querying.</p>
+            <div class="action-row quickstart-actions">
+                <button id="useMainBuilderButton" class="button-primary" type="button">Use Main PyMOL Session Builder</button>
+                <button id="tryBetaButton" class="button-secondary" onclick="window.location.href='/compare_ligands'">Open Ligand Comparison</button>
+                <button id="proteinQueryButton" class="button-secondary" onclick="window.location.href='/query_protein_virus_page'">Open Protein Query</button>
+            </div>
+            <div class="quickstart-dismiss-row">
+                <button id="skipQuickStartButton" class="quickstart-dismiss" type="button">Continue browsing this page</button>
+            </div>
+        </div>
+    </div>
+        
+    <section class="page-intro page-intro-hero">
+        <span class="page-kicker">V-LiSEMOD Workspace</span>
+        <h1 class="page-title">Explore viral protein-ligand structures, surface exposure, and degrader-ready chemistry from one curated workspace.</h1>
+        <p class="page-subtitle">Select a virus, choose a PDB structure, inspect the bound ligand, and generate PyMOL sessions, ligand imagery, or query-ready outputs without leaving the V-LiSEMOD environment.</p>
+        <div class="hero-signal-bar">
+            <span>Select virus</span>
+            <span>Select PDB</span>
+            <span>Select ligand</span>
+            <span>Generate visual and query outputs</span>
+        </div>
+        <div class="action-row hero-actions">
+            <a class="button-primary" href="#pymol-session-builder">Start a ligand analysis session</a>
+            <a class="button-secondary" href="{{ url_for('query_protein_virus_page') }}">Browse by protein target</a>
+        </div>
+    </section>
+
+    <section class="page-card page-section landing-card-shell">
+        <div class="section-heading">
+            <span class="page-kicker">Workflow Modules</span>
+            <h2 class="page-title">Move between structure query, ligand comparison, and molecule support without switching mental context.</h2>
+        </div>
+        <div class="tool-grid">
+            <article class="tool-card feature-card">
+                <span class="feature-badge">Core Query</span>
+                <h3>Protein Query</h3>
+                <p>Filter curated viral structures by virus, protein class, and ligand to build export-ready structure sets.</p>
+                <a class="button-secondary" href="{{ url_for('query_protein_virus_page') }}">Open Protein Query</a>
+            </article>
+            <article class="tool-card feature-card">
+                <span class="feature-badge">Comparative Analysis</span>
+                <h3>Ligand Comparison</h3>
+                <p>Compare ligand interaction signatures across PDB structures and inspect warhead-ready candidates.</p>
+                <a class="button-secondary" href="{{ url_for('compare_ligands') }}">Open Comparison</a>
+            </article>
+            {% if show_drug_gpt_nav %}
+            <article class="tool-card feature-card">
+                <span class="feature-badge">Embedded Assistant</span>
+                <h3>Drug GPT</h3>
+                <p>Launch the local Drug GPT workspace for molecule-focused support without leaving the V-LiSEMOD shell.</p>
+                <a class="button-secondary" href="{% if enable_drug_gpt %}{{ url_for('dp.home') }}{% else %}/drugapp/{% endif %}">Open Drug GPT</a>
+            </article>
+            {% endif %}
+            <article class="tool-card feature-card feature-card-external">
+                <span class="feature-badge">External Handoff</span>
+                <h3>PROTAC Builder</h3>
+                <p>When you move from viral ligand analysis into degrader design, continue in the standalone external builder.</p>
+                <a class="button-primary external-link" href="https://protacbuilder.com/builder" target="_blank" rel="noopener noreferrer">Open PROTAC Builder ↗</a>
+            </article>
+        </div>
+    </section>
+
+    <section id="pymol-session-builder" class="form-container form-card page-section workflow-card">
+        <div class="section-heading">
+            <span class="page-kicker">Primary Workflow</span>
+            <h2 class="page-title">Generate a V-LiSEMOD analysis session</h2>
+            <p class="page-subtitle">Choose a virus, structure, and ligand to prepare a PyMOL session, inspect solvent exposure, and export ligand-focused visuals from the same starting point.</p>
+        </div>
+        <div class="workflow-steps">
+            <span class="workflow-step">1. Virus</span>
+            <span class="workflow-step">2. PDB</span>
+            <span class="workflow-step">3. Ligand</span>
+            <span class="workflow-step">4. Output</span>
+        </div>
+        <form id="pymolForm" class="form-grid float-in" action="/generate_pymol_session" method="POST">
+            <div class="form-row-grid">
+                <div class="form-group">
+                    <label for="virus">Select Virus:</label>
+                    <select id="virus" name="virus" class="searchable-select" required>
+                        <option value="">--Select Virus--</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="pdb_code">Select PDB Code:</label>
+                    <select id="pdb_code" name="pdb_code" class="searchable-select" required disabled>
+                        <option value="">--Select PDB Code--</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="ligand">Select Ligand:</label>
+                    <select id="ligand" name="ligand" class="searchable-select" required disabled>
+                        <option value="">--Select Ligand--</option>
+                    </select>
+                </div>
+            </div>
+
+          <!-- Chain container to select chain when multiple chains are present -->
+            <div id="chain-container" class="form-group chain-group" style="display:none;">
+                <label for="chain">Select Chain:</label>
+                <select id="chain" name="chain" class="searchable-select">
+                    <option value="">--Select Chain--</option>
+                </select>
+            </div>
+
+            
+            <!-- Checkbox container for additional selections -->
+            <div class="checkbox-container option-card-grid">
+                <label class="checkbox-label">
+                    <input type="checkbox" name="binding_pocket" id="binding_pocket" value="1">
+                    <span class="checkbox-copy">
+                        <span class="checkbox-title">Binding Pocket</span>
+                        <span class="checkbox-meta">Capture residues within 5 Angstroms of the selected ligand for structure review.</span>
+                    </span>
+                    <span class="tooltip">ℹ️
+                        <span class="tooltip-text">
+                            Represents all atoms from the proteins that were within 5 Angstroms of an atom in the ligand. 
+                            Selecting this option creates an object containing all of the atoms in the binding pocket as a yellow surface.
+                        </span>
+                    </span>
+                </label>
+
+                <!-- <label class="checkbox-label">
+                    <input type="checkbox" name="hydrated_atoms" id="hydrated_atoms" value="1">
+                    Hydrated Atoms
+                    <span class="tooltip">ℹ️
+                        <span class="tooltip-text">
+                            Hydrated atoms are atoms that were within 5 Angstroms of one or more H2O molecules in the crystal structure.
+                            Selecting this option creates an object that colors the ligand atoms cyan.
+                        </span>
+                    </span>
+                </label>
+
+                <label class="checkbox-label">
+                    <input type="checkbox" name="distal_atoms" id="distal_atoms" value="1">
+                    Distal Atoms
+                    <span class="tooltip">ℹ️
+                        <span class="tooltip-text">
+                            Distal atoms were atoms that were found 4.15 Angstroms away from the nearest protein atoms. 
+                            Selecting this option creates an object and colors the object blue.
+                        </span>
+                    </span>
+                </label> -->
+
+                <label class="checkbox-label">
+                    <input type="checkbox" name="solvent_exposed_atoms" id="solvent_exposed_atoms" value="1">
+                    <span class="checkbox-copy">
+                        <span class="checkbox-title">Shrake-Rupley SASA</span>
+                        <span class="checkbox-meta">Highlight solvent-exposed ligand atoms using a 1.4 Angstrom probe radius.</span>
+                    </span>
+                    <span class="tooltip">ℹ️
+                        <span class="tooltip-text">
+                            Solvent Exposed Atoms detected using the Shrake-Rupley Algorithm. A probe radius of 1.4 Angstroms is used to generate an equidistant mesh outline of the complex's surface. Selecting this option will color these atoms red.
+
+                        </span>
+                    </span>
+                </label>
+
+            
+
+                <label class="checkbox-label" id="functional_group_label">
+                    <input type="checkbox" name="functional_groups" id="functional_groups" value="1" disabled>
+                    <span class="checkbox-copy">
+                        <span class="checkbox-title">Functional Group Atoms</span>
+                        <span class="checkbox-meta">Expose functional-group level objects when ligand annotations are available.</span>
+                    </span>
+                    <span class="tooltip">ℹ️
+                        <span class="tooltip-text">
+                            Functional group atoms are atoms that are part of functional groups. 
+                            Selecting this option generates a session that creates objects for each of the functional groups, 
+                            allowing the user to visualize them however they prefer.
+                        </span>
+                    </span>
+                </label>
+            </div>
+
+            <!-- Add the buttons inside a flexbox to align side-by-side -->
+            <div class="buttons-container action-row">
+                <button type="submit">Generate PyMOL Session</button>
+                <button class="button-secondary" type="button" id="generateLigandImagesButton" disabled title="No SMILES file present in the database" onclick="submitLigandImagesForm()">Generate Ligand Images</button>
+            </div>
+        </form>
+
+        <!-- The hidden ligand images form, triggered by the button above -->
+        <form id="ligandImagesForm" action="/generate_ligand_images" method="POST" style="display:none;">
+            <input type="hidden" name="virus" id="virus_hidden" />
+            <input type="hidden" name="pdb_code" id="pdb_code_hidden" />
+            <input type="hidden" name="ligand" id="ligand_hidden" />
+            <input type="hidden" name="chain" id="chain_hidden" /> <!-- New hidden input for chain -->
+        </form>
+    </section>
+
+    <div class="action-row page-section">
+        <a class="button-ghost" href="{{ url_for('coming_soon') }}">Learn More About Upcoming Features</a>
+    </div>
+
+
+
+    <!-- JavaScript for popup and form functionalities -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-beta.1/js/select2.min.js"></script>
+    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+
+    <script>
+        $(document).ready(function() {
+            function closeQuickStart() {
+                $('#betaModal').hide();
+            }
+
+            function scrollToMainBuilder() {
+                closeQuickStart();
+                const target = document.getElementById('pymol-session-builder') || document.getElementById('pymolForm');
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }
+
+            // Open the beta modal when the document is ready
+            $('#betaModal').show();
+            
+            // Close the modal when the close button is clicked
+            $('.close').click(function() {
+                closeQuickStart();
+            });
+
+            $('#skipQuickStartButton').click(function() {
+                closeQuickStart();
+            });
+
+            $('#useMainBuilderButton').click(function() {
+                scrollToMainBuilder();
+            });
+        });
+
+
+    </script>
+   <!-- Chatbot HTML -->
+
+
+   <!-- Chatbot Icon -->
+<div id="chatbot-icon" onclick="toggleChatbot()">💬</div>
+    
+    
+
+<!-- Chatbot Popup -->
+<div id="chatbot-popup">
+    
+    <!-- "X" Close Button -->
+    <button id="close-chatbot" onclick="closeChatbotPopup()">✖</button>
+
+    <!-- Chatbot Frame (Hidden Initially) -->
+    <iframe id="chatbot-frame" style="width: 100%; height: 90%; border: none; display: none;"></iframe>
+
+    <!-- Coming Soon Message (Hidden Initially) -->
+    <div id="coming-soon-message" style="text-align: center; display: none;">
+        <h2>JARI Drug Insight Bot Coming Soon</h2>
+    </div>
+</div>
+
+
+
+<script>
+    let isDrugAppAvailable = false; // Default to false
+
+    async function checkDrugApp() {
+        try {
+            // Try fetching the chatbot page
+            const response = await fetch("/drugapp/", { method: "HEAD" });
+
+            if (response.ok) {
+                isDrugAppAvailable = true; // ✅ DrugApp is available
+            } else {
+                console.warn("DrugApp is not available.");
+            }
+        } catch (error) {
+            console.warn("Error checking DrugApp availability:", error);
+        }
+    }
+
+    // Run check when the page loads
+    checkDrugApp();
+
+    function toggleChatbot() {
+        document.getElementById("chatbot-frame").src = window.location.origin + "/drugapp/";
+        const chatbotPopup = document.getElementById("chatbot-popup");
+        const chatbotFrame = document.getElementById("chatbot-frame");
+        const comingSoonMessage = document.getElementById("coming-soon-message");
+
+        if (chatbotPopup.style.display === "none" || chatbotPopup.style.display === "") {
+            // If popup is closed, open it
+            if (isDrugAppAvailable) {
+                chatbotFrame.style.display = "block";
+                comingSoonMessage.style.display = "none";
+            } else {
+                chatbotFrame.style.display = "none";
+                comingSoonMessage.style.display = "block";
+            }
+            chatbotPopup.style.display = "block"; // Show popup
+        } else {
+            // If popup is open, close it
+            chatbotPopup.style.display = "none";
+        }
+    }
+
+
+    function closeChatbotPopup() {
+        document.getElementById("chatbot-popup").style.display = "none";
+    }
+</script>
+{% endblock %}
+ 

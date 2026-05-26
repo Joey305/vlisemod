@@ -1,0 +1,94 @@
+# OS / editor noise
+.DS_Store
+.AppleDouble
+.LSOverride
+.vscode/
+.idea/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+.venv/
+venv/
+env/
+.env
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Flask / local instance state
+instance/
+users.db
+viral_data.db
+*.db
+*.sqlite
+*.sqlite3
+
+# Generated app outputs and user/session artifacts
+output_csvs/
+users_info/
+temp/
+tmp/
+scratch/
+pml_sessions/
+exports/
+downloads/
+reports/
+static/charts/
+static/coordinate_cache/
+static/ligand_sdf_cache/
+static/ligand_images/
+
+# Generated PROTACability and analysis outputs
+PROTACability_*.csv
+Lysine_ISO*.csv
+failed_downloads.csv
+download_manifest.csv
+failed_protac_candidates.csv
+
+# Logs and run artifacts
+*.log
+
+# Large structural datasets and regenerated structure files
+PDB_FILES/
+*.pdb
+*.cif
+*.mmcif
+*.sdf
+*.mol2
+
+# Optional external reference dataset; provision separately
+*.smi
+Components-smiles-stereo-oe.smi
+Components-*.smi
+
+# Archives / packaged exports
+*.zip
+*.tar.gz
+*.gz
+
+# ML / local model artifacts
+models/
+checkpoints/
+runs/
+wandb/
+*.pt
+*.pth
+*.bin
+*.safetensors
+*.gguf
+*.onnx
+*.pkl
+*.joblib
+
+# Backups
+backups/
+
+# Jupyter
+.ipynb_checkpoints/

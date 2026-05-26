@@ -1,0 +1,2649 @@
+Ligand	Synonyms
+2Z4	SDZ283-910
+0Q4	Inhibitor analogues of CA-p2
+U0E	No synonyms data available
+PSI	SKF 107457
+THK	No synonyms data available
+NMB	No synonyms data available
+AH1	(4R,5S, 6S, 7R)-1,3-DIBENZYL-4,7-BIS(PHENOXYMETHYL)-5,6-DIHYDROXY-1,3 DIAZEPAN-2-ONE
+RTY	No synonyms data available
+PI5	MACROCYCLIC PEPTIDOMIMETIC INHIBITOR 5
+PI4	MACROCYCLIC PEPTIDOMIMETIC INHIBITOR 4
+PI6	MACROCYCLIC PEPTIDOMIMETIC INHIBITOR 6
+PI7	MACROCYCLIC PEPTIDOMIMETIC INHIBITOR 7
+IM1	No synonyms data available
+HBY	HBY 097
+XV6	XV638
+DMP	DMP323(INHIBITOR OF DUPONT MERCK)
+146	SD146
+BM1	BM+21.1326
+BM5	BM +50.0934
+GCA	GCA-186
+612	TNK-6123
+3IN	No synonyms data available
+MK1	INDINAVIR
+ROC	Fortovase; SAQUINAVIR; RO 31-8959
+L75	L-756,423
+PI8	MACROCYCLIC PEPTIDOMIMETIC INHIBITOR 8
+PI9	No synonyms data available
+TPV	TIPRANAVIR
+A85	No synonyms data available
+DMQ	DMP450(INHIBITOR OF DUPONT MERCK)
+FPT	No synonyms data available
+FTC	No synonyms data available
+BEI	INHIBITOR BEA322
+BEB	INHIBITOR BEA369
+BEC	INHIBITOR BEA388
+BED	INHIBITOR BEA403
+BEE	INHIBITOR BEA409
+BEJ	INHIBITOR BEA428
+MS3	INHIBITOR MSA367
+BFU	MSC204
+PBM	No synonyms data available
+S11	No synonyms data available
+CPS	CHAPS
+CG1	No synonyms data available
+2NC	p2/NC
+EFZ	DMP-266; Efavirenz
+NVP	NON-NUCLEOSIDE RT INHIBITOR NEVIRAPINE
+0ZT	No synonyms data available
+NM1	AHA047
+AHF	No synonyms data available
+N2P	No synonyms data available
+GAN	No synonyms data available
+PJJ	No synonyms data available
+C20	CGP 53820
+1ZK	U75875
+AAA	No synonyms data available
+TBO	TBO 8; TIBO R86183
+PHP	No synonyms data available
+UNI	No synonyms data available
+RUN	SB206343
+478	Amprenavir
+KNI	(N-TERT-BUTYL-THIOPROLINE)-(5-ISOQUINOLYLOXYACETYL-METHYLTHIOALANINE)-ALLOPHENYLNORSTATINE; KNI-272
+AAP	No synonyms data available
+G23	GR123976
+G26	GR126045
+G37	GR137615
+A79	No synonyms data available
+Q82	Q8261
+A77	No synonyms data available
+A78	No synonyms data available
+A76	No synonyms data available
+XK2	No synonyms data available
+216	XK216
+RIT	A-84538
+TTA	No synonyms data available
+TTO	No synonyms data available
+0ZR	No synonyms data available
+PNU	No synonyms data available
+MSD	No synonyms data available
+Q50	No synonyms data available
+B3S	No synonyms data available
+BCX	No synonyms data available
+DAB	No synonyms data available
+SET	No synonyms data available
+TNK	No synonyms data available
+UC1	UC781
+SBN	No synonyms data available
+ALY	No synonyms data available
+SPH	No synonyms data available
+XN3	ANALOGUE OF INDINAVIR DRUG
+XN1	ANALOGUE OF INDINAVIR
+XN2	ANALOGUE OF INDINAVIR DRUG
+SPP	Delavirdine
+PMZ	ACETYLPROMAZINE
+U05	1051U91
+0ZQ	No synonyms data available
+K57	KNI-577
+JE2	JE-2147; AG1776; KNI-764
+AB1	ABT-378; LOPINAVIR
+KI2	No synonyms data available
+3NH	No synonyms data available
+L27	LDC271 INHIBITOR
+LGZ	LGZ479 INHIBITOR
+0E8	BMS-182193
+LP1	No synonyms data available
+1UN	NELFINAVIR MESYLATE AG1343
+A88	A-98881
+846	INHIBITOR Q8467 OF DUPONT MERCK
+CYY	No synonyms data available
+100	No synonyms data available
+TB9	No synonyms data available
+SIN	No synonyms data available
+MKC	No synonyms data available
+UC2	UC10
+UC3	UC38
+UC4	UC84
+TTP	No synonyms data available
+HEF	No synonyms data available
+IET	No synonyms data available
+TPB	No synonyms data available
+ADB	No synonyms data available
+ABZ	No synonyms data available
+185	No synonyms data available
+65B	Etravine; Etravirine
+TFO	TENOFOVIR
+TNV	TENOFOVIR-DIPHOSPHATE
+017	Darunavir; TMC114; UIC-94017
+BH0	No synonyms data available
+H12	No synonyms data available
+GWB	No synonyms data available
+H16	No synonyms data available
+H18	No synonyms data available
+H20	No synonyms data available
+CP9	CP-94,707
+U01	PARA-BROMOPHENYL ANALOGUE OF PHEN-PROCOUMON 3-(ALPHA-ETHYLBENZYL)-4-HYDROXYCOUMARIN
+P13	RBT550 INHIBITOR
+P14	RBT203 INHIBITOR
+P12	RBT205 INHIBITOR
+BAY	No synonyms data available
+568	No synonyms data available
+BLL	No synonyms data available
+189	No synonyms data available
+190	No synonyms data available
+OIS	OXIMINOARYLSULFONAMIDE
+HBB	N-[2-HYDROXY-2-(8-ISOPROPYL-6,9-DIOXO-2-OXA-7,10-DIAZA-BICYCLO[11.2.2]HEPTADECA-1(16),13(17),14-TRIEN-11-YL)-ETHYL]-N-(3-METHYL-BUTYL)-BENZENESULFONAMIDE; INHIBITOR 3
+HBH	2-(11-{2-[BENZENESULFONYL-(3-METHYL-BUTYL)-AMINO]-1-HYDROXY-ETHYL}-6,9-DIOXO-2-OXA-7,10-DIAZA-BICYCLO[11.2.2]HEPTADECA-1(16),13(17),14-TRIEN-8-YL)-ACETAMIDE; INHIBITOR 2
+0ZS	No synonyms data available
+AB2	No synonyms data available
+A83	No synonyms data available
+CB5	No synonyms data available
+IPF	No synonyms data available
+AAU	No synonyms data available
+FRD	No synonyms data available
+DR7	ATAZANAVIR; METHYL [(1S,4S,5S,10S)-4-BENZYL-1,10-DI-TERT-BUTYL-5-HYDROXY-2,9,12-TRIOXO-7-(4-PYRIDIN-2-YLBENZYL)-13-OXA-3,7,8,11-TETRAAZATETRADEC-1-YL]CARBAMATE
+3TL	TL-3, C2 symmetric inhibitor
+XYL	D-Xylitol
+3AC	No synonyms data available
+T50	No synonyms data available
+357	No synonyms data available
+AKC	2-ETHOXYETHYL (2S,3S)-4-((S)-2-BENZYL-3-OXO-4-((3AR,8R,8AS)-2-OXO-3,3A,8,8A-TETRAHYDRO-2H-INDENO[1,2-D]OXAZOL-8-YL)-2,3-DIHYDRO-1H-PYRROL-2-YL)-3-HYDROXY-1-PHENYLBUTAN-2-YLCARBAMATE
+HH1	(S)-TETRAHYDROFURAN-3-YL (2S,3S)-4-((S)-4-((1R,3R)-3-(2-AMINO-2-OXOETHYL)-2,3-DIHYDRO-1H-INDEN-1-YL)-2-BENZYL-3-OXO-2,3-DIHYDRO-1H-PYRROL-2-YL)-3-HYDROXY-1-PHENYLBUTAN-2-YLCARBAMATE
+R22	No synonyms data available
+FUL	beta-L-fucose; 6-deoxy-beta-L-galactopyranose; L-fucose; fucose; 6-DEOXY-BETA-L-GALACTOSE
+1IN	L-738,317
+A1A	No synonyms data available
+1AH	No synonyms data available
+2AH	No synonyms data available
+4AH	No synonyms data available
+RO1	No synonyms data available
+385	No synonyms data available
+AI	No synonyms data available
+ORQ	No synonyms data available
+PBU	di-butanoyl L-alpha-phosphatidyl-D-myo-inositol 4,5-bisphosphate; di-C4-PIP2
+PIO	dioctanoyl l-alpha-phosphatidyl-d-myo-inositol 4,5-diphosphate
+GRL	No synonyms data available
+PGR	No synonyms data available
+PC0	No synonyms data available
+MUI	No synonyms data available
+MUT	No synonyms data available
+QFI	No synonyms data available
+DJR	No synonyms data available
+KGQ	No synonyms data available
+K05	No synonyms data available
+JG3	No synonyms data available
+I15	No synonyms data available
+JPR	No synonyms data available
+PC8	No synonyms data available
+8SP	No synonyms data available
+1HF	No synonyms data available
+HBQ	No synonyms data available
+075	KNI-10075
+O33	KNI-10033
+G0G	No synonyms data available
+MUU	No synonyms data available
+MUV	No synonyms data available
+G3G	No synonyms data available
+G4G	No synonyms data available
+MUW	No synonyms data available
+MU1	No synonyms data available
+MU0	No synonyms data available
+065	RL-98065; [(1R,5S,6R)-2,8-DIOXABICYCLO[3.3.0]OCT-6-YL]N-[(2S,3R)-4-[(3,4-METHYLENEDIOXYPHENYL)SULFONYL-(2-METHYLPROPYL)AMINO]-3-HYDROXY-1-PHENYL-BUTAN-2-YL] CARBAMATE
+MZ1	No synonyms data available
+MZ2	No synonyms data available
+MZ3	No synonyms data available
+MZ4	No synonyms data available
+MZ5	No synonyms data available
+MZ6	No synonyms data available
+MZ7	No synonyms data available
+MZ8	No synonyms data available
+MZ9	No synonyms data available
+A00	No synonyms data available
+QN1	No synonyms data available
+QN2	No synonyms data available
+QN3	No synonyms data available
+MRX	No synonyms data available
+TT1	No synonyms data available
+U02	No synonyms data available
+HI1	No synonyms data available
+HV1	No synonyms data available
+NNC	No synonyms data available
+NNB	No synonyms data available
+NNI	No synonyms data available
+PPN	No synonyms data available
+5AH	No synonyms data available
+ZZE	No synonyms data available
+1B0	No synonyms data available
+CXG	No synonyms data available
+G40	No synonyms data available
+YKN	No synonyms data available
+WHU	No synonyms data available
+EUR	No synonyms data available
+CXD	No synonyms data available
+T27	Rilpivirine
+YDP	No synonyms data available
+KNJ	KNI-1689
+ARQ	No synonyms data available
+BZX	No synonyms data available
+AVX	No synonyms data available
+BMC	No synonyms data available
+833	No synonyms data available
+BBY	No synonyms data available
+LNT	No synonyms data available
+LLG	No synonyms data available
+LJG	No synonyms data available
+LJH	No synonyms data available
+BZN	N-((3R,4R)-4-Benzyloxymethyl-pyrrolidin-3-ylmethyl)-N-isobutyl-benzene sulfonamide
+DRR	No synonyms data available
+DRS	No synonyms data available
+M14	N-[4-(aminosulfonyl)-2-chlorophenyl]-2-[3-chloro-5-(3-chloro-5-cyanophenoxy)phenoxy]acetamide
+M22	No synonyms data available
+KVI	No synonyms data available
+KVS	No synonyms data available
+PDZ	No synonyms data available
+G55	No synonyms data available
+G05	No synonyms data available
+GFA	No synonyms data available
+GWE	No synonyms data available
+GWJ	No synonyms data available
+GWI	No synonyms data available
+R8E	No synonyms data available
+R8D	No synonyms data available
+PZL	No synonyms data available
+PZ2	No synonyms data available
+3OB	No synonyms data available
+GGW	No synonyms data available
+GGV	No synonyms data available
+GGX	No synonyms data available
+K60	(5S)-N-{(1S,2R)-3-[(1,3-benzodioxol-5-ylsulfonyl)(2-methylpropyl)amino]-1-benzyl-2-hydroxypropyl}-2-oxo-3-[3-(trifluoromethyl)phenyl]-1,3-oxazolidine-5-carboxamide
+K62	(5S)-3-(3-acetylphenyl)-N-{(1S,2R)-3-[(1,3-benzodioxol-5-ylsulfonyl)(2-methylpropyl)amino]-1-benzyl-2-hydroxypropyl}-2-oxo-1,3-oxazolidine-5-carboxamide
+D78	(5S)-N-[(1S,2R)-1-benzyl-2-hydroxy-3-{[(4-methoxyphenyl)sulfonyl](2-methylpropyl)amino}propyl]-2-oxo-3-[3-(trifluoromethyl)phenyl]-1,3-oxazolidine-5-carboxamide
+JEF	JEFFAMINE
+031	No synonyms data available
+ON1	No synonyms data available
+RT3	S-(2-{[4-(aminosulfonyl)-2-chlorophenyl]amino}-2-oxoethyl) 6-methyl-3,4-dihydroquinoline-1(2H)-carbothioate
+RT7	S-(2-{[4-(aminosulfonyl)-2-chlorophenyl]amino}-2-oxoethyl) 6,8-dichloro-3,4-dihydroquinoline-1(2H)-carbothioate
+GR6	No synonyms data available
+JTH	beta-thujaplicinol
+UDR	S-methyl 5-[(1E)-1-(3,7-dimethyl-2-oxo-2,3-dihydro-1,3-benzoxazol-5-yl)-5-(5-methyl-1,3,4-oxadiazol-2-yl)pent-1-en-1-yl]-2-methoxy-3-methylbenzenecarbothioate
+AC7	No synonyms data available
+EDM	No synonyms data available
+006	KNI-10006
+JZP	KNI-10074
+JZQ	KNI-10265
+1F1	No synonyms data available
+914	[(5-(6-amino-purin-9-yl)-4-fluoro-2,5-dihydro-furan-2-yloxymethyl)phosphonate-diphosphate]
+URT	No synonyms data available
+ZP4	No synonyms data available
+KR1	No synonyms data available
+KRV	No synonyms data available
+KRP	No synonyms data available
+KBT	No synonyms data available
+LP7	No synonyms data available
+LP8	No synonyms data available
+LP9	No synonyms data available
+MLI	No synonyms data available
+723	No synonyms data available
+976	No synonyms data available
+DJZ	No synonyms data available
+595	No synonyms data available
+K53	(5S)-N-[(1S,2R)-3-[(1,3-Benzodioxol-5-ylsulfonyl)(2-methylpropyl)amino]-2-hydroxy-1-(phenylmethyl)propyl]-3-(2-hydroxyphenyl)-2-oxooxazolidine-5-carboxamide
+K54	(5S)-N-[(1S,2R)-3-[(6-Benzothiazolylsulfonyl)(2-methylpropyl)amino]-2-hydroxy-1-(phenylmethyl)propyl]-2-oxo-3-[2-(trifluoromethyl)phenyl]oxazolidine-5-carboxamide
+JGZ	No synonyms data available
+IMV	No synonyms data available
+CIW	No synonyms data available
+CDQ	No synonyms data available
+CD9	No synonyms data available
+CBJ	No synonyms data available
+016	KNI-10772
+I3M	No synonyms data available
+K13	No synonyms data available
+K14	No synonyms data available
+K2A	No synonyms data available
+K20	No synonyms data available
+K19	No synonyms data available
+A60	No synonyms data available
+K2D	No synonyms data available
+F53	No synonyms data available
+K2E	No synonyms data available
+A61	No synonyms data available
+G52	No synonyms data available
+MPV	No synonyms data available
+ZYK	3,4-dimethoxybenzamidoxy proline
+ZYJ	No synonyms data available
+G04	No synonyms data available
+JHG	No synonyms data available
+NI7	No synonyms data available
+P1Y	No synonyms data available
+QID	No synonyms data available
+P4Y	No synonyms data available
+QO9	No synonyms data available
+NI8	No synonyms data available
+N4I	No synonyms data available
+NK7	No synonyms data available
+NK9	No synonyms data available
+NK8	No synonyms data available
+RSY	No synonyms data available
+RSZ	No synonyms data available
+74T	TMC310911
+LK0	No synonyms data available
+23X	No synonyms data available
+F72	No synonyms data available
+A69	No synonyms data available
+F71	No synonyms data available
+55A	No synonyms data available
+K83	No synonyms data available
+A68	No synonyms data available
+77F	No synonyms data available
+F78	No synonyms data available
+AF8	No synonyms data available
+G89	No synonyms data available
+3T1	No synonyms data available
+5MA	No synonyms data available
+M06	No synonyms data available
+03G	NBD-556
+9Y9	No synonyms data available
+076	No synonyms data available
+079	No synonyms data available
+Y1	No synonyms data available
+0NX	No synonyms data available
+MMJ	No synonyms data available
+BCK	No synonyms data available
+BCU	(3R)-3,4-dihydro-2H-1-benzopyran-3-ylmethanol
+FBB	No synonyms data available
+MWP	6-amino-benzothiophene-1,1-dione
+FBG	No synonyms data available
+MPK	No synonyms data available
+MOK	No synonyms data available
+FMQ	No synonyms data available
+DBJ	No synonyms data available
+EQM	No synonyms data available
+M8Y	No synonyms data available
+M8B	No synonyms data available
+O3N	No synonyms data available
+ZSW	No synonyms data available
+ZSV	No synonyms data available
+2SS	No synonyms data available
+9NS	No synonyms data available
+B0T	No synonyms data available
+D0T	No synonyms data available
+G0T	No synonyms data available
+QCH	No synonyms data available
+VL4	No synonyms data available
+NFW	No synonyms data available
+O5U	No synonyms data available
+IY7	No synonyms data available
+3GM	No synonyms data available
+V7H	No synonyms data available
+EE2	No synonyms data available
+5EY	No synonyms data available
+WOP	No synonyms data available
+OM3	No synonyms data available
+7NV	No synonyms data available
+S8Y	No synonyms data available
+8P3	No synonyms data available
+UJ6	No synonyms data available
+K5Q	No synonyms data available
+LOZ	No synonyms data available
+NZL	No synonyms data available
+ONZ	No synonyms data available
+U2Z	No synonyms data available
+CWU	No synonyms data available
+C5Q	No synonyms data available
+H75	No synonyms data available
+Y7N	No synonyms data available
+JDX	No synonyms data available
+X0P	No synonyms data available
+E4F	No synonyms data available
+S3G	No synonyms data available
+4VW	No synonyms data available
+Q31	No synonyms data available
+RVN	No synonyms data available
+H39	No synonyms data available
+9PA	No synonyms data available
+4D2	No synonyms data available
+VXO	No synonyms data available
+FYM	No synonyms data available
+L0Y	No synonyms data available
+HLR	No synonyms data available
+JNS	No synonyms data available
+IV2	No synonyms data available
+OM1	No synonyms data available
+NVU	No synonyms data available
+K1T	No synonyms data available
+0JV	No synonyms data available
+MK5	No synonyms data available
+M73	No synonyms data available
+M86	No synonyms data available
+0KJ	No synonyms data available
+0LM	No synonyms data available
+0LL	No synonyms data available
+0LK	No synonyms data available
+0LJ	No synonyms data available
+0KU	No synonyms data available
+0KW	No synonyms data available
+0L9	No synonyms data available
+HGU	No synonyms data available
+0LY	NBD-557
+0LZ	No synonyms data available
+0M1	No synonyms data available
+0M4	No synonyms data available
+0M5	No synonyms data available
+TQ2	No synonyms data available
+TQX	No synonyms data available
+0OE	No synonyms data available
+0OF	No synonyms data available
+0OG	No synonyms data available
+IOP	No synonyms data available
+0TQ	No synonyms data available
+IL0	No synonyms data available
+ILE	No synonyms data available
+0LQ	No synonyms data available
+LF2	No synonyms data available
+PUK	No synonyms data available
+DC0	No synonyms data available
+494	No synonyms data available
+506	No synonyms data available
+G73	No synonyms data available
+1BT	No synonyms data available
+1C1	[amino({[(1R,2R)-1-{[(4-chloro-3- fluorophenyl)carbamoyl]formamido}-2,3-dihydro-1H- inden-2-yl]methyl}amino)methylidene]azanium
+NVE	nevirapine phosphonate analogue
+G07	No synonyms data available
+G08	No synonyms data available
+14N	No synonyms data available
+LF0	No synonyms data available
+1FF	No synonyms data available
+1FE	No synonyms data available
+1FD	No synonyms data available
+1FG	No synonyms data available
+J94	No synonyms data available
+1F6	No synonyms data available
+1JR	No synonyms data available
+1ML	No synonyms data available
+1OP	No synonyms data available
+06B	No synonyms data available
+27B	No synonyms data available
+G79	No synonyms data available
+1QP	No synonyms data available
+1RE	No synonyms data available
+JLJ	No synonyms data available
+1WT	No synonyms data available
+1YQ	(E)-3-(3-bromo-5-(4-chloro-2-(2-(2,4-dioxo-3,4-dihydropyrimidin-1(2H)-yl)ethoxy)phenoxy)phenyl)acrylonitrile
+1YR	(E)-3-(3-bromo-5-(4-chloro-2-(2-(2,4-dioxo-3,4-dihydropyrimidin-1(2H)-yl)ethoxy)phenoxy)phenyl)acrylonitrile
+526	No synonyms data available
+525	No synonyms data available
+23K	No synonyms data available
+23L	No synonyms data available
+29T	No synonyms data available
+2KW	Doravirine
+4BI	No synonyms data available
+LF8	No synonyms data available
+2RS	No synonyms data available
+2RT	No synonyms data available
+LF9	No synonyms data available
+2SQ	No synonyms data available
+YT3	No synonyms data available
+1TD	No synonyms data available
+VAC	No synonyms data available
+F95	No synonyms data available
+3JY	No synonyms data available
+79G	No synonyms data available
+3X6	No synonyms data available
+3ZM	No synonyms data available
+K97	No synonyms data available
+3A8	No synonyms data available
+3EM	No synonyms data available
+3EN	No synonyms data available
+G10	No synonyms data available
+3LQ	No synonyms data available
+UNL	No synonyms data available
+G3P	No synonyms data available
+43Y	1,2-dipropionyl-sn-glycero-3-phosphocholine
+45F	No synonyms data available
+45W	No synonyms data available
+G64	No synonyms data available
+G61	No synonyms data available
+QHA	No synonyms data available
+C7U	No synonyms data available
+C7J	No synonyms data available
+C7W	No synonyms data available
+C7L	No synonyms data available
+ZLP	No synonyms data available
+J5L	No synonyms data available
+VXL	No synonyms data available
+4UY	No synonyms data available
+4UX	No synonyms data available
+4XO	No synonyms data available
+639	No synonyms data available
+P4G	No synonyms data available
+52U	GRL-0476
+52W	GRL-015
+52Z	GRL-085
+53F	No synonyms data available
+5B7	No synonyms data available
+5B5	No synonyms data available
+5VE	No synonyms data available
+5VG	No synonyms data available
+5VF	No synonyms data available
+5VH	No synonyms data available
+15P	PEG 1500
+SCN	No synonyms data available
+5DV	No synonyms data available
+BHC	No synonyms data available
+64A	No synonyms data available
+PPF	No synonyms data available
+65P	No synonyms data available
+6EH	No synonyms data available
+6EG	No synonyms data available
+6EF	No synonyms data available
+6EE	No synonyms data available
+6FT	No synonyms data available
+6FN	No synonyms data available
+6FM	No synonyms data available
+6KK	No synonyms data available
+6KQ	No synonyms data available
+6KR	No synonyms data available
+IB1	No synonyms data available
+G43	No synonyms data available
+7SK	No synonyms data available
+6XI	No synonyms data available
+6W6	No synonyms data available
+6YA	No synonyms data available
+9VN	No synonyms data available
+9VK	No synonyms data available
+7AY	JLJ651
+FLU	FLUORESCEIN
+J63	No synonyms data available
+7N1	No synonyms data available
+DDS	No synonyms data available
+7O7	No synonyms data available
+7OA	No synonyms data available
+82M	No synonyms data available
+83G	No synonyms data available
+83J	No synonyms data available
+8BG	No synonyms data available
+8FM	No synonyms data available
+8FP	No synonyms data available
+8HD	No synonyms data available
+Y55	No synonyms data available
+FRZ	FR180204
+7GC	4-methyl-N-[(1,3-thiazol-2-yl)carbamoyl]benzene-1-sulfonamide
+9AY	No synonyms data available
+HV9	No synonyms data available
+9JP	No synonyms data available
+9KG	No synonyms data available
+9KD	No synonyms data available
+9K7	No synonyms data available
+9J1	No synonyms data available
+9HY	No synonyms data available
+9TV	No synonyms data available
+MPO	No synonyms data available
+GR7	No synonyms data available
+ET9	Entecavir 5'-triphosphate
+DGT	No synonyms data available
+8Z0	KNI-1657
+D4T	No synonyms data available
+ZW2	No synonyms data available
+CKD	No synonyms data available
+CKM	No synonyms data available
+CKS	No synonyms data available
+CKV	No synonyms data available
+CKY	No synonyms data available
+CN4	No synonyms data available
+G53	No synonyms data available
+IHP	MYO-INOSITOL HEXAKISPHOSPHATE; INOSITOL 1,2,3,4,5,6-HEXAKISPHOSPHATE
+KYN	L-KYNURENINE
+K5A	No synonyms data available
+K5C	No synonyms data available
+BVR	No synonyms data available
+GR8	No synonyms data available
+GR5	No synonyms data available
+GTP	No synonyms data available
+FQ4	No synonyms data available
+FQ1	No synonyms data available
+FCA	alpha-D-fucose; 6-deoxy-alpha-D-galactopyranose; D-fucose; fucose
+H9Y	No synonyms data available
+GA8	No synonyms data available
+GA5	No synonyms data available
+HWY	No synonyms data available
+J0S	No synonyms data available
+J3M	No synonyms data available
+J3P	No synonyms data available
+T90	No synonyms data available
+BA5	XZ462
+CXX	3-chloro-5-(3-(dimethylamino)propyl)-10,11-dihydro-5H-dibenz[b,f]azepine
+TRP	No synonyms data available
+B0F	No synonyms data available
+1RZ	Lamivudine-5'-triphosphate; 3TC Triphosphate; [[(2R,5S)-5-(4-azanyl-2-oxidanylidene-pyrimidin-1-yl)-1,3-oxathiolan-2-yl]methoxy-oxidanyl-phosphoryl] phosphono hydrogen phosphate
+DCP	No synonyms data available
+EJ9	No synonyms data available
+940	No synonyms data available
+RY	No synonyms data available
+JDY	No synonyms data available
+JDV	No synonyms data available
+A2G	N-acetyl-alpha-D-galactosamine; 2-acetamido-2-deoxy-alpha-D-galactose; 2-acetamido-2-deoxy-D-galactose; 2-acetamido-2-deoxy-galactose; N-ACETYL-2-DEOXY-2-AMINO-GALACTOSE
+JYJ	No synonyms data available
+JYV	No synonyms data available
+JYY	No synonyms data available
+JYS	No synonyms data available
+KJJ	No synonyms data available
+L3D	No synonyms data available
+44E	No synonyms data available
+IY1	Indopy-1
+M9A	No synonyms data available
+MJD	No synonyms data available
+MVY	No synonyms data available
+MW4	No synonyms data available
+MWD	No synonyms data available
+MWA	No synonyms data available
+MXJ	No synonyms data available
+N07	No synonyms data available
+LMT	No synonyms data available
+1RY	No synonyms data available
+N8G	No synonyms data available
+NJM	No synonyms data available
+NJA	No synonyms data available
+NJ4	No synonyms data available
+NEJ	No synonyms data available
+NE7	No synonyms data available
+NF4	No synonyms data available
+NFJ	No synonyms data available
+NF7	No synonyms data available
+NG4	No synonyms data available
+NJG	No synonyms data available
+NJ7	No synonyms data available
+NJ1	No synonyms data available
+NJJ	No synonyms data available
+NKA	No synonyms data available
+NJY	No synonyms data available
+NQ4	No synonyms data available
+DCT	No synonyms data available
+O51	No synonyms data available
+OR1	No synonyms data available
+OQY	No synonyms data available
+OPJ	No synonyms data available
+OP7	No synonyms data available
+ORV	No synonyms data available
+OQG	No synonyms data available
+OO4	No synonyms data available
+OQD	No synonyms data available
+OQA	No synonyms data available
+OQV	No synonyms data available
+OQP	No synonyms data available
+OQ7	No synonyms data available
+P3V	No synonyms data available
+KLQ	No synonyms data available
+OZ1	No synonyms data available
+XXJ	No synonyms data available
+5MY	No synonyms data available
+PSF	PHOSPHATIDYLSERINE
+Q1D	No synonyms data available
+B4R	No synonyms data available
+DLU	Dolutegravir
+QAG	No synonyms data available
+QCG	No synonyms data available
+QJY	No synonyms data available
+QK1	No synonyms data available
+QNG	Lenacapavir
+QUW	No synonyms data available
+QOJ	No synonyms data available
+G6R	No synonyms data available
+QZV	No synonyms data available
+R0J	No synonyms data available
+R0P	No synonyms data available
+R0S	No synonyms data available
+R2A	No synonyms data available
+R2D	No synonyms data available
+T1R	No synonyms data available
+T2R	No synonyms data available
+R7J	No synonyms data available
+ARG	No synonyms data available
+RQG	No synonyms data available
+S0Y	No synonyms data available
+SJY	No synonyms data available
+TK7	No synonyms data available
+TQM	No synonyms data available
+TXM	No synonyms data available
+D4M	2',3'-DIDEOXY-2',3-DIDEHYDROTHYMIDINE 5'-MONOPHOSPHATE; 2',3'-DEHYDRO-2',3'-DEOXY-THYMIDINE 5'-MONOPHOSPHATE
+DGP	No synonyms data available
+7AX	JLJ649
+UMY	No synonyms data available
+UNS	No synonyms data available
+UO4	No synonyms data available
+UMV	No synonyms data available
+UOV	No synonyms data available
+REK	(2~{R})-2-[[[(2~{R})-1-(6-aminopurin-9-yl)propan-2-yl]oxymethyl-oxidanyl-phosphoryl]amino]butanedioic acid
+RE5	(2~{S})-2-[[[(2~{R})-1-(6-aminopurin-9-yl)propan-2-yl]oxymethyl-oxidanyl-phosphoryl]amino]pentanedioic acid
+RFE	(2~{S})-2-[[[(2~{R})-1-(6-aminopurin-9-yl)propan-2-yl]oxymethyl-oxidanyl-phosphoryl]amino]-4-methylsulfanyl-butanoic acid
+GZ9	No synonyms data available
+WBV	Pirmitegravir
+X2J	No synonyms data available
+X2S	No synonyms data available
+X2V	No synonyms data available
+X2G	No synonyms data available
+K7F	No synonyms data available
+XFS	No synonyms data available
+XUY	No synonyms data available
+XUM	No synonyms data available
+XUP	No synonyms data available
+XUS	No synonyms data available
+XUV	No synonyms data available
+XVP	No synonyms data available
+XVM	No synonyms data available
+XVJ	No synonyms data available
+XVS	No synonyms data available
+XVY	No synonyms data available
+XW4	No synonyms data available
+XVV	No synonyms data available
+YBA	No synonyms data available
+YB7	No synonyms data available
+YAV	No synonyms data available
+YBD	No synonyms data available
+1S0	No synonyms data available
+XRF	L-dTTP
+YTG	No synonyms data available
+YWM	No synonyms data available
+YWP	No synonyms data available
+YTY	No synonyms data available
+YWS	No synonyms data available
+YUM	No synonyms data available
+YUP	No synonyms data available
+YUJ	No synonyms data available
+YUD	No synonyms data available
+YUA	No synonyms data available
+1I4	No synonyms data available
+1I1	No synonyms data available
+1IA	No synonyms data available
+1IH	No synonyms data available
+1IK	No synonyms data available
+1IO	No synonyms data available
+1KK	No synonyms data available
+2NU	No synonyms data available
+3IR	((1R,2R)-2-Phenyl-N-(1,3-thiazol-2-yl) cyclopropanecarboxamide
+4OI	No synonyms data available
+2I4	Bevirimat
+61F	No synonyms data available
+6I2	No synonyms data available
+9I4	No synonyms data available
+BTB	BIS-TRIS BUFFER
+9QI	No synonyms data available
+9PJ	No synonyms data available
+9VI	No synonyms data available
+9WW	No synonyms data available
+9UV	No synonyms data available
+9WI	No synonyms data available
+9W3	No synonyms data available
+GE7	No synonyms data available
+GEI	No synonyms data available
+VM5	No synonyms data available
+I6Q	No synonyms data available
+I6M	No synonyms data available
+G8R	No synonyms data available
+G77	No synonyms data available
+KZD	No synonyms data available
+LE8	No synonyms data available
+O20	No synonyms data available
+INU	No synonyms data available
+8LT	No synonyms data available
+8Z3	No synonyms data available
+E58	No synonyms data available
+E6I	No synonyms data available
+E81	No synonyms data available
+E9B	No synonyms data available
+ECW	No synonyms data available
+EGI	No synonyms data available
+RWR	No synonyms data available
+U5L	No synonyms data available
+W2Q	No synonyms data available
+U60	No synonyms data available
+U5S	No synonyms data available
+QD6	No synonyms data available
+R5K	No synonyms data available
+V06	No synonyms data available
+4JH	No synonyms data available
+W15	No synonyms data available
+FIC	No synonyms data available
+0IF	No synonyms data available
+U4D	No synonyms data available
+JBQ	No synonyms data available
+U43	No synonyms data available
+BML	No synonyms data available
+X7B	No synonyms data available
+X7H	No synonyms data available
+XBQ	No synonyms data available
+XRB	No synonyms data available
+XU9	No synonyms data available
+Y05	No synonyms data available
+7IT	No synonyms data available
+Y1O	No synonyms data available
+Y1X	No synonyms data available
+Y26	No synonyms data available
+Y2K	No synonyms data available
+Y2E	No synonyms data available
+Y2O	No synonyms data available
+Y1T	No synonyms data available
+Y9R	No synonyms data available
+Y9N	No synonyms data available
+1HC	No synonyms data available
+F	No synonyms data available
+YZI	No synonyms data available
+Z3F	No synonyms data available
+Z1I	No synonyms data available
+Z1Z	No synonyms data available
+Z2O	No synonyms data available
+Z6F	No synonyms data available
+Z7N	No synonyms data available
+ZNF	No synonyms data available
+LOV	No synonyms data available
+V96	No synonyms data available
+V9O	No synonyms data available
+VA9	No synonyms data available
+WVZ	No synonyms data available
+AJ2	No synonyms data available
+XXL	No synonyms data available
+WWR	No synonyms data available
+WVU	No synonyms data available
+3IP	No synonyms data available
+WZR	No synonyms data available
+S0I	No synonyms data available
+X0L	No synonyms data available
+X0H	No synonyms data available
+WZX	No synonyms data available
+WZL	No synonyms data available
+WZ9	No synonyms data available
+J6U	No synonyms data available
+K3L	No synonyms data available
+VQ0	No synonyms data available
+VQK	No synonyms data available
+VTN	No synonyms data available
+VWU	No synonyms data available
+VTS	No synonyms data available
+VTV	No synonyms data available
+VU8	No synonyms data available
+VVE	No synonyms data available
+VVN	No synonyms data available
+VR9	No synonyms data available
+VRF	No synonyms data available
+VRQ	No synonyms data available
+VW2	No synonyms data available
+VWK	No synonyms data available
+VWB	No synonyms data available
+VOI	No synonyms data available
+VOU	No synonyms data available
+VP2	No synonyms data available
+VPB	No synonyms data available
+VO8	No synonyms data available
+XTE	[[(1~{S},2~{E},3~{S},5~{S})-3-(2-azanyl-6-oxidanylidene-1~{H}-purin-9-yl)-1-cyano-2-(fluoranylmethylidene)-5-oxidanyl-cyclopentyl]methoxy-oxidanyl-phosphoryl] phosphono hydrogen phosphate
+0E9	A-74704
+IDS	O2-SULFO-GLUCURONIC ACID; 2-O-sulfo-alpha-L-iduronic acid; 2-O-sulfo-L-iduronic acid; 2-O-sulfo-iduronic acid
+JHM	2-deoxy-6-O-sulfo-alpha-D-arabino-hexopyranose; 2-deoxy-6-O-sulfo-alpha-D-glucose; 2-deoxy-6-O-sulfo-D-glucose; 2-deoxy-6-O-sulfo-glucose
+ALQ	No synonyms data available
+434	BILH 434
+SDY	beta-D-talose; D-talose; talose; beta-D-talopyranosose
+FSC	No synonyms data available
+JFM	No synonyms data available
+HWH	No synonyms data available
+RZG	No synonyms data available
+RZJ	No synonyms data available
+RZS	No synonyms data available
+K0G	No synonyms data available
+GWS	No synonyms data available
+SZY	No synonyms data available
+T0J	No synonyms data available
+O0S	No synonyms data available
+T0S	No synonyms data available
+T0V	No synonyms data available
+LPZ	No synonyms data available
+JGP	No synonyms data available
+T0Y	No synonyms data available
+T1J	No synonyms data available
+JJG	No synonyms data available
+T1M	No synonyms data available
+6SU	No synonyms data available
+LWA	No synonyms data available
+AWP	No synonyms data available
+T1S	No synonyms data available
+T1V	No synonyms data available
+T1Y	No synonyms data available
+T2G	No synonyms data available
+T2J	No synonyms data available
+T2V	No synonyms data available
+T2Y	No synonyms data available
+T3G	No synonyms data available
+T3J	No synonyms data available
+T3V	No synonyms data available
+T47	No synonyms data available
+T4D	No synonyms data available
+T4J	No synonyms data available
+T4M	No synonyms data available
+T4V	No synonyms data available
+T4Y	No synonyms data available
+T54	No synonyms data available
+T5D	No synonyms data available
+T5G	No synonyms data available
+HVB	No synonyms data available
+T5V	No synonyms data available
+T5Y	No synonyms data available
+HV2	No synonyms data available
+NTG	No synonyms data available
+T67	No synonyms data available
+SFY	Sulfapyridine
+S7D	No synonyms data available
+JGY	No synonyms data available
+K3S	No synonyms data available
+K1Y	No synonyms data available
+T6J	No synonyms data available
+JGG	No synonyms data available
+T6M	No synonyms data available
+T6V	No synonyms data available
+T6Y	No synonyms data available
+T71	No synonyms data available
+T7A	No synonyms data available
+T7D	No synonyms data available
+T7G	No synonyms data available
+T7J	No synonyms data available
+T7P	No synonyms data available
+T7S	No synonyms data available
+T7V	No synonyms data available
+T7Y	No synonyms data available
+T81	No synonyms data available
+T84	No synonyms data available
+T8A	No synonyms data available
+T8D	No synonyms data available
+T8J	No synonyms data available
+T8M	No synonyms data available
+T8P	No synonyms data available
+T8S	No synonyms data available
+T8V	No synonyms data available
+T8Y	No synonyms data available
+T9J	No synonyms data available
+T9M	No synonyms data available
+T9P	No synonyms data available
+NZD	No synonyms data available
+U0M	No synonyms data available
+U0P	No synonyms data available
+U0S	No synonyms data available
+U0V	No synonyms data available
+U0Y	No synonyms data available
+U1D	No synonyms data available
+U1A	No synonyms data available
+U1G	No synonyms data available
+U1M	No synonyms data available
+U1V	No synonyms data available
+K1G	No synonyms data available
+S7V	No synonyms data available
+UHS	No synonyms data available
+UGD	No synonyms data available
+UGG	No synonyms data available
+UGM	No synonyms data available
+UGP	No synonyms data available
+UGS	No synonyms data available
+UH1	No synonyms data available
+UH4	No synonyms data available
+UGV	No synonyms data available
+UH7	No synonyms data available
+UHA	No synonyms data available
+UHG	No synonyms data available
+UHV	No synonyms data available
+UHY	No synonyms data available
+UJ1	No synonyms data available
+UHM	No synonyms data available
+UJ4	No synonyms data available
+USD	No synonyms data available
+USA	No synonyms data available
+US7	No synonyms data available
+UPD	No synonyms data available
+UPJ	No synonyms data available
+VEG	No synonyms data available
+VEJ	No synonyms data available
+VEM	No synonyms data available
+VEP	No synonyms data available
+VEV	No synonyms data available
+VEY	No synonyms data available
+LJA	No synonyms data available
+VVD	No synonyms data available
+VVG	No synonyms data available
+UR7	No synonyms data available
+VVJ	No synonyms data available
+VVM	No synonyms data available
+VVY	No synonyms data available
+VVP	No synonyms data available
+NY7	No synonyms data available
+VW1	No synonyms data available
+K2P	No synonyms data available
+VW4	No synonyms data available
+NYV	No synonyms data available
+H04	No synonyms data available
+VW7	No synonyms data available
+NZG	No synonyms data available
+UQS	No synonyms data available
+VWA	No synonyms data available
+UVA	No synonyms data available
+VWD	No synonyms data available
+VWG	No synonyms data available
+UVJ	No synonyms data available
+JG4	No synonyms data available
+VWJ	No synonyms data available
+S9S	No synonyms data available
+K34	No synonyms data available
+VWM	No synonyms data available
+S7G	No synonyms data available
+RY4	No synonyms data available
+UXG	No synonyms data available
+S7J	No synonyms data available
+PK4	No synonyms data available
+NUA	No synonyms data available
+HR5	No synonyms data available
+N0E	No synonyms data available
+GQJ	No synonyms data available
+EJQ	No synonyms data available
+JHJ	No synonyms data available
+VWV	No synonyms data available
+VWY	No synonyms data available
+RYM	No synonyms data available
+NX7	No synonyms data available
+MUK	No synonyms data available
+VX4	No synonyms data available
+STV	No synonyms data available
+JOV	No synonyms data available
+O2A	No synonyms data available
+VXD	No synonyms data available
+VXG	No synonyms data available
+W4Y	No synonyms data available
+H35	No synonyms data available
+W4V	No synonyms data available
+W4S	No synonyms data available
+W5S	No synonyms data available
+1LQ	No synonyms data available
+W5P	No synonyms data available
+W5M	No synonyms data available
+W5J	No synonyms data available
+W5G	No synonyms data available
+W5D	No synonyms data available
+W5A	No synonyms data available
+W57	No synonyms data available
+W51	No synonyms data available
+4SO	No synonyms data available
+51X	No synonyms data available
+TYZ	No synonyms data available
+LSA	SACCHARIN
+XIY	1H-BENZIMIDAZOL-2-YLMETHANOL
+NC3	4-(3-CYCLOHEXYLURIEDO)-ETHANOIC ACID
+5HN	5-Hydroxynicotinic Acid
+OHB	2-hydroxybenzamide
+4MB	No synonyms data available
+6FZ	No synonyms data available
+YTX	No synonyms data available
+3R6	No synonyms data available
+ZZA	No synonyms data available
+4BL	No synonyms data available
+3A9	No synonyms data available
+5OF	No synonyms data available
+4BX	No synonyms data available
+07L	7-hydroxycoumarin
+05R	No synonyms data available
+GVH	No synonyms data available
+54G	No synonyms data available
+Q6T	No synonyms data available
+3XH	N-[(3-hydroxyphenyl)carbonyl]glycine
+EVE	No synonyms data available
+MHW	No synonyms data available
+4FL	No synonyms data available
+ISN	No synonyms data available
+3HP	No synonyms data available
+3BZ	No synonyms data available
+6U6	No synonyms data available
+PHB	No synonyms data available
+4J8	No synonyms data available
+PZA	Pyrazinamide
+AQO	No synonyms data available
+4PN	No synonyms data available
+AOT	No synonyms data available
+4JO	No synonyms data available
+SHA	No synonyms data available
+0LO	No synonyms data available
+NMI	No synonyms data available
+PF0	No synonyms data available
+OHP	No synonyms data available
+6OT	No synonyms data available
+HBD	No synonyms data available
+FHB	No synonyms data available
+2CL	No synonyms data available
+DFA	No synonyms data available
+06Y	No synonyms data available
+8H8	No synonyms data available
+6V9	No synonyms data available
+BXW	No synonyms data available
+2UP	No synonyms data available
+PYD	No synonyms data available
+1SQ	1-AMINO-ISOQUINOLINE
+4SV	No synonyms data available
+3EU	No synonyms data available
+NCA	No synonyms data available
+2D0	No synonyms data available
+BHA	No synonyms data available
+54T	No synonyms data available
+NOA	No synonyms data available
+KNL	No synonyms data available
+4YS	No synonyms data available
+2SX	No synonyms data available
+5ZE	No synonyms data available
+52F	No synonyms data available
+EXB	No synonyms data available
+W6A	No synonyms data available
+04R	No synonyms data available
+W6D	No synonyms data available
+HSM	No synonyms data available
+APG	No synonyms data available
+W6G	No synonyms data available
+W6J	No synonyms data available
+W6M	No synonyms data available
+W6P	No synonyms data available
+XAN	No synonyms data available
+W6S	No synonyms data available
+W6V	No synonyms data available
+TFA	No synonyms data available
+W7S	No synonyms data available
+MYI	5-methoxy-indole acetate
+4FS	No synonyms data available
+JG8	No synonyms data available
+0HN	benzo[d][1,3]dioxole-5-carboxylic acid
+JNZ	No synonyms data available
+8EJ	No synonyms data available
+EKZ	4-tert-Butylcatechol (CAS 98-29-3)
+HQD	No synonyms data available
+7PD	isoxanthopterin
+W7V	No synonyms data available
+W7Y	No synonyms data available
+W8A	No synonyms data available
+W8D	No synonyms data available
+W8J	No synonyms data available
+Q3C	No synonyms data available
+CLW	5-CHLORO-2-BENZOXAZOLONE
+4JQ	No synonyms data available
+2AK	No synonyms data available
+BVF	2-AMINO-4-PICOLINE
+ANN	P-ANISIC ACID
+4BY	No synonyms data available
+LZ1	No synonyms data available
+6P3	No synonyms data available
+WB1	No synonyms data available
+WOY	No synonyms data available
+WPS	No synonyms data available
+WPV	No synonyms data available
+WPY	No synonyms data available
+WQ1	No synonyms data available
+WQ4	No synonyms data available
+WQ7	No synonyms data available
+DE5	No synonyms data available
+WQA	No synonyms data available
+WQG	No synonyms data available
+WQJ	No synonyms data available
+WQM	No synonyms data available
+WQV	No synonyms data available
+WQY	No synonyms data available
+WRD	No synonyms data available
+WRJ	No synonyms data available
+WRM	No synonyms data available
+L46	No synonyms data available
+WSM	No synonyms data available
+WRV	No synonyms data available
+WRY	No synonyms data available
+WS4	No synonyms data available
+WSG	No synonyms data available
+WSJ	No synonyms data available
+VZM	No synonyms data available
+LUY	No synonyms data available
+VZP	No synonyms data available
+VZS	No synonyms data available
+VZY	No synonyms data available
+GWY	No synonyms data available
+NXS	No synonyms data available
+W04	No synonyms data available
+W0A	No synonyms data available
+K41	No synonyms data available
+GWV	No synonyms data available
+W0D	No synonyms data available
+W0G	No synonyms data available
+GWP	No synonyms data available
+W0J	No synonyms data available
+W0M	No synonyms data available
+W0P	No synonyms data available
+W0S	No synonyms data available
+W0V	No synonyms data available
+K2G	No synonyms data available
+GOV	No synonyms data available
+B1A	No synonyms data available
+7ZC	No synonyms data available
+NZ1	No synonyms data available
+W0Y	No synonyms data available
+W17	No synonyms data available
+W1A	No synonyms data available
+W1D	No synonyms data available
+JFP	No synonyms data available
+WSY	No synonyms data available
+W1J	No synonyms data available
+JHS	No synonyms data available
+W1M	No synonyms data available
+W1P	No synonyms data available
+W1S	No synonyms data available
+JH4	No synonyms data available
+S2S	No synonyms data available
+W1V	No synonyms data available
+W1Y	No synonyms data available
+W21	No synonyms data available
+W2A	No synonyms data available
+W24	No synonyms data available
+W27	No synonyms data available
+W2G	No synonyms data available
+W2J	No synonyms data available
+W2M	No synonyms data available
+W2S	No synonyms data available
+W2V	No synonyms data available
+W2Y	No synonyms data available
+W34	No synonyms data available
+HHQ	No synonyms data available
+HGQ	No synonyms data available
+HH8	No synonyms data available
+UUJ	No synonyms data available
+W3A	No synonyms data available
+W3D	No synonyms data available
+HYN	Hydantoin
+BAQ	No synonyms data available
+HRZ	No synonyms data available
+3TR	AMITROLE
+4AP	No synonyms data available
+W3G	No synonyms data available
+W3J	No synonyms data available
+2OP	No synonyms data available
+W3M	No synonyms data available
+W3P	No synonyms data available
+W3S	No synonyms data available
+W3V	No synonyms data available
+W3Y	No synonyms data available
+W41	No synonyms data available
+W44	No synonyms data available
+WUG	No synonyms data available
+WUJ	No synonyms data available
+WUM	No synonyms data available
+WUS	No synonyms data available
+WUV	No synonyms data available
+WUY	No synonyms data available
+K3A	No synonyms data available
+ZQA	No synonyms data available
+O3G	No synonyms data available
+WL7	No synonyms data available
+GWG	No synonyms data available
+ZQD	No synonyms data available
+WJD	No synonyms data available
+EJW	No synonyms data available
+ZQG	No synonyms data available
+ZQJ	No synonyms data available
+ZQM	No synonyms data available
+LF6	No synonyms data available
+O2M	No synonyms data available
+NVD	No synonyms data available
+B0V	No synonyms data available
+LFO	No synonyms data available
+LGR	No synonyms data available
+LHR	No synonyms data available
+WNV	No synonyms data available
+60P	No synonyms data available
+JGD	No synonyms data available
+LJR	No synonyms data available
+LJK	No synonyms data available
+LJ6	No synonyms data available
+JGA	No synonyms data available
+NZJ	No synonyms data available
+LLU	No synonyms data available
+LL0	No synonyms data available
+LKU	No synonyms data available
+LKL	No synonyms data available
+LK6	No synonyms data available
+WN1	No synonyms data available
+JJM	No synonyms data available
+UWY	No synonyms data available
+ELQ	No synonyms data available
+LO6	No synonyms data available
+SZE	4-(3-fluoropyridin-2-yl)-1-methylpiperazin-2-one; 126776361
+LNS	No synonyms data available
+UX1	No synonyms data available
+LMW	No synonyms data available
+LM6	No synonyms data available
+LQP	No synonyms data available
+LQI	No synonyms data available
+WH1	No synonyms data available
+LQ3	No synonyms data available
+GT4	No synonyms data available
+AWD	No synonyms data available
+S5J	No synonyms data available
+K1A	No synonyms data available
+LPU	No synonyms data available
+WKA	No synonyms data available
+LRR	No synonyms data available
+LRF	No synonyms data available
+WKS	No synonyms data available
+I8D	No synonyms data available
+K1S	No synonyms data available
+LR9	No synonyms data available
+LQV	No synonyms data available
+O3R	No synonyms data available
+O46	No synonyms data available
+O4F	No synonyms data available
+WYY	No synonyms data available
+WVG	No synonyms data available
+RWQ	No synonyms data available
+RVO	No synonyms data available
+WVM	No synonyms data available
+WVY	No synonyms data available
+WW1	No synonyms data available
+WW4	No synonyms data available
+RYI	No synonyms data available
+WWJ	No synonyms data available
+WWP	No synonyms data available
+WWS	No synonyms data available
+S1O	No synonyms data available
+WX4	No synonyms data available
+RZ9	No synonyms data available
+WX7	No synonyms data available
+WXD	No synonyms data available
+WXA	No synonyms data available
+WXG	No synonyms data available
+WXJ	No synonyms data available
+WXS	No synonyms data available
+WXY	No synonyms data available
+WY7	No synonyms data available
+WYA	No synonyms data available
+S3E	No synonyms data available
+WYG	No synonyms data available
+WYJ	No synonyms data available
+RWL	No synonyms data available
+RXX	No synonyms data available
+RVS	No synonyms data available
+RXI	No synonyms data available
+RWC	No synonyms data available
+RY6	No synonyms data available
+RYC	No synonyms data available
+S09	No synonyms data available
+S0T	No synonyms data available
+QLF	No synonyms data available
+QLU	No synonyms data available
+QYJ	No synonyms data available
+QRU	No synonyms data available
+S1F	No synonyms data available
+RYQ	No synonyms data available
+RZI	No synonyms data available
+RZR	No synonyms data available
+S1X	No synonyms data available
+S2R	No synonyms data available
+S3R	No synonyms data available
+S4F	No synonyms data available
+RW5	No synonyms data available
+S4O	No synonyms data available
+S50	No synonyms data available
+S5F	No synonyms data available
+S5U	No synonyms data available
+S63	No synonyms data available
+S6C	No synonyms data available
+S6N	No synonyms data available
+S6U	No synonyms data available
+S7F	No synonyms data available
+S7O	No synonyms data available
+S5O	No synonyms data available
+QIW	No synonyms data available
+QJ0	No synonyms data available
+QJC	No synonyms data available
+QJG	No synonyms data available
+QJO	No synonyms data available
+QJU	No synonyms data available
+QK6	No synonyms data available
+QKC	No synonyms data available
+QKX	No synonyms data available
+QKL	No synonyms data available
+QL6	No synonyms data available
+QM6	No synonyms data available
+QMF	No synonyms data available
+QN0	No synonyms data available
+QMO	No synonyms data available
+QNV	No synonyms data available
+QNF	No synonyms data available
+QOF	No synonyms data available
+QO3	No synonyms data available
+QOR	No synonyms data available
+QP9	No synonyms data available
+QPX	No synonyms data available
+QPL	No synonyms data available
+QR0	No synonyms data available
+QQ9	No synonyms data available
+QQI	No synonyms data available
+QQR	No synonyms data available
+QR6	No synonyms data available
+QRC	No synonyms data available
+QRI	No synonyms data available
+QS6	No synonyms data available
+QSL	No synonyms data available
+QT0	No synonyms data available
+QT6	No synonyms data available
+QTF	No synonyms data available
+QTO	No synonyms data available
+QU3	No synonyms data available
+QUC	No synonyms data available
+QVC	No synonyms data available
+QV1	No synonyms data available
+QUR	No synonyms data available
+QVL	No synonyms data available
+QVX	No synonyms data available
+QWC	No synonyms data available
+QW3	No synonyms data available
+QX5	No synonyms data available
+QWX	No synonyms data available
+QWO	No synonyms data available
+QXC	No synonyms data available
+QXS	No synonyms data available
+QY0	No synonyms data available
+QXL	No synonyms data available
+QYC	No synonyms data available
+QYU	No synonyms data available
+QYO	No synonyms data available
+QZ6	No synonyms data available
+QZF	No synonyms data available
+QZX	No synonyms data available
+QZO	No synonyms data available
+R0A	No synonyms data available
+R0H	No synonyms data available
+R0L	No synonyms data available
+R0R	No synonyms data available
+R0W	No synonyms data available
+QIR	No synonyms data available
+QIO	No synonyms data available
+R8K	No synonyms data available
+R8R	No synonyms data available
+R8Z	No synonyms data available
+R98	No synonyms data available
+R9F	No synonyms data available
+R9L	No synonyms data available
+R9U	No synonyms data available
+RA3	No synonyms data available
+RBB	No synonyms data available
+RBO	No synonyms data available
+RC3	No synonyms data available
+RCR	No synonyms data available
+RD6	No synonyms data available
+RDN	No synonyms data available
+RDU	No synonyms data available
+RF0	No synonyms data available
+RFI	No synonyms data available
+RFU	No synonyms data available
+RG5	No synonyms data available
+RGF	No synonyms data available
+RI3	No synonyms data available
+RI7	No synonyms data available
+RIK	No synonyms data available
+RIW	No synonyms data available
+RIZ	No synonyms data available
+RJ9	No synonyms data available
+RJL	No synonyms data available
+RJS	No synonyms data available
+RK0	No synonyms data available
+RK9	No synonyms data available
+RKI	No synonyms data available
+RKU	No synonyms data available
+RL5	No synonyms data available
+RL9	No synonyms data available
+RLN	No synonyms data available
+RLU	No synonyms data available
+RM6	No synonyms data available
+RMU	No synonyms data available
+RNC	No synonyms data available
+RNL	No synonyms data available
+ROO	No synonyms data available
+RP0	No synonyms data available
+RPU	No synonyms data available
+RQ8	No synonyms data available
+RQC	No synonyms data available
+RQI	No synonyms data available
+RQR	No synonyms data available
+RR3	No synonyms data available
+RS0	No synonyms data available
+RRF	No synonyms data available
+RS9	No synonyms data available
+RSR	No synonyms data available
+RT5	No synonyms data available
+RTI	No synonyms data available
+RTU	No synonyms data available
+RV3	No synonyms data available
+RVF	No synonyms data available
+PJE	No synonyms data available
+010	No synonyms data available
+02J	No synonyms data available
+FHR	No synonyms data available
+FJC	No synonyms data available
+3WL	Baicalein
+APR	No synonyms data available
+SAM	No synonyms data available
+X77	No synonyms data available
+SAH	No synonyms data available
+SFG	ADENOSYL-ORNITHINE
+U5P	No synonyms data available
+U5G	(1R,2S,5S)-N-[(2S,3R)-4-amino-1-cyclobutyl-3-hydroxy-4-oxobutan-2-yl]-3-[N-(tert-butylcarbamoyl)-3-methyl-L-valyl]-6,6-dimethyl-3-azabicyclo[3.1.0]hexane-2-carboxamide
+GTA	7-METHYL-GPPPA
+MGP	No synonyms data available
+K36	GC376
+UED	GC373 bound form; GC376 bound form
+B1S	No synonyms data available
+CMU	5-CHLORO-6-[(2-IMINOPYRROLIDIN-1-YL)METHYL]PYRIMIDINE-2,4(1H,3H)-DIONE
+U3P	No synonyms data available
+UXS	No synonyms data available
+AYE	ALLYLAMINE
+ELL	No synonyms data available
+AR7	No synonyms data available
+AF3	No synonyms data available
+1N7	2-hydroxy-N,N-dimethyl-3-sulfo-N-(3-{[(3beta,5beta,7beta,12beta)-3,7,12-trihydroxy-24-oxocholan-24-yl]amino}propyl)propan-1-aminium
+V1V	No synonyms data available
+APY	No synonyms data available
+V2M	N-[(2S)-1-({(2S)-4-hydroxy-3-oxo-1-[(3S)-2-oxopyrrolidin-3-yl]butan-2-yl}amino)-4-methyl-1-oxopentan-2-yl]-4-methoxy-1H-indole-2-carboxamide, bound form
+CSX	No synonyms data available
+QYS	No synonyms data available
+SV6	TELAPREVIR, bound form
+NNA	Narlaprevir, bound form
+V7G	GRL-024-20
+O6K	(S,S,S)-13b; 13b-K; ketoamide inhibitor 13b (bound)
+PG0	PEG 6000
+P6N	No synonyms data available
+A82	No synonyms data available
+A1R	No synonyms data available
+A3R	No synonyms data available
+MLT	(2R)-2-HYDROXYBUTANEDIOIC ACID; 2-HYDROXY-SUCCINIC ACID
+EIC	9,12-LINOLEIC ACID
+BLA	No synonyms data available
+FUA	No synonyms data available
+POP	No synonyms data available
+GE6	No synonyms data available
+R6Q	No synonyms data available
+R7Q	2,4'-Dimethylpropiophenone
+CF0	Fluoro methyl group
+PHQ	No synonyms data available
+R8H	No synonyms data available
+R9W	No synonyms data available
+LZE	No synonyms data available
+EJM	(2S)-2-azanylhexanal; nleu-al
+RMZ	3-(2-(4-(3,4-Dimethylphenyl)piperazin-1-yl)ethyl)isoindolin-1-one
+RNW	No synonyms data available
+RQH	Climbazole
+RQN	No synonyms data available
+RV5	1-(1,2,3-benzothiadiazol-6-yl)-3-(2-oxidanylidene-2-piperidin-1-yl-ethyl)urea
+QEL	Ifenprodil
+RV8	1,3,5-tris[[(2~{S})-oxiran-2-yl]methyl]-1,3,5-triazinane-2,4,6-trione
+S7H	No synonyms data available
+RVW	thioglucose
+RY5	No synonyms data available
+S1W	No synonyms data available
+S7W	No synonyms data available
+S8E	No synonyms data available
+S8B	No synonyms data available
+CLU	CLONIDINE
+S8H	No synonyms data available
+93J	No synonyms data available
+QCP	N-hydroxy-4-{[(2S)-3-methyl-2-phenylbutanoyl]amino}benzamide
+S8T	Isofloxythepin
+SQ2	2-(benzotriazol-1-yl)-1-(4-methylpiperidin-1-yl)ethanone
+SQ5	(5~{S})-5-(cyclohexylmethyl)-3-(5-fluoranylpyridin-3-yl)imidazolidine-2,4-dione
+F86	Remdesivir, bound form
+MYC	2-(3,4,5-TRIHYDROXYPHENYL)-3,5,7-TRIHYDROXY-4H-1-BENZOPYRAN-4-ONE; 3,3',4',5,5',7-HEXAHYDROXYFLAVONE; MYRICETIN; CANNABISCETIN
+SYH	2-(1H-1,2,3-benzotriazol-1-yl)-1-(4-methylidenepiperidin-1-yl)ethan-1-one; 2-(benzotriazol-1-yl)-1-(4-methylidenepiperidin-1-yl)ethanone
+T0W	2-(1H-1,2,3-benzotriazol-1-yl)-N-ethyl-N-[(furan-3-yl)methyl]acetamide
+PK8	No synonyms data available
+SE	No synonyms data available
+ALD	No synonyms data available
+PRO	No synonyms data available
+PG6	No synonyms data available
+5GP	No synonyms data available
+A2R	No synonyms data available
+U08	Remdesivir, reacted form
+9JT	~{N}-phenyl-2-selanyl-benzamide; Ebselen, bound form
+JRY	No synonyms data available
+FL6	No synonyms data available
+TG3	No synonyms data available
+NOL	No synonyms data available
+FNO	shikonin
+TTT	No synonyms data available
+GKF	No synonyms data available
+GDP	No synonyms data available
+BU2	No synonyms data available
+GQU	No synonyms data available
+H3U	No synonyms data available
+CFF	3,7-DIHYDRO-1,3,7-TRIMETHYL-1H-PURINE-2,6-DIONE
+GXU	No synonyms data available
+AU	No synonyms data available
+H3F	(4S)-N4-[2,6-dimethoxy-4-methyl-5-[3-(trifluoromethyl)phenoxy]quinolin-8-yl]pentane-1,4-diamine
+1RP	No synonyms data available
+RVP	No synonyms data available
+EOF	No synonyms data available
+H60	No synonyms data available
+H63	No synonyms data available
+H6F	No synonyms data available
+H6L	No synonyms data available
+H6R	No synonyms data available
+HCU	Penciclovir phosphate
+HER	No synonyms data available
+HF0	No synonyms data available
+HUR	No synonyms data available
+HUO	No synonyms data available
+GYX	No synonyms data available
+HYR	No synonyms data available
+ELA	No synonyms data available
+VCG	Polysorbate 80
+AT9	AT-9010
+OAR	No synonyms data available
+J7R	No synonyms data available
+J7O	No synonyms data available
+2XI	No synonyms data available
+2RI	No synonyms data available
+WW0	No synonyms data available
+WWC	No synonyms data available
+WWH	No synonyms data available
+WWN	No synonyms data available
+WWT	No synonyms data available
+WX6	No synonyms data available
+WXB	No synonyms data available
+WXF	No synonyms data available
+WXK	No synonyms data available
+WXO	No synonyms data available
+WXT	No synonyms data available
+WXX	No synonyms data available
+WY6	No synonyms data available
+KFU	No synonyms data available
+KG9	No synonyms data available
+KJI	No synonyms data available
+KJO	No synonyms data available
+KL6	No synonyms data available
+KLR	No synonyms data available
+KMF	No synonyms data available
+KMX	No synonyms data available
+KNU	No synonyms data available
+KO9	No synonyms data available
+KOI	No synonyms data available
+KP0	No synonyms data available
+KQ3	No synonyms data available
+KQL	No synonyms data available
+KQX	No synonyms data available
+KS0	No synonyms data available
+KSI	No synonyms data available
+KSX	No synonyms data available
+KT9	No synonyms data available
+KU6	No synonyms data available
+KUU	No synonyms data available
+KVF	No synonyms data available
+KVO	No synonyms data available
+KVX	No synonyms data available
+KW9	No synonyms data available
+KXF	No synonyms data available
+KWR	No synonyms data available
+KX9	No synonyms data available
+KXR	No synonyms data available
+KY0	No synonyms data available
+KYC	No synonyms data available
+KYU	No synonyms data available
+KZC	No synonyms data available
+KZX	No synonyms data available
+L1F	No synonyms data available
+L2I	No synonyms data available
+L3I	No synonyms data available
+L6R	No synonyms data available
+L6D	No synonyms data available
+L5I	No synonyms data available
+L4U	No synonyms data available
+L4N	No synonyms data available
+L7F	No synonyms data available
+L7Q	No synonyms data available
+L7V	No synonyms data available
+L83	No synonyms data available
+L8F	No synonyms data available
+L8O	No synonyms data available
+L93	No synonyms data available
+L9F	No synonyms data available
+L9O	No synonyms data available
+LB0	No synonyms data available
+LBC	No synonyms data available
+LBO	No synonyms data available
+LCU	No synonyms data available
+LDX	No synonyms data available
+LKX	No synonyms data available
+LKI	No synonyms data available
+LJO	No synonyms data available
+LJ0	No synonyms data available
+LF3	No synonyms data available
+LR0	No synonyms data available
+LQU	No synonyms data available
+LQ0	No synonyms data available
+LO0	No synonyms data available
+LM0	No synonyms data available
+LRC	No synonyms data available
+LRN	No synonyms data available
+LS0	No synonyms data available
+LSF	No synonyms data available
+LT9	No synonyms data available
+LUC	No synonyms data available
+LV9	No synonyms data available
+LVM	No synonyms data available
+LW6	No synonyms data available
+LWO	No synonyms data available
+M4L	No synonyms data available
+M2X	No synonyms data available
+M26	No synonyms data available
+Y6J	No synonyms data available
+R30	No synonyms data available
+M0X	No synonyms data available
+M0G	No synonyms data available
+LZX	No synonyms data available
+LXF	No synonyms data available
+MF0	No synonyms data available
+M9U	No synonyms data available
+M93	No synonyms data available
+860	No synonyms data available
+M7X	No synonyms data available
+M6U	No synonyms data available
+M6I	No synonyms data available
+M5X	No synonyms data available
+M5I	No synonyms data available
+M50	No synonyms data available
+MJR	No synonyms data available
+MKI	No synonyms data available
+MQ3	No synonyms data available
+MU3	No synonyms data available
+MVR	No synonyms data available
+MVX	No synonyms data available
+MWN	No synonyms data available
+MX9	No synonyms data available
+MZF	No synonyms data available
+N00	No synonyms data available
+N0F	No synonyms data available
+N0O	No synonyms data available
+N0X	No synonyms data available
+N1U	No synonyms data available
+N2X	No synonyms data available
+N3I	No synonyms data available
+N3R	No synonyms data available
+N43	No synonyms data available
+N4L	No synonyms data available
+N5L	No synonyms data available
+N6X	No synonyms data available
+N7L	No synonyms data available
+N8X	No synonyms data available
+N9I	No synonyms data available
+NB0	No synonyms data available
+NB6	No synonyms data available
+N6F	No synonyms data available
+NDI	No synonyms data available
+NEL	No synonyms data available
+NGX	No synonyms data available
+NIJ	No synonyms data available
+NJE	No synonyms data available
+NJU	No synonyms data available
+NKU	No synonyms data available
+NM0	No synonyms data available
+NO0	No synonyms data available
+NOI	No synonyms data available
+NQ3	No synonyms data available
+NQO	No synonyms data available
+NRC	No synonyms data available
+NRX	No synonyms data available
+NSR	No synonyms data available
+NU0	No synonyms data available
+NUR	No synonyms data available
+NV9	No synonyms data available
+NVO	No synonyms data available
+NW0	No synonyms data available
+NWI	No synonyms data available
+NX9	No synonyms data available
+NYR	No synonyms data available
+NZK	No synonyms data available
+O0C	No synonyms data available
+O0R	No synonyms data available
+O0X	No synonyms data available
+O1I	No synonyms data available
+O1X	No synonyms data available
+O2R	No synonyms data available
+O3I	No synonyms data available
+O3U	No synonyms data available
+O4L	No synonyms data available
+O5C	No synonyms data available
+Z26	No synonyms data available
+O87	No synonyms data available
+O8L	No synonyms data available
+O9O	No synonyms data available
+O9X	No synonyms data available
+OAO	No synonyms data available
+OBO	No synonyms data available
+OCI	No synonyms data available
+OD7	No synonyms data available
+ODX	No synonyms data available
+OE6	No synonyms data available
+OEO	No synonyms data available
+OFX	No synonyms data available
+OGF	No synonyms data available
+OHC	No synonyms data available
+OI4	No synonyms data available
+OIE	No synonyms data available
+OIK	No synonyms data available
+OIX	No synonyms data available
+OJ9	No synonyms data available
+OJO	No synonyms data available
+OK9	No synonyms data available
+OKW	No synonyms data available
+OLX	No synonyms data available
+ONU	No synonyms data available
+OGV	No synonyms data available
+OGO	No synonyms data available
+OO6	No synonyms data available
+OOL	No synonyms data available
+OPU	No synonyms data available
+OQF	No synonyms data available
+OQL	No synonyms data available
+OQX	No synonyms data available
+ORR	No synonyms data available
+OSI	No synonyms data available
+OT6	No synonyms data available
+OTV	No synonyms data available
+OUF	No synonyms data available
+OV4	No synonyms data available
+OVF	No synonyms data available
+OVX	No synonyms data available
+OWC	No synonyms data available
+OWX	No synonyms data available
+OYF	No synonyms data available
+OYX	No synonyms data available
+OZC	No synonyms data available
+OZX	No synonyms data available
+P0X	No synonyms data available
+P3L	No synonyms data available
+P4R	No synonyms data available
+P6O	No synonyms data available
+P7R	No synonyms data available
+P9O	No synonyms data available
+PJ6	No synonyms data available
+PJX	No synonyms data available
+PKW	No synonyms data available
+PQ6	No synonyms data available
+PUU	No synonyms data available
+PVR	No synonyms data available
+PWR	No synonyms data available
+PZ6	No synonyms data available
+Q0I	No synonyms data available
+Q1C	No synonyms data available
+Q1U	No synonyms data available
+Q2G	No synonyms data available
+Q2U	No synonyms data available
+Q36	No synonyms data available
+Q3U	No synonyms data available
+Q45	No synonyms data available
+Q4F	No synonyms data available
+Q4R	No synonyms data available
+Q5C	No synonyms data available
+Q5K	No synonyms data available
+Q5R	No synonyms data available
+Q60	No synonyms data available
+Q69	No synonyms data available
+Q6U	No synonyms data available
+Q7C	No synonyms data available
+Q7R	No synonyms data available
+Q8I	No synonyms data available
+Q8O	No synonyms data available
+Q99	No synonyms data available
+QBR	No synonyms data available
+QC3	No synonyms data available
+QCC	No synonyms data available
+QCO	No synonyms data available
+QD4	No synonyms data available
+QD9	No synonyms data available
+QDF	No synonyms data available
+QDU	No synonyms data available
+QE3	No synonyms data available
+QER	No synonyms data available
+QEX	No synonyms data available
+QF5	No synonyms data available
+QF9	No synonyms data available
+QFL	No synonyms data available
+QFU	No synonyms data available
+QG3	No synonyms data available
+QGC	No synonyms data available
+QGO	No synonyms data available
+QGX	No synonyms data available
+QH6	No synonyms data available
+QHI	No synonyms data available
+QHU	No synonyms data available
+QI4	No synonyms data available
+QI7	No synonyms data available
+QIM	No synonyms data available
+QIB	No synonyms data available
+QIQ	No synonyms data available
+QIT	No synonyms data available
+QIZ	No synonyms data available
+QJ6	No synonyms data available
+QJF	No synonyms data available
+QJL	No synonyms data available
+QJR	No synonyms data available
+QK3	No synonyms data available
+QKB	No synonyms data available
+QKI	No synonyms data available
+QKR	No synonyms data available
+QL3	No synonyms data available
+QLC	No synonyms data available
+QLO	No synonyms data available
+QM3	No synonyms data available
+QM9	No synonyms data available
+QML	No synonyms data available
+QMX	No synonyms data available
+QN9	No synonyms data available
+QNU	No synonyms data available
+QO0	No synonyms data available
+QOO	No synonyms data available
+QOU	No synonyms data available
+QOC	No synonyms data available
+QP0	No synonyms data available
+QP6	No synonyms data available
+QPQ	No synonyms data available
+QQ6	No synonyms data available
+QQF	No synonyms data available
+QQO	No synonyms data available
+QQU	No synonyms data available
+QR5	No synonyms data available
+QR9	No synonyms data available
+QRS	No synonyms data available
+QRF	No synonyms data available
+QS3	No synonyms data available
+QSF	No synonyms data available
+QSX	No synonyms data available
+QT3	No synonyms data available
+QTC	No synonyms data available
+QTL	No synonyms data available
+QU9	No synonyms data available
+QUQ	No synonyms data available
+QV0	No synonyms data available
+QV9	No synonyms data available
+QVG	No synonyms data available
+QVJ	No synonyms data available
+QVU	No synonyms data available
+QW1	No synonyms data available
+QWL	No synonyms data available
+QWU	No synonyms data available
+QX3	No synonyms data available
+QX9	No synonyms data available
+QXI	No synonyms data available
+QXR	No synonyms data available
+QXX	No synonyms data available
+QY6	No synonyms data available
+QYI	No synonyms data available
+QYN	No synonyms data available
+QYR	No synonyms data available
+QZ0	No synonyms data available
+QZC	No synonyms data available
+QZL	No synonyms data available
+QZU	No synonyms data available
+R08	No synonyms data available
+R0F	No synonyms data available
+R0Q	No synonyms data available
+R1I	No synonyms data available
+R1U	No synonyms data available
+R2L	No synonyms data available
+R2X	No synonyms data available
+R3I	No synonyms data available
+R43	No synonyms data available
+R4X	No synonyms data available
+R5H	No synonyms data available
+R5O	No synonyms data available
+R66	No synonyms data available
+R6L	No synonyms data available
+R7F	No synonyms data available
+R76	No synonyms data available
+R87	No synonyms data available
+R8I	No synonyms data available
+R8O	No synonyms data available
+R8X	No synonyms data available
+R95	No synonyms data available
+R9E	No synonyms data available
+R9I	No synonyms data available
+R9R	No synonyms data available
+R9Z	No synonyms data available
+RAQ	No synonyms data available
+RBM	No synonyms data available
+RBX	No synonyms data available
+RC9	No synonyms data available
+RD5	No synonyms data available
+RDK	No synonyms data available
+RDQ	No synonyms data available
+RDX	No synonyms data available
+REU	No synonyms data available
+RFF	No synonyms data available
+RFR	No synonyms data available
+RG3	No synonyms data available
+RG9	No synonyms data available
+RGQ	No synonyms data available
+RGX	No synonyms data available
+RHI	No synonyms data available
+RI1	No synonyms data available
+RI6	No synonyms data available
+RIJ	No synonyms data available
+RIU	No synonyms data available
+RIY	No synonyms data available
+RJ3	No synonyms data available
+RJF	No synonyms data available
+RJO	No synonyms data available
+RJX	No synonyms data available
+RK6	No synonyms data available
+RKC	No synonyms data available
+RKR	No synonyms data available
+RL0	No synonyms data available
+RL8	No synonyms data available
+RLH	No synonyms data available
+RLR	No synonyms data available
+RM3	No synonyms data available
+RMI	No synonyms data available
+RN0	No synonyms data available
+RNI	No synonyms data available
+ROZ	No synonyms data available
+RPK	No synonyms data available
+RPZ	No synonyms data available
+RQ6	No synonyms data available
+RQO	No synonyms data available
+RQF	No synonyms data available
+RR0	No synonyms data available
+RRD	No synonyms data available
+RRU	No synonyms data available
+RS6	No synonyms data available
+RSL	No synonyms data available
+RT4	No synonyms data available
+RT9	No synonyms data available
+RTS	No synonyms data available
+RV0	No synonyms data available
+RVL	No synonyms data available
+RVR	No synonyms data available
+RW0	No synonyms data available
+RW9	No synonyms data available
+RWO	No synonyms data available
+RWT	No synonyms data available
+RXU	No synonyms data available
+RYB	No synonyms data available
+RZF	No synonyms data available
+RZU	No synonyms data available
+S0X	No synonyms data available
+S1U	No synonyms data available
+S1L	No synonyms data available
+S39	No synonyms data available
+S3X	No synonyms data available
+S4X	No synonyms data available
+S5L	No synonyms data available
+S6K	No synonyms data available
+S7C	No synonyms data available
+S7U	No synonyms data available
+XWH	No synonyms data available
+XWZ	No synonyms data available
+Y2C	No synonyms data available
+Y25	No synonyms data available
+Y1R	No synonyms data available
+Y1L	No synonyms data available
+Y1H	No synonyms data available
+Y1C	No synonyms data available
+ZHA	No synonyms data available
+Y0W	No synonyms data available
+Y3N	No synonyms data available
+VXQ	No synonyms data available
+Y0S	No synonyms data available
+Y0O	No synonyms data available
+NT9	No synonyms data available
+Y0L	No synonyms data available
+Y0H	No synonyms data available
+Y0C	No synonyms data available
+XZX	No synonyms data available
+XZT	No synonyms data available
+XZO	No synonyms data available
+XZI	No synonyms data available
+XZE	No synonyms data available
+GT7	No synonyms data available
+5F8	No synonyms data available
+JAH	No synonyms data available
+XZ6	No synonyms data available
+0TI	No synonyms data available
+XXN	No synonyms data available
+V9G	[[(2~{R},3~{R},4~{R},5~{R})-5-(6-aminopurin-9-yl)-4-methoxy-3-oxidanyl-oxolan-2-yl]methoxy-oxidanyl-phosphoryl] [[(2~{R},3~{S},4~{R},5~{R})-5-(2-azanyl-7-methyl-6-oxidanylidene-1~{H}-purin-9-yl)-3,4-bis(oxidanyl)oxolan-2-yl]methoxy-oxidanyl-phosphoryl] hydrogen phosphate
+Y95	No synonyms data available
+VBY	No synonyms data available
+CMP	CYCLIC AMP; CAMP
+Y41	No synonyms data available
+VJA	No synonyms data available
+GHX	No synonyms data available
+VHV	No synonyms data available
+VHJ	No synonyms data available
+VHM	No synonyms data available
+VHP	No synonyms data available
+XM2	No synonyms data available
+MLZ	No synonyms data available
+LW1	No synonyms data available
+G65	No synonyms data available
+A2M	No synonyms data available
+VR4	GC376 alpha-ketoamide analog (bound form)
+UVC	No synonyms data available
+VQV	No synonyms data available
+3NI	No synonyms data available
+PEE	DOPE
+Y94	No synonyms data available
+Y96	No synonyms data available
+AR6	Adenosine-5-Diphosphoribose
+MLY	No synonyms data available
+SNM	No synonyms data available
+X0Y	No synonyms data available
+SER	No synonyms data available
+X4P	No synonyms data available
+X4V	No synonyms data available
+X7V	No synonyms data available
+XB1	No synonyms data available
+XC4	No synonyms data available
+0EN	No synonyms data available
+PG5	No synonyms data available
+XEY	No synonyms data available
+XF1	No synonyms data available
+XF4	No synonyms data available
+XF7	No synonyms data available
+XFD	No synonyms data available
+XNJ	demethylated masitinib
+AG7	RUPINTRIVIR, bound form
+2DO	No synonyms data available
+XT7	No synonyms data available
+BO3	No synonyms data available
+XR8	No synonyms data available
+XTJ	No synonyms data available
+XTM	No synonyms data available
+XTP	No synonyms data available
+XU4	No synonyms data available
+XV4	No synonyms data available
+R9V	No synonyms data available
+XWS	No synonyms data available
+XY4	No synonyms data available
+XYJ	No synonyms data available
+Y8Y	No synonyms data available
+Y4D	No synonyms data available
+Y91	No synonyms data available
+Y5S	No synonyms data available
+Y4P	No synonyms data available
+Y7G	No synonyms data available
+Y4V	No synonyms data available
+Y7M	No synonyms data available
+Y64	No synonyms data available
+Y4J	No synonyms data available
+Y8S	No synonyms data available
+Y8V	No synonyms data available
+Y51	No synonyms data available
+Y71	No synonyms data available
+Y54	No synonyms data available
+Y61	No synonyms data available
+Y6A	No synonyms data available
+Y6G	No synonyms data available
+Y97	No synonyms data available
+YD1	No synonyms data available
+YCV	No synonyms data available
+YG4	No synonyms data available
+YHJ	No synonyms data available
+YHI	No synonyms data available
+IRI	No synonyms data available
+YN1	No synonyms data available
+YMY	No synonyms data available
+YKM	No synonyms data available
+YKP	No synonyms data available
+YLM	No synonyms data available
+YLS	No synonyms data available
+YMG	No synonyms data available
+YMD	No synonyms data available
+YMJ	No synonyms data available
+YMM	No synonyms data available
+YMS	No synonyms data available
+YMV	No synonyms data available
+YKD	No synonyms data available
+YKA	No synonyms data available
+YKS	No synonyms data available
+YKV	No synonyms data available
+YL7	No synonyms data available
+YKY	No synonyms data available
+YLD	No synonyms data available
+YLJ	No synonyms data available
+YLV	No synonyms data available
+YM1	No synonyms data available
+YOP	No synonyms data available
+ALC	No synonyms data available
+YSG	No synonyms data available
+YSP	No synonyms data available
+YSM	No synonyms data available
+YSJ	No synonyms data available
+YTJ	No synonyms data available
+YTM	No synonyms data available
+YTV	No synonyms data available
+YTS	No synonyms data available
+YU4	No synonyms data available
+H37	FFRCK
+YVP	No synonyms data available
+DIO	No synonyms data available
+YVY	No synonyms data available
+YVA	No synonyms data available
+YV7	No synonyms data available
+YVD	No synonyms data available
+YVG	No synonyms data available
+YVJ	No synonyms data available
+YVM	No synonyms data available
+YVV	No synonyms data available
+YWJ	No synonyms data available
+FN7	No synonyms data available
+TLA	No synonyms data available
+NCO	No synonyms data available
+C7A	No synonyms data available
+ZJ1	No synonyms data available
+ZL7	No synonyms data available
+ETF	No synonyms data available
+ASC	Vitamin C
+UFT	No synonyms data available
+ODN	No synonyms data available
+06I	No synonyms data available
+S6V	No synonyms data available
+0MI	No synonyms data available
+0OI	No synonyms data available
+WNM	No synonyms data available
+U88	halicin
+UJK	No synonyms data available
+UQW	[(2~{R})-1-[2-(1~{H}-indol-3-yl)ethylamino]-1-oxidanylidene-butan-2-yl] prop-2-enoate
+URK	[(1~{S})-2-[(2,3-dimethoxyphenyl)methylamino]-1-(4-nitrophenyl)-2-oxidanylidene-ethyl] prop-2-enoate; FSP006
+UQZ	No synonyms data available
+PRL	No synonyms data available
+35J	No synonyms data available
+US8	2-acetamido-~{N}-cyclopropyl-5-phenyl-thiophene-3-carboxamide
+USH	No synonyms data available
+USZ	No synonyms data available
+V18	No synonyms data available
+YRL	p-tyrosol
+HBA	No synonyms data available
+DMX	No synonyms data available
+PIM	No synonyms data available
+2AQ	2-AMINOQUINOLINE
+7WA	No synonyms data available
+7OK	[(2R,3S,4R,5R)-5-[(4E)-4-hydroxyimino-2-oxidanylidene-pyrimidin-1-yl]-3,4-bis(oxidanyl)oxolan-2-yl]methyl dihydrogen phosphate
+16B	No synonyms data available
+4N0	No synonyms data available
+5P9	(1~{R})-~{N}-(5-chloranylpyridin-2-yl)-3-oxidanylidene-1,2-dihydroindene-1-carboxamide
+7IL	N-[(1R)-2-(Tert-butylamino)-2-oxo-1-pyridin-3-ylethyl]-N-(4-tert-butylphenyl)-1H-imidazole-5-carboxamide
+90I	(phenylmethyl) (2S)-2-[[(2S)-3,4-bis(oxidanylidene)-1-[(3S)-2-oxidanylidenepyrrolidin-3-yl]-4-(2-phenylethylamino)butan-2-yl]carbamoyl]pyrrolidine-1-carboxylate
+90X	(2S)-1-[2-[2,4-bis(chloranyl)phenoxy]ethanoyl]-N-[(2S)-3,4-bis(oxidanylidene)-1-[(3S)-2-oxidanylidenepyrrolidin-3-yl]-4-(2-phenylethylamino)butan-2-yl]pyrrolidine-2-carboxamide
+V1B	No synonyms data available
+DZI	N-(2-pyrrolidyl)-3,4,5-trihydroxybenzoylhydrazone
+A5I	1-[(E)-(3,5-dimethoxy-4-oxidanyl-phenyl)methylideneamino]thiourea
+A6Q	1-[(E)-[3,4-bis(oxidanyl)phenyl]methylideneamino]-3-ethyl-thiourea
+A4O	1-[(E)-[2,4-bis(oxidanyl)phenyl]methylideneamino]thiourea
+A7L	1-[(E)-[2,5-bis(oxidanyl)phenyl]methylideneamino]-3-ethyl-thiourea
+A3X	1-[(E)-1-(3-methoxy-4-oxidanyl-phenyl)ethylideneamino]thiourea
+NDG	N-acetyl-alpha-D-glucosamine; 2-acetamido-2-deoxy-alpha-D-glucose; 2-acetamido-2-deoxy-D-glucose; 2-acetamido-2-deoxy-glucose; 2-(ACETYLAMINO)-2-DEOXY-A-D-GLUCOPYRANOSE
+GTG	MRNA CAP ANALOG N7-METHYL GPPPG
+SEP	PHOSPHONOSERINE
+GE9	No synonyms data available
+6NR	No synonyms data available
+4IK	No synonyms data available
+POL	1-PROPONOL
+4IT	No synonyms data available
+4IJ	No synonyms data available
+4I9	No synonyms data available
+4W8	No synonyms data available
+4WI	PF-07321332, bound form; nirmatrelvir, bound form; Paxlovid, bound form
+4YG	No synonyms data available
+5YN	No synonyms data available
+5YJ	No synonyms data available
+5Z7	No synonyms data available
+5Z3	No synonyms data available
+5ZN	No synonyms data available
+5ZJ	No synonyms data available
+5ZB	No synonyms data available
+5ZF	No synonyms data available
+H69	No synonyms data available
+5ZW	No synonyms data available
+5ZT	No synonyms data available
+9OW	No synonyms data available
+7V2	No synonyms data available
+7VB	No synonyms data available
+7VI	No synonyms data available
+7VQ	No synonyms data available
+7VW	No synonyms data available
+7W5	No synonyms data available
+81L	No synonyms data available
+7XK	No synonyms data available
+7XT	No synonyms data available
+7Y2	No synonyms data available
+7YB	No synonyms data available
+7YI	No synonyms data available
+7YQ	No synonyms data available
+7YW	No synonyms data available
+7YZ	No synonyms data available
+800	No synonyms data available
+JWX	No synonyms data available
+87H	No synonyms data available
+8G9	No synonyms data available
+I70	No synonyms data available
+8GW	No synonyms data available
+I71	No synonyms data available
+8H3	No synonyms data available
+8H9	No synonyms data available
+8I0	No synonyms data available
+I69	No synonyms data available
+I68	No synonyms data available
+8I7	No synonyms data available
+8T6	No synonyms data available
+8UI	No synonyms data available
+I80	No synonyms data available
+JW9	No synonyms data available
+8ZI	No synonyms data available
+90H	No synonyms data available
+90U	No synonyms data available
+91I	No synonyms data available
+91Z	No synonyms data available
+99W	N-(2,4,6-trifluorophenyl)glycyl-N-{(1Z,2S)-1-imino-3-[(3S)-2-oxopyrrolidin-3-yl]propan-2-yl}-L-leucinamide
+9EI	No synonyms data available
+L30	No synonyms data available
+9GI	No synonyms data available
+GJ3	No synonyms data available
+9HA	No synonyms data available
+I64	No synonyms data available
+FIW	No synonyms data available
+FIK	No synonyms data available
+FN2	No synonyms data available
+FP8	No synonyms data available
+ESS	No synonyms data available
+ET6	No synonyms data available
+EW9	No synonyms data available
+F5L	No synonyms data available
+F8C	No synonyms data available
+FEY	No synonyms data available
+FHS	No synonyms data available
+FVE	No synonyms data available
+FV5	No synonyms data available
+EQS	No synonyms data available
+EO6	No synonyms data available
+FWI	No synonyms data available
+FZI	No synonyms data available
+I2J	No synonyms data available
+I1W	No synonyms data available
+I1Z	No synonyms data available
+I2D	No synonyms data available
+I2N	No synonyms data available
+NB2	No synonyms data available
+V46	No synonyms data available
+W48	No synonyms data available
+I54	No synonyms data available
+Q56	No synonyms data available
+Y48	No synonyms data available
+N63	No synonyms data available
+S4L	No synonyms data available
+ISG	No synonyms data available
+IS5	No synonyms data available
+IRZ	No synonyms data available
+IRW	No synonyms data available
+ITX	No synonyms data available
+IT3	No synonyms data available
+ITG	No synonyms data available
+MOH	No synonyms data available
+EOH	No synonyms data available
+S88	No synonyms data available
+M0C	No synonyms data available
+NWX	No synonyms data available
+3DA	No synonyms data available
+UTP	No synonyms data available
+L2B	[(2~{S},4~{R},5~{R})-5-[2,4-bis(oxidanylidene)pyrimidin-1-yl]-4-oxidanyl-oxolan-2-yl]methyl dihydrogen phosphate
+CTP	No synonyms data available
+O5F	No synonyms data available
+O5O	No synonyms data available
+O69	No synonyms data available
+I65	No synonyms data available
+5IL	No synonyms data available
+7XB	No synonyms data available
+7YY	No synonyms data available
+80I	No synonyms data available
+80X	No synonyms data available
+BLR	Bilirubin IX alpha
+3XI	No synonyms data available
+40I	No synonyms data available
+59S	No synonyms data available
+5IZ	No synonyms data available
+5IW	No synonyms data available
+GME	(2S)-2-amino-5-methoxy-5-oxopentanoic acid
+G7L	No synonyms data available
+G7O	No synonyms data available
+9FF	No synonyms data available
+BOV	No synonyms data available
+BJ6	No synonyms data available
+NNH	No synonyms data available
+GUN	No synonyms data available
+GMP	No synonyms data available
+REA	No synonyms data available
+3PH	PHOSPHATIDIC ACID
+DD9	No synonyms data available
+OCT	No synonyms data available
+STE	No synonyms data available
+II7	3-azanylcyclobutane-1-carboxylic acid
+IFO	penicillin derivative (open form)
+4J5	No synonyms data available
+CY3	No synonyms data available
+0JY	No synonyms data available
+KZ0	Chemical crosslinker
+3Q9	No synonyms data available
+BEZ	No synonyms data available
+XNV	AG7404, bound form
+HSV	No synonyms data available
+BOC	No synonyms data available
+OCA	No synonyms data available
+KW6	No synonyms data available
+V9R	(R,S,S)-13b; 13b-H; ketoamide inhibitor 13b (bound)
+QO6	~{N}-(2,3-dihydro-1~{H}-inden-5-yl)ethanamide
+29N	1,1',1''-(1,3,5-triazinane-1,3,5-triyl)triprop-2-en-1-one, bound form
+LQ6	No synonyms data available
+LQL	No synonyms data available
+92G	No synonyms data available
+OEI	2-(benzylamino)ethan-1-ol
+OHR	[[(2~{R},3~{S},5~{R})-5-(6-aminopurin-9-yl)-3-oxidanyl-oxolan-2-yl]methoxy-oxidanyl-phosphoryl] [(2~{R},3~{S},4~{R},5~{S})-3,4,5-tris(oxidanyl)oxolan-2-yl]methyl hydrogen phosphate; [[(2R,3S,5R)-5-(6-aminopurin-9-yl)-3-oxidanyl-oxolan-2-yl]methoxy-oxidanyl-phosphoryl] [(2R,3S,4R,5S)-3,4,5-tris(oxidanyl)oxolan-2-yl]methyl hydrogen phosphate; 2'-deoxy-ADPR
+OI3	[[(2~{R},3~{R},4~{R},5~{R})-5-(6-aminopurin-9-yl)-4-fluoranyl-3-oxidanyl-oxolan-2-yl]methoxy-oxidanyl-phosphoryl] [(2~{R},3~{S},4~{R},5~{R})-3,4,5-tris(oxidanyl)oxolan-2-yl]methyl hydrogen phosphate; [[(2R,3R,4R,5R)-5-(6-aminopurin-9-yl)-4-fluoranyl-3-oxidanyl-oxolan-2-yl]methoxy-oxidanyl-phosphoryl] [(2R,3S,4R,5R)-3,4,5-tris(oxidanyl)oxolan-2-yl]methyl hydrogen phosphate; 2'-deoxy-2'-fluoro-ADPR
+OI6	[[(2~{R},3~{S},4~{R},5~{R})-5-(6-azanyl-8-bromanyl-purin-9-yl)-3,4-bis(oxidanyl)oxolan-2-yl]methoxy-oxidanyl-phosphoryl] [(2~{R},3~{S},4~{R},5~{R})-3,4,5-tris(oxidanyl)oxolan-2-yl]methyl hydrogen phosphate; [[(2R,3S,4R,5R)-5-(6-azanyl-8-bromanyl-purin-9-yl)-3,4-bis(oxidanyl)oxolan-2-yl]methoxy-oxidanyl-phosphoryl] [(2R,3S,4R,5R)-3,4,5-tris(oxidanyl)oxolan-2-yl]methyl hydrogen phosphate; 8Br-ADPR
+RVK	[[(2~{R},3~{S},4~{R},5~{R})-5-(6-aminopurin-9-yl)-3,4-bis(oxidanyl)oxolan-2-yl]methoxy-oxidanyl-phosphoryl] [(2~{R},3~{S},4~{R},5~{S})-5-methoxy-3,4-bis(oxidanyl)oxolan-2-yl]methyl hydrogen phosphate; [[(2R,3S,4R,5R)-5-(6-Aminopurin-9-yl)-3,4-dihydroxyoxolan-2-yl]methoxy-hydroxyphosphoryl] [(2R,3S,4R,5S)-3,4-dihydroxy-5-methoxyoxolan-2-yl]methyl hydrogen phosphate; Adenosine 5'-diphosphoric acid beta-[(3beta,4beta-dihydroxy-5beta-methoxytetrahydrofuran-2alpha-yl)methyl] ester; alpha-1''-O-methyl-ADP ribose; J3.653.949F
+OIG	[[(2~{R},3~{S},4~{R},5~{R})-5-(6-aminopurin-9-yl)-3,4-bis(oxidanyl)oxolan-2-yl]methoxy-oxidanyl-phosphoryl] ethyl hydrogen phosphate; [[(2R,3S,4R,5R)-5-(6-aminopurin-9-yl)-3,4-dihydroxyoxolan-2-yl]methoxy-hydroxyphosphoryl] ethyl hydrogen phosphate; beta-ethyl-ADP
+OH9	[[(2~{R},3~{S},4~{R},5~{R})-5-(6-aminopurin-9-yl)-3,4-bis(oxidanyl)oxolan-2-yl]methoxy-oxidanyl-phosphoryl] methyl hydrogen phosphate; [[(2R,3S,4R,5R)-5-(6-aminopurin-9-yl)-3,4-bis(oxidanyl)oxolan-2-yl]methoxy-oxidanyl-phosphoryl] methyl hydrogen phosphate; beta-methyl-ADP
+OW1	(1~{R},2~{S},5~{S})-3-[(2~{S})-3,3-dimethyl-2-[2,2,2-tris(fluoranyl)ethanoylamino]butanoyl]-6,6-dimethyl-~{N}-[(2~{S})-1-[(3~{S})-2-oxidanylidenepyrrolidin-3-yl]but-3-en-2-yl]-3-azabicyclo[3.1.0]hexane-2-carboxamide
+QQL	No synonyms data available
+QH0	No synonyms data available
+TBN	7-DEAZAADENOSINE
+T6B	1-methyl-4-[5-(morpholin-4-ylcarbonyl)-2-furyl]-1H-pyrrolo[2,3-b]pyridine
+T6O	2-[[1-(2-azanyl-1,3-thiazol-4-yl)-2-[(2-methyl-4-oxidanylidene-1-sulfo-azetidin-3-yl)amino]-2-oxidanylidene-ethylidene]amino]oxy-2-methyl-propanoic acid
+MTA	No synonyms data available
+DHL	2,3-DESHYDROLANTHIONINE
+OG3	(R)-1-(4-chlorophenyl)ethan-1-amine
+OF6	1-(2-(3-chlorophenyl)thiazol-4-yl)-N-methylmethanamine
+AH2	1,5-Anhydromannitol; 1-deoxy-alpha-D-mannose; 1-deoxy-D-mannose; 1-deoxy-mannose
+P5X	No synonyms data available
+P6I	No synonyms data available
+P6R	No synonyms data available
+P7L	No synonyms data available
+P8L	No synonyms data available
+P8U	No synonyms data available
+P8C	No synonyms data available
+PJR	No synonyms data available
+QAO	No synonyms data available
+TKX	No synonyms data available
+TNI	No synonyms data available
+U0R	No synonyms data available
+U1J	No synonyms data available
+U1R	No synonyms data available
+U26	No synonyms data available
+U2B	No synonyms data available
+U2I	No synonyms data available
+SRU	No synonyms data available
+SVL	No synonyms data available
+T2L	No synonyms data available
+T1X	No synonyms data available
+T43	No synonyms data available
+U6Y	No synonyms data available
+U76	No synonyms data available
+URR	No synonyms data available
+UO9	No synonyms data available
+WJB	No synonyms data available
+UQO	No synonyms data available
+VM0	No synonyms data available
+VLU	No synonyms data available
+UUR	No synonyms data available
+UV2	No synonyms data available
+WEQ	No synonyms data available
+WEL	No synonyms data available
+WF5	No synonyms data available
+WGO	No synonyms data available
+WGU	No synonyms data available
+WIO	No synonyms data available
+WIX	No synonyms data available
+WJ0	No synonyms data available
+WOH	No synonyms data available
+WQO	No synonyms data available
+WUK	No synonyms data available
+X6O	No synonyms data available
+X70	No synonyms data available
+X6T	No synonyms data available
+X9Z	No synonyms data available
+XA8	No synonyms data available
+XFF	No synonyms data available
+XFR	No synonyms data available
+XF8	No synonyms data available
+XCK	No synonyms data available
+XDU	No synonyms data available
+XE0	No synonyms data available
+Y0I	No synonyms data available
+Y0E	No synonyms data available
+Y1E	No synonyms data available
+AW2	No synonyms data available
+MJ7	No synonyms data available
+Y8O	No synonyms data available
+YVZ	No synonyms data available
+YFK	No synonyms data available
+YOO	No synonyms data available
+BCN	No synonyms data available
+ZGI	No synonyms data available
+ZH0	No synonyms data available
+ZGO	No synonyms data available
+ZGW	(1R,2S,5S)-N-{(1S)-1-cyano-2-[(3S)-2-oxopyrrolidin-3-yl]ethyl}-6,6-dimethyl-3-[3-methyl-N-(trifluoroacetyl)-L-valyl]-3-azabicyclo[3.1.0]hexane-2-carboxamide
+ZJ3	No synonyms data available
+QUE	QUERCETIN
+KAE	No synonyms data available
+K9U	No synonyms data available
+0A9	No synonyms data available
+GNP	No synonyms data available
+6GS	No synonyms data available
+06Q	No synonyms data available
+0AX	No synonyms data available
+0BO	No synonyms data available
+GO3	7-(8-formyl-1,6,7-trihydroxy-3-methyl-5-propan-2-yl naphthalen-2-yl)-2,3,8-trihydroxy-6-methyl-4-propan-2-yl naphthalene-1-carbaldehyde
+KM6	No synonyms data available
+Q83	No synonyms data available
+VIB	THIAMIN; VITAMIN B1
+LQZ	No synonyms data available
+LI	No synonyms data available
+LV0	No synonyms data available
+LVX	No synonyms data available
+LKR	Robinetin
+UZF	No synonyms data available
+OF9	No synonyms data available
+OU3	No synonyms data available
+OZ6	No synonyms data available
+P0O	No synonyms data available
+OZL	No synonyms data available
+OZB	No synonyms data available
+7ON	No synonyms data available
+PQL	No synonyms data available
+PQX	No synonyms data available
+DJU	5-Benzyloxygramine
+85Y	No synonyms data available
+U2H	No synonyms data available
+PBP	No synonyms data available
+H2S	HYDROGEN SULFIDE
+A8J	317829-73-5
+AIE	AKOS000277907
+AJF	No synonyms data available
+AO0	No synonyms data available
+B7Y	No synonyms data available
+UWO	No synonyms data available
+V3E	No synonyms data available
+ALA	No synonyms data available
+V00	No synonyms data available
+VQR	No synonyms data available
+VQN	No synonyms data available
+83F	tert-butyl N-[(2S)-3-methyl-1-[(2S,4S)-4-methyl-2-[[(2S)-1-oxidanylidene-3-[(3S)-2-oxidanylidenepyrrolidin-3-yl]propan-2-yl]carbamoyl]pyrrolidin-1-yl]-1-oxidanylidene-butan-2-yl]carbamate
+83N	tert-butyl-N-[(2S)-1-[(2S,4S)-4-methoxy-2-[[(2S)-1-oxidanylidene-3-[(3S)-2-oxidanylidenepyrrolidin-3-yl]propan-2-yl]carbamoyl]pyrrolidin-1-yl]-3-methyl-1-oxidanylidene-butan-2-yl]carbamate
+84C	tert-butyl N-[(2S)-1-[(3S,3aS,6aR)-3-[[(2S)-1-oxidanylidene-3-[(3S)-2-oxidanylidenepyrrolidin-3-yl]propan-2-yl]carbamoyl]-3,3a,4,5,6,6a-hexahydro-1H-cyclopenta[c]pyrrol-2-yl]-3-methyl-1-oxidanylidene-butan-2-yl]carbamate
+83W	tert-butyl-N-[(2S,3R)-3-[(2-methylpropan-2-yl)oxy]-1-oxidanylidene-1-[(2S)-2-[[(2S)-1-oxidanylidene-3-[(3S)-2-oxidanylidenepyrrolidin-3-yl]propan-2-yl]carbamoyl]pyrrolidin-1-yl]butan-2-yl]carbamate
+W08	(2S,3S,4R,5R)-5-(6-Amino-9H-purin-9-yl)-3,4-dihydroxy-N-(1-methyl-4-piperidinyl)tetrahydro-2-furancarboxamide; (2S,3S,4R,5R)-5-(6-aminopurin-9-yl)-3,4-dihydroxy-N-(1-methylpiperidin-4-yl)oxolane-2-carboxamide
+SGV	4-amino-7-beta-D-ribofuranosyl-7H-pyrrolo[2,3-d]pyrimidine-5-carboxamide
+5ID	5-IODOTUBERCIDIN
+TO1	TOYOCAMYCIN
+9M5	No synonyms data available
+XIO	No synonyms data available
+YQN	No synonyms data available
+XI0	No synonyms data available
+XH9	No synonyms data available
+XHW	No synonyms data available
+XJ9	No synonyms data available
+EQT	No synonyms data available
+ABV	2-Aminobenzothiazole
+ZU0	No synonyms data available
+ZV7	No synonyms data available
+I3R	No synonyms data available
+A1W	No synonyms data available
+WSB	No synonyms data available
+VSN	No synonyms data available
+WGE	No synonyms data available
+WGI	No synonyms data available
+WZK	No synonyms data available
+PHL	bound form of Phenylalaninal
+CSI	No synonyms data available
+ZQB	No synonyms data available
+JVX	No synonyms data available
+JJC	No synonyms data available
+JJO	No synonyms data available
+JKL	No synonyms data available
+JWO	No synonyms data available
+JX6	No synonyms data available
+JY0	No synonyms data available
+K2X	No synonyms data available
+V83	No synonyms data available
+VI1	No synonyms data available
+SJF	No synonyms data available
+SO0	No synonyms data available
+SQ3	No synonyms data available
+W28	No synonyms data available
+WOK	Inhibitor TKB-272, hemithioacetal bound form
+WTE	GSK4365096A
+WTV	No synonyms data available
+XB5	No synonyms data available
+X83	No synonyms data available
+X8F	No synonyms data available
+XEK	No synonyms data available
+XKQ	No synonyms data available
+XWO	No synonyms data available
+XXW	No synonyms data available
+XYI	No synonyms data available
+XYR	No synonyms data available
+Y2I	No synonyms data available
+Y2N	No synonyms data available
+Y2R	No synonyms data available
+Y3R	No synonyms data available
+YDL	N-(methoxycarbonyl)-3-methyl-L-valyl-(4R)-N-{(1S)-1-cyano-2-[(3S)-2-oxopyrrolidin-3-yl]ethyl}-4-(trifluoromethyl)-L-prolinamide, bound form; Ibuzatrelvir, bound form
+X1Z	No synonyms data available
+XIU	CCF0058981
+IDU	2-O-sulfo-beta-L-altruronic acid; 2-O-sulfo-L-altruronic acid; 2-O-sulfo-altruronic acid
+ROA	Rosmarinic acid
+TBG	No synonyms data available
+EDT	No synonyms data available

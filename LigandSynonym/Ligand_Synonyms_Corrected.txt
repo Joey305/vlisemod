@@ -1,0 +1,2649 @@
+Ligand	Synonyms
+2Z4	SDZ283-910
+0Q4	Inhibitor analogues of CA-p2
+U0E	
+PSI	SKF 107457
+THK	
+NMB	
+AH1	(4R,5S, 6S, 7R)-1,3-DIBENZYL-4,7-BIS(PHENOXYMETHYL)-5,6-DIHYDROXY-1,3 DIAZEPAN-2-ONE
+RTY	
+PI5	MACROCYCLIC PEPTIDOMIMETIC INHIBITOR 5
+PI4	MACROCYCLIC PEPTIDOMIMETIC INHIBITOR 4
+PI6	MACROCYCLIC PEPTIDOMIMETIC INHIBITOR 6
+PI7	MACROCYCLIC PEPTIDOMIMETIC INHIBITOR 7
+IM1	
+HBY	HBY 097
+XV6	XV638
+DMP	DMP323(INHIBITOR OF DUPONT MERCK)
+146	SD146
+BM1	BM+21.1326
+BM5	BM +50.0934
+GCA	GCA-186
+612	TNK-6123
+3IN	
+MK1	INDINAVIR
+ROC	Fortovase; SAQUINAVIR; RO 31-8959
+L75	L-756,423
+PI8	MACROCYCLIC PEPTIDOMIMETIC INHIBITOR 8
+PI9	
+TPV	TIPRANAVIR
+A85	
+DMQ	DMP450(INHIBITOR OF DUPONT MERCK)
+FPT	
+FTC	
+BEI	INHIBITOR BEA322
+BEB	INHIBITOR BEA369
+BEC	INHIBITOR BEA388
+BED	INHIBITOR BEA403
+BEE	INHIBITOR BEA409
+BEJ	INHIBITOR BEA428
+MS3	INHIBITOR MSA367
+BFU	MSC204
+PBM	
+S11	
+CPS	CHAPS
+CG1	
+2NC	p2/NC
+EFZ	DMP-266; Efavirenz
+NVP	NON-NUCLEOSIDE RT INHIBITOR NEVIRAPINE
+0ZT	
+NM1	AHA047
+AHF	
+N2P	
+GAN	
+PJJ	
+C20	CGP 53820
+1ZK	U75875
+AAA	
+TBO	TBO 8; TIBO R86183
+PHP	
+UNI	
+RUN	SB206343
+478	Amprenavir
+KNI	(N-TERT-BUTYL-THIOPROLINE)-(5-ISOQUINOLYLOXYACETYL-METHYLTHIOALANINE)-ALLOPHENYLNORSTATINE; KNI-272
+AAP	
+G23	GR123976
+G26	GR126045
+G37	GR137615
+A79	
+Q82	Q8261
+A77	
+A78	
+A76	
+XK2	
+216	XK216
+RIT	A-84538
+TTA	
+TTO	
+0ZR	
+PNU	
+MSD	
+Q50	
+B3S	
+BCX	
+DAB	
+SET	
+TNK	
+UC1	UC781
+SBN	
+ALY	
+SPH	
+XN3	ANALOGUE OF INDINAVIR DRUG
+XN1	ANALOGUE OF INDINAVIR
+XN2	ANALOGUE OF INDINAVIR DRUG
+SPP	Delavirdine
+PMZ	ACETYLPROMAZINE
+U05	1051U91
+0ZQ	
+K57	KNI-577
+JE2	JE-2147; AG1776; KNI-764
+AB1	ABT-378; LOPINAVIR
+KI2	
+3NH	
+L27	LDC271 INHIBITOR
+LGZ	LGZ479 INHIBITOR
+0E8	BMS-182193
+LP1	
+1UN	NELFINAVIR MESYLATE AG1343
+A88	A-98881
+846	INHIBITOR Q8467 OF DUPONT MERCK
+CYY	
+100	
+TB9	
+SIN	
+MKC	
+UC2	UC10
+UC3	UC38
+UC4	UC84
+TTP	
+HEF	
+IET	
+TPB	
+ADB	
+ABZ	
+185	
+65B	Etravine; Etravirine
+TFO	TENOFOVIR
+TNV	TENOFOVIR-DIPHOSPHATE
+017	Darunavir; TMC114; UIC-94017
+BH0	
+H12	
+GWB	
+H16	
+H18	
+H20	
+CP9	CP-94,707
+U01	PARA-BROMOPHENYL ANALOGUE OF PHEN-PROCOUMON 3-(ALPHA-ETHYLBENZYL)-4-HYDROXYCOUMARIN
+P13	RBT550 INHIBITOR
+P14	RBT203 INHIBITOR
+P12	RBT205 INHIBITOR
+BAY	
+568	
+BLL	
+189	
+190	
+OIS	OXIMINOARYLSULFONAMIDE
+HBB	N-[2-HYDROXY-2-(8-ISOPROPYL-6,9-DIOXO-2-OXA-7,10-DIAZA-BICYCLO[11.2.2]HEPTADECA-1(16),13(17),14-TRIEN-11-YL)-ETHYL]-N-(3-METHYL-BUTYL)-BENZENESULFONAMIDE; INHIBITOR 3
+HBH	2-(11-{2-[BENZENESULFONYL-(3-METHYL-BUTYL)-AMINO]-1-HYDROXY-ETHYL}-6,9-DIOXO-2-OXA-7,10-DIAZA-BICYCLO[11.2.2]HEPTADECA-1(16),13(17),14-TRIEN-8-YL)-ACETAMIDE; INHIBITOR 2
+0ZS	
+AB2	
+A83	
+CB5	
+IPF	
+AAU	
+FRD	
+DR7	ATAZANAVIR; METHYL [(1S,4S,5S,10S)-4-BENZYL-1,10-DI-TERT-BUTYL-5-HYDROXY-2,9,12-TRIOXO-7-(4-PYRIDIN-2-YLBENZYL)-13-OXA-3,7,8,11-TETRAAZATETRADEC-1-YL]CARBAMATE
+3TL	TL-3, C2 symmetric inhibitor
+XYL	D-Xylitol
+3AC	
+T50	
+357	
+AKC	2-ETHOXYETHYL (2S,3S)-4-((S)-2-BENZYL-3-OXO-4-((3AR,8R,8AS)-2-OXO-3,3A,8,8A-TETRAHYDRO-2H-INDENO[1,2-D]OXAZOL-8-YL)-2,3-DIHYDRO-1H-PYRROL-2-YL)-3-HYDROXY-1-PHENYLBUTAN-2-YLCARBAMATE
+HH1	(S)-TETRAHYDROFURAN-3-YL (2S,3S)-4-((S)-4-((1R,3R)-3-(2-AMINO-2-OXOETHYL)-2,3-DIHYDRO-1H-INDEN-1-YL)-2-BENZYL-3-OXO-2,3-DIHYDRO-1H-PYRROL-2-YL)-3-HYDROXY-1-PHENYLBUTAN-2-YLCARBAMATE
+R22	
+FUL	beta-L-fucose; 6-deoxy-beta-L-galactopyranose; L-fucose; fucose; 6-DEOXY-BETA-L-GALACTOSE
+1IN	L-738,317
+A1A	
+1AH	
+2AH	
+4AH	
+RO1	
+385	
+AI	
+ORQ	
+PBU	di-butanoyl L-alpha-phosphatidyl-D-myo-inositol 4,5-bisphosphate; di-C4-PIP2
+PIO	dioctanoyl l-alpha-phosphatidyl-d-myo-inositol 4,5-diphosphate
+GRL	
+PGR	
+PC0	
+MUI	
+MUT	
+QFI	
+DJR	
+KGQ	
+K05	
+JG3	
+I15	
+JPR	
+PC8	
+8SP	
+1HF	
+HBQ	
+075	KNI-10075
+O33	KNI-10033
+G0G	
+MUU	
+MUV	
+G3G	
+G4G	
+MUW	
+MU1	
+MU0	
+065	RL-98065; [(1R,5S,6R)-2,8-DIOXABICYCLO[3.3.0]OCT-6-YL]N-[(2S,3R)-4-[(3,4-METHYLENEDIOXYPHENYL)SULFONYL-(2-METHYLPROPYL)AMINO]-3-HYDROXY-1-PHENYL-BUTAN-2-YL] CARBAMATE
+MZ1	
+MZ2	
+MZ3	
+MZ4	
+MZ5	
+MZ6	
+MZ7	
+MZ8	
+MZ9	
+A00	
+QN1	
+QN2	
+QN3	
+MRX	
+TT1	
+U02	
+HI1	
+HV1	
+NNC	
+NNB	
+NNI	
+PPN	
+5AH	
+ZZE	
+1B0	
+CXG	
+G40	
+YKN	
+WHU	
+EUR	
+CXD	
+T27	Rilpivirine
+YDP	
+KNJ	KNI-1689
+ARQ	
+BZX	
+AVX	
+BMC	
+833	
+BBY	
+LNT	
+LLG	
+LJG	
+LJH	
+BZN	N-((3R,4R)-4-Benzyloxymethyl-pyrrolidin-3-ylmethyl)-N-isobutyl-benzene sulfonamide
+DRR	
+DRS	
+M14	N-[4-(aminosulfonyl)-2-chlorophenyl]-2-[3-chloro-5-(3-chloro-5-cyanophenoxy)phenoxy]acetamide
+M22	
+KVI	
+KVS	
+PDZ	
+G55	
+G05	
+GFA	
+GWE	
+GWJ	
+GWI	
+R8E	
+R8D	
+PZL	
+PZ2	
+3OB	
+GGW	
+GGV	
+GGX	
+K60	(5S)-N-{(1S,2R)-3-[(1,3-benzodioxol-5-ylsulfonyl)(2-methylpropyl)amino]-1-benzyl-2-hydroxypropyl}-2-oxo-3-[3-(trifluoromethyl)phenyl]-1,3-oxazolidine-5-carboxamide
+K62	(5S)-3-(3-acetylphenyl)-N-{(1S,2R)-3-[(1,3-benzodioxol-5-ylsulfonyl)(2-methylpropyl)amino]-1-benzyl-2-hydroxypropyl}-2-oxo-1,3-oxazolidine-5-carboxamide
+D78	(5S)-N-[(1S,2R)-1-benzyl-2-hydroxy-3-{[(4-methoxyphenyl)sulfonyl](2-methylpropyl)amino}propyl]-2-oxo-3-[3-(trifluoromethyl)phenyl]-1,3-oxazolidine-5-carboxamide
+JEF	JEFFAMINE
+031	
+ON1	
+RT3	S-(2-{[4-(aminosulfonyl)-2-chlorophenyl]amino}-2-oxoethyl) 6-methyl-3,4-dihydroquinoline-1(2H)-carbothioate
+RT7	S-(2-{[4-(aminosulfonyl)-2-chlorophenyl]amino}-2-oxoethyl) 6,8-dichloro-3,4-dihydroquinoline-1(2H)-carbothioate
+GR6	
+JTH	beta-thujaplicinol
+UDR	S-methyl 5-[(1E)-1-(3,7-dimethyl-2-oxo-2,3-dihydro-1,3-benzoxazol-5-yl)-5-(5-methyl-1,3,4-oxadiazol-2-yl)pent-1-en-1-yl]-2-methoxy-3-methylbenzenecarbothioate
+AC7	
+EDM	
+006	KNI-10006
+JZP	KNI-10074
+JZQ	KNI-10265
+1F1	
+914	[(5-(6-amino-purin-9-yl)-4-fluoro-2,5-dihydro-furan-2-yloxymethyl)phosphonate-diphosphate]
+URT	
+ZP4	
+KR1	
+KRV	
+KRP	
+KBT	
+LP7	
+LP8	
+LP9	
+MLI	
+723	
+976	
+DJZ	
+595	
+K53	(5S)-N-[(1S,2R)-3-[(1,3-Benzodioxol-5-ylsulfonyl)(2-methylpropyl)amino]-2-hydroxy-1-(phenylmethyl)propyl]-3-(2-hydroxyphenyl)-2-oxooxazolidine-5-carboxamide
+K54	(5S)-N-[(1S,2R)-3-[(6-Benzothiazolylsulfonyl)(2-methylpropyl)amino]-2-hydroxy-1-(phenylmethyl)propyl]-2-oxo-3-[2-(trifluoromethyl)phenyl]oxazolidine-5-carboxamide
+JGZ	
+IMV	
+CIW	
+CDQ	
+CD9	
+CBJ	
+016	KNI-10772
+I3M	
+K13	
+K14	
+K2A	
+K20	
+K19	
+A60	
+K2D	
+F53	
+K2E	
+A61	
+G52	
+MPV	
+ZYK	3,4-dimethoxybenzamidoxy proline
+ZYJ	
+G04	
+JHG	
+NI7	
+P1Y	
+QID	
+P4Y	
+QO9	
+NI8	
+N4I	
+NK7	
+NK9	
+NK8	
+RSY	
+RSZ	
+74T	TMC310911
+LK0	
+23X	
+F72	
+A69	
+F71	
+55A	
+K83	
+A68	
+77F	
+F78	
+AF8	
+G89	
+3T1	
+5MA	
+M06	
+03G	NBD-556
+9Y9	
+076	
+079	
+Y1	
+0NX	
+MMJ	
+BCK	
+BCU	(3R)-3,4-dihydro-2H-1-benzopyran-3-ylmethanol
+FBB	
+MWP	6-amino-benzothiophene-1,1-dione
+FBG	
+MPK	
+MOK	
+FMQ	
+DBJ	
+EQM	
+M8Y	
+M8B	
+O3N	
+ZSW	
+ZSV	
+2SS	
+9NS	
+B0T	
+D0T	
+G0T	
+QCH	
+VL4	
+NFW	
+O5U	
+IY7	
+3GM	
+V7H	
+EE2	
+5EY	
+WOP	
+OM3	
+7NV	
+S8Y	
+8P3	
+UJ6	
+K5Q	
+LOZ	
+NZL	
+ONZ	
+U2Z	
+CWU	
+C5Q	
+H75	
+Y7N	
+JDX	
+X0P	
+E4F	
+S3G	
+4VW	
+Q31	
+RVN	
+H39	
+9PA	
+4D2	
+VXO	
+FYM	
+L0Y	
+HLR	
+JNS	
+IV2	
+OM1	
+NVU	
+K1T	
+0JV	
+MK5	
+M73	
+M86	
+0KJ	
+0LM	
+0LL	
+0LK	
+0LJ	
+0KU	
+0KW	
+0L9	
+HGU	
+0LY	NBD-557
+0LZ	
+0M1	
+0M4	
+0M5	
+TQ2	
+TQX	
+0OE	
+0OF	
+0OG	
+IOP	
+0TQ	
+IL0	
+ILE	
+0LQ	
+LF2	
+PUK	
+DC0	
+494	
+506	
+G73	
+1BT	
+1C1	[amino({[(1R,2R)-1-{[(4-chloro-3- fluorophenyl)carbamoyl]formamido}-2,3-dihydro-1H- inden-2-yl]methyl}amino)methylidene]azanium
+NVE	nevirapine phosphonate analogue
+G07	
+G08	
+14N	
+LF0	
+1FF	
+1FE	
+1FD	
+1FG	
+J94	
+1F6	
+1JR	
+1ML	
+1OP	
+06B	
+27B	
+G79	
+1QP	
+1RE	
+JLJ	
+1WT	
+1YQ	(E)-3-(3-bromo-5-(4-chloro-2-(2-(2,4-dioxo-3,4-dihydropyrimidin-1(2H)-yl)ethoxy)phenoxy)phenyl)acrylonitrile
+1YR	(E)-3-(3-bromo-5-(4-chloro-2-(2-(2,4-dioxo-3,4-dihydropyrimidin-1(2H)-yl)ethoxy)phenoxy)phenyl)acrylonitrile
+526	
+525	
+23K	
+23L	
+29T	
+2KW	Doravirine
+4BI	
+LF8	
+2RS	
+2RT	
+LF9	
+2SQ	
+YT3	
+1TD	
+VAC	
+F95	
+3JY	
+79G	
+3X6	
+3ZM	
+K97	
+3A8	
+3EM	
+3EN	
+G10	
+3LQ	
+UNL	
+G3P	
+43Y	1,2-dipropionyl-sn-glycero-3-phosphocholine
+45F	
+45W	
+G64	
+G61	
+QHA	
+C7U	
+C7J	
+C7W	
+C7L	
+ZLP	
+J5L	
+VXL	
+4UY	
+4UX	
+4XO	
+639	
+P4G	
+52U	GRL-0476
+52W	GRL-015
+52Z	GRL-085
+53F	
+5B7	
+5B5	
+5VE	
+5VG	
+5VF	
+5VH	
+15P	PEG 1500
+SCN	
+5DV	
+BHC	
+64A	
+PPF	
+65P	
+6EH	
+6EG	
+6EF	
+6EE	
+6FT	
+6FN	
+6FM	
+6KK	
+6KQ	
+6KR	
+IB1	
+G43	
+7SK	
+6XI	
+6W6	
+6YA	
+9VN	
+9VK	
+7AY	JLJ651
+FLU	FLUORESCEIN
+J63	
+7N1	
+DDS	
+7O7	
+7OA	
+82M	
+83G	
+83J	
+8BG	
+8FM	
+8FP	
+8HD	
+Y55	
+FRZ	FR180204
+7GC	4-methyl-N-[(1,3-thiazol-2-yl)carbamoyl]benzene-1-sulfonamide
+9AY	
+HV9	
+9JP	
+9KG	
+9KD	
+9K7	
+9J1	
+9HY	
+9TV	
+MPO	
+GR7	
+ET9	Entecavir 5'-triphosphate
+DGT	
+8Z0	KNI-1657
+D4T	
+ZW2	
+CKD	
+CKM	
+CKS	
+CKV	
+CKY	
+CN4	
+G53	
+IHP	MYO-INOSITOL HEXAKISPHOSPHATE; INOSITOL 1,2,3,4,5,6-HEXAKISPHOSPHATE
+KYN	L-KYNURENINE
+K5A	
+K5C	
+BVR	
+GR8	
+GR5	
+GTP	
+FQ4	
+FQ1	
+FCA	alpha-D-fucose; 6-deoxy-alpha-D-galactopyranose; D-fucose; fucose
+H9Y	
+GA8	
+GA5	
+HWY	
+J0S	
+J3M	
+J3P	
+T90	
+BA5	XZ462
+CXX	3-chloro-5-(3-(dimethylamino)propyl)-10,11-dihydro-5H-dibenz[b,f]azepine
+TRP	
+B0F	
+1RZ	Lamivudine-5'-triphosphate; 3TC Triphosphate; [[(2R,5S)-5-(4-azanyl-2-oxidanylidene-pyrimidin-1-yl)-1,3-oxathiolan-2-yl]methoxy-oxidanyl-phosphoryl] phosphono hydrogen phosphate
+DCP	
+EJ9	
+940	
+RY	
+JDY	
+JDV	
+A2G	N-acetyl-alpha-D-galactosamine; 2-acetamido-2-deoxy-alpha-D-galactose; 2-acetamido-2-deoxy-D-galactose; 2-acetamido-2-deoxy-galactose; N-ACETYL-2-DEOXY-2-AMINO-GALACTOSE
+JYJ	
+JYV	
+JYY	
+JYS	
+KJJ	
+L3D	
+44E	
+IY1	Indopy-1
+M9A	
+MJD	
+MVY	
+MW4	
+MWD	
+MWA	
+MXJ	
+N07	
+LMT	
+1RY	
+N8G	
+NJM	
+NJA	
+NJ4	
+NEJ	
+NE7	
+NF4	
+NFJ	
+NF7	
+NG4	
+NJG	
+NJ7	
+NJ1	
+NJJ	
+NKA	
+NJY	
+NQ4	
+DCT	
+O51	
+OR1	
+OQY	
+OPJ	
+OP7	
+ORV	
+OQG	
+OO4	
+OQD	
+OQA	
+OQV	
+OQP	
+OQ7	
+P3V	
+KLQ	
+OZ1	
+XXJ	
+5MY	
+PSF	PHOSPHATIDYLSERINE
+Q1D	
+B4R	
+DLU	Dolutegravir
+QAG	
+QCG	
+QJY	
+QK1	
+QNG	Lenacapavir
+QUW	
+QOJ	
+G6R	
+QZV	
+R0J	
+R0P	
+R0S	
+R2A	
+R2D	
+T1R	
+T2R	
+R7J	
+ARG	
+RQG	
+S0Y	
+SJY	
+TK7	
+TQM	
+TXM	
+D4M	2',3'-DIDEOXY-2',3-DIDEHYDROTHYMIDINE 5'-MONOPHOSPHATE; 2',3'-DEHYDRO-2',3'-DEOXY-THYMIDINE 5'-MONOPHOSPHATE
+DGP	
+7AX	JLJ649
+UMY	
+UNS	
+UO4	
+UMV	
+UOV	
+REK	(2~{R})-2-[[[(2~{R})-1-(6-aminopurin-9-yl)propan-2-yl]oxymethyl-oxidanyl-phosphoryl]amino]butanedioic acid
+RE5	(2~{S})-2-[[[(2~{R})-1-(6-aminopurin-9-yl)propan-2-yl]oxymethyl-oxidanyl-phosphoryl]amino]pentanedioic acid
+RFE	(2~{S})-2-[[[(2~{R})-1-(6-aminopurin-9-yl)propan-2-yl]oxymethyl-oxidanyl-phosphoryl]amino]-4-methylsulfanyl-butanoic acid
+GZ9	
+WBV	Pirmitegravir
+X2J	
+X2S	
+X2V	
+X2G	
+K7F	
+XFS	
+XUY	
+XUM	
+XUP	
+XUS	
+XUV	
+XVP	
+XVM	
+XVJ	
+XVS	
+XVY	
+XW4	
+XVV	
+YBA	
+YB7	
+YAV	
+YBD	
+1S0	
+XRF	L-dTTP
+YTG	
+YWM	
+YWP	
+YTY	
+YWS	
+YUM	
+YUP	
+YUJ	
+YUD	
+YUA	
+1I4	
+1I1	
+1IA	
+1IH	
+1IK	
+1IO	
+1KK	
+2NU	
+3IR	((1R,2R)-2-Phenyl-N-(1,3-thiazol-2-yl) cyclopropanecarboxamide
+4OI	
+2I4	Bevirimat
+61F	
+6I2	
+9I4	
+BTB	BIS-TRIS BUFFER
+9QI	
+9PJ	
+9VI	
+9WW	
+9UV	
+9WI	
+9W3	
+GE7	
+GEI	
+VM5	
+I6Q	
+I6M	
+G8R	
+G77	
+KZD	
+LE8	
+O20	
+INU	
+8LT	
+8Z3	
+E58	
+E6I	
+E81	
+E9B	
+ECW	
+EGI	
+RWR	
+U5L	
+W2Q	
+U60	
+U5S	
+QD6	
+R5K	
+V06	
+4JH	
+W15	
+FIC	
+0IF	
+U4D	
+JBQ	
+U43	
+BML	
+X7B	
+X7H	
+XBQ	
+XRB	
+XU9	
+Y05	
+7IT	
+Y1O	
+Y1X	
+Y26	
+Y2K	
+Y2E	
+Y2O	
+Y1T	
+Y9R	
+Y9N	
+1HC	
+F	
+YZI	
+Z3F	
+Z1I	
+Z1Z	
+Z2O	
+Z6F	
+Z7N	
+ZNF	
+LOV	
+V96	
+V9O	
+VA9	
+WVZ	
+AJ2	
+XXL	
+WWR	
+WVU	
+3IP	
+WZR	
+S0I	
+X0L	
+X0H	
+WZX	
+WZL	
+WZ9	
+J6U	
+K3L	
+VQ0	
+VQK	
+VTN	
+VWU	
+VTS	
+VTV	
+VU8	
+VVE	
+VVN	
+VR9	
+VRF	
+VRQ	
+VW2	
+VWK	
+VWB	
+VOI	
+VOU	
+VP2	
+VPB	
+VO8	
+XTE	[[(1~{S},2~{E},3~{S},5~{S})-3-(2-azanyl-6-oxidanylidene-1~{H}-purin-9-yl)-1-cyano-2-(fluoranylmethylidene)-5-oxidanyl-cyclopentyl]methoxy-oxidanyl-phosphoryl] phosphono hydrogen phosphate
+0E9	A-74704
+IDS	O2-SULFO-GLUCURONIC ACID; 2-O-sulfo-alpha-L-iduronic acid; 2-O-sulfo-L-iduronic acid; 2-O-sulfo-iduronic acid
+JHM	2-deoxy-6-O-sulfo-alpha-D-arabino-hexopyranose; 2-deoxy-6-O-sulfo-alpha-D-glucose; 2-deoxy-6-O-sulfo-D-glucose; 2-deoxy-6-O-sulfo-glucose
+ALQ	
+434	BILH 434
+SDY	beta-D-talose; D-talose; talose; beta-D-talopyranosose
+FSC	
+JFM	
+HWH	
+RZG	
+RZJ	
+RZS	
+K0G	
+GWS	
+SZY	
+T0J	
+O0S	
+T0S	
+T0V	
+LPZ	
+JGP	
+T0Y	
+T1J	
+JJG	
+T1M	
+6SU	
+LWA	
+AWP	
+T1S	
+T1V	
+T1Y	
+T2G	
+T2J	
+T2V	
+T2Y	
+T3G	
+T3J	
+T3V	
+T47	
+T4D	
+T4J	
+T4M	
+T4V	
+T4Y	
+T54	
+T5D	
+T5G	
+HVB	
+T5V	
+T5Y	
+HV2	
+NTG	
+T67	
+SFY	Sulfapyridine
+S7D	
+JGY	
+K3S	
+K1Y	
+T6J	
+JGG	
+T6M	
+T6V	
+T6Y	
+T71	
+T7A	
+T7D	
+T7G	
+T7J	
+T7P	
+T7S	
+T7V	
+T7Y	
+T81	
+T84	
+T8A	
+T8D	
+T8J	
+T8M	
+T8P	
+T8S	
+T8V	
+T8Y	
+T9J	
+T9M	
+T9P	
+NZD	
+U0M	
+U0P	
+U0S	
+U0V	
+U0Y	
+U1D	
+U1A	
+U1G	
+U1M	
+U1V	
+K1G	
+S7V	
+UHS	
+UGD	
+UGG	
+UGM	
+UGP	
+UGS	
+UH1	
+UH4	
+UGV	
+UH7	
+UHA	
+UHG	
+UHV	
+UHY	
+UJ1	
+UHM	
+UJ4	
+USD	
+USA	
+US7	
+UPD	
+UPJ	
+VEG	
+VEJ	
+VEM	
+VEP	
+VEV	
+VEY	
+LJA	
+VVD	
+VVG	
+UR7	
+VVJ	
+VVM	
+VVY	
+VVP	
+NY7	
+VW1	
+K2P	
+VW4	
+NYV	
+H04	
+VW7	
+NZG	
+UQS	
+VWA	
+UVA	
+VWD	
+VWG	
+UVJ	
+JG4	
+VWJ	
+S9S	
+K34	
+VWM	
+S7G	
+RY4	
+UXG	
+S7J	
+PK4	
+NUA	
+HR5	
+N0E	
+GQJ	
+EJQ	
+JHJ	
+VWV	
+VWY	
+RYM	
+NX7	
+MUK	
+VX4	
+STV	
+JOV	
+O2A	
+VXD	
+VXG	
+W4Y	
+H35	
+W4V	
+W4S	
+W5S	
+1LQ	
+W5P	
+W5M	
+W5J	
+W5G	
+W5D	
+W5A	
+W57	
+W51	
+4SO	
+51X	
+TYZ	
+LSA	SACCHARIN
+XIY	1H-BENZIMIDAZOL-2-YLMETHANOL
+NC3	4-(3-CYCLOHEXYLURIEDO)-ETHANOIC ACID
+5HN	5-Hydroxynicotinic Acid
+OHB	2-hydroxybenzamide
+4MB	
+6FZ	
+YTX	
+3R6	
+ZZA	
+4BL	
+3A9	
+5OF	
+4BX	
+07L	7-hydroxycoumarin
+05R	
+GVH	
+54G	
+Q6T	
+3XH	N-[(3-hydroxyphenyl)carbonyl]glycine
+EVE	
+MHW	
+4FL	
+ISN	
+3HP	
+3BZ	
+6U6	
+PHB	
+4J8	
+PZA	Pyrazinamide
+AQO	
+4PN	
+AOT	
+4JO	
+SHA	
+0LO	
+NMI	
+PF0	
+OHP	
+6OT	
+HBD	
+FHB	
+2CL	
+DFA	
+06Y	
+8H8	
+6V9	
+BXW	
+2UP	
+PYD	
+1SQ	1-AMINO-ISOQUINOLINE
+4SV	
+3EU	
+NCA	
+2D0	
+BHA	
+54T	
+NOA	
+KNL	
+4YS	
+2SX	
+5ZE	
+52F	
+EXB	
+W6A	
+04R	
+W6D	
+HSM	
+APG	
+W6G	
+W6J	
+W6M	
+W6P	
+XAN	
+W6S	
+W6V	
+TFA	
+W7S	
+MYI	5-methoxy-indole acetate
+4FS	
+JG8	
+0HN	benzo[d][1,3]dioxole-5-carboxylic acid
+JNZ	
+8EJ	
+EKZ	4-tert-Butylcatechol (CAS 98-29-3)
+HQD	
+7PD	isoxanthopterin
+W7V	
+W7Y	
+W8A	
+W8D	
+W8J	
+Q3C	
+CLW	5-CHLORO-2-BENZOXAZOLONE
+4JQ	
+2AK	
+BVF	2-AMINO-4-PICOLINE
+ANN	P-ANISIC ACID
+4BY	
+LZ1	
+6P3	
+WB1	
+WOY	
+WPS	
+WPV	
+WPY	
+WQ1	
+WQ4	
+WQ7	
+DE5	
+WQA	
+WQG	
+WQJ	
+WQM	
+WQV	
+WQY	
+WRD	
+WRJ	
+WRM	
+L46	
+WSM	
+WRV	
+WRY	
+WS4	
+WSG	
+WSJ	
+VZM	
+LUY	
+VZP	
+VZS	
+VZY	
+GWY	
+NXS	
+W04	
+W0A	
+K41	
+GWV	
+W0D	
+W0G	
+GWP	
+W0J	
+W0M	
+W0P	
+W0S	
+W0V	
+K2G	
+GOV	
+B1A	
+7ZC	
+NZ1	
+W0Y	
+W17	
+W1A	
+W1D	
+JFP	
+WSY	
+W1J	
+JHS	
+W1M	
+W1P	
+W1S	
+JH4	
+S2S	
+W1V	
+W1Y	
+W21	
+W2A	
+W24	
+W27	
+W2G	
+W2J	
+W2M	
+W2S	
+W2V	
+W2Y	
+W34	
+HHQ	
+HGQ	
+HH8	
+UUJ	
+W3A	
+W3D	
+HYN	Hydantoin
+BAQ	
+HRZ	
+3TR	AMITROLE
+4AP	
+W3G	
+W3J	
+2OP	
+W3M	
+W3P	
+W3S	
+W3V	
+W3Y	
+W41	
+W44	
+WUG	
+WUJ	
+WUM	
+WUS	
+WUV	
+WUY	
+K3A	
+ZQA	
+O3G	
+WL7	
+GWG	
+ZQD	
+WJD	
+EJW	
+ZQG	
+ZQJ	
+ZQM	
+LF6	
+O2M	
+NVD	
+B0V	
+LFO	
+LGR	
+LHR	
+WNV	
+60P	
+JGD	
+LJR	
+LJK	
+LJ6	
+JGA	
+NZJ	
+LLU	
+LL0	
+LKU	
+LKL	
+LK6	
+WN1	
+JJM	
+UWY	
+ELQ	
+LO6	
+SZE	4-(3-fluoropyridin-2-yl)-1-methylpiperazin-2-one; 126776361
+LNS	
+UX1	
+LMW	
+LM6	
+LQP	
+LQI	
+WH1	
+LQ3	
+GT4	
+AWD	
+S5J	
+K1A	
+LPU	
+WKA	
+LRR	
+LRF	
+WKS	
+I8D	
+K1S	
+LR9	
+LQV	
+O3R	
+O46	
+O4F	
+WYY	
+WVG	
+RWQ	
+RVO	
+WVM	
+WVY	
+WW1	
+WW4	
+RYI	
+WWJ	
+WWP	
+WWS	
+S1O	
+WX4	
+RZ9	
+WX7	
+WXD	
+WXA	
+WXG	
+WXJ	
+WXS	
+WXY	
+WY7	
+WYA	
+S3E	
+WYG	
+WYJ	
+RWL	
+RXX	
+RVS	
+RXI	
+RWC	
+RY6	
+RYC	
+S09	
+S0T	
+QLF	
+QLU	
+QYJ	
+QRU	
+S1F	
+RYQ	
+RZI	
+RZR	
+S1X	
+S2R	
+S3R	
+S4F	
+RW5	
+S4O	
+S50	
+S5F	
+S5U	
+S63	
+S6C	
+S6N	
+S6U	
+S7F	
+S7O	
+S5O	
+QIW	
+QJ0	
+QJC	
+QJG	
+QJO	
+QJU	
+QK6	
+QKC	
+QKX	
+QKL	
+QL6	
+QM6	
+QMF	
+QN0	
+QMO	
+QNV	
+QNF	
+QOF	
+QO3	
+QOR	
+QP9	
+QPX	
+QPL	
+QR0	
+QQ9	
+QQI	
+QQR	
+QR6	
+QRC	
+QRI	
+QS6	
+QSL	
+QT0	
+QT6	
+QTF	
+QTO	
+QU3	
+QUC	
+QVC	
+QV1	
+QUR	
+QVL	
+QVX	
+QWC	
+QW3	
+QX5	
+QWX	
+QWO	
+QXC	
+QXS	
+QY0	
+QXL	
+QYC	
+QYU	
+QYO	
+QZ6	
+QZF	
+QZX	
+QZO	
+R0A	
+R0H	
+R0L	
+R0R	
+R0W	
+QIR	
+QIO	
+R8K	
+R8R	
+R8Z	
+R98	
+R9F	
+R9L	
+R9U	
+RA3	
+RBB	
+RBO	
+RC3	
+RCR	
+RD6	
+RDN	
+RDU	
+RF0	
+RFI	
+RFU	
+RG5	
+RGF	
+RI3	
+RI7	
+RIK	
+RIW	
+RIZ	
+RJ9	
+RJL	
+RJS	
+RK0	
+RK9	
+RKI	
+RKU	
+RL5	
+RL9	
+RLN	
+RLU	
+RM6	
+RMU	
+RNC	
+RNL	
+ROO	
+RP0	
+RPU	
+RQ8	
+RQC	
+RQI	
+RQR	
+RR3	
+RS0	
+RRF	
+RS9	
+RSR	
+RT5	
+RTI	
+RTU	
+RV3	
+RVF	
+PJE	
+010	
+02J	
+FHR	
+FJC	
+3WL	Baicalein
+APR	
+SAM	
+X77	
+SAH	
+SFG	ADENOSYL-ORNITHINE
+U5P	
+U5G	(1R,2S,5S)-N-[(2S,3R)-4-amino-1-cyclobutyl-3-hydroxy-4-oxobutan-2-yl]-3-[N-(tert-butylcarbamoyl)-3-methyl-L-valyl]-6,6-dimethyl-3-azabicyclo[3.1.0]hexane-2-carboxamide
+GTA	7-METHYL-GPPPA
+MGP	
+K36	GC376
+UED	GC373 bound form; GC376 bound form
+B1S	
+CMU	5-CHLORO-6-[(2-IMINOPYRROLIDIN-1-YL)METHYL]PYRIMIDINE-2,4(1H,3H)-DIONE
+U3P	
+UXS	
+AYE	ALLYLAMINE
+ELL	
+AR7	
+AF3	
+1N7	2-hydroxy-N,N-dimethyl-3-sulfo-N-(3-{[(3beta,5beta,7beta,12beta)-3,7,12-trihydroxy-24-oxocholan-24-yl]amino}propyl)propan-1-aminium
+V1V	
+APY	
+V2M	N-[(2S)-1-({(2S)-4-hydroxy-3-oxo-1-[(3S)-2-oxopyrrolidin-3-yl]butan-2-yl}amino)-4-methyl-1-oxopentan-2-yl]-4-methoxy-1H-indole-2-carboxamide, bound form
+CSX	
+QYS	
+SV6	TELAPREVIR, bound form
+NNA	Narlaprevir, bound form
+V7G	GRL-024-20
+O6K	(S,S,S)-13b; 13b-K; ketoamide inhibitor 13b (bound)
+PG0	PEG 6000
+P6N	
+A82	
+A1R	
+A3R	
+MLT	(2R)-2-HYDROXYBUTANEDIOIC ACID; 2-HYDROXY-SUCCINIC ACID
+EIC	9,12-LINOLEIC ACID
+BLA	
+FUA	
+POP	
+GE6	
+R6Q	
+R7Q	2,4'-Dimethylpropiophenone
+CF0	Fluoro methyl group
+PHQ	
+R8H	
+R9W	
+LZE	
+EJM	(2S)-2-azanylhexanal; nleu-al
+RMZ	3-(2-(4-(3,4-Dimethylphenyl)piperazin-1-yl)ethyl)isoindolin-1-one
+RNW	
+RQH	Climbazole
+RQN	
+RV5	1-(1,2,3-benzothiadiazol-6-yl)-3-(2-oxidanylidene-2-piperidin-1-yl-ethyl)urea
+QEL	Ifenprodil
+RV8	1,3,5-tris[[(2~{S})-oxiran-2-yl]methyl]-1,3,5-triazinane-2,4,6-trione
+S7H	
+RVW	thioglucose
+RY5	
+S1W	
+S7W	
+S8E	
+S8B	
+CLU	CLONIDINE
+S8H	
+93J	
+QCP	N-hydroxy-4-{[(2S)-3-methyl-2-phenylbutanoyl]amino}benzamide
+S8T	Isofloxythepin
+SQ2	2-(benzotriazol-1-yl)-1-(4-methylpiperidin-1-yl)ethanone
+SQ5	(5~{S})-5-(cyclohexylmethyl)-3-(5-fluoranylpyridin-3-yl)imidazolidine-2,4-dione
+F86	Remdesivir, bound form
+MYC	2-(3,4,5-TRIHYDROXYPHENYL)-3,5,7-TRIHYDROXY-4H-1-BENZOPYRAN-4-ONE; 3,3',4',5,5',7-HEXAHYDROXYFLAVONE; MYRICETIN; CANNABISCETIN
+SYH	2-(1H-1,2,3-benzotriazol-1-yl)-1-(4-methylidenepiperidin-1-yl)ethan-1-one; 2-(benzotriazol-1-yl)-1-(4-methylidenepiperidin-1-yl)ethanone
+T0W	2-(1H-1,2,3-benzotriazol-1-yl)-N-ethyl-N-[(furan-3-yl)methyl]acetamide
+PK8	
+SE	
+ALD	
+PRO	
+PG6	
+5GP	
+A2R	
+U08	Remdesivir, reacted form
+9JT	~{N}-phenyl-2-selanyl-benzamide; Ebselen, bound form
+JRY	
+FL6	
+TG3	
+NOL	
+FNO	shikonin
+TTT	
+GKF	
+GDP	
+BU2	
+GQU	
+H3U	
+CFF	3,7-DIHYDRO-1,3,7-TRIMETHYL-1H-PURINE-2,6-DIONE
+GXU	
+AU	
+H3F	(4S)-N4-[2,6-dimethoxy-4-methyl-5-[3-(trifluoromethyl)phenoxy]quinolin-8-yl]pentane-1,4-diamine
+1RP	
+RVP	
+EOF	
+H60	
+H63	
+H6F	
+H6L	
+H6R	
+HCU	Penciclovir phosphate
+HER	
+HF0	
+HUR	
+HUO	
+GYX	
+HYR	
+ELA	
+VCG	Polysorbate 80
+AT9	AT-9010
+OAR	
+J7R	
+J7O	
+2XI	
+2RI	
+WW0	
+WWC	
+WWH	
+WWN	
+WWT	
+WX6	
+WXB	
+WXF	
+WXK	
+WXO	
+WXT	
+WXX	
+WY6	
+KFU	
+KG9	
+KJI	
+KJO	
+KL6	
+KLR	
+KMF	
+KMX	
+KNU	
+KO9	
+KOI	
+KP0	
+KQ3	
+KQL	
+KQX	
+KS0	
+KSI	
+KSX	
+KT9	
+KU6	
+KUU	
+KVF	
+KVO	
+KVX	
+KW9	
+KXF	
+KWR	
+KX9	
+KXR	
+KY0	
+KYC	
+KYU	
+KZC	
+KZX	
+L1F	
+L2I	
+L3I	
+L6R	
+L6D	
+L5I	
+L4U	
+L4N	
+L7F	
+L7Q	
+L7V	
+L83	
+L8F	
+L8O	
+L93	
+L9F	
+L9O	
+LB0	
+LBC	
+LBO	
+LCU	
+LDX	
+LKX	
+LKI	
+LJO	
+LJ0	
+LF3	
+LR0	
+LQU	
+LQ0	
+LO0	
+LM0	
+LRC	
+LRN	
+LS0	
+LSF	
+LT9	
+LUC	
+LV9	
+LVM	
+LW6	
+LWO	
+M4L	
+M2X	
+M26	
+Y6J	
+R30	
+M0X	
+M0G	
+LZX	
+LXF	
+MF0	
+M9U	
+M93	
+860	
+M7X	
+M6U	
+M6I	
+M5X	
+M5I	
+M50	
+MJR	
+MKI	
+MQ3	
+MU3	
+MVR	
+MVX	
+MWN	
+MX9	
+MZF	
+N00	
+N0F	
+N0O	
+N0X	
+N1U	
+N2X	
+N3I	
+N3R	
+N43	
+N4L	
+N5L	
+N6X	
+N7L	
+N8X	
+N9I	
+NB0	
+NB6	
+N6F	
+NDI	
+NEL	
+NGX	
+NIJ	
+NJE	
+NJU	
+NKU	
+NM0	
+NO0	
+NOI	
+NQ3	
+NQO	
+NRC	
+NRX	
+NSR	
+NU0	
+NUR	
+NV9	
+NVO	
+NW0	
+NWI	
+NX9	
+NYR	
+NZK	
+O0C	
+O0R	
+O0X	
+O1I	
+O1X	
+O2R	
+O3I	
+O3U	
+O4L	
+O5C	
+Z26	
+O87	
+O8L	
+O9O	
+O9X	
+OAO	
+OBO	
+OCI	
+OD7	
+ODX	
+OE6	
+OEO	
+OFX	
+OGF	
+OHC	
+OI4	
+OIE	
+OIK	
+OIX	
+OJ9	
+OJO	
+OK9	
+OKW	
+OLX	
+ONU	
+OGV	
+OGO	
+OO6	
+OOL	
+OPU	
+OQF	
+OQL	
+OQX	
+ORR	
+OSI	
+OT6	
+OTV	
+OUF	
+OV4	
+OVF	
+OVX	
+OWC	
+OWX	
+OYF	
+OYX	
+OZC	
+OZX	
+P0X	
+P3L	
+P4R	
+P6O	
+P7R	
+P9O	
+PJ6	
+PJX	
+PKW	
+PQ6	
+PUU	
+PVR	
+PWR	
+PZ6	
+Q0I	
+Q1C	
+Q1U	
+Q2G	
+Q2U	
+Q36	
+Q3U	
+Q45	
+Q4F	
+Q4R	
+Q5C	
+Q5K	
+Q5R	
+Q60	
+Q69	
+Q6U	
+Q7C	
+Q7R	
+Q8I	
+Q8O	
+Q99	
+QBR	
+QC3	
+QCC	
+QCO	
+QD4	
+QD9	
+QDF	
+QDU	
+QE3	
+QER	
+QEX	
+QF5	
+QF9	
+QFL	
+QFU	
+QG3	
+QGC	
+QGO	
+QGX	
+QH6	
+QHI	
+QHU	
+QI4	
+QI7	
+QIM	
+QIB	
+QIQ	
+QIT	
+QIZ	
+QJ6	
+QJF	
+QJL	
+QJR	
+QK3	
+QKB	
+QKI	
+QKR	
+QL3	
+QLC	
+QLO	
+QM3	
+QM9	
+QML	
+QMX	
+QN9	
+QNU	
+QO0	
+QOO	
+QOU	
+QOC	
+QP0	
+QP6	
+QPQ	
+QQ6	
+QQF	
+QQO	
+QQU	
+QR5	
+QR9	
+QRS	
+QRF	
+QS3	
+QSF	
+QSX	
+QT3	
+QTC	
+QTL	
+QU9	
+QUQ	
+QV0	
+QV9	
+QVG	
+QVJ	
+QVU	
+QW1	
+QWL	
+QWU	
+QX3	
+QX9	
+QXI	
+QXR	
+QXX	
+QY6	
+QYI	
+QYN	
+QYR	
+QZ0	
+QZC	
+QZL	
+QZU	
+R08	
+R0F	
+R0Q	
+R1I	
+R1U	
+R2L	
+R2X	
+R3I	
+R43	
+R4X	
+R5H	
+R5O	
+R66	
+R6L	
+R7F	
+R76	
+R87	
+R8I	
+R8O	
+R8X	
+R95	
+R9E	
+R9I	
+R9R	
+R9Z	
+RAQ	
+RBM	
+RBX	
+RC9	
+RD5	
+RDK	
+RDQ	
+RDX	
+REU	
+RFF	
+RFR	
+RG3	
+RG9	
+RGQ	
+RGX	
+RHI	
+RI1	
+RI6	
+RIJ	
+RIU	
+RIY	
+RJ3	
+RJF	
+RJO	
+RJX	
+RK6	
+RKC	
+RKR	
+RL0	
+RL8	
+RLH	
+RLR	
+RM3	
+RMI	
+RN0	
+RNI	
+ROZ	
+RPK	
+RPZ	
+RQ6	
+RQO	
+RQF	
+RR0	
+RRD	
+RRU	
+RS6	
+RSL	
+RT4	
+RT9	
+RTS	
+RV0	
+RVL	
+RVR	
+RW0	
+RW9	
+RWO	
+RWT	
+RXU	
+RYB	
+RZF	
+RZU	
+S0X	
+S1U	
+S1L	
+S39	
+S3X	
+S4X	
+S5L	
+S6K	
+S7C	
+S7U	
+XWH	
+XWZ	
+Y2C	
+Y25	
+Y1R	
+Y1L	
+Y1H	
+Y1C	
+ZHA	
+Y0W	
+Y3N	
+VXQ	
+Y0S	
+Y0O	
+NT9	
+Y0L	
+Y0H	
+Y0C	
+XZX	
+XZT	
+XZO	
+XZI	
+XZE	
+GT7	
+5F8	
+JAH	
+XZ6	
+0TI	
+XXN	
+V9G	[[(2~{R},3~{R},4~{R},5~{R})-5-(6-aminopurin-9-yl)-4-methoxy-3-oxidanyl-oxolan-2-yl]methoxy-oxidanyl-phosphoryl] [[(2~{R},3~{S},4~{R},5~{R})-5-(2-azanyl-7-methyl-6-oxidanylidene-1~{H}-purin-9-yl)-3,4-bis(oxidanyl)oxolan-2-yl]methoxy-oxidanyl-phosphoryl] hydrogen phosphate
+Y95	
+VBY	
+CMP	CYCLIC AMP; CAMP
+Y41	
+VJA	
+GHX	
+VHV	
+VHJ	
+VHM	
+VHP	
+XM2	
+MLZ	
+LW1	
+G65	
+A2M	
+VR4	GC376 alpha-ketoamide analog (bound form)
+UVC	
+VQV	
+3NI	
+PEE	DOPE
+Y94	
+Y96	
+AR6	Adenosine-5-Diphosphoribose
+MLY	
+SNM	
+X0Y	
+SER	
+X4P	
+X4V	
+X7V	
+XB1	
+XC4	
+0EN	
+PG5	
+XEY	
+XF1	
+XF4	
+XF7	
+XFD	
+XNJ	demethylated masitinib
+AG7	RUPINTRIVIR, bound form
+2DO	
+XT7	
+BO3	
+XR8	
+XTJ	
+XTM	
+XTP	
+XU4	
+XV4	
+R9V	
+XWS	
+XY4	
+XYJ	
+Y8Y	
+Y4D	
+Y91	
+Y5S	
+Y4P	
+Y7G	
+Y4V	
+Y7M	
+Y64	
+Y4J	
+Y8S	
+Y8V	
+Y51	
+Y71	
+Y54	
+Y61	
+Y6A	
+Y6G	
+Y97	
+YD1	
+YCV	
+YG4	
+YHJ	
+YHI	
+IRI	
+YN1	
+YMY	
+YKM	
+YKP	
+YLM	
+YLS	
+YMG	
+YMD	
+YMJ	
+YMM	
+YMS	
+YMV	
+YKD	
+YKA	
+YKS	
+YKV	
+YL7	
+YKY	
+YLD	
+YLJ	
+YLV	
+YM1	
+YOP	
+ALC	
+YSG	
+YSP	
+YSM	
+YSJ	
+YTJ	
+YTM	
+YTV	
+YTS	
+YU4	
+H37	FFRCK
+YVP	
+DIO	
+YVY	
+YVA	
+YV7	
+YVD	
+YVG	
+YVJ	
+YVM	
+YVV	
+YWJ	
+FN7	
+TLA	
+NCO	
+C7A	
+ZJ1	
+ZL7	
+ETF	
+ASC	Vitamin C
+UFT	
+ODN	
+06I	
+S6V	
+0MI	
+0OI	
+WNM	
+U88	halicin
+UJK	
+UQW	[(2~{R})-1-[2-(1~{H}-indol-3-yl)ethylamino]-1-oxidanylidene-butan-2-yl] prop-2-enoate
+URK	[(1~{S})-2-[(2,3-dimethoxyphenyl)methylamino]-1-(4-nitrophenyl)-2-oxidanylidene-ethyl] prop-2-enoate; FSP006
+UQZ	
+PRL	
+35J	
+US8	2-acetamido-~{N}-cyclopropyl-5-phenyl-thiophene-3-carboxamide
+USH	
+USZ	
+V18	
+YRL	p-tyrosol
+HBA	
+DMX	
+PIM	
+2AQ	2-AMINOQUINOLINE
+7WA	
+7OK	[(2R,3S,4R,5R)-5-[(4E)-4-hydroxyimino-2-oxidanylidene-pyrimidin-1-yl]-3,4-bis(oxidanyl)oxolan-2-yl]methyl dihydrogen phosphate
+16B	
+4N0	
+5P9	(1~{R})-~{N}-(5-chloranylpyridin-2-yl)-3-oxidanylidene-1,2-dihydroindene-1-carboxamide
+7IL	N-[(1R)-2-(Tert-butylamino)-2-oxo-1-pyridin-3-ylethyl]-N-(4-tert-butylphenyl)-1H-imidazole-5-carboxamide
+90I	(phenylmethyl) (2S)-2-[[(2S)-3,4-bis(oxidanylidene)-1-[(3S)-2-oxidanylidenepyrrolidin-3-yl]-4-(2-phenylethylamino)butan-2-yl]carbamoyl]pyrrolidine-1-carboxylate
+90X	(2S)-1-[2-[2,4-bis(chloranyl)phenoxy]ethanoyl]-N-[(2S)-3,4-bis(oxidanylidene)-1-[(3S)-2-oxidanylidenepyrrolidin-3-yl]-4-(2-phenylethylamino)butan-2-yl]pyrrolidine-2-carboxamide
+V1B	
+DZI	N-(2-pyrrolidyl)-3,4,5-trihydroxybenzoylhydrazone
+A5I	1-[(E)-(3,5-dimethoxy-4-oxidanyl-phenyl)methylideneamino]thiourea
+A6Q	1-[(E)-[3,4-bis(oxidanyl)phenyl]methylideneamino]-3-ethyl-thiourea
+A4O	1-[(E)-[2,4-bis(oxidanyl)phenyl]methylideneamino]thiourea
+A7L	1-[(E)-[2,5-bis(oxidanyl)phenyl]methylideneamino]-3-ethyl-thiourea
+A3X	1-[(E)-1-(3-methoxy-4-oxidanyl-phenyl)ethylideneamino]thiourea
+NDG	N-acetyl-alpha-D-glucosamine; 2-acetamido-2-deoxy-alpha-D-glucose; 2-acetamido-2-deoxy-D-glucose; 2-acetamido-2-deoxy-glucose; 2-(ACETYLAMINO)-2-DEOXY-A-D-GLUCOPYRANOSE
+GTG	MRNA CAP ANALOG N7-METHYL GPPPG
+SEP	PHOSPHONOSERINE
+GE9	
+6NR	
+4IK	
+POL	1-PROPONOL
+4IT	
+4IJ	
+4I9	
+4W8	
+4WI	PF-07321332, bound form; nirmatrelvir, bound form; Paxlovid, bound form
+4YG	
+5YN	
+5YJ	
+5Z7	
+5Z3	
+5ZN	
+5ZJ	
+5ZB	
+5ZF	
+H69	
+5ZW	
+5ZT	
+9OW	
+7V2	
+7VB	
+7VI	
+7VQ	
+7VW	
+7W5	
+81L	
+7XK	
+7XT	
+7Y2	
+7YB	
+7YI	
+7YQ	
+7YW	
+7YZ	
+800	
+JWX	
+87H	
+8G9	
+I70	
+8GW	
+I71	
+8H3	
+8H9	
+8I0	
+I69	
+I68	
+8I7	
+8T6	
+8UI	
+I80	
+JW9	
+8ZI	
+90H	
+90U	
+91I	
+91Z	
+99W	N-(2,4,6-trifluorophenyl)glycyl-N-{(1Z,2S)-1-imino-3-[(3S)-2-oxopyrrolidin-3-yl]propan-2-yl}-L-leucinamide
+9EI	
+L30	
+9GI	
+GJ3	
+9HA	
+I64	
+FIW	
+FIK	
+FN2	
+FP8	
+ESS	
+ET6	
+EW9	
+F5L	
+F8C	
+FEY	
+FHS	
+FVE	
+FV5	
+EQS	
+EO6	
+FWI	
+FZI	
+I2J	
+I1W	
+I1Z	
+I2D	
+I2N	
+NB2	
+V46	
+W48	
+I54	
+Q56	
+Y48	
+N63	
+S4L	
+ISG	
+IS5	
+IRZ	
+IRW	
+ITX	
+IT3	
+ITG	
+MOH	
+EOH	
+S88	
+M0C	
+NWX	
+3DA	
+UTP	
+L2B	[(2~{S},4~{R},5~{R})-5-[2,4-bis(oxidanylidene)pyrimidin-1-yl]-4-oxidanyl-oxolan-2-yl]methyl dihydrogen phosphate
+CTP	
+O5F	
+O5O	
+O69	
+I65	
+5IL	
+7XB	
+7YY	
+80I	
+80X	
+BLR	Bilirubin IX alpha
+3XI	
+40I	
+59S	
+5IZ	
+5IW	
+GME	(2S)-2-amino-5-methoxy-5-oxopentanoic acid
+G7L	
+G7O	
+9FF	
+BOV	
+BJ6	
+NNH	
+GUN	
+GMP	
+REA	
+3PH	PHOSPHATIDIC ACID
+DD9	
+OCT	
+STE	
+II7	3-azanylcyclobutane-1-carboxylic acid
+IFO	penicillin derivative (open form)
+4J5	
+CY3	
+0JY	
+KZ0	Chemical crosslinker
+3Q9	
+BEZ	
+XNV	AG7404, bound form
+HSV	
+BOC	
+OCA	
+KW6	
+V9R	(R,S,S)-13b; 13b-H; ketoamide inhibitor 13b (bound)
+QO6	~{N}-(2,3-dihydro-1~{H}-inden-5-yl)ethanamide
+29N	1,1',1''-(1,3,5-triazinane-1,3,5-triyl)triprop-2-en-1-one, bound form
+LQ6	
+LQL	
+92G	
+OEI	2-(benzylamino)ethan-1-ol
+OHR	[[(2~{R},3~{S},5~{R})-5-(6-aminopurin-9-yl)-3-oxidanyl-oxolan-2-yl]methoxy-oxidanyl-phosphoryl] [(2~{R},3~{S},4~{R},5~{S})-3,4,5-tris(oxidanyl)oxolan-2-yl]methyl hydrogen phosphate; [[(2R,3S,5R)-5-(6-aminopurin-9-yl)-3-oxidanyl-oxolan-2-yl]methoxy-oxidanyl-phosphoryl] [(2R,3S,4R,5S)-3,4,5-tris(oxidanyl)oxolan-2-yl]methyl hydrogen phosphate; 2'-deoxy-ADPR
+OI3	[[(2~{R},3~{R},4~{R},5~{R})-5-(6-aminopurin-9-yl)-4-fluoranyl-3-oxidanyl-oxolan-2-yl]methoxy-oxidanyl-phosphoryl] [(2~{R},3~{S},4~{R},5~{R})-3,4,5-tris(oxidanyl)oxolan-2-yl]methyl hydrogen phosphate; [[(2R,3R,4R,5R)-5-(6-aminopurin-9-yl)-4-fluoranyl-3-oxidanyl-oxolan-2-yl]methoxy-oxidanyl-phosphoryl] [(2R,3S,4R,5R)-3,4,5-tris(oxidanyl)oxolan-2-yl]methyl hydrogen phosphate; 2'-deoxy-2'-fluoro-ADPR
+OI6	[[(2~{R},3~{S},4~{R},5~{R})-5-(6-azanyl-8-bromanyl-purin-9-yl)-3,4-bis(oxidanyl)oxolan-2-yl]methoxy-oxidanyl-phosphoryl] [(2~{R},3~{S},4~{R},5~{R})-3,4,5-tris(oxidanyl)oxolan-2-yl]methyl hydrogen phosphate; [[(2R,3S,4R,5R)-5-(6-azanyl-8-bromanyl-purin-9-yl)-3,4-bis(oxidanyl)oxolan-2-yl]methoxy-oxidanyl-phosphoryl] [(2R,3S,4R,5R)-3,4,5-tris(oxidanyl)oxolan-2-yl]methyl hydrogen phosphate; 8Br-ADPR
+RVK	[[(2~{R},3~{S},4~{R},5~{R})-5-(6-aminopurin-9-yl)-3,4-bis(oxidanyl)oxolan-2-yl]methoxy-oxidanyl-phosphoryl] [(2~{R},3~{S},4~{R},5~{S})-5-methoxy-3,4-bis(oxidanyl)oxolan-2-yl]methyl hydrogen phosphate; [[(2R,3S,4R,5R)-5-(6-Aminopurin-9-yl)-3,4-dihydroxyoxolan-2-yl]methoxy-hydroxyphosphoryl] [(2R,3S,4R,5S)-3,4-dihydroxy-5-methoxyoxolan-2-yl]methyl hydrogen phosphate; Adenosine 5'-diphosphoric acid beta-[(3beta,4beta-dihydroxy-5beta-methoxytetrahydrofuran-2alpha-yl)methyl] ester; alpha-1''-O-methyl-ADP ribose; J3.653.949F
+OIG	[[(2~{R},3~{S},4~{R},5~{R})-5-(6-aminopurin-9-yl)-3,4-bis(oxidanyl)oxolan-2-yl]methoxy-oxidanyl-phosphoryl] ethyl hydrogen phosphate; [[(2R,3S,4R,5R)-5-(6-aminopurin-9-yl)-3,4-dihydroxyoxolan-2-yl]methoxy-hydroxyphosphoryl] ethyl hydrogen phosphate; beta-ethyl-ADP
+OH9	[[(2~{R},3~{S},4~{R},5~{R})-5-(6-aminopurin-9-yl)-3,4-bis(oxidanyl)oxolan-2-yl]methoxy-oxidanyl-phosphoryl] methyl hydrogen phosphate; [[(2R,3S,4R,5R)-5-(6-aminopurin-9-yl)-3,4-bis(oxidanyl)oxolan-2-yl]methoxy-oxidanyl-phosphoryl] methyl hydrogen phosphate; beta-methyl-ADP
+OW1	(1~{R},2~{S},5~{S})-3-[(2~{S})-3,3-dimethyl-2-[2,2,2-tris(fluoranyl)ethanoylamino]butanoyl]-6,6-dimethyl-~{N}-[(2~{S})-1-[(3~{S})-2-oxidanylidenepyrrolidin-3-yl]but-3-en-2-yl]-3-azabicyclo[3.1.0]hexane-2-carboxamide
+QQL	
+QH0	
+TBN	7-DEAZAADENOSINE
+T6B	1-methyl-4-[5-(morpholin-4-ylcarbonyl)-2-furyl]-1H-pyrrolo[2,3-b]pyridine
+T6O	2-[[1-(2-azanyl-1,3-thiazol-4-yl)-2-[(2-methyl-4-oxidanylidene-1-sulfo-azetidin-3-yl)amino]-2-oxidanylidene-ethylidene]amino]oxy-2-methyl-propanoic acid
+MTA	
+DHL	2,3-DESHYDROLANTHIONINE
+OG3	(R)-1-(4-chlorophenyl)ethan-1-amine
+OF6	1-(2-(3-chlorophenyl)thiazol-4-yl)-N-methylmethanamine
+AH2	1,5-Anhydromannitol; 1-deoxy-alpha-D-mannose; 1-deoxy-D-mannose; 1-deoxy-mannose
+P5X	
+P6I	
+P6R	
+P7L	
+P8L	
+P8U	
+P8C	
+PJR	
+QAO	
+TKX	
+TNI	
+U0R	
+U1J	
+U1R	
+U26	
+U2B	
+U2I	
+SRU	
+SVL	
+T2L	
+T1X	
+T43	
+U6Y	
+U76	
+URR	
+UO9	
+WJB	
+UQO	
+VM0	
+VLU	
+UUR	
+UV2	
+WEQ	
+WEL	
+WF5	
+WGO	
+WGU	
+WIO	
+WIX	
+WJ0	
+WOH	
+WQO	
+WUK	
+X6O	
+X70	
+X6T	
+X9Z	
+XA8	
+XFF	
+XFR	
+XF8	
+XCK	
+XDU	
+XE0	
+Y0I	
+Y0E	
+Y1E	
+AW2	
+MJ7	
+Y8O	
+YVZ	
+YFK	
+YOO	
+BCN	
+ZGI	
+ZH0	
+ZGO	
+ZGW	(1R,2S,5S)-N-{(1S)-1-cyano-2-[(3S)-2-oxopyrrolidin-3-yl]ethyl}-6,6-dimethyl-3-[3-methyl-N-(trifluoroacetyl)-L-valyl]-3-azabicyclo[3.1.0]hexane-2-carboxamide
+ZJ3	
+QUE	QUERCETIN
+KAE	
+K9U	
+0A9	
+GNP	
+6GS	
+06Q	
+0AX	
+0BO	
+GO3	7-(8-formyl-1,6,7-trihydroxy-3-methyl-5-propan-2-yl naphthalen-2-yl)-2,3,8-trihydroxy-6-methyl-4-propan-2-yl naphthalene-1-carbaldehyde
+KM6	
+Q83	
+VIB	THIAMIN; VITAMIN B1
+LQZ	
+LI	
+LV0	
+LVX	
+LKR	Robinetin
+UZF	
+OF9	
+OU3	
+OZ6	
+P0O	
+OZL	
+OZB	
+7ON	
+PQL	
+PQX	
+DJU	5-Benzyloxygramine
+85Y	
+U2H	
+PBP	
+H2S	HYDROGEN SULFIDE
+A8J	317829-73-5
+AIE	AKOS000277907
+AJF	
+AO0	
+B7Y	
+UWO	
+V3E	
+ALA	
+V00	
+VQR	
+VQN	
+83F	tert-butyl N-[(2S)-3-methyl-1-[(2S,4S)-4-methyl-2-[[(2S)-1-oxidanylidene-3-[(3S)-2-oxidanylidenepyrrolidin-3-yl]propan-2-yl]carbamoyl]pyrrolidin-1-yl]-1-oxidanylidene-butan-2-yl]carbamate
+83N	tert-butyl-N-[(2S)-1-[(2S,4S)-4-methoxy-2-[[(2S)-1-oxidanylidene-3-[(3S)-2-oxidanylidenepyrrolidin-3-yl]propan-2-yl]carbamoyl]pyrrolidin-1-yl]-3-methyl-1-oxidanylidene-butan-2-yl]carbamate
+84C	tert-butyl N-[(2S)-1-[(3S,3aS,6aR)-3-[[(2S)-1-oxidanylidene-3-[(3S)-2-oxidanylidenepyrrolidin-3-yl]propan-2-yl]carbamoyl]-3,3a,4,5,6,6a-hexahydro-1H-cyclopenta[c]pyrrol-2-yl]-3-methyl-1-oxidanylidene-butan-2-yl]carbamate
+83W	tert-butyl-N-[(2S,3R)-3-[(2-methylpropan-2-yl)oxy]-1-oxidanylidene-1-[(2S)-2-[[(2S)-1-oxidanylidene-3-[(3S)-2-oxidanylidenepyrrolidin-3-yl]propan-2-yl]carbamoyl]pyrrolidin-1-yl]butan-2-yl]carbamate
+W08	(2S,3S,4R,5R)-5-(6-Amino-9H-purin-9-yl)-3,4-dihydroxy-N-(1-methyl-4-piperidinyl)tetrahydro-2-furancarboxamide; (2S,3S,4R,5R)-5-(6-aminopurin-9-yl)-3,4-dihydroxy-N-(1-methylpiperidin-4-yl)oxolane-2-carboxamide
+SGV	4-amino-7-beta-D-ribofuranosyl-7H-pyrrolo[2,3-d]pyrimidine-5-carboxamide
+5ID	5-IODOTUBERCIDIN
+TO1	TOYOCAMYCIN
+9M5	
+XIO	
+YQN	
+XI0	
+XH9	
+XHW	
+XJ9	
+EQT	
+ABV	2-Aminobenzothiazole
+ZU0	
+ZV7	
+I3R	
+A1W	
+WSB	
+VSN	
+WGE	
+WGI	
+WZK	
+PHL	bound form of Phenylalaninal
+CSI	
+ZQB	
+JVX	
+JJC	
+JJO	
+JKL	
+JWO	
+JX6	
+JY0	
+K2X	
+V83	
+VI1	
+SJF	
+SO0	
+SQ3	
+W28	
+WOK	Inhibitor TKB-272, hemithioacetal bound form
+WTE	GSK4365096A
+WTV	
+XB5	
+X83	
+X8F	
+XEK	
+XKQ	
+XWO	
+XXW	
+XYI	
+XYR	
+Y2I	
+Y2N	
+Y2R	
+Y3R	
+YDL	N-(methoxycarbonyl)-3-methyl-L-valyl-(4R)-N-{(1S)-1-cyano-2-[(3S)-2-oxopyrrolidin-3-yl]ethyl}-4-(trifluoromethyl)-L-prolinamide, bound form; Ibuzatrelvir, bound form
+X1Z	
+XIU	CCF0058981
+IDU	2-O-sulfo-beta-L-altruronic acid; 2-O-sulfo-L-altruronic acid; 2-O-sulfo-altruronic acid
+ROA	Rosmarinic acid
+TBG	
+EDT	

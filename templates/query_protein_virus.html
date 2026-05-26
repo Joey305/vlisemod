@@ -1,0 +1,457 @@
+{% extends "base.html" %}
+
+{% block title %}V-LiSEMOD | Protein Query{% endblock %}
+
+{% block head_extra %}
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-beta.1/css/select2.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-beta.1/js/select2.min.js"></script>
+<style>
+
+    /* Apply custom arrow to all Select2 dropdowns */
+        /* Hide default select arrow for all Select2 dropdowns */
+        .select2-container--default .select2-selection--single,
+        .select2-container--default .select2-selection--multiple {
+            -webkit-appearance: none;   /* For Chrome, Safari, and Opera */
+            -moz-appearance: none;      /* For Firefox */
+            appearance: none;           /* Standard syntax */
+        }
+
+        /* Apply custom arrow to all Select2 dropdowns */
+        .select2-container--default .select2-selection--single::after,
+        .select2-container--default .select2-selection--multiple::after {
+            content: '▼'; /* Custom arrow */
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 12px;
+            color: #005030; /* Your arrow color */
+            pointer-events: none; /* Prevents the pseudo-element from being clickable */
+        }
+
+        /* Rotate arrow when dropdown is open, applicable if you have single select dropdowns as well */
+        .select2-container--open .select2-selection--single::after,
+        .select2-container--open .select2-selection--multiple::after {
+            transform: translateY(-50%) rotate(180deg);
+        }
+
+
+
+
+</style>
+
+<style>
+    /* existing styles above ... */
+
+    .protacability-popup {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.6);
+        z-index: 3000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .protacability-popup-content {
+        background: var(--card-bg);
+        color: var(--text-main);
+        border: 1px solid var(--border-soft);
+        width: 90%;
+        max-width: 700px;
+        border-radius: 16px;
+        padding: 30px;
+        text-align: left;
+        box-shadow: var(--shadow-panel);
+        position: relative;
+    }
+
+    .protacability-popup-content h2 {
+        margin: 0 0 14px;
+        color: var(--heading-color);
+    }
+
+    .protacability-popup-content p,
+    .protacability-popup-content li {
+        color: var(--text-main);
+        line-height: 1.65;
+    }
+
+    .protacability-popup-copy {
+        margin-bottom: 18px;
+    }
+
+    .protacability-popup-list {
+        margin: 0 0 24px;
+        padding-left: 22px;
+    }
+
+    .protacability-popup-actions {
+        display: flex;
+        justify-content: center;
+    }
+
+    .close-popup-btn {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        border: none;
+        background: transparent;
+        font-size: 20px;
+        cursor: pointer;
+        color: var(--text-muted);
+    }
+
+    #goToProtacabilityPage,
+    #openProtacabilityPopup {
+        margin-top: 12px;
+    }
+
+    html[data-theme="dark"] .protacability-popup-content {
+        background: var(--card-bg);
+        color: var(--text-main);
+        border-color: var(--border-soft);
+    }
+
+    html[data-theme="dark"] .protacability-popup-content h2,
+    html[data-theme="dark"] .protacability-popup-content p,
+    html[data-theme="dark"] .protacability-popup-content li,
+    html[data-theme="dark"] .protacability-popup-content .close-popup-btn {
+        color: var(--text-main);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+    {% set TUTORIAL_URL = "https://youtu.be/-nm4yCq8AIM?si=zJJ3ANwLtvt-bot-" %}
+    {% include "_tutorial_flyover.html" %}
+    <section class="page-intro">
+        <span class="page-kicker">Protein Query</span>
+        <h1>Filter viral structures by virus, protein class, ligand, and export-ready structure sets.</h1>
+        <p>Use the guided query builder to assemble targeted viral structure collections, export the exact datasets you need, and hand off degrader-design work to standalone PROTAC Builder when appropriate.</p>
+    </section>
+    <section class="form-container form-card page-section">
+        <h2 class="page-title">Flexible Query by Protein, Virus, and Ligand</h2>
+        <p class="page-subtitle">Build filtered V-LiSEMOD exports from virus names, protein classes, and optional ligand constraints.</p>
+        <form id="queryForm">
+            <label for="virus_name">Select Virus Name(s):</label>
+            <select id="virus_name" name="virus_name" multiple="multiple" class="searchable-select" required></select>
+
+            <label for="protein_type">Select Protein Type(s):</label>
+            <select id="protein_type" name="protein_type" multiple="multiple" class="searchable-select" required></select>
+
+            <label for="ligand_filter">Select Ligand (Optional):</label>
+            <select id="ligand_filter" name="ligand_filter" class="searchable-select">
+                <option value="">--No Ligand Filter--</option>
+            </select>
+
+            <div id="pdbContainers"></div>
+
+            <div id="dataSetOptions" style="display: none;">
+                <label>Select Data Sets to Export:</label>
+                <div><input type="checkbox" name="data_set" value="Solvent Exposed Atoms"> Solvent Exposed Atoms</div>
+                <div><input type="checkbox" name="data_set" value="Ligand Atoms"> Ligand Atoms</div>
+                <div><input type="checkbox" name="data_set" value="Binding Pocket"> Binding Pocket</div>
+                <div><input type="checkbox" name="data_set" value="Smiles and Functional Groups"> Smiles and Functional Groups</div>
+                <div><input type="checkbox" name="data_set" value="Interatomic Interactions"> Interatomic Interactions</div>
+                <div><input type="checkbox" name="data_set" value="Functional Group Atoms"> Functional Group Atoms</div>
+                <div><input type="checkbox" name="data_set" value="Smiles & PDB Mapping"> Smiles & PDB Mapping</div>
+                {% if protacability_data_available %}
+                <div><input type="checkbox" name="data_set" value="PROTACability Assessment"> PROTACability Assessment</div>
+                <div><input type="checkbox" name="data_set" value="PROTACability Lysine Proximity"> PROTACability Lysine Proximity</div>
+                <div><input type="checkbox" name="data_set" value="PROTACability Ligand Inventory"> PROTACability Ligand Inventory</div>
+                {% endif %}
+            </div>
+
+            <button type="button" id="exportButton" disabled style="display: none;">Export Data</button>
+        </form>
+        <div class="action-row centered-row" style="margin-top: 18px;">
+            <a class="button-secondary" href="{{ url_for('index') }}">Back to Main Page</a>
+            <a class="button-secondary" href="{{ url_for('compare_ligands') }}">Try Our Ligand Query</a>
+            <button type="button" id="openProtacabilityPopup">Assess PROTACability</button>
+        </div>
+    </section>
+
+    <!-- Chatbot HTML -->
+
+
+   <!-- Chatbot Icon -->
+   <div id="chatbot-icon" onclick="toggleChatbot()">💬</div>
+    
+    
+
+   <!-- Chatbot Popup -->
+   <div id="chatbot-popup">
+       
+       <!-- "X" Close Button -->
+       <button id="close-chatbot" onclick="closeChatbotPopup()">✖</button>
+   
+       <!-- Chatbot Frame (Hidden Initially) -->
+       <iframe id="chatbot-frame" style="width: 100%; height: 90%; border: none; display: none;"></iframe>
+   
+       <!-- Coming Soon Message (Hidden Initially) -->
+       <div id="coming-soon-message" style="text-align: center; display: none;">
+           <h2>JARI Drug Insight Bot Coming Soon</h2>
+       </div>
+   </div>
+   
+   
+   
+   <script>
+       let isDrugAppAvailable = false; // Default to false
+   
+       async function checkDrugApp() {
+           try {
+               // Try fetching the chatbot page
+               const response = await fetch("/drugapp/", { method: "HEAD" });
+   
+               if (response.ok) {
+                   isDrugAppAvailable = true; // ✅ DrugApp is available
+               } else {
+                   console.warn("DrugApp is not available.");
+               }
+           } catch (error) {
+               console.warn("Error checking DrugApp availability:", error);
+           }
+       }
+   
+       // Run check when the page loads
+       checkDrugApp();
+   
+       function toggleChatbot() {
+           document.getElementById("chatbot-frame").src = window.location.origin + "/drugapp/";
+           const chatbotPopup = document.getElementById("chatbot-popup");
+           const chatbotFrame = document.getElementById("chatbot-frame");
+           const comingSoonMessage = document.getElementById("coming-soon-message");
+   
+           if (chatbotPopup.style.display === "none" || chatbotPopup.style.display === "") {
+               // If popup is closed, open it
+               if (isDrugAppAvailable) {
+                   chatbotFrame.style.display = "block";
+                   comingSoonMessage.style.display = "none";
+               } else {
+                   chatbotFrame.style.display = "none";
+                   comingSoonMessage.style.display = "block";
+               }
+               chatbotPopup.style.display = "block"; // Show popup
+           } else {
+               // If popup is open, close it
+               chatbotPopup.style.display = "none";
+           }
+       }
+   
+   
+       function closeChatbotPopup() {
+           document.getElementById("chatbot-popup").style.display = "none";
+       }
+   </script>
+
+    <script>
+       $(document).ready(function() {
+            console.log("Initializing page...");
+            $('.searchable-select').select2();
+
+            // Fetch virus names, protein types, and ligands
+            fetchOptions('#virus_name', '/get_virus_names_list_distinct');
+            fetchOptions('#protein_type', '/get_protein_types_list_distinct');
+            fetchLigands('#ligand_filter');
+
+            // When protein types or ligand filter changes, fetch PDB options
+            $('#protein_type, #ligand_filter').on('change', function() {
+                const selectedVirusNames = $('#virus_name').val();
+                const selectedProteinTypes = $('#protein_type').val();
+                const selectedLigand = $('#ligand_filter').val();
+
+                if (selectedVirusNames.length > 0 && selectedProteinTypes.length > 0) {
+                    fetchPDBOptions(selectedVirusNames, selectedProteinTypes, selectedLigand);
+                }
+            });
+
+            // Function to fetch virus and protein type options
+            function fetchOptions(selector, url) {
+                $.get(url, function(data) {
+                    populateDropdown(selector, data);
+                }).fail(function() {
+                    console.error("Failed to fetch options for", selector);
+                });
+            }
+
+            // Fetch ligands and synonyms for ligand filter dropdown
+            function fetchLigands(selector) {
+                $.get('/get_ligands_with_synonyms', function(data) {
+                    const ligandSelect = $(selector);
+                    const uniqueLigands = new Set(); // Use Set to avoid duplicates
+                    
+                    ligandSelect.empty();
+                    ligandSelect.append('<option value="">--No Ligand Filter--</option>');
+                    
+                    data.forEach(item => {
+                        // Add ligand code if not already added
+                        if (!uniqueLigands.has(item.ligand_code)) {
+                            uniqueLigands.add(item.ligand_code);
+                            ligandSelect.append(`<option value="${item.ligand_code}">${item.ligand_code}</option>`);
+                        }
+                        // Add synonym but with the same value as ligand_code
+                        if (item.synonym && !uniqueLigands.has(item.synonym)) {
+                            uniqueLigands.add(item.synonym);
+                            ligandSelect.append(`<option value="${item.ligand_code}">${item.synonym} (Synonym for ${item.ligand_code})</option>`);
+                        }
+                    });
+                });
+            }
+
+            // Populate dropdown
+            function populateDropdown(selector, options) {
+                $(selector).empty();
+                $(selector).append('<option value="">Select an option</option>');
+                options.forEach(function(option) {
+                    $(selector).append(`<option value="${option}">${option}</option>`);
+                });
+                $(selector).trigger('change'); // Refresh for select2
+            }
+
+            // Fetch PDB options based on virus, protein, and optional ligand filter
+            function fetchPDBOptions(virusNames, proteinTypes, ligandFilter) {
+                $('#pdbContainers').empty();
+                $('#dataSetOptions').hide();
+                $('#exportButton').hide().prop('disabled', true);
+
+                virusNames.forEach(virus => {
+                    $.ajax({
+                        url: '/get_pdbs_for_virus_protein',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({ virus_name: virus, protein_types: proteinTypes, ligand: ligandFilter }),
+                        success: function(data) {
+                            if (data.pdb_codes.length > 0) {
+                                const pdbDropdown = `<label for="pdb_${virus}">Select PDB Code(s) for ${virus}:</label>
+                                    <select id="pdb_${virus}" data-virus="${virus}" multiple="multiple" class="searchable-select pdb-select">
+                                    ${data.pdb_codes.map(pdb => `<option value="${pdb}">${pdb}</option>`).join('')}
+                                    </select>`;
+                                $('#pdbContainers').append(pdbDropdown);
+                                $('.pdb-select').select2().on('change', function() {
+                                    let anySelected = Array.from($('.pdb-select')).some(select => $(select).val().length > 0);
+                                    $('#exportButton').prop('disabled', !anySelected);
+                                });
+                                $('#dataSetOptions').show();
+                                $('#exportButton').show();
+                            }
+                        },
+                        error: function() {
+                            console.error("Failed to fetch PDB options for virus:", virus);
+                            alert('Failed to fetch PDB options. Please try again.');
+                        }
+                    });
+                });
+            }
+
+            // Handle Export Button click
+            $('#exportButton').on('click', function() {
+                if ($(this).prop('disabled')) {
+                    console.log("Button is disabled.");
+                    return;
+                }
+                const selectedVirusNames = $('#virus_name').val();
+                const selectedProteinTypes = $('#protein_type').val();
+                const pdbSelections = {};
+                $('#pdbContainers select').each(function() {
+                    const virusName = $(this).data('virus');
+                    pdbSelections[virusName] = $(this).val();
+                });
+
+                const selectedDataSets = [];
+                $('input[name="data_set"]:checked').each(function() {
+                    selectedDataSets.push($(this).val());
+                });
+
+                if (selectedDataSets.length === 0) {
+                    alert('Please select at least one data set.');
+                    return;
+                }
+
+                const requestData = {
+                    pdb_codes: Object.values(pdbSelections).flat(),
+                    data_sets: selectedDataSets
+                };
+
+                $.ajax({
+                    url: '/export_data_to_excel',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(requestData),
+                    xhrFields: {
+                        responseType: 'blob'
+                    },
+                    success: function(blob) {
+                        console.log("File received.");
+                        var downloadUrl = window.URL.createObjectURL(blob);
+                        var a = document.createElement("a");
+                        a.href = downloadUrl;
+                        a.download = "data_sets.zip"; // Assuming the file is a ZIP archive
+                        document.body.appendChild(a);
+                        a.click();
+                        setTimeout(function() {
+                            window.URL.revokeObjectURL(downloadUrl);
+                        }, 100); // Cleanup the URL object
+                    },
+                    error: function(xhr, status, error) {
+                        console.error("Error processing request:", error);
+                        alert('Error processing request. Please try again.');
+                    }
+                });
+            });
+
+            $('#openProtacabilityPopup').on('click', function() {
+                $('#protacability-popup').fadeIn(200);
+            });
+
+            $('#close-protacability-popup').on('click', function() {
+                $('#protacability-popup').fadeOut(200);
+            });
+
+            $('#protacability-popup').on('click', function(e) {
+                if (e.target.id === 'protacability-popup') {
+                    $('#protacability-popup').fadeOut(200);
+                }
+            });
+
+            $('#goToProtacabilityPage').on('click', function() {
+                const selectedVirusNames = $('#virus_name').val() || [];
+                const selectedProteinTypes = $('#protein_type').val() || [];
+                const params = new URLSearchParams();
+
+                selectedVirusNames.forEach(value => params.append('virus_name', value));
+                selectedProteinTypes.forEach(value => params.append('protein_type', value));
+
+                const targetUrl = "{{ url_for('protacability_page') }}" + (params.toString() ? `?${params.toString()}` : '');
+                window.location.href = targetUrl;
+            });
+        });
+    </script>
+
+
+
+<!-- PROTACability Popup -->
+<div id="protacability-popup" class="protacability-popup" style="display: none;">
+    <div class="protacability-popup-content">
+        <button id="close-protacability-popup" class="close-popup-btn">✖</button>
+        <h2>PROTACability Assessment</h2>
+        <p class="protacability-popup-copy">
+            Explore ligand-centered warhead linkability, target lysine accessibility, ternary geometry cues, and degrader-design readiness across curated viral protein structures.
+        </p>
+        <ul class="protacability-popup-list">
+            <li>Warhead linkability: ligand-centered linkerability evidence</li>
+            <li>Target lysine accessibility: ubiquitination-readiness cue</li>
+            <li>Ternary geometry: hypothesis-generating only</li>
+            <li>Overall degrader-design readiness scoring</li>
+        </ul>
+
+        <div class="protacability-popup-actions">
+            <button type="button" id="goToProtacabilityPage">
+                Open PROTACability Page
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}

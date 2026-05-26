@@ -1,0 +1,6 @@
+AlkaliMetal: [Li,Na,K,Rb,Cs,Fr:1]
+AlkalineEarthMetal: [Be,Mg,Ca,Sr,Ba,Ra:1]
+Metalloid: [Si,P,B,Ge,As,Sb,Te,At,D:1]
+NonMetal: [#1,#2,#6,#7,#8,F,#10,#15,#16,Cl,#18,#34,Br,#36,I,#54,#86:1]
+OrganoMetallicCompound: [!#1;!#5;!#6;!#7;!#8;!#9;!#14;!#15;!#16;!#17;!#33;!#34;!#35;!#52;!#53;!#85]~[#6;!-]
+TransitionMetal: [Sc,Ti,V,Cr,Mn,Fe,Co,Cu,Ni,Zn,Y,Zr,Nb,Mo,Tc,Ru,Rh,Pd,Ag,Au,Cd,Pt,Yb,La,Si,Eu,Pr,Dy]

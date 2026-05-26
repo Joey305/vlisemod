@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generated PyMOL Movie | PDB ID: {{ pdb_id }} | Ligand: {{ ligand_code }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+
+<div class="content-container">
+    <h1>
+        Generated PyMOL Movie | PDB ID: {{ pdb_id }} | Ligand: {{ ligand_code }}
+    </h1>
+    <div class="image-container">
+        <img src="{{ movie_path }}" alt="PyMOL Movie">
+    </div>
+    <div class="buttons">
+        <a href="{{ url_for('download_movie') }}?movie_path={{ movie_path }}">
+            <button>Download Movie</button>
+        </a>
+        <a href="{{ url_for('index') }}">
+            <button>Back to Main Page</button>
+        </a>
+        <form action="{{ url_for('generate_pymol_movie_route') }}" method="POST">
+            <input type="hidden" name="pdb_id" value="{{ pdb_id }}">
+            <input type="hidden" name="ligand_code" value="{{ ligand_code }}">
+            <button type="submit">Generate Another Movie</button>
+        </form>
+    </div>
+</div>
+
+</body>
+</html>
+ 

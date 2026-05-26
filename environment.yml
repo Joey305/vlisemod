@@ -1,0 +1,14 @@
+
+name: viraldb
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10
+  - flask
+  - rdkit
+  - pubchempy
+  - transformers
+  - pandas
+  - matplotlib
+  - seaborn
+  - pip

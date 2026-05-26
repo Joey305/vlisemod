@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Molecule Rendering with py3Dmol</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-beta.1/css/select2.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-beta.1/js/select2.min.js"></script>
+    <script src="https://3Dmol.org/build/3Dmol-min.js"></script>     
+    <script src="https://3Dmol.org/build/3Dmol.ui-min.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="form-container">
+        <h1>3D Molecule Rendering</h1>
+        <select id="ligandSelector" class="searchable-select">
+            <!-- Ligand options will be loaded here -->
+        </select>
+        <select id="pdbMappingSelector" class="searchable-select" style="display: none;">
+            <!-- PDB mapping options will be loaded here -->
+        </select>
+        <button id="fetchMoleculeButton" disabled>Render Molecule</button>
+        <div style="height: 400px; width: 400px; position: relative;" class='viewer_3Dmoljs' data-pdb='3EKY' data-backgroundcolor='0xffffff' data-style='stick' data-ui='true'></div>       
+
+        <div id="molecule_container">Molecule will be rendered here.</div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            $('.searchable-select').select2();
+            loadLigandOptions();
+
+            function loadLigandOptions() {
+                fetch('/get_ligands_list')
+                    .then(response => response.json())
+                    .then(data => {
+                        const ligandSelect = $('#ligandSelector');
+                        ligandSelect.empty();
+                        ligandSelect.append('<option value="">--Select Ligand--</option>');
+                        data.ligands.forEach(ligand => {
+                            ligandSelect.append(`<option value="${ligand}">${ligand}</option>`);
+                        });
+                    });
+            }
+
+            $('#ligandSelector').change(function() {
+                const ligandCode = $(this).val();
+                if (ligandCode) {
+                    loadPdbMapping(ligandCode);
+                }
+            });
+
+            function loadPdbMapping(ligandCode) {
+                fetch(`/get_pdb_mapping/${ligandCode}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log(data)
+                        const pdbMappingSelect = $('#pdbMappingSelector');
+                        pdbMappingSelect.empty();
+                        pdbMappingSelect.append('<option value="">--Select PDB Mapping--</option>');
+                        for (let key in data.pdb_mapping) {
+                            pdbMappingSelect.append(`<option value="${key}" data-pdb-id="${data.pdb_mapping[key].pdb_id}" data-ligand-id="${data.pdb_mapping[key].ligand_id}" data-chain="${data.pdb_mapping[key].chain}">${data.pdb_mapping[key].virus_name}, ${key}</option>`);
+                        }
+                        pdbMappingSelect.select2();
+                        pdbMappingSelect.show();
+                    });
+            }
+
+            $('#pdbMappingSelector').change(function() {
+                const selectedOption = $(this).find('option:selected');
+                var pdb_id = selectedOption.data('pdb-id');
+                var ligand_id = selectedOption.data('ligand-id');
+                var chain = selectedOption.data('chain');
+                if (pdb_id && ligand_id && chain) {
+                    var key = `${pdb_id}-${ligand_id}-${chain}`;
+                    $('#fetchMoleculeButton').data('key', key);
+                    $('#fetchMoleculeButton').prop('disabled', false);
+                } else {
+                    $('#fetchMoleculeButton').prop('disabled', true);
+                }
+            });
+
+
+            $('#fetchMoleculeButton').click(function() {
+                var key = $(this).data('key');
+                if (key) {
+                    fetchAndRenderMolecule(key);
+                }
+            });
+            function fetchAndRenderMolecule(key) {
+                fetch(`/render_3d_molecule/${key}`)
+                    .then(response => response.text())
+                    .then(html => {
+                        $('#molecule_container').html(html);
+                    })
+                    .catch(error => console.error('Error fetching molecule:', error));
+            }
+        });
+    </script>
+</body>
+</html>

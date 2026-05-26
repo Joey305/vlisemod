@@ -1,0 +1,14 @@
+AliphaticAlcohol: [#6;!c;!$(C=[O,N,S]);!$(C=,#[C]):1][OX2H1]
+Alkane: [CX4:1][CX4:2]
+AminoAlcohol12: [#6X4:1]([#6,#1:2])([#6,#1:3])([OH:4])[#6X4:5]([#6,#1:6])([#6,#1:7])[NH2:8]
+ArylAlcohol: [#6;!C:1][OX2H1]
+BromoAlkene: [BrX1:1][CX3:2]=[CX3:3]
+ChloroAlkene: [ClX1:1][CX3:2]=[CX3:3]
+ChloroFormate: [CX3:1](=[OX1:2])([OX2:3][#6:4])[Cl:5]
+IodoAlkene: [IX1:1][CX3:2]=[CX3:3]
+IodoIsotope: [$([120#53,121#53,123#53,124#53,125#53,126#53,129#53,130#53,131#53,132#53,133#53,134#53,135#53])]
+PerChloroCycloPentene: C1(Cl)(Cl)C(Cl)([#1,#6])C(Cl)=C(Cl)C1(Cl)([#1,#6])
+PriAlcohol: [#6X4H2;!$(C([OX2H])[O,S,#7,#15]):1][OX2H1:2]
+SecAlcohol: [#6X4H1;!$(C([OX2H])[O,S,#7,#15]);!$(C([OX2H])C([OX2H])):1][OX2H1:2]
+TertAlcohol: [#6X4H0;!$(C([OX2H])[O,S,#7,#15]):1][OX2H1:2]
+TriChloroPhenylEster: [CX3](=[OX1])[OX2]c1c(Cl)cc(Cl)c(Cl)c1

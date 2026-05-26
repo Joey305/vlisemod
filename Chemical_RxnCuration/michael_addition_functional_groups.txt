@@ -1,0 +1,10 @@
+AlkynylCarbonyl: [#6,#1:1][C:2]#[C:3][C:4](=[OX1:5])[#6,#7,#8:6]
+ArylCarbonyl: c(=O)(~c)~c
+CarbonylImide: [$([#6][CX3]=[OX2+][NX2-][#6]),$([#6][CX3+][OX2][NX2-][#6])]
+CarbonylOxide: [$([CX3-][OX2+]=[OX1]),$([CX3]=[OX2+][OX1-])]
+CarbonylYlide: [$([CX3]=[OX2+][CX3-]),$([CX3+][OX2][CX3-])]
+ConjugatedAcetylene: [CX2:1]#[CX2:2][CX2:3]#[CX2:4]
+QuaternaryNitrogen_bCarbonyl: [#6](=O)[#6][#7+]
+ThioCarbonyl: [CX3:1](=[SX1:2])[#1,#6:3]
+abUnsatdCarbonyl: [#6:1](=[OX1:2])[#6X3:3]=[#6X3;!$(C#[N]);!$(C=C[N,S]);!$(CO[Al,Ag,Cu,Co,Mn,Fe,Ni,Pt,Pd,V,Cr,Zn]):4]
+bHaloCarbonyl: [CX3:1](=[OX1:2])[CX4:3][CX4:4][F,Cl,Br,I:5]

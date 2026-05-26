@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+
+{% block title %}V-LiSEMOD | Drug GPT{% endblock %}
+
+{% block body_class %}app-shell drugapp-page{% endblock %}
+
+{% block head_extra %}
+  <style>
+    .drugapp-page .site-main {
+      width: min(1000px, calc(100% - 32px));
+    }
+
+    .drugapp-shell {
+      position: relative;
+      overflow: hidden;
+      border-radius: 28px;
+      padding: 28px;
+      background: rgba(8, 10, 12, 0.82);
+      color: white;
+      box-shadow: 0 28px 70px rgba(0, 0, 0, 0.28);
+    }
+
+    .drugapp-shell::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at top right, rgba(0, 170, 255, 0.18), transparent 35%);
+      pointer-events: none;
+    }
+
+    .chat-container {
+      width: 100%;
+      max-width: 700px;
+      margin: 0 auto;
+      background: rgba(20, 20, 20, 0.72);
+      backdrop-filter: blur(10px);
+      border-radius: 18px;
+      box-shadow: 0 0 15px rgba(0, 170, 255, 0.3);
+      padding: 24px;
+      text-align: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    .chat-title {
+      margin: 0;
+      font-size: 1.9rem;
+      text-transform: uppercase;
+      color: #00afff;
+      text-shadow: 0 0 10px rgba(0, 170, 255, 0.6);
+    }
+
+    .input-container {
+      display: flex;
+      margin-top: 20px;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .drugapp-page input[type="text"] {
+      flex: 1;
+      border: none;
+      background: rgba(255,255,255,0.1);
+      color: white;
+      text-align: center;
+    }
+
+    .drugapp-page input::placeholder {
+      color: rgba(255,255,255,0.6);
+    }
+
+    .response-container {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(8px);
+      max-height: 280px;
+      overflow-y: auto;
+      display: none;
+      text-align: left;
+    }
+
+    .response-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .response-list p {
+      margin: 0;
+      padding: 10px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 8px;
+      word-wrap: break-word;
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <section class="page-intro">
+    <span class="page-kicker">Drug GPT</span>
+    <h1>Ask V-LiSEMOD’s local Drug GPT assistant for molecule-focused support.</h1>
+    <p>This page stays inside the parent V-LiSEMOD app and now shares the global shell, while still respecting the local-model toggle so lightweight smoke tests do not force a large model load.</p>
+  </section>
+
+  <section class="drugapp-shell page-section">
+    <div class="chat-container">
+      <h2 class="chat-title">Drug GPT Chat</h2>
+
+      {% if not local_llm_ready %}
+      <div class="status-card status-warning" style="margin-top: 14px; text-align: left;">
+        <strong>Drug GPT status</strong><br>
+        {% if local_llm_enabled %}
+          Local LLM is enabled but not ready{% if local_llm_error %}: {{ local_llm_error }}{% endif %}.
+        {% else %}
+          Local LLM is disabled. Set <code>ENABLE_LOCAL_LLM=true</code> to enable Drug GPT.
+        {% endif %}
+        <div style="margin-top: 6px; opacity: 0.8;">Model: {{ model_id }}</div>
+      </div>
+      {% endif %}
+
+      <div class="input-container">
+        <input id="queryInput" type="text" placeholder="Enter your question..." {% if not local_llm_ready %}disabled{% endif %} />
+        <button id="askBtn" {% if not local_llm_ready %}disabled{% endif %}>Ask</button>
+      </div>
+
+      <div id="responseContainer" class="response-container">
+        <strong>Responses:</strong>
+        <div id="responseList" class="response-list"></div>
+      </div>
+
+      <button id="newQuestionButton" style="display:none; margin-top:10px;">New Question</button>
+    </div>
+  </section>
+{% endblock %}
+
+{% block scripts %}
+  <script>
+    const inputEl = document.getElementById('queryInput');
+    const askBtn = document.getElementById('askBtn');
+    const responseContainer = document.getElementById('responseContainer');
+    const responseList = document.getElementById('responseList');
+    const newBtn = document.getElementById('newQuestionButton');
+
+    askBtn.addEventListener('click', sendQuery);
+    inputEl.addEventListener('keydown', e => {
+      if (e.key === 'Enter') sendQuery();
+    });
+    newBtn.addEventListener('click', resetChat);
+
+    async function sendQuery() {
+      const query = (inputEl.value || '').trim();
+      if (!query) { alert('Please enter a question!'); return; }
+
+      askBtn.disabled = true;
+      const loading = document.createElement('p');
+      loading.textContent = 'Processing...';
+      responseList.appendChild(loading);
+      responseContainer.style.display = 'block';
+
+      try {
+        const res = await fetch('/drugapp/query', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question: query }),
+        });
+
+        const data = await res.json().catch(() => ({}));
+        responseList.removeChild(loading);
+
+        const msg = document.createElement('p');
+        if (res.ok && data.response) {
+          msg.textContent = data.response;
+        } else if (res.status === 429) {
+          msg.textContent = data.error || 'Model is busy. Please try again in a few seconds.';
+        } else if (res.status === 503) {
+          msg.textContent = data.error || 'Local model is currently unavailable.';
+        } else {
+          msg.textContent = data.error || 'No response received.';
+        }
+
+        responseList.appendChild(msg);
+        newBtn.style.display = 'block';
+      } catch (err) {
+        responseList.removeChild(loading);
+        const msg = document.createElement('p');
+        msg.textContent = 'Network error while contacting the model.';
+        responseList.appendChild(msg);
+      } finally {
+        askBtn.disabled = false;
+      }
+    }
+
+    function resetChat() {
+      inputEl.value = '';
+      responseList.innerHTML = '';
+      responseContainer.style.display = 'none';
+      newBtn.style.display = 'none';
+      inputEl.focus();
+    }
+  </script>
+{% endblock %}

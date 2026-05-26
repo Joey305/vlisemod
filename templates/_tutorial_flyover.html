@@ -1,0 +1,48 @@
+{# templates/_tutorial_flyover.html #}
+{% set _URL = (TUTORIAL_URL if (TUTORIAL_URL is defined and TUTORIAL_URL) else tutorial_url if (tutorial_url is defined) else None) %}
+{% if _URL %}
+<div id="tutorial-flyover" data-url="{{ _URL }}">
+  <a class="tf-link" href="{{ _URL }}" target="_blank" rel="noopener">
+    <span class="tf-plane" aria-hidden="true">✈</span>
+    <span class="tf-banner" aria-label="Open tutorial video">
+      Click here for the tutorial ▶
+    </span>
+  </a>
+  <button class="tf-close" type="button" aria-label="Dismiss tutorial banner">×</button>
+</div>
+{% endif %}
+
+<style>
+  #tutorial-flyover{
+    position:fixed; top:8px; left:100%;
+    z-index:99999; display:flex; align-items:center; gap:10px;
+    pointer-events:none; animation: tf-fly 24s linear infinite; animation-delay:.8s;
+  }
+  #tutorial-flyover .tf-link, #tutorial-flyover .tf-close{ pointer-events:auto; }
+  .tf-link{ display:flex; align-items:center; gap:10px; text-decoration:none; }
+  .tf-plane{ display:inline-block; font-size:22px; line-height:1; transform:rotate(10deg); filter:drop-shadow(0 1px 1px rgba(0,0,0,.2)); }
+  .tf-banner{
+    display:inline-block; color:#fff; background:#F47321; border:2px solid #d85d16;
+    padding:8px 14px; border-radius:10px; font-weight:800; white-space:nowrap; box-shadow:0 6px 16px rgba(0,0,0,.25);
+  }
+  .tf-close{
+    margin-left:6px; appearance:none; border:2px solid #005030; background:#fff; color:#005030;
+    font-weight:900; line-height:1; border-radius:10px; width:28px; height:28px; cursor:pointer; box-shadow:0 4px 10px rgba(0,0,0,.15);
+  }
+  @keyframes tf-fly { 0%{transform:translateX(0)} 100%{transform:translateX(calc(-100vw - 120%))} }
+  #tutorial-flyover:hover{ animation-play-state: paused; }
+  @media (prefers-reduced-motion: reduce){ #tutorial-flyover{ animation:none; left:50%; transform:translateX(-50%);} }
+  @media (max-width:480px){ .tf-banner{ font-size:.9rem; padding:6px 10px } .tf-plane{ font-size:18px } .tf-close{ width:26px; height:26px } }
+</style>
+
+<script>
+(function(){
+  const el = document.getElementById('tutorial-flyover');
+  if (!el) return;
+
+  // Close only hides it for this page view; no persistence.
+  el.querySelector('.tf-close')?.addEventListener('click', function(){
+    el.remove();
+  });
+})();
+</script>

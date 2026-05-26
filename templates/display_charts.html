@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Charts</title>
+</head>
+<body>
+    <h1>Interaction Charts for PDB {{ pdb_id }} Chain {{ chain }} Residue {{ residue_id }}</h1>
+    
+    {% for chart in chart_paths %}
+        <img src="{{ chart }}" alt="Interaction Chart" width="600px">
+    {% endfor %}
+    
+</body>
+</html>

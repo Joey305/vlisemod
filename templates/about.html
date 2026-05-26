@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}About V-LiSEMOD | Viral Ligand Solvent-Exposed Moiety Database{% endblock %}
+
+{% block meta_description %}Learn how V-LiSEMOD supports viral ligand discovery through solvent-exposed moiety analysis, PyMOL session generation, ligand comparison, and degrader-aware molecular design workflows.{% endblock %}
+
+{% block body_class %}app-shell about-page{% endblock %}
+
+{% block content %}
+    <section class="page-intro">
+        <span class="page-kicker">About V-LiSEMOD</span>
+        <h1>A structure-first workspace for viral ligand discovery.</h1>
+        <p>V-LiSEMOD helps researchers move from curated viral protein-ligand structures to solvent-exposed moiety analysis, PyMOL-ready visualization sessions, and degrader-aware ligand comparison workflows.</p>
+    </section>
+
+    <section class="page-card page-section">
+        <div class="section-heading">
+            <h2 class="page-title">Why this project exists</h2>
+            <p class="page-subtitle">Viral drug discovery needs better structure-aware tools for reasoning from experimentally resolved complexes toward next-generation antiviral design ideas.</p>
+        </div>
+        <p>Many antiviral ligands are known structurally, but their solvent-exposed atoms, binding context, and fragment or warhead potential are not easy to compare in one coherent workflow. V-LiSEMOD organizes those structures into a practical workspace for exploring ligand exposure, protein context, and downstream design opportunities rooted in real structural data.</p>
+        <p>The aim is to help researchers reason from resolved viral protein-ligand structures toward next-generation viral inhibitors, warhead-like starting points, and degrader-inspired antiviral strategies without overclaiming what any single ligand can become.</p>
+    </section>
+
+    <section class="page-card page-section">
+        <div class="section-heading">
+            <span class="page-kicker">Origin and scientific foundation</span>
+            <h2 class="page-title">From antiviral degrader concepts to linkable ligand analysis</h2>
+            <p class="page-subtitle">V-LiSEMOD grew from the need to inspect viral inhibitor co-crystal structures for solvent-exposed, modifiable atoms.</p>
+        </div>
+        <p>V-LiSEMOD was motivated in part by the structure-guided questions raised during work on “Targeted degrader technologies as prospective SARS-CoV-2 therapies” in <em>Drug Discovery Today</em>. That review examined how known viral inhibitor co-crystal structures, especially SARS-CoV-2 3CLpro inhibitor complexes, could inform targeted protein degradation strategies.</p>
+        <p>A central lesson from that work was that an inhibitor is not automatically a useful warhead. To reason about degrader potential, researchers need to ask whether the bound ligand presents solvent-accessible atoms, plausible linker attachment vectors, and a protein environment compatible with downstream degrader design. V-LiSEMOD turns that recurring manual inspection problem into a searchable workflow across viral protein-ligand structures.</p>
+        <p><a class="external-link" href="https://www.sciencedirect.com/science/article/abs/pii/S135964462300363X" target="_blank" rel="noopener noreferrer">Khurshid, Schulz, Hu, Snowden, Reynolds, and Schürer. Targeted degrader technologies as prospective SARS-CoV-2 therapies. <em>Drug Discovery Today</em>, 2024. DOI: 10.1016/j.drudis.2023.103847.</a></p>
+    </section>
+
+    <section class="page-card page-section">
+        <div class="section-heading">
+            <h2 class="page-title">What V-LiSEMOD does</h2>
+        </div>
+        <div class="tool-grid">
+            <article class="tool-card feature-card">
+                <h3>Curated viral structure exploration</h3>
+                <p>Select virus, PDB structure, ligand, and chain or residue context from the curated workspace.</p>
+            </article>
+            <article class="tool-card feature-card">
+                <h3>Solvent-exposed moiety analysis</h3>
+                <p>Highlight accessible atoms using SASA and Shrake-Rupley-informed logic to support solvent-exposed vector reasoning.</p>
+            </article>
+            <article class="tool-card feature-card">
+                <h3>PyMOL-ready session generation</h3>
+                <p>Export 3D sessions with ligand, binding pocket, exposure, and functional group annotations ready for inspection.</p>
+            </article>
+            <article class="tool-card feature-card">
+                <h3>Ligand comparison</h3>
+                <p>Compare interaction fingerprints across multiple PDB contexts to understand structure-dependent behavior.</p>
+            </article>
+            <article class="tool-card feature-card">
+                <h3>Warhead and linker-vector reasoning</h3>
+                <p>Inspect ligand atoms that remain exposed in the bound pose and evaluate whether they may serve as chemically plausible modification vectors for downstream design.</p>
+            </article>
+            <article class="tool-card feature-card feature-card-external">
+                <h3>Degrader-aware handoff</h3>
+                <p>Move promising ligands and warhead candidates into PROTAC Builder or companion tools when design work progresses downstream.</p>
+            </article>
+        </div>
+    </section>
+
+    <section class="page-card page-section">
+        <div class="section-heading">
+            <h2 class="page-title">Scientific motivation</h2>
+        </div>
+        <p>Structure-guided antiviral design benefits from understanding which ligand atoms are buried, which remain solvent exposed, and where modification vectors may exist. V-LiSEMOD is designed to support that reasoning by keeping protein-ligand interaction context close to solvent-exposure analysis and structural export workflows.</p>
+        <p>In practical terms, V-LiSEMOD focuses on the question that repeatedly appears when considering inhibitor-derived warheads: which atoms remain exposed after binding, and could any of those atoms support modification without destroying the binding pose? The platform therefore pairs ligand exposure maps, interaction diagrams, and structure-specific context so users can reason about linkable positions before moving into PROTAC Builder or other degrader-design tools.</p>
+        <p>These views can help prioritize candidates for medicinal chemistry follow-up, fragmentable ligand analysis, and warhead discovery efforts. They may also reveal chemically useful vectors for linker attachment, conjugation, or other modification strategies, while recognizing that solvent exposure alone does not guarantee downstream compatibility with degrader design.</p>
+    </section>
+
+    <section class="page-card page-section">
+        <div class="section-heading">
+            <h2 class="page-title">Connected ecosystem</h2>
+            <p class="page-subtitle">V-LiSEMOD sits upstream of a broader structure-guided molecular design toolkit.</p>
+        </div>
+        <div class="tool-grid">
+            <article class="tool-card">
+                <h3><a href="https://warheadhunter.com" target="_blank" rel="noopener noreferrer">Warhead Hunter</a></h3>
+                <p>Identify and evaluate warhead-like ligands and fragmentable chemotypes for follow-on molecular design.</p>
+            </article>
+            <article class="tool-card">
+                <h3><a href="https://e3ligandalyzer.com" target="_blank" rel="noopener noreferrer">E3 Ligandalyzer</a></h3>
+                <p>Explore E3 ligase recruiter structures, ligandability, scaffold context, and attachment-vector opportunities.</p>
+            </article>
+            <article class="tool-card feature-card-external">
+                <h3><a href="https://protacbuilder.com" target="_blank" rel="noopener noreferrer">PROTAC Builder</a></h3>
+                <p>Continue from ligand and warhead analysis into standalone degrader design workflows.</p>
+            </article>
+        </div>
+    </section>
+
+    <section class="page-card page-section">
+        <div class="section-heading">
+            <h2 class="page-title">Responsible use and limitations</h2>
+        </div>
+        <p>V-LiSEMOD is an exploratory research tool. Solvent exposure, interaction patterns, and chain-specific structural context are useful for hypothesis generation, but they remain context dependent and should be interpreted alongside broader structural, computational, and experimental evidence.</p>
+        <p>Generated sessions, charts, and comparative views are intended to support structure-guided reasoning rather than replace medicinal chemistry validation, docking, biophysical assays, or biological testing.</p>
+    </section>
+
+    <section class="page-card page-section">
+        <div class="section-heading">
+            <h2 class="page-title">Start exploring</h2>
+        </div>
+        <div class="action-row">
+            <a class="button-primary" href="{{ url_for('index') }}">Start a V-LiSEMOD session</a>
+            <a class="button-secondary" href="{{ url_for('compare_ligands') }}">Compare ligands</a>
+            <a class="button-primary external-link" href="https://protacbuilder.com/builder" target="_blank" rel="noopener noreferrer">Open PROTAC Builder ↗</a>
+        </div>
+    </section>
+{% endblock %}

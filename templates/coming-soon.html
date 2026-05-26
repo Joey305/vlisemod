@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}V-LiSEMOD | Coming Soon{% endblock %}
+
+{% block head_extra %}
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet" />
+    <style>
+        .coming-soon-page .button-table {
+            width: 100%;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 14px;
+        }
+
+        .coming-soon-page .button-table button {
+            width: 100%;
+        }
+
+        .modal-img-container {
+            width: 150px;
+            height: 150px;
+            overflow: hidden;
+            border-radius: 50%;
+            margin: 0 auto 20px;
+        }
+
+        .modal-img-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .modal-body p {
+            color: black;
+            font-size: 1.1rem;
+        }
+
+        .modal.fade .modal-dialog {
+            transform: translateY(-50px);
+            opacity: 0;
+            transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+        }
+
+        .modal.show .modal-dialog {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    </style>
+{% endblock %}
+
+{% block body_class %}app-shell coming-soon-page{% endblock %}
+
+{% block content %}
+    <section class="page-intro">
+        <span class="page-kicker">Roadmap</span>
+        <h1>More V-LiSEMOD capabilities are on deck.</h1>
+        <p>This preview page tracks planned V-LiSEMOD enhancements around PyMOL workflows, protein querying, and additional virology-focused discovery tools.</p>
+    </section>
+
+    <section class="page-card">
+        <div class="tool-grid button-table">
+            <button id="pymol-integration-button" onclick="openModal('pymol_int.png', 'PyMOL Integration', 'This feature integrates PyMOL for visualizing protein-ligand complexes with a focus on solvent exposure.')">PyMOL Integration</button>
+            <button onclick="openModal('protein_query.png', 'Protein Querying', 'This feature allows you to query and analyze protein structures in the V-LiSEMOD database.', true)">Protein Querying</button>
+            <button onclick="openModal('virus.png', 'Additional Viruses', 'More viral structures will be added to expand the scope of V-LiSEMOD.')">Additional Viruses</button>
+            <button onclick="openModal('fragment.png', 'Fragment Identification', 'This feature helps identify key fragments in ligands for drug design.')">Fragment Identification</button>
+            <button onclick="openModal('insilico.png', 'In Silico Incorporation', 'Simulate the interaction of compounds and identify potential leads using in silico tools.')">In Silico Incorporation</button>
+            <button onclick="window.location.href='{{ url_for('index') }}'">Back to Live Tools</button>
+        </div>
+    </section>
+
+    <div class="modal fade" id="featureModal" tabindex="-1" role="dialog" aria-labelledby="featureModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="featureModalLabel">Header</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body text-center">
+                    <div class="modal-img-container">
+                        <img src="" id="modalImage" alt="Feature Image">
+                    </div>
+                    <p id="modalText">Add text here...</p>
+                    <div id="modalExtraButton" class="mt-4"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        function openModal(imageSrc, headerText, descriptionText, showProteinButton = false) {
+            document.getElementById('modalImage').src = `static/images/${imageSrc}`;
+            document.getElementById('featureModalLabel').innerText = headerText;
+            document.getElementById('modalText').innerText = descriptionText;
+
+            if (showProteinButton) {
+                document.getElementById('modalExtraButton').innerHTML = `
+                    <a href="{{ url_for('query_protein_virus_page') }}">
+                        <button class="btn btn-primary">Try the Protein Query</button>
+                    </a>`;
+            } else {
+                document.getElementById('modalExtraButton').innerHTML = '';
+            }
+
+            $('#featureModal').modal('show');
+        }
+    </script>
+{% endblock %}

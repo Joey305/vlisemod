@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}V-LiSEMOD | Page Not Found{% endblock %}
+
+{% block head_extra %}
+  <meta http-equiv="refresh" content="4;url={{ url_for('index') }}">
+{% endblock %}
+
+{% block content %}
+  <section class="page-intro">
+    <span class="page-kicker">Navigation Error</span>
+    <h1>That V-LiSEMOD page could not be found.</h1>
+    <p>You will be redirected to the homepage shortly. If you meant to continue exploring PROTAC design, use the external PROTAC Builder from the navigation bar.</p>
+  </section>
+
+  <section class="empty-state">
+    <h2>404: Page not found</h2>
+    <p>We could not match this URL to an active V-LiSEMOD page.</p>
+    <div class="action-row" style="justify-content: center; margin-top: 18px;">
+      <a class="button-primary" href="{{ url_for('index') }}">Return Home</a>
+      <a class="button-secondary" href="{{ url_for('index') }}">Back to Home</a>
+    </div>
+  </section>
+{% endblock %}

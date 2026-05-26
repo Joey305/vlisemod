@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>V-LiSEMOD: Viral Ligand Solvent Exposed MOiety Database</title>
+    <link rel="icon" href="/static/images/favicon.png" type="image/png">
+
+    <!-- Add Select2 CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-beta.1/css/select2.min.css" rel="stylesheet" />
+    <style>
+        /* Cyberpunk background */
+        body {
+            font-family: 'Orbitron', sans-serif; /* Futuristic font */
+            background: linear-gradient(135deg, #1f1f1f 0%, #0c0c0c 100%);
+            color: #00ffcc;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            min-height: 100vh;
+            background-attachment: fixed;
+        }
+
+        /* Cyberpunk-style title */
+        h1 {
+            color: #00ffcc;
+            font-size: 4em;
+            text-shadow: 0 0 20px #00ffcc, 0 0 30px #00ffff, 0 0 40px #00ffcc;
+            margin-bottom: 20px;
+            text-align: center;
+            letter-spacing: 2px;
+        }
+
+        /* Title for V-LiSEMEN */
+        .main-title {
+            font-size: 5em;
+            font-weight: bold;
+            color: #ff00ff;
+            text-shadow: 0 0 30px #ff00ff, 0 0 40px #ff00ff, 0 0 50px #ff00ff;
+        }
+
+        /* Neon glowing form */
+        form {
+            max-width: 600px;
+            width: 100%;
+            padding: 30px;
+            border: 2px solid #00ffcc;
+            border-radius: 20px;
+            background-color: rgba(20, 20, 20, 0.9);
+            box-shadow: 0px 0px 30px #00ffcc, 0px 0px 40px #00ffff;
+        }
+
+        label {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #00ffcc;
+            display: block;
+            margin-bottom: 10px;
+            text-align: left;
+        }
+
+        select {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.3em;
+            margin-bottom: 20px;
+            border: 2px solid #00ffcc;
+            border-radius: 10px;
+            background-color: #333333;
+            color: #00ffcc;
+            box-shadow: 0 0 20px #00ffcc, inset 0 0 15px #00ffff;
+            transition: all 0.3s ease;
+        }
+
+        select:focus {
+            border-color: #ff00ff;
+            box-shadow: 0 0 30px #ff00ff, inset 0 0 20px #ff00ff;
+            outline: none;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background-color: #00ffcc;
+            color: black;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.5em;
+            cursor: pointer;
+            box-shadow: 0 0 20px #00ffcc, 0 0 30px #00ffcc, inset 0 0 15px #00ffff;
+            transition: all 0.3s ease;
+        }
+
+        button:disabled {
+            background-color: #333333;
+            color: #555555;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+
+        button:hover:not(:disabled) {
+            background-color: #ff00ff;
+            box-shadow: 0 0 40px #ff00ff, 0 0 50px #ff00ff, inset 0 0 20px #ff00ff;
+            transform: scale(1.05);
+        }
+
+        /* Neon Glow Animation for unlocking */
+        .unlock {
+            animation: unlockAnimation 0.5s forwards;
+        }
+
+        @keyframes unlockAnimation {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* Dropdowns: Neon Disabled State */
+        select:disabled {
+            background-color: #1a1a1a;
+            border-color: #555555;
+            color: #555555;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+
+        .select2-container--default .select2-selection--single {
+            height: 45px;
+            font-size: 1.2em;
+            background-color: #333333;
+            border: 2px solid #00ffcc;
+            color: #00ffcc;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 45px;
+            color: #00ffcc;
+        }
+    </style>
+</head>
+<body>
+    <h1>
+        <span class="main-title">V-LiSEMEN</span><br>
+        Viral Ligand Solvent Exposed Moiety Evaluation and Mapping
+    </h1>
+    
+    <form id="pymolForm" action="/generate_pymol_session" method="POST">
+        <label for="virus">Select Virus:</label>
+        <select id="virus" name="virus" class="searchable-select" required>
+            <option value="">--Select Virus--</option>
+        </select>
+
+        <label for="pdb_code">Select PDB Code:</label>
+        <select id="pdb_code" name="pdb_code" class="searchable-select" required disabled>
+            <option value="">--Select PDB Code--</option>
+        </select>
+
+        <label for="ligand">Select Ligand:</label>
+        <select id="ligand" name="ligand" class="searchable-select" required disabled>
+            <option value="">--Select Ligand--</option>
+        </select>
+
+        <button type="submit" disabled>Generate PyMOL Session</button>
+    </form>
+
+    <!-- Add jQuery and Select2 JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-beta.1/js/select2.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            $('.searchable-select').select2();
+
+            // Initially load the virus options
+            fetch('/get_viruses')
+                .then(response => response.json())
+                .then(data => {
+                    const virusSelect = $('#virus');
+                    data.viruses.forEach(virus => {
+                        const option = new Option(virus, virus);
+                        virusSelect.append(option);
+                    });
+                });
+        });
+
+        $('#virus').on('change', function() {
+            const virusName = this.value;
+            if (virusName) {
+                fetch(`/get_pdb_codes/${virusName}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const pdbSelect = $('#pdb_code');
+                        pdbSelect.html('<option value="">--Select PDB Code--</option>');
+                        data.pdb_codes.forEach(pdb => {
+                            const option = new Option(pdb, pdb);
+                            pdbSelect.append(option);
+                        });
+                        pdbSelect.prop('disabled', false).addClass('unlock');
+                    });
+            } else {
+                $('#pdb_code').prop('disabled', true).removeClass('unlock');
+                $('#ligand').prop('disabled', true).removeClass('unlock');
+            }
+        });
+
+        $('#pdb_code').on('change', function() {
+            const pdbCode = this.value;
+            if (pdbCode) {
+                fetch(`/get_ligands/${pdbCode}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const ligandSelect = $('#ligand');
+                        ligandSelect.html('<option value="">--Select Ligand--</option>');
+                        data.ligands.forEach(ligand => {
+                            const option = new Option(ligand, ligand);
+                            ligandSelect.append(option);
+                        });
+                        ligandSelect.prop('disabled', false).addClass('unlock');
+                    });
+            } else {
+                $('#ligand').prop('disabled', true).removeClass('unlock');
+            }
+        });
+
+        $('#ligand').on('change', function() {
+            const submitButton = $('button[type="submit"]');
+            submitButton.prop('disabled', !this.value).addClass('unlock');
+        });
+    </script>
+</body>
+</html>

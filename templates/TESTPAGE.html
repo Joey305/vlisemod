@@ -1,0 +1,1090 @@
+{% extends "base.html" %}
+
+{% block title %}V-LiSEMOD | Ligand Comparison Lab{% endblock %}
+
+{% block body_class %}app-shell comparison-page{% endblock %}
+
+{% block head_extra %}
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-beta.1/css/select2.min.css" rel="stylesheet" />
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-beta.1/js/select2.min.js"></script>
+
+        <style>
+            /* General styling */
+            .comparison-page {
+                font-family: Arial, sans-serif;
+                color: #005030;
+            }
+
+            h1 {
+                text-align: center;
+                color: #005030;
+                font-size: 2.5em;
+                margin-bottom: 20px;
+            }
+
+            .form-container {
+                max-width: 600px;
+                width: 100%;
+                padding: 30px;
+                border-radius: 20px;
+                background-color: rgba(255, 255, 255, 0.9);
+                box-shadow: 0px 6px 20px rgba(0, 0, 0, 0.15);
+                margin-bottom: 30px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+            }
+
+            label {
+                font-size: 1.4em;
+                font-weight: bold;
+                color: #005030;
+                margin-bottom: 10px;
+                text-align: center;
+                width: 100%;
+            }
+
+            .checkbox-container {
+                display: grid;
+                grid-template-columns: repeat(6, 1fr); /* 6 items per row */
+                gap: 10px; /* Space between the items */
+                margin-bottom: 20px;
+            }
+
+            .checkbox-item {
+                position: relative; /* Ensure the label is the reference point for the absolute positioning */
+                background-color: #005030;
+                color: white;
+                padding: 10px;
+                border-radius: 10px;
+                transition: background-color 0.3s, transform 0.3s;
+                cursor: pointer;
+                text-align: center;
+                font-size: 0.9em; /* Smaller font size to save space */
+            }
+
+            .checkbox-item:hover {
+                background-color: #d85d16;
+            }
+
+            .checkbox-item input[type="checkbox"] {
+                display: none; /* Hide the checkbox */
+            }
+
+            .checkbox-item label {
+                cursor: pointer;
+                color: inherit;
+                width: 100%;
+                display: block;
+            }
+
+            .checkbox-item input[type="checkbox"]:checked + label {
+                color: #F47321;
+                transform: scale(1.05);
+                position: relative; /* Allow pseudo-element positioning relative to label */
+            }
+
+            /* Add image when checked */
+            .checkbox-item input[type="checkbox"]:checked + label::after {
+                content: '';
+                background-image: url('/static/images/umlogo.png'); /* Path to your logo */
+                background-size: contain;
+                background-repeat: no-repeat;
+                position: absolute;
+                top: 94%;
+                left: 7%;
+                width: 20px;  /* Adjust the size of the logo */
+                height: 20px; /* Adjust the size of the logo */
+            }
+
+            button {
+                width: 100%;
+                padding: 15px;
+                background-color: #F47321;
+                color: white;
+                border: none;
+                border-radius: 10px;
+                font-size: 1.5em;
+                cursor: pointer;
+                transition: background-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+                margin-top: 10px;
+            }
+
+            button:disabled {
+                background-color: #cccccc;
+                cursor: not-allowed;
+            }
+
+            button:hover:not(:disabled) {
+                background-color: #d85d16;
+                transform: scale(1.05);
+                box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.2);
+            }
+
+            /* Hide the results container initially */
+            #results-container.hidden {
+                display: none;
+            }
+
+            #results-container {
+                display: flex;
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: flex-start;
+                width: 100%;
+                max-width: 1200px;
+                margin-top: 20px;
+            }
+
+            #results-container > div {
+                flex: 1;
+                padding: 10px;
+            }
+
+            #left-column {
+                display: flex;
+                flex-direction: column; /* Stack content vertically */
+                justify-content: center; /* Vertically center content */
+                align-items: center; /* Horizontally center content */
+                width: 100%; /* Full width for flexibility */
+                max-width: 600px; /* Ensure alignment with the right column */
+                padding: 10px;
+                background-color: transparent;
+                box-shadow: none;
+                border-radius: 0;
+            }
+
+            /* Molecule container styling */
+            #molecule_container {
+                max-width: 600px;
+                text-align: center;
+                background-color: transparent;
+                padding: 0;
+                box-shadow: none;
+                border-radius: 0;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                position: relative;
+                margin-bottom: 20px; /* Add space below the molecule container */
+            }
+
+            /* Carousel controls */
+            .carousel-controls {
+                display: flex;
+                justify-content: center; /* Center the buttons */
+                gap: 10px; /* Space between buttons */
+                width: 100%; /* Ensure the buttons take up full width */
+                margin-top: 20px; /* Space above the buttons */
+            }
+
+            .carousel-controls button {
+                padding: 10px 15px;
+                font-size: 20px;
+                background-color: #005030;
+                color: white;
+                border: none;
+                border-radius: 10px;
+                cursor: pointer;
+            }
+
+            .carousel-controls button:hover {
+                background-color: #d85d16;
+            }
+
+            /* Carousel container */
+            .carousel-container {
+                max-width: 600px;
+                background-color: transparent;
+                padding: 0;
+                box-shadow: none;
+                border-radius: 0;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100%;
+            }
+
+            /* Carousel graph */
+            .carousel-graph {
+                width: 100%;
+                max-width: 100%;
+                height: auto;
+                display: none; /* Hidden by default */
+                margin: auto;
+            }
+
+            .carousel-graph.active {
+                display: block; /* Show only active chart */
+            }
+
+            /* Modal styling */
+            .modal {
+                display: none; /* Hidden by default */
+                position: fixed; /* Stay in place */
+                z-index: 1000; /* Sit on top */
+                padding-top: 60px; /* Location of the box */
+                left: 0;
+                top: 0;
+                width: 100%; /* Full width */
+                height: 100%; /* Full height */
+                overflow: auto; /* Enable scroll if needed */
+                background-color: rgba(0, 0, 0, 0.4); /* Black with opacity */
+            }
+
+            .modal-content {
+                background-color: #fefefe;
+                margin: 5% auto; /* 5% from the top and centered */
+                padding: 20px;
+                border: 1px solid #888;
+                width: 80%; /* Could be more or less, depending on the screen size */
+                max-width: 600px;
+                border-radius: 10px;
+            }
+
+            .close {
+                color: #aaa;
+                float: right;
+                font-size: 28px;
+                font-weight: bold;
+            }
+
+            .close:hover,
+            .close:focus {
+                color: black;
+                text-decoration: none;
+                cursor: pointer;
+            }
+
+
+            .tooltip-container {
+                position: relative;
+                display: inline-block;
+            }
+
+            .tooltip-container .tooltip-text {
+                visibility: hidden;
+                width: 200px;
+                background-color: #333;
+                color: #fff;
+                text-align: center;
+                padding: 5px 0;
+                border-radius: 5px;
+                position: absolute;
+                z-index: 1;
+                bottom: 125%; /* Position above the element */
+                left: 50%;
+                margin-left: -100px;
+                opacity: 0;
+                transition: opacity 0.3s;
+            }
+
+            .tooltip-container:hover .tooltip-text {
+                visibility: visible;
+                opacity: 1;
+            }
+
+            /* Floating Button Container */
+            #floating-warhead-container {
+                position: fixed;
+                bottom: 20px;
+                left: 20px;
+                z-index: 1000;
+                display: none; /* Initially hidden */
+            }
+
+            /* Floating Button */
+            #floating-warhead-button {
+                width: 50px;
+                height: 50px;
+                background-color: #F47321;
+                color: white;
+                font-size: 24px;
+                text-align: center;
+                line-height: 50px;
+                border-radius: 50%;
+                cursor: pointer;
+                transition: transform 0.3s ease, box-shadow 0.3s ease;
+            }
+
+            #floating-warhead-button:hover {
+                transform: scale(1.2);
+                box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.2);
+            }
+
+            /* Warhead Popup (Hidden by Default) */
+            #floating-warhead-popup {
+                display: none;
+                position: absolute;
+                bottom: 60px;
+                left: 50%;
+                transform: translateX(-50%);
+                background-color: white;
+                padding: 10px;
+                border-radius: 8px;
+                box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.2);
+                text-align: center;
+            }
+
+            /* Warhead Button Inside Popup */
+            #floatingChooseWarheadButton {
+                background-color: #005030;
+                color: white;
+                padding: 10px;
+                border: none;
+                border-radius: 8px;
+                cursor: pointer;
+                font-size: 1em;
+                transition: background-color 0.3s ease, transform 0.3s ease;
+            }
+
+            #floatingChooseWarheadButton:hover {
+                background-color: #d85d16;
+                transform: scale(1.05);
+            }
+
+
+
+        </style>
+{% endblock %}
+
+{% block content %}
+        <section class="page-intro">
+            <span class="page-kicker">Ligand Comparison Lab</span>
+            <h1>Test and compare ligand interaction views.</h1>
+            <p>This advanced comparison page stays inside V-LiSEMOD for viral ligand analysis, while PROTAC Builder remains an external next-step tool for degrader construction.</p>
+        </section>
+        <section class="form-container form-card page-section">
+            <h2 class="page-title">Compare Ligands Across PDB Structures</h2>
+            <p class="page-subtitle">Experimental lab view for comparison workflows, preserved for testing while matching the shared V-LiSEMOD shell.</p>
+            <form id="ligandQueryForm">
+                <label for="ligand">Select Ligand (3-letter code or Synonym):</label>
+                <select id="ligand" name="ligand" class="searchable-select" required>
+                    <option value="">--Select Ligand--</option>
+                </select>
+
+                <label for="pdb_residues">Select Multiple PDB Structures:</label>
+                <div class="checkbox-container" id="pdb_residues_grid">
+                    <!-- Checkbox items will be dynamically added here -->
+                </div>
+
+                <button type="button" id="showComparisonButton" disabled>Compare Ligand Interactions</button>
+            </form>
+
+            <div class="action-row centered-row" style="margin-top: 18px;">
+                <a class="button-secondary" href="{{ url_for('index') }}">Back to Main Page</a>
+                <a class="button-secondary" href="{{ url_for('query_protein_virus_page') }}">Try the Protein Query</a>
+                <a class="button-primary external-link" href="https://protacbuilder.com/builder" target="_blank" rel="noopener noreferrer">Open PROTAC Builder</a>
+            </div>
+        </section>
+
+        <!-- Modal structure for displaying the ligand -->
+        <div id="ligandModal" class="modal hidden">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <div id="ligandModalContent"></div>
+                <!-- Add the Choose as Warhead button -->
+                <button id="chooseWarheadButton" class="btn btn-primary">
+                    Choose as Warhead
+                </button>
+            </div>
+        </div>
+        
+
+        <!-- Results container to hold both molecule and carousel -->
+        <section id="results-container" class="hidden page-card page-section">
+            <!-- Left Column -->
+            <div id="left-column">
+                <div id="molecule_container"></div>
+                <div class="carousel-controls">
+                    <button id="prevChart">Previous</button>
+                    <button id="nextChart">Next</button>
+                </div>
+            </div>
+
+            <!-- Right Column -->
+            <div class="carousel-container">
+                <div id="donutChart" class="carousel-graph"></div>
+                <div id="scatterPlot" class="carousel-graph"></div>
+                <div id="barChart" class="carousel-graph"></div>
+                <div id="atomBarChart" class="carousel-graph"></div>
+            </div>
+        </section>
+        </script>
+        <!-- Chatbot HTML -->
+        <div id="chatbot-container">
+        <div id="chatbot-icon" onclick="toggleChatbot()">💬</div>
+        <div id="chatbot-popup">
+            <iframe id="chatbot-frame" title="Chatbot" style="display:none;"></iframe>
+        </div>
+        </div>
+
+        <!-- Floating Button (Initially Hidden) -->
+        <div id="floating-warhead-container">
+            <div id="floating-warhead-button">
+                🧪
+            </div>
+            <div id="floating-warhead-popup">
+                <button id="floatingChooseWarheadButton">Choose Ligand as Warhead</button>
+            </div>
+        </div>
+
+
+        <script>
+
+        let isDrugAppAvailable = false;
+
+        async function checkDrugApp() {
+            try {
+                const response = await fetch("/drugapp/", { method: "HEAD" });
+                if (response.ok) {
+                    isDrugAppAvailable = true;
+                }
+            } catch (error) {
+                console.warn("Error checking DrugApp availability:", error);
+            }
+        }
+
+        checkDrugApp();
+
+        function toggleChatbot() {
+            const chatbotPopup = document.getElementById("chatbot-popup");
+            const chatbotFrame = document.getElementById("chatbot-frame");
+            chatbotFrame.src = window.location.origin + "/drugapp/";
+
+            if (chatbotPopup.style.display === "none" || chatbotPopup.style.display === "") {
+                chatbotFrame.style.display = isDrugAppAvailable ? "block" : "none";
+                chatbotPopup.style.display = "block";
+            } else {
+                chatbotPopup.style.display = "none";
+            }
+        }
+        </script>
+
+        <script>
+            let selectedLigandData = {};
+
+
+            let originalSVG = ''; // Store the original SVG for resetting the molecule container
+            let tooltipVisible = false; // Global flag to prevent multiple tooltips
+            let hoverTimeout;  // Global variable to store hover timeout
+
+            $(document).ready(function() {
+                // Initialize Select2 for searchable dropdowns
+                $('.searchable-select').select2();
+
+                // Load ligand options
+                loadLigandOptions();
+
+                // Event handler for ligand selection
+                $('#ligand').change(function() {
+                    const ligand_id = $(this).val();
+                    hideCarousel();
+                    if (ligand_id) {
+                        fetchMoleculeAndShowModal(ligand_id);
+                        fetchPDBMappings(ligand_id);
+                    } else {
+                        $('#molecule_container').html('');
+                        $('#pdb_residues_grid').empty();
+                    }
+                });
+
+                // Event handler for comparison button click
+                $('#showComparisonButton').on('click', function() {
+                    const selectedLigand = $('#ligand').val();
+                    const selectedPdbs = $('input[name="pdb_residues"]:checked').map(function() {
+                        return this.value;
+                    }).get();
+
+                    if (selectedLigand && selectedPdbs.length > 0) {
+                        compareLigandInteractions(selectedLigand, selectedPdbs);
+                    } else {
+                        alert('Please select a ligand and PDB files.');
+                    }
+                });
+
+                // Load ligand options
+                function loadLigandOptions() {
+                    fetch('/get_ligands_with_synonyms')
+                        .then(response => response.json())
+                        .then(data => {
+                            const ligandSelect = $('#ligand');
+                            const uniqueLigands = new Set();
+                            ligandSelect.empty();
+                            ligandSelect.append('<option value="">--Select Ligand or Synonym--</option>');
+
+                            data.forEach(item => {
+                                if (!uniqueLigands.has(item.ligand_code)) {
+                                    uniqueLigands.add(item.ligand_code);
+                                    ligandSelect.append(`<option value="${item.ligand_code}">${item.ligand_code}</option>`);
+                                }
+                                if (item.synonym && !uniqueLigands.has(item.synonym)) {
+                                    uniqueLigands.add(item.synonym);
+                                    ligandSelect.append(`<option value="${item.ligand_code}">${item.synonym} (Synonym for ${item.ligand_code})</option>`);
+                                }
+                            });
+                        })
+                        .catch(error => console.error('Error fetching ligands with synonyms:', error));
+                }
+
+                // Generate green shades dynamically based on number of unique viruses
+                function generateGreenShades(numColors) {
+                    const baseHue = 120;  // Hue for green
+                    const saturation = 80;  // Saturation for vivid colors
+                    const startLightness = 20;  // Starting lightness percentage
+                    const lightnessStep = 2;  // Step size for increasing lightness
+
+                    const colors = [];
+                    for (let i = 0; i < numColors; i++) {
+                        let lightness = startLightness + (i * lightnessStep);
+                        if (lightness > 90) {
+                            lightness = 90;
+                        }
+                        colors.push(`hsl(${baseHue}, ${saturation}%, ${lightness}%)`);
+                    }
+                    return colors;
+                }
+
+                // Fetch PDB mappings for the selected ligand and apply shades of green for different viruses
+                function fetchPDBMappings(ligand_id) {
+                    fetch(`/get_pdb_mapping/${ligand_id}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            const checkboxContainer = $('#pdb_residues_grid');
+                            checkboxContainer.empty();
+
+                            // Get unique virus names
+                            const uniqueViruses = [...new Set(Object.values(data.pdb_mapping).map(pdbInfo => pdbInfo.virus_name))];
+                            const virusColors = generateGreenShades(uniqueViruses.length);
+
+                            const virusColorMap = {};
+                            uniqueViruses.forEach((virus, index) => {
+                                virusColorMap[virus] = virusColors[index];
+                            });
+
+                            Object.keys(data.pdb_mapping).forEach(uniqueKey => {
+                                const pdbInfo = data.pdb_mapping[uniqueKey];
+                                const option = `PDB: ${pdbInfo.pdb_id}, Res: ${pdbInfo.ligand_id}, Chain: ${pdbInfo.chain}`;
+                                const virusColor = virusColorMap[pdbInfo.virus_name] || '#005030';  // Default green
+
+                                const checkbox = `
+                                    <div class="checkbox-item tooltip-container" style="background-color: ${virusColor};">
+                                        <input type="checkbox" name="pdb_residues" value="${uniqueKey}" id="${pdbInfo.pdb_id}" />
+                                        <label for="${pdbInfo.pdb_id}">${option}</label>
+                                        <span class="tooltip-text">Virus: ${pdbInfo.virus_name}</span>
+                                    </div>`;
+                                checkboxContainer.append(checkbox);
+
+                                // Hover event for tooltips with a delay
+                                $('.tooltip-container').hover(
+                                    function () {
+                                        clearTimeout(hoverTimeout); // Clear any previous hover timeout
+                                        const tooltip = $(this).find('.tooltip-text');
+                                        if (!tooltipVisible) {
+                                            hoverTimeout = setTimeout(() => {
+                                                tooltip.css('visibility', 'visible').css('opacity', 1);
+                                                tooltipVisible = true;
+                                            }, 1000);  // 1-second delay
+                                        }
+                                    },
+                                    function () {
+                                        clearTimeout(hoverTimeout); // Clear the hover timeout immediately
+                                        const tooltip = $(this).find('.tooltip-text');
+                                        tooltip.css('visibility', 'hidden').css('opacity', 0);
+                                        tooltipVisible = false;
+                                    }
+                                );
+                            });
+
+                            $('#showComparisonButton').prop('disabled', false); // Enable the button
+                        })
+                        .catch(error => console.error('Error fetching PDB mappings:', error));
+                }
+                // Fetch and show the ligand SVG
+                // Fetch and show the ligand SVG
+                function fetchMoleculeAndShowModal(ligand_id) {
+                    fetch(`/get_smiles_svg/${ligand_id}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.svg) {
+                                $('#ligandModalContent').html(data.svg);
+                                originalSVG = data.svg;
+                                $('#molecule_container').html(originalSVG);
+
+                                // ✅ Store ligand details so they can be accessed later
+                                selectedLigandData = {
+                                    ligand: ligand_id,
+                                    
+                                };
+
+                                console.log("✅ Stored Ligand Data:", selectedLigandData);
+                                showModal();
+                            } else {
+                                console.error('SVG not available:', data.error);
+                            }
+                        })
+                        .catch(error => console.error('Error fetching SVG:', error));
+    }
+
+                // Modal handling
+                function showModal() {
+                    const modal = document.getElementById("ligandModal");
+                    modal.style.display = "block";
+                }
+
+                const closeBtn = document.getElementsByClassName("close")[0];
+                closeBtn.onclick = function() {
+                    document.getElementById("ligandModal").style.display = "none";
+                };
+                window.onclick = function(event) {
+                    const modal = document.getElementById("ligandModal");
+                    if (event.target === modal) {
+                        modal.style.display = "none";
+                    }
+                };
+
+                // Compare ligand interactions and generate charts
+                function compareLigandInteractions(ligand_id, pdb_ids) {
+                    fetch('/compare_ligand_interactions', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ ligand: ligand_id, pdb_ids: pdb_ids })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        generateDonutChart(data.interactions_data);
+                        generateScatterPlot(data.interactions_data);
+                        generateStackedBarChart(data.interactions_data);
+                        generateAtomBarChart(data.smiles_interactions_data);
+
+                        displayCarousel(0);
+                        $('.carousel-controls').addClass('visible');
+                        $('#results-container').removeClass('hidden');
+                        $('html, body').animate({ scrollTop: $('#results-container').offset().top }, 1000);
+                    })
+                    .catch(error => console.error('Error comparing ligand interactions:', error));
+                }
+
+                // Hide carousel
+                function hideCarousel() {
+                    $('.carousel-graph').removeClass('active');
+                    $('.carousel-controls').removeClass('visible');
+                    $('#results-container').addClass('hidden');
+                }
+                // Generate carousel navigation
+                let currentChartIndex = 0;
+                const charts = ['donutChart', 'scatterPlot', 'barChart', 'atomBarChart'];
+        
+                function displayCarousel(index) {
+                    $('.carousel-graph').removeClass('active');
+                    $('#' + charts[index]).addClass('active');
+                }
+        
+                $('#nextChart').on('click', function() {
+                    currentChartIndex = (currentChartIndex + 1) % charts.length;
+                    displayCarousel(currentChartIndex);
+                });
+        
+                $('#prevChart').on('click', function() {
+                    currentChartIndex = (currentChartIndex - 1 + charts.length) % charts.length;
+                    displayCarousel(currentChartIndex);
+                });
+        
+                // Donut chart
+                function generateDonutChart(interactions_data) {
+                    let labels = [];
+                    let values = [];
+
+                    const interactionMergeMap = {
+                        'weak_polar': 'polar',
+                        'vdw_clash': 'vdw',
+                        'weak_hbond': 'hbond'
+                    };
+
+                    interactions_data.forEach(pdbData => {
+                        pdbData.interactions.forEach(interaction => {
+                            let contact = interaction.Contact;
+                            contact = interactionMergeMap[contact] || contact; // Merge interactions
+
+                            if (!labels.includes(contact)) {
+                                labels.push(contact);
+                                values.push(1);
+                            } else {
+                                let index = labels.indexOf(contact);
+                                values[index] += 1;
+                            }
+                        });
+                    });
+
+                    let data = [{
+                        type: 'pie',
+                        hole: 0.4,
+                        labels: labels,
+                        values: values,
+                        textinfo: 'label+percent',
+                        insidetextorientation: 'radial'
+                    }];
+
+                    let layout = {
+                        title: 'Interaction Types Distribution',
+                        height: 400,
+                        width: 500
+                    };
+
+                    Plotly.newPlot('donutChart', data, layout);
+                }
+
+        
+                // Scatter plot
+                function generateScatterPlot(interactions_data) {
+                    let traces = [];
+                    const shapeMapping = {
+                        'hydrophobic': 'circle',
+                        'vdw': 'square',
+                        'polar': 'diamond',
+                        'ionic': 'triangle-up',
+                        'carbonyl': 'x',
+                        'hbond': 'cross'
+                    };
+
+                    const interactionMergeMap = {
+                        'weak_polar': 'polar',
+                        'vdw_clash': 'vdw',
+                        'weak_hbond': 'hbond'
+                    };
+
+                    interactions_data.forEach(pdbData => {
+                        let pdb_id = pdbData.pdb_id;
+                        let interactionMap = {};
+
+                        pdbData.interactions.forEach(interaction => {
+                            let interactionType = interaction.Contact;
+                            interactionType = interactionMergeMap[interactionType] || interactionType; // Merge interactions
+
+                            if (!interactionMap[interactionType]) {
+                                interactionMap[interactionType] = { x: [], y: [] };
+                            }
+
+                            interactionMap[interactionType].x.push(interaction.Distance);
+                            interactionMap[interactionType].y.push(interactionType);
+                        });
+
+                        for (let type in interactionMap) {
+                            traces.push({
+                                x: interactionMap[type].x,
+                                y: interactionMap[type].y,
+                                mode: 'markers',
+                                name: `${pdb_id} - ${type}`,
+                                marker: {
+                                    symbol: shapeMapping[type],
+                                    size: 10,
+                                    opacity: 0.7
+                                }
+                            });
+                        }
+                    });
+
+                    let layout = {
+                        title: 'Interaction Type vs Distance',
+                        xaxis: { title: 'Distance' },
+                        yaxis: { title: 'Interaction Type', type: 'category' },
+                        showlegend: true,
+                        height: 600,
+                        width: 800
+                    };
+
+                    Plotly.newPlot('scatterPlot', traces, layout);
+                }
+
+        
+                // Stacked bar chart
+                function generateStackedBarChart(interactions_data) {
+                    let interactionTypes = [];
+                    let pdbInteractionMap = {};
+
+                    const interactionMergeMap = {
+                        'weak_polar': 'polar',
+                        'vdw_clash': 'vdw',
+                        'weak_hbond': 'hbond'
+                    };
+
+                    interactions_data.forEach(pdbData => {
+                        let pdb_id = pdbData.pdb_id;
+                        pdbInteractionMap[pdb_id] = {};
+
+                        pdbData.interactions.forEach(interaction => {
+                            let contact = interaction.Contact;
+                            contact = interactionMergeMap[contact] || contact; // Merge interactions
+
+                            if (!interactionTypes.includes(contact)) {
+                                interactionTypes.push(contact);
+                            }
+                            if (!pdbInteractionMap[pdb_id][contact]) {
+                                pdbInteractionMap[pdb_id][contact] = 1;
+                            } else {
+                                pdbInteractionMap[pdb_id][contact] += 1;
+                            }
+                        });
+                    });
+
+                    interactionTypes.sort();
+
+                    let traces = [];
+
+                    Object.keys(pdbInteractionMap).forEach(pdb_id => {
+                        let yValues = [];
+                        interactionTypes.forEach(type => {
+                            yValues.push(pdbInteractionMap[pdb_id][type] || 0);
+                        });
+
+                        traces.push({
+                            x: interactionTypes,
+                            y: yValues,
+                            name: pdb_id,
+                            type: 'bar',
+                            text: pdb_id,
+                            hoverinfo: 'x+y+text',
+                            marker: { opacity: 0.8 }
+                        });
+                    });
+
+                    let layout = {
+                        title: 'Stacked Interaction Counts per PDB',
+                        barmode: 'stack',
+                        height: 500,
+                        width: 700,
+                        xaxis: { title: 'Interaction Type', type: 'category' },
+                        yaxis: { title: 'Count of Interactions' }
+                    };
+
+                    Plotly.newPlot('barChart', traces, layout);
+                }
+
+        
+                // Atom Bar chart
+                function generateAtomBarChart(smiles_interactions_data) {
+                    let atomInteractionMap = {};
+                    let hoverInfoMap = {};
+                    let addedInteractions = new Set();
+        
+                    const interactionColors = {
+                        'clash': '#FF6347',           
+                        'covalent': '#4682B4',        
+                        'vdw_clash': '#FF4500',       
+                        'vdw': '#2196F3',            
+                        'proximal': '#8A2BE2',       
+                        'hbond': '#32CD32',          
+                        'weak_hbond': '#ADFF2F',     
+                        'xbond': '#FF8C00',          
+                        'ionic': '#00CED1',          
+                        'metal': '#FFC107',        
+                        'aromatic': '#DA70D6',     
+                        'hydrophobic': '#2E8B57',  
+                        'carbonyl': '#D2691E',     
+                        'polar':    '#FFD700',     
+                        'weak_polar': '#9C27B0',   
+                        'CARBONPI': '#4CAF50',     
+                        'CATIONPI': '#FFB6C1',     
+                        'DONORPI': '#BA55D3',      
+                        'HALOGENPI': '#8B0000',    
+                        'METSULPHURPI': '#FF9800'  
+                        
+                    };
+        
+                    const excludedInteractions = ['proximal'];
+                    const interactionMergeMap = {
+                        'weak_polar': 'polar',
+                        'vdw_clash': 'vdw',
+                        'weak_hbond': 'hbond'
+                    };
+        
+                    const maxHoverEntries = 10;
+        
+                    smiles_interactions_data.forEach(pdbData => {
+                        let pdb_id = pdbData.pdb_id;
+        
+                        pdbData.interactions.forEach(interaction => {
+                            let atom = interaction.smiles_atom_index;
+                            let contactType = interaction.Contact;
+        
+                            if (excludedInteractions.includes(contactType)) return;
+        
+                            contactType = interactionMergeMap[contactType] || contactType;
+        
+                            if (!atomInteractionMap[atom]) {
+                                atomInteractionMap[atom] = {};
+                                hoverInfoMap[atom] = {};
+                            }
+                            if (!hoverInfoMap[atom][pdb_id]) {
+                                hoverInfoMap[atom][pdb_id] = {};
+                            }
+                            hoverInfoMap[atom][pdb_id][contactType] = (hoverInfoMap[atom][pdb_id][contactType] || 0) + 1;
+                            atomInteractionMap[atom][contactType] = (atomInteractionMap[atom][contactType] || 0) + 1;
+                        });
+                    });
+        
+                    let traces = [];
+                    Object.keys(atomInteractionMap).forEach(atom => {
+                        Object.keys(atomInteractionMap[atom]).forEach(interactionType => {
+                            let hoverEntries = [];
+                            Object.keys(hoverInfoMap[atom]).forEach(pdb_id => {
+                                if (hoverInfoMap[atom][pdb_id][interactionType]) {
+                                    hoverEntries.push(`PDB: ${pdb_id}, Count: ${hoverInfoMap[atom][pdb_id][interactionType]}`);
+                                }
+                            });
+        
+                            let hoverText = hoverEntries.length > maxHoverEntries ? hoverEntries.slice(0, maxHoverEntries).join('<br>') + '...and more' : hoverEntries.join('<br>');
+                            let showLegend = !addedInteractions.has(interactionType);
+                            if (showLegend) addedInteractions.add(interactionType);
+        
+                            traces.push({
+                                x: [atom],
+                                y: [atomInteractionMap[atom][interactionType]],
+                                type: 'bar',
+                                name: interactionType,
+                                hoverinfo: 'text',
+                                text: hoverText,
+                                showlegend: showLegend,
+                                marker: { color: interactionColors[interactionType] || '#808080' }
+                            });
+                        });
+                    });
+        
+                    let layout = {
+                        title: 'Interactions per Atom (SMILES Atom Index)',
+                        barmode: 'stack',
+                        xaxis: { title: 'SMILES Atom Index' },
+                        yaxis: { title: 'Number of Interactions' },
+                        showlegend: true
+                    };
+        
+                    Plotly.newPlot('atomBarChart', traces, layout);
+        
+                    const plotDiv = document.getElementById('atomBarChart');
+                    plotDiv.on('plotly_hover', function(data) {
+                        let atomIndex = data.points[0].x;
+                        highlightAtomOnHover(atomIndex);
+                    }).on('plotly_unhover', function() {
+                        // Reset to the original SVG after unhover
+                        $('#molecule_container').html(originalSVG);
+                    });
+                }
+        
+                // Highlight atom on hover
+                function highlightAtomOnHover(atomIndex) {
+                    let ligand_id = $('#ligand').val();
+        
+                    fetch('/highlight_atoms', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ ligand_id: ligand_id, atom_indices: [atomIndex] })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.image) {
+                            $('#molecule_container').html(data.image);
+                        } else {
+                            console.error('Failed to retrieve highlighted image:', data.error);
+                        }
+                    })
+                    .catch(error => console.error('Error highlighting atom:', error));
+                }
+            });
+
+            
+            
+            
+            
+            
+            
+            const PROTAC_BUILDER_BASE_URL = "https://protacbuilder.com/builder";
+
+            document.getElementById("chooseWarheadButton").addEventListener("click", function () {
+                console.log("🔵 Choose Warhead Button Clicked");
+
+                var ligandElement = document.getElementById("ligand");  // Get selected ligand
+                if (!ligandElement || !ligandElement.value) {
+                    console.error("❌ Error: Ligand selection not found!");
+                    alert("No ligand selected. Please choose a ligand.");
+                    return;
+                }
+
+                var ligandCode = ligandElement.value.trim();  // Get ligand ID
+                console.log("✅ Ligand Code Selected:", ligandCode);
+
+                // ✅ Construct the target URL
+                var redirectUrl = `${PROTAC_BUILDER_BASE_URL}?ligand=${encodeURIComponent(ligandCode)}`;
+                console.log("🔀 Opening in new tab:", redirectUrl);
+
+                // ✅ Open the URL in a new tab
+                window.open(redirectUrl, "_blank", "noopener,noreferrer");
+            });
+
+
+
+            // Legacy helper retained as redirect-only behavior after PROTAC decoupling.
+            function sendLigandToDatabase(ligandCode) {
+                const targetUrl = `${PROTAC_BUILDER_BASE_URL}?ligand=${encodeURIComponent(ligandCode)}`;
+                window.open(targetUrl, "_blank", "noopener,noreferrer");
+            }
+
+
+            // ✅ Floating Warhead Button Controls
+            $(document).ready(function () {
+                let floatingWarheadButton = $("#floating-warhead-container");
+
+                // Show floating button only when a ligand is selected
+                $('#ligand').change(function () {
+                    if ($(this).val()) {
+                        floatingWarheadButton.fadeIn();
+                    } else {
+                        floatingWarheadButton.fadeOut();
+                    }
+                });
+
+                // Hover Effect to Show Popup
+                $("#floating-warhead-button").hover(
+                    function () {
+                        $("#floating-warhead-popup").fadeIn();
+                    },
+                    function () {
+                        setTimeout(() => {
+                            if (!$("#floating-warhead-popup").is(":hover")) {
+                                $("#floating-warhead-popup").fadeOut();
+                            }
+                        }, 300);
+                    }
+                );
+
+                // Hide popup when not hovering over it
+                $("#floating-warhead-popup").mouseleave(function () {
+                    $(this).fadeOut();
+                });
+
+                // Add Click Event to Choose Warhead Button
+                $("#floatingChooseWarheadButton").click(function () {
+                    var ligandElement = document.getElementById("ligand");
+                    if (!ligandElement || !ligandElement.value) {
+                        alert("No ligand selected. Please choose a ligand.");
+                        return;
+                    }
+
+                    var ligandCode = ligandElement.value.trim();
+                    console.log("✅ Opening Ligand Editor for:", ligandCode);
+
+                    window.open(`${PROTAC_BUILDER_BASE_URL}?ligand=${encodeURIComponent(ligandCode)}`, "_blank", "noopener,noreferrer");
+                });
+            });
+
+
+
+
+
+        </script>
+
+{% endblock %}
+ 

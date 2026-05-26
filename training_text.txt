@@ -1,0 +1,1915 @@
+# Training Script Catalog
+# ========================
+
+
+### training_00.py
+################################################################################
+import os
+
+# Directory with training scripts
+directory = "."
+
+# Get all matching scripts in alphanumerical order
+training_scripts = sorted([
+    f for f in os.listdir(directory)
+    if f.startswith("training_") and f.endswith(".py")
+])
+
+# Write to catalog file
+with open("training_text.txt", "w") as f:
+    f.write("# Training Script Catalog\n")
+    f.write("# ========================\n\n")
+
+    for script in training_scripts:
+        f.write(f"\n### {script}\n")
+        f.write("#" * 80 + "\n")
+        
+        with open(os.path.join(directory, script), "r") as script_file:
+            content = script_file.read()
+            f.write(content)
+            f.write("\n\n" + "-" * 80 + "\n")
+
+print("✅ Full training script catalog written to training_text.txt.")
+
+
+--------------------------------------------------------------------------------
+
+### training_0_all.py
+################################################################################
+import subprocess
+
+# === List your training scripts here (comment out any you want to skip) ===
+training_scripts = [
+    # "training_1a_generate_data.py",
+    # "training_1b_generate_data.py",
+    # "training_1c_generate_Contrastivedata.py",
+    # "training_1d_generate_Contrastivedata.py",
+    # "training_1e_generate_Dialog.py",
+    # "training_1eII_generate_Dialog.py",
+    # "training_1f_extended.py",
+    # "training_1g_Augmented.py",
+    # "training_",
+    "training_2_Cleaning.py",
+    "training_2b_Cleaning.py",
+    "training_3Enrich.py",
+    "training_4CleanEnrich.py",
+    "training_5AdditionalEnrichment.py",
+    "training_6CleaningNones.py",
+    "training_7Synonyms.py",
+    "training_8llama.py",
+    # "training_1h_Combination",
+    "training_9LlamaFinetuning.py",
+
+]
+
+# === Execute each script one after the other ===
+for script in training_scripts:
+    print(f"\n🚀 Running {script} ...")
+    try:
+        subprocess.run(["python", script], check=True)
+        print(f"✅ Finished {script}")
+    except subprocess.CalledProcessError as e:
+        print(f"❌ Error running {script}: {e}")
+        break  # Optional: stop the chain on error
+
+
+--------------------------------------------------------------------------------
+
+### training_1a_generate_data.py
+################################################################################
+import pandas as pd
+import json
+import sqlite3
+from rdkit import Chem
+from rdkit.Chem import DataStructs, Descriptors, QED
+from rdkit.Chem.rdFingerprintGenerator import GetMorganGenerator
+
+# Connect to the SQLite database
+conn = sqlite3.connect("viral_data.db")
+
+# Load tables dynamically
+tables = {
+    "ligand_synonyms": "ligand_synonyms",
+    "functional_grouped": "Functional_GROUPED",
+    "arpeggio_contacts": "Arpeggio_Contacts_Data",
+    "virus_proteins": "Virus_Proteins",
+    "ligand_atoms": "ligand_atoms",
+    "rupley_sasa": "RUPLEY_SASA_DATA",
+    "ligand_water_distances": "ligand_water_distances",
+    "receptor_binding_pocket": "receptor_binding_pocket",
+    "ligand_atoms_smiles": "Ligand_Atoms_Smiles",
+    "binding_affinity_data": "binding_affinity"
+}
+
+# Dictionary to hold loaded tables
+dataframes = {}
+
+for key, query in tables.items():
+    try:
+        dataframes[key] = pd.read_sql_query(f"SELECT * FROM {query}", conn)
+    except Exception as e:
+        print(f"⚠️ Warning: Could not load {query}. Skipping...")
+        dataframes[key] = None  # Assign None if the table is missing
+
+# Close database connection
+conn.close()
+
+# Unpack dataframes
+ligand_synonyms = dataframes["ligand_synonyms"]
+functional_grouped = dataframes["functional_grouped"]
+arpeggio_contacts = dataframes["arpeggio_contacts"]
+virus_proteins = dataframes["virus_proteins"]
+ligand_atoms = dataframes["ligand_atoms"]
+rupley_sasa = dataframes["rupley_sasa"]
+ligand_water_distances = dataframes["ligand_water_distances"]
+receptor_binding_pocket = dataframes["receptor_binding_pocket"]
+ligand_atoms_smiles = dataframes["ligand_atoms_smiles"]
+binding_affinity_data = dataframes["binding_affinity_data"]
+
+# Synonym lookup dictionary
+synonym_lookup = {}
+if ligand_synonyms is not None:
+    for _, row in ligand_synonyms.iterrows():
+        if pd.isna(row.get("ligand")) or pd.isna(row.get("synonym")):
+            continue  # Skip missing values
+        synonym_lookup.setdefault(row["ligand"], []).append(row["synonym"])
+
+def get_ligand_name(ligand):
+    """Get the ligand name with synonyms."""
+    synonyms = synonym_lookup.get(ligand, [])
+    return f"{ligand} (also known as {', '.join(synonyms)})" if synonyms else ligand
+
+# Training data storage
+training_data = []
+
+# Generate training data
+datasets = [
+    ("ligand_synonyms", "ligand", "synonym", "What is another name for {ligand}?", "{ligand} is also known as {synonym}."),
+    ("functional_grouped", "ligand", "functional_groups", "What functional groups are in {ligand_name} in PDB {pdb_id}?",
+     "Ligand {ligand_name} in PDB {pdb_id} contains: {functional_groups}."),
+    ("arpeggio_contacts", "ligand", "residue", "What interactions does {ligand_name} have in PDB {pdb_id}?",
+     "Ligand {ligand_name} in PDB {pdb_id} interacts with residue {residue} {residue_number} (chain {residue_chain}) via a {Contact} at {Distance} Å."),
+    ("rupley_sasa", "ligand", "SASA_Area", "What is the SASA value for atom {atom_id} in {ligand_name} in PDB {pdb_id}?",
+     "The SASA value for atom {atom_id} in {ligand_name} in PDB {pdb_id} is {SASA_Area} Å²."),
+    ("ligand_water_distances", "ligand", "distance", "What is the distance between {ligand_name} atom {atom_id} and water {water_sequence_id} in PDB {pdb_id}?",
+     "The distance between {ligand_name} atom {atom_id} and water {water_sequence_id} in PDB {pdb_id} is {distance} Å."),
+    ("receptor_binding_pocket", "residue", "pdb_id", "What residues are in the binding pocket of PDB {pdb_id}?",
+     "The binding pocket of PDB {pdb_id} includes residue {residue} {residue_number} (chain {residue_chain})."),
+]
+
+for dataset, key, col, input_templ, output_templ in datasets:
+    df = dataframes[dataset]
+    if df is not None:
+        for _, row in df.iterrows():
+            try:
+                if pd.isna(row.get(key)) or pd.isna(row.get(col)):
+                    continue  # Skip missing values
+                ligand_name = get_ligand_name(row[key]) if key == "ligand" else row[key]
+                training_data.append({"input": input_templ.format(**row, ligand_name=ligand_name),
+                                      "output": output_templ.format(**row, ligand_name=ligand_name)})
+            except Exception as e:
+                print(f"⚠️ Error processing {dataset}: {e}")
+
+# RDKit Ligand Similarity Calculation
+if ligand_atoms_smiles is not None:
+    valid_smiles_df = ligand_atoms_smiles.dropna(subset=["smiles"])
+    valid_smiles_df = valid_smiles_df[valid_smiles_df["smiles"].apply(lambda x: Chem.MolFromSmiles(x) is not None)]
+    valid_ligands = valid_smiles_df["ligand"].unique()
+
+    def get_valid_molecule(smiles):
+        try:
+            mol = Chem.MolFromSmiles(smiles)
+            Chem.SanitizeMol(mol)
+            return mol
+        except:
+            return None
+
+    for i, ligand1 in enumerate(valid_ligands):
+        for ligand2 in valid_ligands[i+1:]:
+            try:
+                mol1, mol2 = get_valid_molecule(valid_smiles_df[valid_smiles_df["ligand"] == ligand1]["smiles"].values[0]), \
+                             get_valid_molecule(valid_smiles_df[valid_smiles_df["ligand"] == ligand2]["smiles"].values[0])
+
+                if mol1 and mol2:
+                    generator = GetMorganGenerator(radius=2)
+                    sim_score = DataStructs.TanimotoSimilarity(generator.GetFingerprint(mol1), generator.GetFingerprint(mol2))
+
+                    training_data.append({
+                        "input": f"How similar are ligand {ligand1} and ligand {ligand2}?",
+                        "output": f"Ligand {ligand1} and ligand {ligand2} have a Tanimoto similarity score of {sim_score:.2f}."
+                    })
+            except Exception as e:
+                print(f"⚠️ Error processing similarity for {ligand1}, {ligand2}: {e}")
+
+# Binding affinity data processing
+if binding_affinity_data is not None:
+    for _, row in binding_affinity_data.iterrows():
+        try:
+            if pd.isna(row.get("ligand")) or pd.isna(row.get("protein")) or pd.isna(row.get("binding_affinity")):
+                continue  # Skip missing values
+
+            ligand_name = get_ligand_name(row["ligand"])
+            training_data.append({
+                "input": f"What is the binding affinity of ligand {ligand_name} with protein {row['protein']}?",
+                "output": f"Ligand {ligand_name} binds to protein {row['protein']} with an affinity of {row['binding_affinity']} kcal/mol."
+            })
+        except Exception as e:
+            print(f"⚠️ Error processing binding affinity: {e}")
+
+# Save training data to JSON
+with open("training_data1.json", "w") as f:
+    json.dump(training_data, f, indent=4)
+
+print("✅ Training data generated and saved to training_data.json!")
+
+
+
+--------------------------------------------------------------------------------
+
+### training_1b_generate_data.py
+################################################################################
+# import pandas as pd
+# import json
+# import sqlite3
+# import re
+# from rdkit import Chem
+# from rdkit.Chem import Descriptors
+
+# # Connect to the SQLite database
+# conn = sqlite3.connect("viral_data.db")
+
+# # Load necessary tables
+# try:
+#     functional_group_atoms = pd.read_sql_query("SELECT * FROM Functional_Group_Atoms", conn)
+#     rupley_sasa = pd.read_sql_query("SELECT * FROM RUPLEY_SASA_DATA", conn)
+#     ligand_smiles = pd.read_sql_query("SELECT * FROM Ligand_Atoms_Smiles", conn)
+# except Exception as e:
+#     print(f"⚠️ Warning: Could not load some tables: {e}")
+#     conn.close()
+#     exit()
+
+# # Close the database connection
+# conn.close()
+
+# # Load existing training data
+# try:
+#     with open("training_data1.json", "r") as f:
+#         training_data = json.load(f)
+# except FileNotFoundError:
+#     training_data = []
+
+# # List of functional groups favorable for PROTAC linkers
+# PROTAC_LINKER_GROUPS = ["Hydroxyl/Alcohol", "Amine", "Carboxylic-Acid", "Thiol"]
+
+# # Function to clean functional group names by removing Roman numerals
+# def clean_functional_group_name(name):
+#     return re.sub(r"\s*\(.*?\)", "", name).strip()
+
+# # Update the functional group column to remove Roman numerals
+# functional_group_atoms["functional_group"] = functional_group_atoms["functional_group"].apply(clean_functional_group_name)
+
+# # Function to calculate molecular weight from SMILES
+# def calculate_molecular_weight(smiles):
+#     try:
+#         mol = Chem.MolFromSmiles(smiles)
+#         if mol:
+#             return Descriptors.MolWt(mol)
+#     except Exception as e:
+#         print(f"⚠️ Error calculating molecular weight for SMILES {smiles}: {e}")
+#     return None
+
+# # Add molecular weight data to the Ligand_Atoms_Smiles table
+# ligand_smiles["molecular_weight"] = ligand_smiles["smiles"].apply(calculate_molecular_weight)
+
+# # Function to assess PROTAC potential
+# def assess_protac_potential(ligand):
+#     """Determine if a ligand is suitable for PROTAC development based on solvent-exposed functional groups and molecular weight."""
+#     # Get functional group data for the ligand
+#     functional_groups = functional_group_atoms[functional_group_atoms["ligand"] == ligand]
+
+#     if functional_groups.empty:
+#         return 0, "No functional group data available."
+
+#     # Get SASA data for the ligand
+#     sasa_data = rupley_sasa[rupley_sasa["ligand"] == ligand]
+
+#     if sasa_data.empty:
+#         return 0, "No solvent accessibility data available."
+
+#     # Get molecular weight for the ligand
+#     smiles_row = ligand_smiles[ligand_smiles["ligand"] == ligand]
+#     molecular_weight = smiles_row["molecular_weight"].values[0] if not smiles_row.empty else None
+
+#     if molecular_weight is None:
+#         return 0, "No molecular weight data available."
+
+#     # Find solvent-exposed functional group atoms
+#     exposed_groups = []
+#     for _, row in functional_groups.iterrows():
+#         atom_id = row["atom_id"]
+#         group = row["functional_group"]
+
+#         if group in PROTAC_LINKER_GROUPS:
+#             sasa_entry = sasa_data[sasa_data["atom_id"] == atom_id]
+            
+#             # Check if the atom is solvent-exposed
+#             if not sasa_entry.empty:
+#                 exposed_groups.append(group)
+
+#     # Assess PROTAC potential based on the number of solvent-exposed functional groups and molecular weight
+#     if molecular_weight > 500:
+#         weight_comment = f"However, its molecular weight ({molecular_weight:.2f} Da) is higher than the optimal range for PROTAC development."
+#     else:
+#         weight_comment = f"Its molecular weight ({molecular_weight:.2f} Da) is within the optimal range for PROTAC development."
+
+#     if len(exposed_groups) > 1:
+#         score = 3
+#         reasoning = f"This compound has multiple exposed linker-friendly functional groups: {', '.join(set(exposed_groups))}. {weight_comment}"
+#     elif len(exposed_groups) == 1:
+#         score = 2
+#         reasoning = f"This compound has an exposed {exposed_groups[0]} functional group, making it a viable PROTAC candidate. {weight_comment}"
+#     else:
+#         score = 1
+#         reasoning = f"This compound has no solvent-exposed linker-friendly groups and may not be ideal for PROTAC development. {weight_comment}"
+
+#     return score, reasoning
+
+# # Generate PROTAC-related training data
+# for ligand in functional_group_atoms["ligand"].unique():
+#     try:
+#         protac_score, reasoning = assess_protac_potential(ligand)
+
+#         input_text = f"Can {ligand} be adapted into a PROTAC?"
+#         output_text = f"PROTAC Adaptability Score for {ligand}: {protac_score}/3. {reasoning}"
+
+#         training_data.append({"input": input_text, "output": output_text})
+
+#     except Exception as e:
+#         print(f"⚠️ Error processing {ligand}: {e}")
+
+# # Save updated training data to JSON
+# with open("training_data2.json", "w") as f:
+#     json.dump(training_data, f, indent=4)
+
+# print("✅ PROTAC Adaptability Assessment complete. Data appended to training_data.json!")
+
+
+
+
+import pandas as pd
+import json
+import sqlite3
+import re
+from rdkit import Chem
+from rdkit.Chem import Descriptors
+
+# Connect to the SQLite database
+conn = sqlite3.connect("viral_data.db")
+
+# Load necessary tables
+try:
+    functional_group_atoms = pd.read_sql_query("SELECT * FROM Functional_Group_Atoms", conn)
+    rupley_sasa = pd.read_sql_query("SELECT * FROM RUPLEY_SASA_DATA", conn)
+    ligand_smiles = pd.read_sql_query("SELECT * FROM Ligand_Atoms_Smiles", conn)
+    arpeggio_contacts = pd.read_sql_query("SELECT * FROM Arpeggio_Contacts_Data", conn)
+except Exception as e:
+    print(f"⚠️ Warning: Could not load some tables: {e}")
+    conn.close()
+    exit()
+
+# Close the database connection
+conn.close()
+
+# Load existing training data
+try:
+    with open("training_data1.json", "r") as f:
+        training_data = json.load(f)
+except FileNotFoundError:
+    training_data = []
+
+# List of functional groups favorable for PROTAC linkers
+PROTAC_LINKER_GROUPS = ["Hydroxyl/Alcohol", "Amine", "Carboxylic-Acid", "Thiol"]
+
+# Define what counts as a 'high-quality' interaction
+# Define what counts as a 'high-quality' interaction
+HIGH_QUALITY_CONTACTS = {
+    "polar",
+    "weak_polar",
+    "hbond",
+    "ionic",
+    "weak_hbond",
+    "vdw_clash"
+}
+
+successful_ligands = []
+failed_ligands = []
+
+# Function to clean functional group names by removing Roman numerals
+def clean_functional_group_name(name):
+    return re.sub(r"\s*\(.*?\)", "", name).strip()
+
+# Update the functional group column to remove Roman numerals
+functional_group_atoms["functional_group"] = functional_group_atoms["functional_group"].apply(clean_functional_group_name)
+
+# Function to calculate molecular weight from SMILES
+def calculate_molecular_weight(smiles):
+    try:
+        mol = Chem.MolFromSmiles(smiles)
+        if mol:
+            return Descriptors.MolWt(mol)
+    except Exception as e:
+        print(f"⚠️ Error calculating molecular weight for SMILES {smiles}: {e}")
+    return None
+
+# Add molecular weight data to the Ligand_Atoms_Smiles table
+ligand_smiles["molecular_weight"] = ligand_smiles["smiles"].apply(calculate_molecular_weight)
+
+# Compute binding interaction score
+# Compute binding interaction score
+def compute_interaction_score(ligand):
+    if arpeggio_contacts.empty:
+        return 0.0, "No interaction data available.", 0.0, 0
+
+    # Filter for the ligand and high-quality contacts
+    filtered = arpeggio_contacts[
+        (arpeggio_contacts["ligand"] == ligand) &
+        (arpeggio_contacts["Contact"].isin(HIGH_QUALITY_CONTACTS))
+    ]
+
+    if filtered.empty:
+        return 0.0, "No high-quality contacts found.", 0.0, 0
+
+    # Group by (pdb_id, ligand_id, chain) to avoid counting duplicates
+    grouped = filtered.groupby(["pdb_id", "ligand_id", "chain"])
+    contact_counts = grouped.size()
+
+    # Take the average number of contacts across unique groups
+    avg_contacts = contact_counts.mean()
+    n_instances = len(contact_counts)
+
+    # Now scale into score buckets
+    if avg_contacts >= 5:
+        score = 1.0
+        msg = "Strong binder"
+    elif avg_contacts >= 2:
+        score = 0.5
+        msg = "Moderate binder"
+    else:
+        score = 0.0
+        msg = "Weak binder"
+
+    reasoning = f"{msg}: {avg_contacts:.1f} average high-quality contacts across {n_instances} structure(s)."
+    return score, reasoning, avg_contacts, n_instances
+
+
+
+# Function to assess PROTAC potential
+# Function to assess PROTAC potential
+def assess_protac_potential(ligand):
+    functional_groups = functional_group_atoms[functional_group_atoms["ligand"] == ligand]
+    if functional_groups.empty:
+        return 0, "No functional group data available.", True
+
+    sasa_data = rupley_sasa[rupley_sasa["ligand"] == ligand]
+    if sasa_data.empty:
+        return 0, "No solvent accessibility data available.", True
+
+    smiles_row = ligand_smiles[ligand_smiles["ligand"] == ligand]
+    molecular_weight = smiles_row["molecular_weight"].values[0] if not smiles_row.empty else None
+    if molecular_weight is None:
+        return 0, "No molecular weight data available.", True
+
+    exposed_groups = []
+    for _, row in functional_groups.iterrows():
+        atom_id = row["atom_id"]
+        group = row["functional_group"]
+        if group in PROTAC_LINKER_GROUPS:
+            sasa_entry = sasa_data[sasa_data["atom_id"] == atom_id]
+            if not sasa_entry.empty:
+                exposed_groups.append(group)
+
+    if molecular_weight > 500:
+        weight_comment = f"However, its molecular weight ({molecular_weight:.2f} Da) is higher than the optimal range for PROTAC development."
+    else:
+        weight_comment = f"Its molecular weight ({molecular_weight:.2f} Da) is within the optimal range for PROTAC development."
+
+    if len(exposed_groups) > 1:
+        base_score = 3
+        reasoning = f"Multiple exposed linker-friendly functional groups: {', '.join(set(exposed_groups))}. {weight_comment}"
+    elif len(exposed_groups) == 1:
+        base_score = 2
+        reasoning = f"One exposed {exposed_groups[0]} group, a viable PROTAC candidate. {weight_comment}"
+    else:
+        base_score = 1
+        reasoning = f"No solvent-exposed linker-friendly groups. May not be ideal. {weight_comment}"
+
+    interaction_score, interaction_reasoning, avg_contacts, n_structures = compute_interaction_score(ligand)
+    interaction_density = avg_contacts / molecular_weight if molecular_weight else 0
+
+    combined_reasoning = (
+        f"{reasoning}\n"
+        f"Binding Interaction Score: {interaction_score}/1. {interaction_reasoning}\n"
+        f"Interaction Density: {interaction_density:.4f} high-quality contacts per Dalton."
+    )
+
+    total_score = base_score + interaction_score
+    return total_score, combined_reasoning, False, avg_contacts, interaction_density
+
+
+
+# Generate PROTAC-related training data
+for ligand in functional_group_atoms["ligand"].unique():
+    try:
+        total_score, reasoning, failed, avg_contacts, interaction_density = assess_protac_potential(ligand)
+
+
+        if failed:
+            # Grab PDB ID for context if available
+            try:
+                example_row = functional_group_atoms[functional_group_atoms["ligand"] == ligand].iloc[0]
+                pdb_id = example_row["pdb_id"]
+            except:
+                pdb_id = "N/A"
+
+            failed_ligands.append({
+                "ligand": ligand,
+                "pdb_id": pdb_id,
+                "failure_reason": reasoning
+            })
+            continue  # Skip training data append
+
+        # Only executed if not failed
+        example_row = functional_group_atoms[functional_group_atoms["ligand"] == ligand].iloc[0]
+        pdb_id = example_row["pdb_id"]
+
+        successful_ligands.append({
+            "ligand": ligand,
+            "pdb_id": pdb_id,
+            "score": total_score,
+            "avg_contacts": avg_contacts,
+            "interaction_density": interaction_density,
+            "reasoning": reasoning
+        })
+
+
+        training_data.append({
+            "input": f"Can {ligand} be adapted into a PROTAC?",
+            "output": f"PROTAC Adaptability Score for {ligand}: {total_score}/4. {reasoning}"
+        })
+
+    except Exception as e:
+        failed_ligands.append({
+            "ligand": ligand,
+            "pdb_id": "N/A",
+            "failure_reason": f"Unhandled exception: {e}"
+        })
+
+
+
+# Save updated training data to JSON
+with open("training_data2.json", "w") as f:
+    json.dump(training_data, f, indent=4)
+# Export successful ligand-PDB-score mapping
+# Save failed ligands and reasons
+fail_df = pd.DataFrame(failed_ligands)
+fail_df.to_csv("failed_protac_candidates.csv", index=False)
+print("🧪 Logged failed candidates to failed_protac_candidates.csv")
+
+
+--------------------------------------------------------------------------------
+
+### training_1c_generate_Contrastivedata.py
+################################################################################
+import json
+import re
+import multiprocessing
+from itertools import combinations, islice
+
+def format_comparative_reasoning(better, worse):
+    lines = []
+
+    lines.append(f"{better['ligand']} scores higher overall ({better['score']}/4) compared to {worse['ligand']} ({worse['score']}/4).")
+
+    if "linker-friendly functional groups" in better["reasoning"]:
+        better_fg = re.search(r"Multiple exposed linker-friendly functional groups: (.+?)\.", better["reasoning"])
+        if better_fg:
+            lines.append(f"{better['ligand']} has more exposed linker-friendly functional groups ({better_fg.group(1)}).")
+
+    if better["avg_contacts"] > worse["avg_contacts"]:
+        lines.append(f"It also shows more average high-quality binding contacts ({better['avg_contacts']:.1f} vs {worse['avg_contacts']:.1f}).")
+
+    if better["interaction_density"] > worse["interaction_density"]:
+        lines.append(f"Its interaction density is higher ({better['interaction_density']:.4f} vs {worse['interaction_density']:.4f}), indicating tighter binding for its size.")
+
+    if "molecular_weight" in better and "molecular_weight" in worse:
+        if better["molecular_weight"] < worse["molecular_weight"]:
+            lines.append(f"{better['ligand']} is also smaller in molecular weight ({better['molecular_weight']:.2f} Da vs {worse['molecular_weight']:.2f} Da).")
+
+    return " ".join(lines)
+
+def generate_pairwise_batch(pairs_batch, successful_ligands, score_threshold=0.5, min_diff_contacts=0.5, min_diff_density=0.001):
+    contrastive_data = []
+
+    for i, j in pairs_batch:
+        ligand_a = successful_ligands[i]
+        ligand_b = successful_ligands[j]
+
+        score_diff = ligand_a["score"] - ligand_b["score"]
+        if abs(score_diff) >= score_threshold:
+            better, worse = (ligand_a, ligand_b) if score_diff > 0 else (ligand_b, ligand_a)
+        else:
+            contact_diff = ligand_a.get("avg_contacts", 0) - ligand_b.get("avg_contacts", 0)
+            if abs(contact_diff) >= min_diff_contacts:
+                better, worse = (ligand_a, ligand_b) if contact_diff > 0 else (ligand_b, ligand_a)
+            else:
+                density_diff = ligand_a.get("interaction_density", 0) - ligand_b.get("interaction_density", 0)
+                if abs(density_diff) >= min_diff_density:
+                    better, worse = (ligand_a, ligand_b) if density_diff > 0 else (ligand_b, ligand_a)
+                else:
+                    continue
+
+        contrastive_data.append({
+            "input": f"Which is the better PROTAC warhead candidate: {better['ligand']} or {worse['ligand']}? Why?",
+            "output": f"{better['ligand']} is the better candidate.\n\n{format_comparative_reasoning(better, worse)}",
+            "metadata": {
+                "better": better["ligand"],
+                "worse": worse["ligand"],
+                "score_diff": round(score_diff, 2),
+                "contacts_diff": round(better["avg_contacts"] - worse["avg_contacts"], 2),
+                "density_diff": round(better["interaction_density"] - worse["interaction_density"], 4)
+            }
+        })
+
+    return contrastive_data
+
+def chunked_iterable(iterable, size):
+    it = iter(iterable)
+    return iter(lambda: list(islice(it, size)), [])
+
+if __name__ == "__main__":
+    with open("training_data2.json", "r") as f:
+        raw_data = json.load(f)
+
+    successful_ligands = []
+    seen = set()
+
+    for entry in raw_data:
+        if "Adaptability Score for" in entry["output"]:
+            match = re.search(r"Score for (\w+): ([\d\.]+)/4", entry["output"])
+            if match:
+                ligand = match.group(1)
+                if ligand in seen:
+                    continue
+                seen.add(ligand)
+
+                score = float(match.group(2))
+                try:
+                    avg = float(re.search(r"([\d\.]+) average high-quality contacts", entry["output"]).group(1))
+                    density = float(re.search(r"Interaction Density: ([\d\.]+)", entry["output"]).group(1))
+                    mw_match = re.search(r"molecular weight \(([\d\.]+)", entry["output"])
+                    mw = float(mw_match.group(1)) if mw_match else 0.0
+                except:
+                    avg, density, mw = 0.0, 0.0, 0.0
+
+                successful_ligands.append({
+                    "ligand": ligand,
+                    "score": score,
+                    "avg_contacts": avg,
+                    "interaction_density": density,
+                    "molecular_weight": mw,
+                    "reasoning": entry["output"]
+                })
+
+    pair_indices = list(combinations(range(len(successful_ligands)), 2))
+    num_workers = multiprocessing.cpu_count()
+    chunks = list(chunked_iterable(pair_indices, len(pair_indices) // num_workers + 1))
+
+    with multiprocessing.Pool(num_workers) as pool:
+        results = pool.starmap(generate_pairwise_batch, [(chunk, successful_ligands) for chunk in chunks])
+
+    contrastive_pairs = [pair for sublist in results for pair in sublist]
+
+    with open("training_data_contrastive.json", "w") as f:
+        json.dump(contrastive_pairs, f, indent=4)
+
+    print(f"✅ Saved {len(contrastive_pairs)} contrastive training prompts to training_data_contrastive.json")
+
+
+--------------------------------------------------------------------------------
+
+### training_1d_generate_Contrastivedata.py
+################################################################################
+import json
+import multiprocessing
+import re
+from itertools import islice
+
+
+def expand_to_multiturn(entry):
+    turns = []
+
+    try:
+        output_section = entry["output"].split("\n\n")[-1]
+        lines = output_section.split(". ")
+        input_q = entry["input"]
+
+        turns.append({
+            "input": input_q,
+            "output": entry["output"]
+        })
+
+        for line in lines:
+            line = line.strip().rstrip(".")
+            if "scores higher overall" in line:
+                turns.append({
+                    "input": f"Why does {line.split()[0]} score higher overall?",
+                    "output": line + "."
+                })
+            elif "linker-friendly functional groups" in line:
+                turns.append({
+                    "input": "What does it mean to have more linker-friendly functional groups?",
+                    "output": line + "."
+                })
+            elif "average high-quality binding contacts" in line:
+                turns.append({
+                    "input": "Why do more high-quality contacts matter for PROTACs?",
+                    "output": line + "."
+                })
+            elif "interaction density" in line:
+                turns.append({
+                    "input": "What is interaction density and why is it important?",
+                    "output": line + "."
+                })
+
+    except Exception as e:
+        print(f"[!] Skipping malformed entry: {e}")
+        return []
+
+    return turns
+
+
+def chunked_iterable(iterable, size):
+    it = iter(iterable)
+    return iter(lambda: list(islice(it, size)), [])
+
+
+def process_batch(batch):
+    result = []
+    for entry in batch:
+        result.extend(expand_to_multiturn(entry))
+    return result
+
+
+if __name__ == "__main__":
+    with open("training_data_contrastive.json", "r") as f:
+        contrastive_data = json.load(f)
+
+    num_workers = multiprocessing.cpu_count()
+    chunks = list(chunked_iterable(contrastive_data, len(contrastive_data) // num_workers + 1))
+
+    with multiprocessing.Pool(num_workers) as pool:
+        results = pool.map(process_batch, chunks)
+
+    multi_turn_data = [entry for sublist in results for entry in sublist]
+
+    with open("training_data_contrastive_multiturn.json", "w") as f:
+        json.dump(multi_turn_data, f, indent=4)
+
+    print(f"🧠 Saved {len(multi_turn_data)} multi-turn Q&A examples to training_data_contrastive_multiturn.json")
+
+
+--------------------------------------------------------------------------------
+
+### training_1eII_generate_Dialog.py
+################################################################################
+import json
+import re
+import multiprocessing
+from itertools import islice
+
+# Challenge questions to simulate skepticism or tradeoffs
+CHALLENGE_TEMPLATES = [
+    "But what if the other ligand has better pharmacokinetics?",
+    "What about synthetic accessibility for the other molecule?",
+    "Could the larger molecule offer better selectivity in vivo?",
+    "Doesn't a lower molecular weight usually help with oral bioavailability?",
+    "Could the other ligand be easier to modify for linker attachment?",
+    "What if the weaker one is more stable in plasma?",
+    "Could the size of the better candidate be a disadvantage?",
+    "But what if the other ligand is more specific to the target?",
+]
+
+def format_followup(better, worse, challenge):
+    return {
+        "role": "assistant",
+        "content": (
+            f"That's a good point. While {worse} may offer that advantage, "
+            f"{better} still remains the better candidate due to its stronger interaction profile, "
+            f"exposed linker groups, and tighter binding footprint."
+        )
+    }
+
+def generate_dialog_from_pair(pair, challenge_templates):
+    dialog = []
+
+    # Extract ligand names and winner
+    q_match = re.search(r"Which is the better PROTAC warhead candidate: (\w+) or (\w+)", pair["input"])
+    a_match = re.search(r"^(\w+) is the better candidate", pair["output"])
+    if not q_match or not a_match:
+        return None
+
+    ligand_a, ligand_b = q_match.groups()
+    better = a_match.group(1)
+    worse = ligand_b if better == ligand_a else ligand_a
+
+    # Base Q&A
+    dialog.append({"role": "user", "content": pair["input"]})
+    dialog.append({"role": "assistant", "content": pair["output"]})
+
+    # Add one challenge Q+A
+    challenge = challenge_templates[hash(better + worse) % len(challenge_templates)]
+    dialog.append({"role": "user", "content": challenge})
+    dialog.append(format_followup(better, worse, challenge))
+
+    return {"dialog": dialog}
+
+def chunked_iterable(iterable, size):
+    it = iter(iterable)
+    return iter(lambda: list(islice(it, size)), [])
+
+def process_chunk(chunk):
+    return [dialog for dialog in (generate_dialog_from_pair(pair, CHALLENGE_TEMPLATES) for pair in chunk) if dialog]
+
+if __name__ == "__main__":
+    with open("training_data_contrastive.json", "r") as f:
+        contrastive_pairs = json.load(f)
+
+    num_workers = multiprocessing.cpu_count()
+    chunks = list(chunked_iterable(contrastive_pairs, len(contrastive_pairs) // num_workers + 1))
+
+    with multiprocessing.Pool(num_workers) as pool:
+        results = pool.map(process_chunk, chunks)
+
+    dialogs = [dialog for batch in results for dialog in batch]
+
+    with open("training_data_contrastive_dialog.json", "w") as f:
+        json.dump(dialogs, f, indent=4)
+
+    print(f"💬 Saved {len(dialogs)} multi-turn dialog examples to training_data_contrastive_dialog.json")
+
+
+--------------------------------------------------------------------------------
+
+### training_1e_generate_Dialog.py
+################################################################################
+import json
+import re
+import multiprocessing
+from itertools import islice
+
+# Challenge turns
+CHALLENGE_TEMPLATES = [
+    "But what if the other ligand has better pharmacokinetics?",
+    "What about synthetic accessibility for the other molecule?",
+    "Could the larger molecule offer better selectivity in vivo?",
+    "Doesn't a lower molecular weight usually help with oral bioavailability?",
+    "Could the other ligand be easier to modify for linker attachment?",
+    "What if the weaker one is more stable in plasma?",
+    "Could the size of the better candidate be a disadvantage?",
+    "But what if the other ligand is more specific to the target?",
+]
+
+def format_followup(better, worse, challenge):
+    return {
+        "role": "assistant",
+        "content": (
+            f"That's a thoughtful point. While {worse} might offer some advantages like {challenge.lower()}, "
+            f"{better} is still preferable overall due to its binding efficiency, linker-friendly groups, and strong interaction density."
+        )
+    }
+
+def generate_long_dialog(pair, challenge_templates, max_turns=3):
+    dialog = []
+
+    q_match = re.search(r"Which is the better PROTAC warhead candidate: (\w+) or (\w+)", pair["input"])
+    a_match = re.search(r"^(\w+) is the better candidate", pair["output"])
+    if not q_match or not a_match:
+        return None
+
+    ligand_a, ligand_b = q_match.groups()
+    better = a_match.group(1)
+    worse = ligand_b if better == ligand_a else ligand_a
+
+    dialog.append({"role": "user", "content": pair["input"]})
+    dialog.append({"role": "assistant", "content": pair["output"]})
+
+    start = hash(better + worse) % len(challenge_templates)
+    selected = challenge_templates[start:] + challenge_templates[:start]
+
+    for challenge in selected[:max_turns]:
+        dialog.append({"role": "user", "content": challenge})
+        dialog.append(format_followup(better, worse, challenge))
+
+    return {"dialog": dialog}
+
+def chunked_iterable(iterable, size):
+    it = iter(iterable)
+    return iter(lambda: list(islice(it, size)), [])
+
+def process_chunk(chunk):
+    return [dialog for dialog in (generate_long_dialog(pair, CHALLENGE_TEMPLATES) for pair in chunk) if dialog]
+
+if __name__ == "__main__":
+    with open("training_data_contrastive.json", "r") as f:
+        contrastive_pairs = json.load(f)
+
+    num_workers = multiprocessing.cpu_count()
+    chunks = list(chunked_iterable(contrastive_pairs, len(contrastive_pairs) // num_workers + 1))
+
+    with multiprocessing.Pool(num_workers) as pool:
+        results = pool.map(process_chunk, chunks)
+
+    dialogs = [d for batch in results for d in batch]
+
+    with open("training_data_contrastive_dialog_long.json", "w") as f:
+        json.dump(dialogs, f, indent=4)
+
+    print(f"💬 Saved {len(dialogs)} extended multi-turn dialogs to training_data_contrastive_dialog_long.json")
+
+
+--------------------------------------------------------------------------------
+
+### training_1f_extended.py
+################################################################################
+import json
+import re
+import random
+
+# -------------------------------
+# Helper functions for metadata extraction
+# -------------------------------
+def extract_metadata(entry):
+    """Extract ligand, score, avg_contacts, interaction_density, and reasoning from a training_data2.json entry."""
+    metadata = {}
+    m = re.search(r"Score for (\w+): ([\d\.]+)/4", entry["output"])
+    if not m:
+        return None
+    metadata["ligand"] = m.group(1)
+    metadata["score"] = float(m.group(2))
+    try:
+        avg = float(re.search(r"([\d\.]+) average high-quality contacts", entry["output"]).group(1))
+        density = float(re.search(r"Interaction Density: ([\d\.]+)", entry["output"]).group(1))
+    except Exception:
+        avg, density = 0.0, 0.0
+    metadata["avg_contacts"] = avg
+    metadata["interaction_density"] = density
+    # Optionally extract molecular weight if mentioned
+    try:
+        mw_match = re.search(r"molecular weight \(([\d\.]+)", entry["output"])
+        metadata["molecular_weight"] = float(mw_match.group(1)) if mw_match else None
+    except Exception:
+        metadata["molecular_weight"] = None
+    metadata["reasoning"] = entry["output"]
+    return metadata
+
+# -------------------------------
+# 1. Instruction-Tuned Single-Turn QA
+# -------------------------------
+def generate_instruction_qa(metadata):
+    ligand = metadata["ligand"]
+    # Create a question about linker-friendly groups
+    q = f"What linker-friendly functional groups are present in {ligand}?"
+    # Try to extract the linker group information from the reasoning text
+    fg_match = re.search(r"exposed linker-friendly functional groups: ([^\.]+)\.", metadata["reasoning"], re.IGNORECASE)
+    a = f"{ligand} has "
+    if fg_match:
+        a += fg_match.group(1) + "."
+    else:
+        a += "no reported linker-friendly functional groups."
+    return {"type": "instruction_qa", "input": q, "output": a}
+
+# -------------------------------
+# 2. "Explain This Output" Rationalization
+# -------------------------------
+def generate_explain_output(metadata):
+    ligand = metadata["ligand"]
+    q = (f"Interpret the following PROTAC metrics for {ligand}: "
+         f"Score = {metadata['score']}/4, "
+         f"Average Contacts = {metadata['avg_contacts']}, "
+         f"Interaction Density = {metadata['interaction_density']}. "
+         "What do these numbers suggest about its suitability as a PROTAC warhead?")
+    a = (f"For {ligand}, a higher score combined with more average high-quality contacts and a higher interaction density "
+         "indicates strong binding efficiency and favorable structural features for PROTAC design. "
+         "This suggests that it likely has multiple exposed functional groups and robust interaction patterns, making it a promising candidate.")
+    return {"type": "explain_output", "input": q, "output": a}
+
+# -------------------------------
+# 4. Ranking Task / Preference Modeling
+# -------------------------------
+def generate_ranking_example(metadata_list):
+    # Select three distinct ligands at random
+    if len(metadata_list) < 3:
+        return None
+    candidates = random.sample(metadata_list, 3)
+    ligand_names = [m["ligand"] for m in candidates]
+    q = f"Rank the following PROTAC warhead candidates in order of overall suitability and explain your reasoning: {', '.join(ligand_names)}."
+    
+    # Sort by score then by avg_contacts (as a secondary criterion)
+    ranked = sorted(candidates, key=lambda m: (m["score"], m["avg_contacts"]), reverse=True)
+    ranking_str = ", ".join([f"{m['ligand']} (Score: {m['score']}/4)" for m in ranked])
+    a = f"Based on the provided metrics, the ranking is: {ranking_str}. " \
+        "This ordering is determined by the overall score, which reflects the combined impact of binding interactions and structural features."
+    return {"type": "ranking", "input": q, "output": a}
+
+# -------------------------------
+# 5. Chain-of-Thought (CoT) Expansion
+# -------------------------------
+def generate_chain_of_thought(metadata):
+    ligand = metadata["ligand"]
+    q = f"Explain step-by-step why {ligand} is a good PROTAC candidate."
+    a = (
+        f"Step 1: {ligand} has a high overall score ({metadata['score']}/4), indicating strong binding interactions.\n"
+        f"Step 2: It forms an average of {metadata['avg_contacts']} high-quality contacts, which shows robust molecular interactions.\n"
+        f"Step 3: Its interaction density of {metadata['interaction_density']:.4f} suggests that it binds efficiently relative to its size.\n"
+        "Therefore, these factors combined indicate that it is a promising candidate for PROTAC design."
+    )
+    return {"type": "chain_of_thought", "input": q, "output": a}
+
+# -------------------------------
+# 8. Synthetic Negative Reasoning
+# -------------------------------
+def generate_negative_reasoning(metadata):
+    ligand = metadata["ligand"]
+    # Use a threshold; if score is low (< 2), consider it a poor candidate
+    if metadata["score"] >= 2:
+        return None
+    q = f"Is {ligand} a suitable candidate for PROTAC development? Explain why or why not."
+    a = (f"No, {ligand} is not a suitable candidate for PROTAC development. "
+         f"It only achieves a score of {metadata['score']}/4, which suggests it has insufficient high-quality binding interactions and "
+         "lacks adequate exposure of linker-friendly functional groups. These shortcomings mean it may not be able to form a stable ternary complex.")
+    return {"type": "negative_reasoning", "input": q, "output": a}
+
+# -------------------------------
+# 9. Glossary / Concept Definition
+# -------------------------------
+def generate_glossary_examples():
+    examples = []
+    glossary = {
+        "Linker-friendly functional group": (
+            "A chemical group (such as hydroxyl, amine, carboxylic acid, or thiol) that is accessible on the surface of a ligand, "
+            "making it a suitable attachment point for a linker in PROTAC design."
+        ),
+        "Interaction Density": (
+            "A measure of how many high-quality binding contacts a ligand makes per Dalton of molecular weight, "
+            "indicating how efficiently it binds relative to its size."
+        ),
+        "Molecular Weight Threshold": (
+            "An optimal range for PROTAC ligands, typically lower than 500 Da, ensures that the ligand is sufficiently small "
+            "to allow for effective linker and binder design."
+        )
+    }
+    for term, definition in glossary.items():
+        q = f"What is meant by '{term}'?"
+        a = definition
+        examples.append({"type": "glossary", "input": q, "output": a})
+    return examples
+
+# -------------------------------
+# Main script
+# -------------------------------
+if __name__ == "__main__":
+    with open("training_data2.json", "r") as f:
+        raw_data = json.load(f)
+
+    metadata_list = []
+    for entry in raw_data:
+        meta = extract_metadata(entry)
+        if meta:
+            metadata_list.append(meta)
+
+    extended_examples = []
+
+    # 1. Instruction-Tuned Single-Turn QA (for each ligand)
+    for meta in metadata_list:
+        extended_examples.append(generate_instruction_qa(meta))
+
+    # 2. "Explain This Output" Rationalization (for each ligand)
+    for meta in metadata_list:
+        extended_examples.append(generate_explain_output(meta))
+
+    # 4. Ranking Task / Preference Modeling (sample a few groups)
+    num_ranking = min(5, len(metadata_list) // 3)
+    for _ in range(num_ranking):
+        ranking_example = generate_ranking_example(metadata_list)
+        if ranking_example:
+            extended_examples.append(ranking_example)
+
+    # 5. Chain-of-Thought Expansion (for each ligand)
+    for meta in metadata_list:
+        extended_examples.append(generate_chain_of_thought(meta))
+
+    # 8. Synthetic Negative Reasoning (for ligands with low score)
+    for meta in metadata_list:
+        neg_example = generate_negative_reasoning(meta)
+        if neg_example:
+            extended_examples.append(neg_example)
+
+    # 9. Glossary / Concept Definitions
+    extended_examples.extend(generate_glossary_examples())
+
+    # Shuffle the extended examples for variety
+    random.shuffle(extended_examples)
+
+    with open("training_data_extended.json", "w") as f:
+        json.dump(extended_examples, f, indent=4)
+
+    print(f"✅ Saved {len(extended_examples)} extended training examples to extended_training_data.json")
+
+
+--------------------------------------------------------------------------------
+
+### training_1g_Augmented.py
+################################################################################
+import json
+import re
+from tqdm import tqdm
+
+# Load the contrastive dataset
+with open("training_data_contrastive.json", "r") as f:
+    contrastive_data = json.load(f)
+
+# Generate new reasoning examples from top 4 reasoning types
+
+def generate_reasoning_prompts(pair):
+    prompts = []
+
+    q_match = re.search(r"Which is the better PROTAC warhead candidate: (\w+) or (\w+)", pair["input"])
+    a_match = re.search(r"^(\w+) is the better candidate", pair["output"])
+    
+    if not q_match or not a_match:
+        return []
+
+    ligand_a, ligand_b = q_match.groups()
+    better = a_match.group(1)
+    worse = ligand_b if better == ligand_a else ligand_a
+
+    reasoning = pair["output"].split("\n\n")[-1]
+
+    # 1. Reverse justification
+    prompts.append({
+        "input": f"Why not use {worse} instead?",
+        "output": f"While {worse} may have some advantages, {better} is superior overall. {reasoning}"
+    })
+
+    # 2. Design prompt
+    prompts.append({
+        "input": f"What would improve {better} as a PROTAC warhead?",
+        "output": (
+            f"To improve {better}, one could increase the number of solvent-exposed linker-friendly groups or optimize its binding affinity. "
+            f"Currently, its strength lies in: {reasoning}"
+        )
+    })
+
+    # 3. Explain like I'm 5
+    prompts.append({
+        "input": f"Why is {better} good? (Explain like I'm 5)",
+        "output": (
+            f"{better} sticks really well to the target and has parts we can grab to make special medicines. {worse} doesn't do this as nicely."
+        )
+    })
+
+    # 4. Critique this reasoning
+    prompts.append({
+        "input": f"Is this a good explanation? '{pair['output']}'",
+        "output": (
+            f"It's a good start and explains why {better} is better, but could be improved by comparing molecular weight or interaction density more clearly."
+        )
+    })
+
+    # 5. Role-Reversal: Improve the weaker one
+    prompts.append({
+        "input": f"What would make {worse} a better PROTAC warhead than {better}?",
+        "output": (
+            f"If {worse} had more solvent-exposed functional groups or improved binding affinity, "
+            f"it might outperform {better}. Currently, it lacks in comparison."
+        )
+    })
+
+    # 6. One-sentence summary
+    prompts.append({
+        "input": f"Summarize why {better} is better than {worse} in one sentence.",
+        "output": f"{better} has stronger binding, more exposed linker groups, and better interaction efficiency than {worse}."
+    })
+
+    # 7. True or False quiz
+    prompts.append({
+        "input": f"True or False: {worse} is the better PROTAC candidate compared to {better}.",
+        "output": f"False. {better} is superior because {reasoning}"
+    })
+
+    return prompts
+
+
+# Process all pairs
+all_reasoning = []
+for entry in tqdm(contrastive_data):
+    all_reasoning.extend(generate_reasoning_prompts(entry))
+
+# Save
+with open("training_data_reasoning_prompts.json", "w") as f:
+    json.dump(all_reasoning, f, indent=4)
+
+print(f"✅ Saved {len(all_reasoning)} reasoning-style prompts to training_data_reasoning_prompts.json")
+
+
+--------------------------------------------------------------------------------
+
+### training_1h_Combination.py
+################################################################################
+# import json
+# import os
+
+# # --- Helper to convert dialog format to flat "text" format ---
+# def flatten_dialog_json(input_file, output_file):
+#     with open(input_file) as f:
+#         dialogs = json.load(f)
+
+#     flat_data = []
+
+#     for dialog_entry in dialogs:
+#         conversation = dialog_entry["dialog"]
+#         text = ""
+#         for turn in conversation:
+#             role = turn["role"]
+#             content = turn["content"]
+#             if role == "user":
+#                 text += f"### User:\n{content}\n\n"
+#             elif role == "assistant":
+#                 text += f"### Assistant:\n{content}\n\n"
+#         flat_data.append({"text": text.strip()})
+
+#     with open(output_file, "w") as f:
+#         json.dump(flat_data, f, indent=2)
+
+#     print(f"✅ Flattened {len(flat_data)} dialogs from {input_file} into {output_file}")
+#     return flat_data
+
+
+# # --- Step 1: Convert dialog JSONs ---
+# # dialog_short = flatten_dialog_json("training_data_contrastive_dialog.json", "training_data_chat_text.json")
+# # dialog_long  = flatten_dialog_json("training_data_contrastive_dialog_long.json", "training_data_chat_text_long.json")
+
+# # --- Step 2: Combine all datasets ---
+# combined = []
+
+# # Files already in "input"/"output" format
+# standard_files = [
+#     "training_data_contrastive.json",
+#     "training_data_reasoning_prompts.json",
+#     "training_data_multiturn.json",
+#     "training_data_chat_text_long.json",
+#     "training_data_chat_text.json"
+# ]
+
+# for fname in standard_files:
+#     if os.path.exists(fname):
+#         with open(fname) as f:
+#             data = json.load(f)
+#             # Convert to "text" format
+#             for entry in data:
+#                 combined.append({
+#                     "text": f"### User:\n{entry['input']}\n\n### Assistant:\n{entry['output']}"
+#                 })
+#         print(f"✅ Loaded and converted {len(data)} from {fname}")
+#     else:
+#         print(f"⚠️ Missing file: {fname} — skipping.")
+
+# # Include the newly flattened dialog data
+# combined += dialog_short
+# combined += dialog_long
+
+# # Save final finetune-ready dataset
+# with open("training_data_contrastive_llama.json", "w") as f:
+#     json.dump(combined, f, indent=2)
+
+# print(f"\n📦 Final combined dataset: {len(combined)} entries written to llama_finetune_ready.json")
+
+
+
+import json
+import os
+
+def convert_to_messages_format(entry):
+    if "input" in entry and "output" in entry:
+        return {
+            "messages": [
+                {"role": "user", "content": entry["input"]},
+                {"role": "assistant", "content": entry["output"]}
+            ]
+        }
+    return None
+
+# === Files to convert ===
+input_output_files = [
+    "training_data_contrastive.json",
+    "training_data_reasoning_prompts.json",
+    "training_data_contrastive_multiturn.json"
+]
+
+# === Files already in "messages" format ===
+chat_files = [
+    "training_data_llama.json"
+]
+
+# === Files in "text" format that need to be split ===
+flattened_text_files = [
+    "training_data_chat_text.json",
+    "training_data_chat_text_long.json"
+]
+
+final_data = []
+
+# Step 1: Convert input/output format
+for fname in input_output_files:
+    if os.path.exists(fname):
+        with open(fname) as f:
+            raw = json.load(f)
+            converted = [convert_to_messages_format(e) for e in raw if convert_to_messages_format(e)]
+            final_data.extend(converted)
+            print(f"✅ Converted {len(converted)} entries from {fname}")
+    else:
+        print(f"⚠️ Missing file: {fname}")
+
+# Step 2: Append raw messages (chat format)
+for fname in chat_files:
+    if os.path.exists(fname):
+        with open(fname) as f:
+            chat_data = json.load(f)
+            final_data.extend(chat_data)
+            print(f"✅ Appended {len(chat_data)} chat entries from {fname}")
+    else:
+        print(f"⚠️ Missing file: {fname}")
+
+# Step 3: Convert flattened text to messages
+for fname in flattened_text_files:
+    if os.path.exists(fname):
+        with open(fname) as f:
+            text_data = json.load(f)
+            count = 0
+            for item in text_data:
+                if "text" in item:
+                    parts = item["text"].split("### User:\n")
+                    for part in parts:
+                        if "### Assistant:\n" in part:
+                            user_part, assistant_part = part.split("### Assistant:\n", 1)
+                            final_data.append({
+                                "messages": [
+                                    {"role": "user", "content": user_part.strip()},
+                                    {"role": "assistant", "content": assistant_part.strip()}
+                                ]
+                            })
+                            count += 1
+            print(f"✅ Converted {count} entries from {fname} (flattened text)")
+    else:
+        print(f"⚠️ Missing file: {fname}")
+
+# === Save final output ===
+# === Save final output safely as JSONL ===
+out_path = "training_data_llama_chat_ready.jsonl"
+with open(out_path, "w") as f:
+    for entry in final_data:
+        f.write(json.dumps(entry) + "\n")
+
+print(f"\n📦 Stream-saved {len(final_data)} entries to {out_path}")
+
+print(f"\n📦 Total {len(final_data)} entries written to llama_chat_ready.json")
+
+
+--------------------------------------------------------------------------------
+
+### training_2_Cleaning.py
+################################################################################
+import json
+import pandas as pd
+import re
+from collections import defaultdict
+
+# Input and output file names
+INPUT_FILENAME = "training_data2.json"
+OUTPUT_FILENAME = "training_data3.json"
+
+# Load your data
+with open(INPUT_FILENAME, "r", encoding="utf-8") as f:
+    training_data = json.load(f)
+
+# Function to replace unicode escape Angstrom with real symbol
+def replace_unicode_angstrom(data):
+    if isinstance(data, list):
+        return [replace_unicode_angstrom(item) for item in data]
+    elif isinstance(data, dict):
+        return {k: replace_unicode_angstrom(v) for k, v in data.items()}
+    elif isinstance(data, str):
+        return data.replace("\u00c5", "Å")
+    return data
+
+# Regex to extract interaction components
+ligand_pdb_pattern = re.compile(r"What interactions does (.+?) have in PDB (\w{4})\?")
+output_pattern = re.compile(r"residue (\w+ \d+) \(chain (\w+)\) via a ([\w_]+) at ([\d.]+) Å")
+
+# Prepare mapping
+interaction_map = defaultdict(list)
+non_interactions = []
+
+for entry in training_data:
+    input_text = entry.get("input", "")
+    output_text = entry.get("output", "")
+
+    match = ligand_pdb_pattern.match(input_text)
+    if match:
+        ligand_raw, pdb_id = match.groups()
+        for res, chain, interaction_type, distance in output_pattern.findall(output_text):
+            interaction_map[(ligand_raw, pdb_id)].append((res, chain, interaction_type, distance))
+    else:
+        non_interactions.append(entry)
+
+# Generate merged interaction entries
+aggregated_data = []
+for (ligand_raw, pdb_id), interactions in interaction_map.items():
+    merged = "\n".join([
+        f" - Residue {res} (chain {chain}) via {itype} at {dist} Å."
+        for res, chain, itype, dist in interactions
+    ])
+    combined_output = f"Ligand {ligand_raw} in PDB {pdb_id} interacts with:\n{merged}"
+    aggregated_data.append({
+        "input": f"What interactions does {ligand_raw} have in PDB {pdb_id}?",
+        "output": combined_output
+    })
+
+# Combine and replace unicode
+final_data = replace_unicode_angstrom(non_interactions + aggregated_data)
+
+# Save to new file
+with open(OUTPUT_FILENAME, "w", encoding="utf-8") as f:
+    json.dump(final_data, f, indent=4, ensure_ascii=False)
+
+print(f"✅ Aggregation complete: saved to {OUTPUT_FILENAME}")
+
+
+--------------------------------------------------------------------------------
+
+### training_2b_Cleaning.py
+################################################################################
+import json
+
+# Load your data
+with open("training_data3.json", "r", encoding="utf-8") as f:
+    data = json.load(f)
+
+# Clean the data
+for entry in data:
+    for key in ["input", "output"]:
+        if key in entry:
+            entry[key] = entry[key].replace(".\n", " ").replace(":\n", ":")
+
+# Save to a new file
+with open("training_data4.json", "w", encoding="utf-8") as f:
+    json.dump(data, f, indent=4)
+
+print("Finished cleaning. Saved as training_data4.json")
+
+
+
+
+--------------------------------------------------------------------------------
+
+### training_3Enrich.py
+################################################################################
+import json
+import sqlite3
+import re
+from copy import deepcopy
+import pandas as pd
+
+# === Load synonym and protein mappings ===
+conn = sqlite3.connect("viral_data.db")
+ligand_synonyms_df = pd.read_sql("SELECT * FROM ligand_synonyms", conn)
+virus_proteins_df = pd.read_sql("SELECT * FROM virus_proteins", conn)
+conn.close()
+
+# === Build lookup dictionaries ===
+ligand_to_synonyms = {}
+for _, row in ligand_synonyms_df.iterrows():
+    ligand = str(row["ligand"]).strip()
+    synonym = str(row["synonym"]).strip()
+    if ligand and synonym:  # Only add if both values are non-empty
+        ligand_to_synonyms.setdefault(ligand, []).append(synonym)
+
+pdb_to_protein = {}
+for _, row in virus_proteins_df.iterrows():
+    pdb_id = str(row["pdb_id"]).strip().upper()
+    protein = str(row["protein"]).strip()
+    if pdb_id and protein:
+        pdb_to_protein[pdb_id] = protein
+
+# === Load cleaned training data ===
+with open("training_data4.json", "r") as f:
+    training_data = json.load(f)
+
+# === Pattern to extract 3-letter ligand and 4-letter PDB code ===
+pattern = re.compile(r"What interactions does (\w{3}) have in PDB (\w{4})\?")
+
+# === Build enriched data ===
+final_data = []
+
+for entry in training_data:
+    input_text = entry["input"]
+
+    # Skip bad entries with 'None'
+    if "None" in input_text or "Ligand None" in entry["output"]:
+        continue
+
+    match = pattern.match(input_text)
+    if match:
+        ligand, pdb_id = match.groups()
+        synonyms = ligand_to_synonyms.get(ligand, [])
+        protein_name = pdb_to_protein.get(pdb_id.upper())
+
+        # ✅ Always include original
+        final_data.append(entry)
+
+        # ➕ Synonym variants (ONLY if they exist)
+        if synonyms:
+            for syn in synonyms:
+                syn_entry = deepcopy(entry)
+                syn_entry["input"] = f"What interactions does {syn} have in PDB {pdb_id}?"
+                syn_entry["output"] = entry["output"].replace(f"Ligand {ligand}", f"Ligand {syn}")
+                final_data.append(syn_entry)
+
+        # ➕ Protein name variant
+        if protein_name:
+            prot_input = f"What interactions does {ligand} have with {protein_name}?"
+            prot_output = entry["output"].replace(f"in PDB {pdb_id}", f"with {protein_name}")
+            final_data.append({"input": prot_input, "output": prot_output})
+
+            # Combine synonym + protein if synonyms exist
+            if synonyms:
+                for syn in synonyms:
+                    final_data.append({
+                        "input": f"What interactions does {syn} have with {protein_name}?",
+                        "output": entry["output"]
+                            .replace(f"Ligand {ligand}", f"Ligand {syn}")
+                            .replace(f"in PDB {pdb_id}", f"with {protein_name}")
+                    })
+    else:
+        final_data.append(entry)
+
+# === Save final JSON ===
+with open("training_data5.json", "w") as f:
+    json.dump(final_data, f, indent=4)
+
+print("✅ Final training data saved — no 'None' entries, all logic respected.")
+
+
+--------------------------------------------------------------------------------
+
+### training_4CleanEnrich.py
+################################################################################
+import json
+
+# Path to your training data file
+json_path = "training_data5.json"
+
+# Load the JSON
+with open(json_path, "r") as f:
+    data = json.load(f)
+
+# Filter out entries with "What interactions does None" in the input
+cleaned_data = [entry for entry in data if not entry["input"].startswith("What interactions does None")]
+
+# Save it back to the same file
+with open(json_path, "w") as f:
+    json.dump(cleaned_data, f, indent=4)
+
+print(f"✅ Cleaned {len(data) - len(cleaned_data)} 'None' entries. Saved to {json_path}")
+
+
+--------------------------------------------------------------------------------
+
+### training_5AdditionalEnrichment.py
+################################################################################
+import json
+import sqlite3
+import re
+from copy import deepcopy
+import pandas as pd
+
+# === Load synonym mappings ===
+conn = sqlite3.connect("viral_data.db")
+ligand_synonyms_df = pd.read_sql("SELECT * FROM ligand_synonyms", conn)
+conn.close()
+
+# === Build synonym dictionary ===
+ligand_to_synonyms = {}
+for _, row in ligand_synonyms_df.iterrows():
+    ligand = str(row["ligand"]).strip()
+    synonym = str(row["synonym"]).strip()
+    if ligand and synonym:
+        ligand_to_synonyms.setdefault(ligand, []).append(synonym)
+
+# === Load the existing training dataset ===
+with open("training_data5.json", "r") as f:
+    original_data = json.load(f)
+
+# === Regex patterns ===
+similarity_pattern = re.compile(r"How similar are ligand (\w{3}) and ligand (\w{3})\?")
+protac_pattern = re.compile(r"Can (\w{3}) be adapted into a PROTAC\?")
+
+# === Begin enrichment ===
+enriched_data = []
+for entry in original_data:
+    enriched_data.append(entry)  # Always keep original
+    input_text = entry["input"]
+
+    # 🔬 Similarity enrichment
+    match_sim = similarity_pattern.match(input_text)
+    if match_sim:
+        lig1, lig2 = match_sim.groups()
+        syns1 = ligand_to_synonyms.get(lig1, [])
+        syns2 = ligand_to_synonyms.get(lig2, [])
+
+        for s1 in syns1:
+            new_entry = deepcopy(entry)
+            new_entry["input"] = f"How similar are ligand {s1} and ligand {lig2}?"
+            new_entry["output"] = entry["output"].replace(f"Ligand {lig1}", f"Ligand {s1}")
+            enriched_data.append(new_entry)
+
+        for s2 in syns2:
+            new_entry = deepcopy(entry)
+            new_entry["input"] = f"How similar are ligand {lig1} and ligand {s2}?"
+            new_entry["output"] = entry["output"].replace(f"Ligand {lig2}", f"Ligand {s2}")
+            enriched_data.append(new_entry)
+
+        for s1 in syns1:
+            for s2 in syns2:
+                new_entry = deepcopy(entry)
+                new_entry["input"] = f"How similar are ligand {s1} and ligand {s2}?"
+                new_entry["output"] = entry["output"].replace(f"Ligand {lig1}", f"Ligand {s1}").replace(f"Ligand {lig2}", f"Ligand {s2}")
+                enriched_data.append(new_entry)
+
+    # 🔧 PROTAC enrichment
+    match_protac = protac_pattern.match(input_text)
+    if match_protac:
+        lig = match_protac.group(1)
+        synonyms = ligand_to_synonyms.get(lig, [])
+        for syn in synonyms:
+            new_entry = deepcopy(entry)
+            new_entry["input"] = f"Can {syn} be adapted into a PROTAC?"
+            new_entry["output"] = entry["output"].replace(f"PROTAC Adaptability Score for {lig}", f"PROTAC Adaptability Score for {syn}")
+            enriched_data.append(new_entry)
+
+# === Save enriched version ===
+with open("training_data6.json", "w") as f:
+    json.dump(enriched_data, f, indent=4)
+
+print(f"✅ Enriched dataset saved to training_data6.json with {len(enriched_data) - len(original_data)} new entries.")
+
+
+--------------------------------------------------------------------------------
+
+### training_6CleaningNones.py
+################################################################################
+import json
+
+# === Load the enriched dataset ===
+with open("training_data6.json", "r") as f:
+    data = json.load(f)
+
+# === Define filters for bad input patterns ===
+def is_bad_entry(entry):
+    input_text = entry.get("input", "")
+    return (
+        input_text.strip() == "Can None be adapted into a PROTAC?" or
+        "How similar are ligand None" in input_text
+    )
+
+# === Remove bad entries ===
+cleaned_data = [entry for entry in data if not is_bad_entry(entry)]
+removed_count = len(data) - len(cleaned_data)
+
+# === Overwrite original file with cleaned data ===
+with open("training_data7.json", "w") as f:
+    json.dump(cleaned_data, f, indent=4)
+
+print(f"✅ Cleaned training_data6.json. Removed {removed_count} bad entries.")
+
+
+--------------------------------------------------------------------------------
+
+### training_7Synonyms.py
+################################################################################
+import sqlite3
+import json
+import re
+from copy import deepcopy
+
+# === Load training data ===
+with open("training_data7.json", "r") as f:
+    data = json.load(f)
+
+# === Connect to DB and load mappings ===
+conn = sqlite3.connect("viral_data.db")
+cursor = conn.cursor()
+
+# PDB → Protein mapping
+cursor.execute("SELECT pdb_id, protein FROM Virus_Proteins")
+pdb_to_protein = {row[0].upper(): row[1] for row in cursor.fetchall()}
+
+# Ligand → Synonyms mapping (safe check for None)
+cursor.execute("SELECT ligand, synonym FROM ligand_synonyms")
+ligand_to_synonyms = {}
+for ligand, synonym in cursor.fetchall():
+    if ligand and synonym:
+        ligand = ligand.strip().upper()
+        synonym = synonym.strip()
+        ligand_to_synonyms.setdefault(ligand, []).append(synonym)
+
+conn.close()
+
+# Regex to match "What interactions does XXX (also known as ...) have in PDB XXXX?"
+pattern = re.compile(r"What interactions does (\w{3}) \(also known as .+?\) have in PDB (\w{4})\?", re.IGNORECASE)
+
+final_data = []
+new_entries = 0
+
+for entry in data:
+    input_text = entry["input"]
+    output_text = entry["output"]
+    final_data.append(entry)  # Always keep the original
+
+    match = pattern.match(input_text)
+    if match:
+        ligand, pdb_id = match.groups()
+        ligand = ligand.upper()
+        pdb_id = pdb_id.upper()
+
+        protein = pdb_to_protein.get(pdb_id)
+        synonyms = ligand_to_synonyms.get(ligand, [])
+
+        if protein:
+            # ➕ Ligand with protein
+            final_data.append({
+                "input": f"What interactions does {ligand} have with {protein}?",
+                "output": output_text.replace(f"in PDB {pdb_id}", f"with {protein}")
+            })
+            new_entries += 1
+
+            # ➕ Each synonym with protein
+            for syn in synonyms:
+                final_data.append({
+                    "input": f"What interactions does {syn} have with {protein}?",
+                    "output": output_text
+                        .replace(f"Ligand {ligand}", f"Ligand {syn}")
+                        .replace(f"in PDB {pdb_id}", f"with {protein}")
+                })
+                new_entries += 1
+
+# === Save output ===
+with open("training_data8.json", "w") as f:
+    json.dump(final_data, f, indent=2)
+
+print(f"✅ Enriched with {new_entries} new entries using protein + synonym logic.")
+print(f"📦 Saved to training_data8.json with total {len(final_data)} entries.")
+
+
+--------------------------------------------------------------------------------
+
+### training_8llama.py
+################################################################################
+import json
+
+# Load the original dataset
+with open("training_data8.json", "r") as infile:
+    raw_data = json.load(infile)
+
+# Reformat for LLaMA SFT
+formatted_data = []
+for item in raw_data:
+    formatted_data.append({
+        "messages": [
+            {"role": "user", "content": item["input"]},
+            {"role": "assistant", "content": item["output"]}
+        ]
+    })
+
+# Save to new file
+with open("training_data_llama.json", "w") as outfile:
+    json.dump(formatted_data, outfile, indent=2)
+
+print("✅ Saved to training_data_llama.json")
+
+
+--------------------------------------------------------------------------------
+
+### training_9LlamaFinetuning.py
+################################################################################
+import os
+import torch
+from datasets import load_dataset, load_from_disk
+from transformers import (
+    AutoTokenizer,
+    AutoModelForCausalLM,
+    TrainingArguments,
+    Trainer,
+    BitsAndBytesConfig
+)
+from peft import prepare_model_for_kbit_training, LoraConfig, get_peft_model
+
+# === Model ID ===
+model_id = "meta-llama/Llama-3.1-8B-Instruct"
+
+# === File Paths ===
+input_jsonl = "/mnt/c/Users/joey/Documents/WorkingViralDB/training_data_llama_chat_ready.jsonl"
+tokenized_path = "/mnt/d/llama/tokenized_llama_dataset"
+output_dir = "/mnt/d/llama/llama3_finetuned"
+
+# === Tokenizer ===
+tokenizer = AutoTokenizer.from_pretrained(model_id)
+tokenizer.pad_token = tokenizer.eos_token
+
+# === Load or Tokenize Dataset ===
+if os.path.exists(tokenized_path):
+    print(f"✅ Loading tokenized dataset from {tokenized_path}...")
+    tokenized_dataset = load_from_disk(tokenized_path)
+else:
+    print("🌀 Tokenizing raw dataset...")
+    dataset = load_dataset("json", data_files=input_jsonl, split="train")
+
+    def preprocess(example):
+        prompt = tokenizer.apply_chat_template(example["messages"], tokenize=False)
+        encoded = tokenizer(prompt, padding="max_length", truncation=True, max_length=2048)
+        return {
+            "input_ids": encoded["input_ids"],
+            "attention_mask": encoded["attention_mask"],
+            "labels": encoded["input_ids"]
+        }
+
+    tokenized_dataset = dataset.map(preprocess, batched=False)
+    os.makedirs(tokenized_path, exist_ok=True)
+    tokenized_dataset.save_to_disk(tokenized_path)
+    print(f"✅ Tokenization complete and saved to {tokenized_path}.")
+
+# === Quantization Setup ===
+bnb_config = BitsAndBytesConfig(
+    load_in_4bit=True,
+    bnb_4bit_compute_dtype=torch.float16,
+    bnb_4bit_use_double_quant=True,
+    bnb_4bit_quant_type="nf4"
+)
+
+# === Load Model + Prepare for LoRA ===
+model = AutoModelForCausalLM.from_pretrained(
+    model_id,
+    quantization_config=bnb_config,
+    torch_dtype=torch.float16,
+    device_map="auto"
+)
+model = prepare_model_for_kbit_training(model)
+
+# === Apply LoRA Adapter ===
+peft_config = LoraConfig(
+    r=8,
+    lora_alpha=16,
+    target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
+    lora_dropout=0.05,
+    bias="none",
+    task_type="CAUSAL_LM"
+)
+model = get_peft_model(model, peft_config)
+
+# === Training Args ===
+training_args = TrainingArguments(
+    output_dir=output_dir,
+    per_device_train_batch_size=1,
+    gradient_accumulation_steps=4,
+    num_train_epochs=3,
+    learning_rate=2e-4,
+    fp16=True,
+    logging_steps=10,
+    save_strategy="epoch",
+    save_total_limit=2,
+    report_to="none"
+)
+
+# === Trainer Setup ===
+trainer = Trainer(
+    model=model,
+    train_dataset=tokenized_dataset,
+    args=training_args,
+    tokenizer=tokenizer
+)
+
+# === Start Training ===
+trainer.train()
+
+
+--------------------------------------------------------------------------------

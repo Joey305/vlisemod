@@ -1,0 +1,327 @@
+{% extends "base.html" %}
+
+{% block title %}V-LiSEMOD | Sign In{% endblock %}
+
+{% block body_class %}app-shell login-page{% endblock %}
+
+{% block head_extra %}
+  <style>
+    /* ===== Brand palette ===== */
+    :root { --green:#005030; --orange:#F47321; --ink:#0d1b16; }
+
+    /* ===== Page centering (mobile-first) ===== */
+    html, body { height:100%; box-sizing:border-box; }
+    *, *::before, *::after { box-sizing:inherit; }
+
+    body.login-page{
+      min-height:100svh;
+      display:flex !important;
+      align-items:center !important;
+      justify-content:center !important;
+      padding:16px;
+      margin:0;
+      font-family: ui-sans-serif, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      color:var(--ink);
+      background:
+        radial-gradient(1200px 800px at 10% -10%, rgba(255,255,255,.08) 0, transparent 60%),
+        radial-gradient(1200px 800px at 110% 110%, rgba(0,0,0,.08) 0, transparent 60%),
+        linear-gradient(135deg, var(--green) 0%, var(--orange) 100%);
+      background-attachment: fixed;
+    }
+
+    /* ===== Card ===== */
+    .login-card{
+      width:min(92vw, 680px) !important;
+      margin-inline:auto !important;
+      border-radius:18px;
+      background:#ffffffee;
+      box-shadow:0 18px 60px rgba(0,0,0,.25);
+      border:1px solid rgba(0,0,0,.06);
+      padding:20px;
+    }
+    .login-title{
+      margin:0 0 6px 0;
+      color:var(--green);
+      font-weight:800;
+      font-size:clamp(28px, 6vw, 48px);
+      letter-spacing:.5px;
+      text-align:center;
+    }
+    .login-sub{
+      margin:0 auto 18px auto;
+      color:#2a4b3e;
+      font-size:clamp(14px, 3.4vw, 18px);
+      line-height:1.35;
+      text-align:center;
+      max-width:520px;
+    }
+
+    /* ===== Form ===== */
+    .login-form{ display:grid; gap:14px; }
+    .login-form label{ font-size:14px; font-weight:700; color:var(--green); }
+    .login-input{
+      width:100%;
+      padding:12px;
+      border-radius:12px;
+      border:2px solid var(--green);
+      color:var(--green);
+      background:#fff;
+      outline:none;
+    }
+    .login-input:focus{ box-shadow:0 0 0 4px rgba(0,80,48,.15); }
+
+    .btn-brand{
+      width:100%;
+      border:0;
+      border-radius:12px;
+      padding:12px 14px;
+      cursor:pointer;
+      color:#fff;
+      background:linear-gradient(90deg, var(--orange), #ff8a3a);
+      font-weight:800;
+      font-size:16px;
+      transition:transform .12s ease, box-shadow .12s ease, filter .12s ease;
+      box-shadow:0 8px 18px rgba(244,115,33,.25);
+    }
+    .btn-brand:hover{ filter:brightness(.97); transform:translateY(-1px); }
+
+    /* Secondary actions */
+    .buttons{ margin-top:12px; }
+    .buttons-container{
+      display:flex !important;
+      gap:12px;
+      justify-content:center !important;
+      align-items:stretch !important;
+      width:100%;
+    }
+    .btn-link{
+      flex:1 1 0;
+      max-width:320px;
+      background:#fff;
+      color:var(--green);
+      border:2px solid rgba(0,0,0,.08);
+      border-radius:12px;
+      padding:12px 14px;
+      font-weight:700;
+      cursor:pointer;
+      box-shadow:0 6px 14px rgba(0,0,0,.06);
+    }
+    @media (max-width:560px){ .buttons-container{ flex-direction:column; } }
+
+    /* Error banner (bad creds, timeout, etc.) */
+    .error-banner{
+      margin:0 0 12px 0;
+      padding:12px 14px;
+      border-radius:10px;
+      background:#fff3f0;
+      border:1px solid var(--orange);
+      color:#7a2e0b;
+      font-size:.95rem;
+    }
+
+    /* ===== Modals: hard-centered with position:fixed ===== */
+    .lp-backdrop{
+      position:fixed; inset:0;
+      display:none !important;                    /* hidden by default */
+      background:rgba(0,0,0,.55);
+      z-index:9999 !important;
+    }
+    .lp-backdrop.is-open{ display:block !important; }
+
+    .lp-modal{
+      position:fixed;                              /* relative to viewport */
+      top:50%; left:50%;
+      transform:translate(-50%,-50%);
+      width:min(92vw, 560px);
+      max-height:90svh;                            /* never overflow screen */
+      overflow:auto;                               
+      background:#fff;
+      color:var(--green);
+      border-radius:16px;
+      padding:18px;
+      box-shadow:0 24px 60px rgba(0,0,0,.35);
+      border:1px solid rgba(0,0,0,.08);
+      z-index:10000;                               /* above backdrop */
+    }
+    .lp-modal h3{ margin:0 0 6px 0; font-size:20px; }
+    .lp-modal p{  margin:0 0 12px 0; color:#1c3a2b; font-size:14px; }
+
+    .lp-input{
+      width:100%;
+      padding:12px;
+      border-radius:10px;
+      border:2px solid var(--green);
+      background:#fff;
+      color:var(--green);
+    }
+    textarea.lp-input{ min-height:100px; resize:vertical; }
+
+    .lp-actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:12px; }
+    .btn-ghost{
+      background:#fff; color:var(--green);
+      border:2px solid var(--green);
+      border-radius:10px; padding:10px 14px; cursor:pointer;
+    }
+    .btn-ghost:hover{ background:rgba(0,80,48,.08); }
+  </style>
+{% endblock %}
+
+{% block content %}
+  {% set TUTORIAL_URL = "https://youtu.be/0tyw-ZfJxkk?si=xnDocGriI4OOsamt" %}
+  {% include "_tutorial_flyover.html" %}
+  <main class="login-card" role="main">
+    <section class="page-intro" style="color: var(--green); margin-bottom: 18px;">
+      <span class="page-kicker" style="background: rgba(0,80,48,.08); color: var(--green);">Secure Access</span>
+      <h1 class="login-title">V-LISEMOD</h1>
+      <p class="login-sub">Sign in to access V-LiSEMOD queries, ligand comparison workflows, PyMOL exports, and Drug GPT tools.</p>
+    </section>
+
+    {% if error %}
+      <div class="error-banner">{{ error }}</div>
+    {% endif %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for cat, msg in messages %}
+          <div class="error-banner">{{ msg }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <form method="POST" action="{{ url_for('login') }}" class="login-form" autocomplete="on">
+      <div>
+        <label for="email">Email</label>
+        <input id="email" name="email" class="login-input" type="email" placeholder="you@domain.com" required autofocus>
+      </div>
+      <div>
+        <label for="password">Password</label>
+        <input id="password" name="password" class="login-input" type="password" placeholder="••••••••" required>
+      </div>
+      <button type="submit" class="btn-brand">Sign In</button>
+    </form>
+
+    <div class="buttons">
+      <div class="buttons-container">
+        <button id="btnForgot"  class="btn-link" type="button">Forgot password</button>
+        <button id="btnRequest" class="btn-link" type="button">Request an account</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- Forgot Password Modal -->
+  <div id="modal-forgot" class="lp-backdrop" aria-hidden="true">
+    <div class="lp-modal" role="dialog" aria-modal="true" aria-labelledby="forgotTitle">
+      <h3 id="forgotTitle">Forgot password</h3>
+      <p>We’ll open your email app with a prefilled message to the admin.</p>
+      <form onsubmit="mailtoCompose(event, 'Password reset request')">
+        <label for="fp_email">Your email</label>
+        <input id="fp_email" class="lp-input" type="email" required placeholder="you@domain.com">
+
+        <label for="fp_msg" style="margin-top:10px;">Message</label>
+        <textarea id="fp_msg" class="lp-input" placeholder="Anything helpful to include…"></textarea>
+
+        <div class="lp-actions">
+          <button type="button" class="btn-ghost" data-close="forgot">Cancel</button>
+          <button type="submit" class="btn-brand">Email support</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Request Account Modal -->
+  <div id="modal-request" class="lp-backdrop" aria-hidden="true">
+    <div class="lp-modal" role="dialog" aria-modal="true" aria-labelledby="requestTitle">
+      <h3 id="requestTitle">Request an account</h3>
+      <p>Tell us who you are and why you need access. We’ll open a prefilled email.</p>
+      <form onsubmit="mailtoCompose(event, 'New V-LISEMOD Account Request')">
+        <label for="rq_name">Your name</label>
+        <input id="rq_name" class="lp-input" type="text" required placeholder="Full name">
+
+        <label for="rq_email" style="margin-top:10px;">Email</label>
+        <input id="rq_email" class="lp-input" type="email" required placeholder="you@domain.com">
+
+        <label for="rq_msg" style="margin-top:10px;">Notes</label>
+        <textarea id="rq_msg" class="lp-input" placeholder="Team, role, brief reason for access…"></textarea>
+
+        <div class="lp-actions">
+          <button type="button" class="btn-ghost" data-close="request">Cancel</button>
+          <button type="submit" class="btn-brand">Email admin</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Open/close modals; fixed centering
+    function openModal(kind){
+      const el = document.getElementById('modal-' + kind);
+      if (!el) return;
+      el.classList.add('is-open');
+      el.setAttribute('aria-hidden', 'false');
+      // lock background scroll (iOS-friendly)
+      document.documentElement.style.overflow = 'hidden';
+      document.body.style.overflow = 'hidden';
+
+      // focus first field
+      const first = el.querySelector('input, textarea, button');
+      first && first.focus();
+    }
+    function closeModal(kind){
+      const el = document.getElementById('modal-' + kind);
+      if (!el) return;
+      el.classList.remove('is-open');
+      el.setAttribute('aria-hidden', 'true');
+      document.documentElement.style.overflow = '';
+      document.body.style.overflow = '';
+    }
+
+    // Compose mailto for both popups — works on iOS/Android/desktop
+    function mailtoCompose(e, subject){
+      e.preventDefault();
+      const to = "jmschulz@med.miami.edu";
+      const parts = [];
+      const fpEmail = document.getElementById('fp_email');
+      const fpMsg   = document.getElementById('fp_msg');
+      const rqName  = document.getElementById('rq_name');
+      const rqEmail = document.getElementById('rq_email');
+      const rqMsg   = document.getElementById('rq_msg');
+
+      if (fpEmail && fpEmail.value) parts.push("From: " + fpEmail.value);
+      if (fpMsg   && fpMsg.value)   parts.push("Message: " + fpMsg.value);
+      if (rqName  && rqName.value)  parts.push("Name: " + rqName.value);
+      if (rqEmail && rqEmail.value) parts.push("Email: " + rqEmail.value);
+      if (rqMsg   && rqMsg.value)   parts.push("Notes: " + rqMsg.value);
+
+      const body = encodeURIComponent(parts.join("\n"));
+      const href = `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${body}`;
+      window.location.href = href;  // trigger mail client
+    }
+
+    // Bindings
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('btnForgot')  ?.addEventListener('click', () => openModal('forgot'));
+      document.getElementById('btnRequest') ?.addEventListener('click', () => openModal('request'));
+
+      // close on backdrop click
+      ['forgot','request'].forEach(k => {
+        const backdrop = document.getElementById('modal-' + k);
+        if (!backdrop) return;
+        backdrop.addEventListener('click', (e) => {
+          // only close if you clicked outside the modal box
+          if (e.target === backdrop) closeModal(k);
+        });
+      });
+
+      // close buttons
+      document.querySelectorAll('[data-close="forgot"]').forEach(el => el.addEventListener('click', () => closeModal('forgot')));
+      document.querySelectorAll('[data-close="request"]').forEach(el => el.addEventListener('click', () => closeModal('request')));
+
+      // Esc key
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') ['forgot','request'].forEach(k => {
+          const b = document.getElementById('modal-' + k);
+          if (b && b.classList.contains('is-open')) closeModal(k);
+        });
+      });
+    });
+  </script>
+{% endblock %}

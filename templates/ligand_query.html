@@ -1,0 +1,280 @@
+{% extends "base.html" %}
+
+{% block title %}V-LiSEMOD | Ligand Indexer{% endblock %}
+
+{% block head_extra %}
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-beta.1/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-beta.1/js/select2.min.js"></script>
+{% endblock %}
+
+{% block body_class %}app-shell ligand-query-page{% endblock %}
+
+{% block content %}
+    <section class="page-intro">
+        <span class="page-kicker">Ligand Indexer</span>
+        <h1>Find a ligand, inspect mapped residues, and generate interaction charts.</h1>
+        <p>This page keeps the original ligand indexing workflow intact while bringing the layout, navigation, and support tools in line with the rest of V-LiSEMOD.</p>
+    </section>
+
+    <section class="form-container form-card page-section">
+        <form id="ligandQueryForm">
+            <label for="ligand">Select Ligand (3-letter code):</label>
+            <select id="ligand" name="ligand" class="searchable-select" required>
+                <option value="">--Select Ligand--</option>
+            </select>
+
+            <label for="pdb_residue">Select PDB ID, Chain, Residue ID:</label>
+            <select id="pdb_residue" name="pdb_residue" class="searchable-select" required>
+                <option value="">--Select PDB/Residue--</option>
+            </select>
+
+            <button type="button" id="showInteractionButton" disabled>Show Interactions</button>
+        </form>
+        <div class="action-row centered-row">
+            <a class="button-secondary" href="{{ url_for('compare_ligands') }}">Demo the Dynamic Ligand Multi PDB Plots</a>
+            <a class="button-secondary" href="{{ url_for('index') }}">Back to Main Page</a>
+            <button id="openDefinitions" type="button">Definitions for Interactions</button>
+        </div>
+    </section>
+
+    <div id="definitionsModal" class="modal">
+        <div class="modal-content data-panel">
+            <button class="close modal-close-button" type="button" aria-label="Close definitions">&times;</button>
+            <h2>Interaction Definitions</h2>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Key</th>
+                            <th>Interaction</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>ionic</td><td>Ionic</td><td>Denotes an ionic interaction.</td></tr>
+                        <tr><td>hbond</td><td>Hydrogen Bond</td><td>Denotes a hydrogen bond.</td></tr>
+                        <tr><td>vdw</td><td>Van der Waals</td><td>Denotes a Van der Waals contact.</td></tr>
+                        <tr><td>metal</td><td>Metal Complex</td><td>Denotes if the atom is part of a metal complex.</td></tr>
+                        <tr><td>aromatic</td><td>Aromatic</td><td>Denotes an aromatic ring atom interacting with another aromatic ring atom.</td></tr>
+                        <tr><td>hydrophobic</td><td>Hydrophobic</td><td>Denotes hydrophobic interaction.</td></tr>
+                        <tr><td>carbonyl</td><td>Carbonyl</td><td>Denotes a carbonyl-carbon:carbonyl-carbon interaction.</td></tr>
+                        <tr><td>polar</td><td>Polar</td><td>Less strict hydrogen bonding without angle terms.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="carouselModal" class="modal">
+        <div class="modal-content data-panel">
+            <button class="close modal-close-button" type="button" aria-label="Close chart carousel">&times;</button>
+            <h2 class="modal-title">Interaction Visualizations</h2>
+            <div id="carouselGraphs" class="carousel chart-container"></div>
+
+            <div class="carousel-controls">
+                <button id="prevSlide" type="button">&#10094;</button>
+                <button id="saveImageButton" type="button">Save Image</button>
+                <button id="nextSlide" type="button">&#10095;</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="chatbot-container">
+        <div id="chatbot-icon" onclick="toggleChatbot()">💬</div>
+        <div id="chatbot-popup">
+            <iframe id="chatbot-frame" title="Chatbot" style="display:none;"></iframe>
+            <div id="coming-soon-message" style="text-align:center; display:none;">
+                <h2>Drug GPT is currently unavailable</h2>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        const modal = document.getElementById('definitionsModal');
+        const btn = document.getElementById('openDefinitions');
+        const span = document.getElementsByClassName('close')[0];
+
+        btn.onclick = function() {
+            modal.style.display = 'block';
+        };
+
+        span.onclick = function() {
+            modal.style.display = 'none';
+        };
+
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        };
+    </script>
+
+    <script>
+        let isDrugAppAvailable = false;
+
+        async function checkDrugApp() {
+            try {
+                const response = await fetch("/drugapp/", { method: "HEAD" });
+                if (response.ok) {
+                    isDrugAppAvailable = true;
+                }
+            } catch (error) {
+                console.warn("Error checking DrugApp availability:", error);
+            }
+        }
+
+        checkDrugApp();
+
+        function toggleChatbot() {
+            const chatbotPopup = document.getElementById("chatbot-popup");
+            const chatbotFrame = document.getElementById("chatbot-frame");
+            const comingSoonMessage = document.getElementById("coming-soon-message");
+            chatbotFrame.src = window.location.origin + "/drugapp/";
+
+            if (chatbotPopup.style.display === "none" || chatbotPopup.style.display === "") {
+                if (isDrugAppAvailable) {
+                    chatbotFrame.style.display = "block";
+                    comingSoonMessage.style.display = "none";
+                } else {
+                    chatbotFrame.style.display = "none";
+                    comingSoonMessage.style.display = "block";
+                }
+                chatbotPopup.style.display = "block";
+            } else {
+                chatbotPopup.style.display = "none";
+            }
+        }
+    </script>
+
+    <script>
+        $(document).ready(function() {
+            $('.searchable-select').select2();
+
+            fetch('/get_ligands_with_synonyms')
+                .then(response => response.json())
+                .then(data => {
+                    const ligandSelect = $('#ligand');
+                    const uniqueLigands = new Set();
+
+                    ligandSelect.empty();
+                    ligandSelect.append('<option value="">--Select Ligand or Synonym--</option>');
+
+                    data.forEach(item => {
+                        if (!uniqueLigands.has(item.ligand_code)) {
+                            uniqueLigands.add(item.ligand_code);
+                            ligandSelect.append(`<option value="${item.ligand_code}">${item.ligand_code}</option>`);
+                        }
+                        if (item.synonym && !uniqueLigands.has(item.synonym)) {
+                            uniqueLigands.add(item.synonym);
+                            ligandSelect.append(`<option value="${item.ligand_code}">${item.synonym} (Synonym for ${item.ligand_code})</option>`);
+                        }
+                    });
+                });
+
+            $('#ligand').on('change', function() {
+                const selectedCode = $(this).val();
+                const pdbResidueSelect = $('#pdb_residue');
+                if (selectedCode) {
+                    fetch(`/get_pdb_residue_by_ligand/${selectedCode}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            pdbResidueSelect.empty();
+                            pdbResidueSelect.append('<option value="">--Select PDB/Residue--</option>');
+
+                            data.pairs.forEach(pair => {
+                                const option = `${pair.pdb_id}, Chain: ${pair.chain}, Residue: ${pair.ligand_id}`;
+                                pdbResidueSelect.append(`<option value="${pair.pdb_id},${pair.chain},${pair.ligand_id}">${option}</option>`);
+                            });
+
+                            $('#showInteractionButton').prop('disabled', false);
+                        });
+                } else {
+                    $('#pdb_residue').empty().append('<option value="">--Select PDB/Residue--</option>');
+                    $('#showInteractionButton').prop('disabled', true);
+                }
+            });
+
+            $('#showInteractionButton').on('click', function() {
+                const selectedPair = $('#pdb_residue').val();
+                const selectedLigand = $('#ligand').val();
+
+                if (selectedPair && selectedLigand) {
+                    const [pdb_id, chain, ligand_id] = selectedPair.split(',');
+
+                    fetch('/generate_charts', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            pdb_id: pdb_id.trim(),
+                            chain: chain.trim(),
+                            ligand_id: ligand_id.trim(),
+                            ligand: selectedLigand.trim()
+                        }),
+                    })
+                    .then(response => response.json())
+                    .then(chartPaths => {
+                        displayCarouselModal(chartPaths.chart_paths);
+                    });
+                }
+            });
+
+            function displayCarouselModal(chartPaths) {
+                const modal = $('#carouselModal');
+                const carouselContainer = $('#carouselGraphs');
+                carouselContainer.empty();
+
+                chartPaths.forEach((chartPath, index) => {
+                    const img = $('<img>').attr('src', `/${chartPath}`).addClass(index === 0 ? 'active' : '');
+                    carouselContainer.append(img);
+                });
+
+                let currentSlide = 0;
+                modal.show();
+
+                $('#nextSlide').off('click').on('click', function() {
+                    currentSlide = (currentSlide + 1) % chartPaths.length;
+                    updateSlide(currentSlide);
+                });
+
+                $('#prevSlide').off('click').on('click', function() {
+                    currentSlide = (currentSlide - 1 + chartPaths.length) % chartPaths.length;
+                    updateSlide(currentSlide);
+                });
+
+                function updateSlide(slideIndex) {
+                    carouselContainer.find('img').removeClass('active');
+                    carouselContainer.find('img').eq(slideIndex).addClass('active');
+                }
+
+                $('.close').off('click').on('click', function() {
+                    modal.hide();
+                    carouselContainer.empty();
+                    currentSlide = 0;
+                });
+
+                $(window).on('click', function(event) {
+                    if (event.target == modal[0]) {
+                        modal.hide();
+                        carouselContainer.empty();
+                        currentSlide = 0;
+                    }
+                });
+            }
+
+            document.getElementById('saveImageButton').addEventListener('click', function() {
+                const activeImage = document.querySelector('.carousel img.active');
+                if (activeImage) {
+                    const link = document.createElement('a');
+                    link.href = activeImage.src;
+                    link.download = 'interaction_visualization.png';
+                    link.click();
+                }
+            });
+        });
+    </script>
+{% endblock %}

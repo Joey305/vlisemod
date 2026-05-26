@@ -1,0 +1,1528 @@
+{% extends "base.html" %}
+
+{% block title %}V-LiSEMOD | PROTACability Assessment{% endblock %}
+
+{% block body_class %}app-shell protacability-page{% endblock %}
+
+{% block head_extra %}
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-beta.1/css/select2.min.css" rel="stylesheet" />
+    <script>
+        window.VLISEMOD_DEBUG_LIGANDS = window.VLISEMOD_DEBUG_LIGANDS === true;
+        (function () {
+            try {
+                const params = new URLSearchParams(window.location.search);
+                if (params.get("debug_ligands") === "1") window.VLISEMOD_DEBUG_LIGANDS = true;
+                if (window.localStorage && localStorage.getItem("vlisemod_debug_ligands") === "1") window.VLISEMOD_DEBUG_LIGANDS = true;
+            } catch (e) {}
+        })();
+        function ligandDebugEnabled() {
+            return window.VLISEMOD_DEBUG_LIGANDS === true ||
+                new URLSearchParams(window.location.search).get("debug_ligands") === "1" ||
+                localStorage.getItem("vlisemod_debug_ligands") === "1";
+        }
+    </script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-beta.1/js/select2.min.js"></script>
+    <script src="https://unpkg.com/ngl@2.0.0-dev.37/dist/ngl.js"></script>
+    <script src="{{ url_for('static', filename='js/ngl_viewer_helpers.js') }}?v=pdb-only-handle-validation-v3"></script>
+{% endblock %}
+
+{% block content %}
+    <section class="page-intro">
+        <span class="page-kicker">PROTACability Assessment</span>
+        <h1>Prioritize viral protein structures for degrader-aware exploration.</h1>
+        <p>Explore ligand-centered warhead linkability, target lysine accessibility, ternary geometry cues, and overall degrader-design readiness across curated viral protein structures. These metrics support hypothesis generation and do not replace experimental validation.</p>
+    </section>
+
+    <section class="status-card status-warning page-section protacability-callout">
+        <strong>Important interpretation note</strong>
+        <p>Warhead linkability evaluates whether the bound ligand contains solvent-exposed, chemically modifiable atoms that may tolerate linker attachment while preserving binding. Target lysine accessibility is evaluated separately as a ubiquitination-readiness cue. Ternary geometry cues are hypothesis-generating only and should not be interpreted as proof of productive degradation.</p>
+    </section>
+
+    {% if not protacability_data_available %}
+    <section class="empty-state page-section">
+        <h2>PROTACability data not imported yet</h2>
+        <p>Run <code>python tools/import_protacability_data.py</code> after generating the expansion outputs to populate the assessment tables in <code>viral_data.db</code>.</p>
+    </section>
+    {% endif %}
+
+    <section class="page-card page-section">
+        <div class="tool-grid protacability-metrics">
+            {% for idx in range(1, 6) %}
+            <article class="tool-card status-card">
+                <span class="feature-badge" id="metric-{{ idx }}-label">Loading…</span>
+                <h3 id="metric-{{ idx }}-value">--</h3>
+                <p id="metric-{{ idx }}-meta">Preparing grouped assessment summary.</p>
+            </article>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="form-container form-card page-section">
+        <div class="section-heading">
+            <h2 class="page-title">Filter structural-priority results</h2>
+            <p class="page-subtitle">Candidate small-molecule ligand contexts and higher-evidence warhead rows are prioritized by default. Glycan-only structures remain available for structural context, but they are not treated as strong warhead evidence.</p>
+        </div>
+
+        <div class="protacability-toolbar">
+            <div class="protacability-segmented" role="tablist" aria-label="PROTACability view mode">
+                <button type="button" class="protac-view-button is-active" data-view="targets">Target Browser</button>
+                <button type="button" class="protac-view-button" data-view="protein">Protein Summary</button>
+                <button type="button" class="protac-view-button" data-view="summary">Structure Summary</button>
+                <button type="button" class="protac-view-button" data-view="chains">Chain Details</button>
+            </div>
+            <div class="protacability-toolbar-meta">
+                <div class="form-group compact-group">
+                    <label for="protac-sort">Sort</label>
+                    <select id="protac-sort"></select>
+                </div>
+                <div class="form-group compact-group">
+                    <label for="protac-page-size">Page size</label>
+                    <select id="protac-page-size">
+                        <option value="25">25</option>
+                        <option value="50" selected>50</option>
+                        <option value="100">100</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <form id="protacability-filter-form" class="form-grid protac-filter-grid">
+            <input type="hidden" id="protac-view" value="targets">
+            <div class="form-row-grid">
+                <div class="form-group">
+                    <label for="protac-virus-name">Virus name</label>
+                    <select id="protac-virus-name" multiple="multiple" class="searchable-select"></select>
+                </div>
+                <div class="form-group">
+                    <label for="protac-protein-type">Protein type</label>
+                    <select id="protac-protein-type" multiple="multiple" class="searchable-select"></select>
+                </div>
+                <div class="form-group">
+                    <label for="protac-tier">Priority tier</label>
+                    <select id="protac-tier" multiple="multiple" class="searchable-select"></select>
+                </div>
+                <div class="form-group">
+                    <label for="protac-readiness-tier">Degrader readiness tier</label>
+                    <select id="protac-readiness-tier" multiple="multiple" class="searchable-select"></select>
+                </div>
+                <div class="form-group">
+                    <label for="protac-warhead-tier">Warhead linkability tier</label>
+                    <select id="protac-warhead-tier" multiple="multiple" class="searchable-select"></select>
+                </div>
+            </div>
+            <div class="form-row-grid">
+                <div class="form-group">
+                    <label for="protac-pdb-code">PDB code</label>
+                    <input id="protac-pdb-code" type="text" placeholder="e.g. 1A8K">
+                </div>
+                <div class="form-group">
+                    <label for="protac-min-score">Minimum proxy score</label>
+                    <input id="protac-min-score" type="number" min="0" max="100" step="1" placeholder="0">
+                </div>
+                <div class="form-group">
+                    <label for="protac-min-readiness-score">Minimum degrader readiness</label>
+                    <input id="protac-min-readiness-score" type="number" min="0" max="100" step="0.1" placeholder="0">
+                </div>
+                <div class="form-group">
+                    <label for="protac-min-warhead-score">Minimum warhead linkability</label>
+                    <input id="protac-min-warhead-score" type="number" min="0" max="100" step="0.1" placeholder="0">
+                </div>
+            </div>
+            <div class="form-row-grid protac-ligand-row">
+                <div class="form-group">
+                    <label for="protac-ligand-filter">Candidate ligand resname</label>
+                    <select id="protac-ligand-filter" class="searchable-select">
+                        <option value="">Any ligand</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="protac-ligand-presence">Ligand presence</label>
+                    <select id="protac-ligand-presence" class="searchable-select">
+                        <option value="">Any ligand status</option>
+                        <option value="has_any_ligand">Has any ligand context</option>
+                        <option value="no_ligand">No ligand context</option>
+                        <option value="has_candidate_ligand">Has candidate small-molecule ligand</option>
+                        <option value="no_candidate_ligand">No candidate small-molecule ligand</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="protac-ligand-context-class">Ligand context</label>
+                    <select id="protac-ligand-context-class">
+                        <option value="">Any context</option>
+                    </select>
+                    <p class="field-help">Candidate contexts are prioritized by default. Glycan-only structures remain available for surface biology and structural completeness.</p>
+                </div>
+                <div class="form-group">
+                    <label for="protac-evidence-level">Evidence level</label>
+                    <select id="protac-evidence-level" multiple="multiple" class="searchable-select"></select>
+                </div>
+                <div class="form-group">
+                    <label for="protac-smiles-source">SMILES source</label>
+                    <select id="protac-smiles-source" multiple="multiple" class="searchable-select"></select>
+                </div>
+            </div>
+            <div class="checkbox-container protacability-toggle-grid">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="toggle-collapse-labels" checked>
+                    <span class="checkbox-copy">
+                        <span class="checkbox-title">Collapse overlapping protein labels</span>
+                        <span class="checkbox-meta">Prefer specific labels like Protease over generic labels such as NSP Proteins when the same chain is duplicated.</span>
+                    </span>
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="toggle-has-exposed-lysine">
+                    <span class="checkbox-copy">
+                        <span class="checkbox-title">Has exposed lysine</span>
+                        <span class="checkbox-meta">Require at least one surface-exposed lysine.</span>
+                    </span>
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="toggle-has-ligand-proximal-exposed-lysine">
+                    <span class="checkbox-copy">
+                        <span class="checkbox-title">Has ligand-proximal exposed lysine</span>
+                        <span class="checkbox-meta">Treat ligand-proximal lysines as secondary geometry cues only.</span>
+                    </span>
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="toggle-has-candidate-linker-atoms">
+                    <span class="checkbox-copy">
+                        <span class="checkbox-title">Has candidate linker atoms</span>
+                        <span class="checkbox-meta">Prefer ligands with explicit linker-attachment candidates.</span>
+                    </span>
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="toggle-has-solvent-exposed-ligand-atoms">
+                    <span class="checkbox-copy">
+                        <span class="checkbox-title">Has solvent-exposed ligand atoms</span>
+                        <span class="checkbox-meta">Require solvent-exposed ligand atoms before ranking highly.</span>
+                    </span>
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="toggle-has-mapped-atoms">
+                    <span class="checkbox-copy">
+                        <span class="checkbox-title">Has mapped atoms</span>
+                        <span class="checkbox-meta">Require PDB-to-SMILES mapped atoms.</span>
+                    </span>
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="toggle-has-valid-rdkit-smiles">
+                    <span class="checkbox-copy">
+                        <span class="checkbox-title">Has valid RDKit SMILES</span>
+                        <span class="checkbox-meta">Keep rows with chemically parseable ligand SMILES.</span>
+                    </span>
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="toggle-has-exposed-target-lysines">
+                    <span class="checkbox-copy">
+                        <span class="checkbox-title">Has exposed target lysines</span>
+                        <span class="checkbox-meta">Filter for chains with at least one exposed target lysine.</span>
+                    </span>
+                </label>
+            </div>
+            <div class="action-row protacability-actions">
+                <button type="button" id="apply-protac-filters">Apply Filters</button>
+                <button type="button" id="reset-protac-filters" class="button-secondary">Reset</button>
+                <select id="protac-export-type" class="button-secondary">
+                    <option value="">Filtered current view</option>
+                    <option value="PROTACability Assessment">Old PROTACability Assessment</option>
+                    <option value="PROTACability Lysine Proximity">Old PROTACability Lysine Proximity</option>
+                    <option value="PROTACability Ligand Inventory">Old PROTACability Ligand Inventory</option>
+                    <option value="PROTACability Warhead Linkability">New Warhead Linkability</option>
+                    <option value="PROTACability Degrader Readiness">New Degrader Readiness</option>
+                </select>
+                <button type="button" id="export-protac-csv" class="button-secondary">Export CSV</button>
+            </div>
+            <p id="protac-filter-feedback" class="field-help" aria-live="polite"></p>
+        </form>
+    </section>
+
+    <section class="page-card page-section protac-results-section">
+        <div class="section-heading">
+            <h2 class="page-title">Assessment results</h2>
+            <p class="page-subtitle" id="protac-results-note">Default view: target-first grouped cards so repeated PDB rows do not bury viral protein-level triage.</p>
+        </div>
+        <div class="protacability-pagination top">
+            <span id="protac-page-summary">Loading results…</span>
+            <div class="action-row">
+                <button type="button" id="protac-prev-page" class="button-secondary">Previous</button>
+                <button type="button" id="protac-next-page" class="button-secondary">Next</button>
+            </div>
+        </div>
+        <div class="table-wrap">
+            <table id="protacability-table" class="protacability-compact-table">
+                <thead id="protacability-table-head"></thead>
+                <tbody id="protacability-table-body">
+                    <tr>
+                        <td colspan="10">Loading assessment rows...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div id="protac-target-browser" class="protac-target-browser" style="display:none;"></div>
+        <div class="protacability-pagination bottom">
+            <span id="protac-page-summary-bottom">Loading results…</span>
+            <div class="action-row">
+                <button type="button" id="protac-prev-page-bottom" class="button-secondary">Previous</button>
+                <button type="button" id="protac-next-page-bottom" class="button-secondary">Next</button>
+            </div>
+        </div>
+    </section>
+
+    <div id="protacability-detail-modal" class="modal" style="display:none;">
+        <div class="modal-content data-panel protacability-detail-modal">
+            <button id="close-protac-detail" class="modal-close-button" type="button" aria-label="Close detail panel">&times;</button>
+            <div id="protac-detail-content">
+                <h2 class="page-title">Loading detail...</h2>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        const initialProtacabilityDataAvailable = {{ 'true' if protacability_data_available else 'false' }};
+        const protacState = { view: 'targets', offset: 0, limit: 50, totalRows: 0, hasMore: false, currentSort: 'ligand_priority_desc', modalSurfaceOn: false };
+        let latestProtacViewerPayload = null;
+        let latestProtacLoadedSourceUrl = null;
+        let refreshingFilterOptions = false;
+        const useDirectRcsbPdb = (new URLSearchParams(window.location.search).get('useDirectRcsbPdb') === 'true');
+
+        function renderLigandDebugPanel() {
+            if (!ligandDebugEnabled()) return '';
+            return `
+                <details id="protac-ligand-debug-panel" class="page-card">
+                    <summary>Ligand debug</summary>
+                    <pre id="protac-ligand-debug-text"></pre>
+                    <div class="action-row">
+                        <a id="protac-ligand-debug-link" class="button-secondary" target="_blank" rel="noopener noreferrer">Open backend ligand debug</a>
+                        <button id="copy-protac-debug-payload" type="button" class="button-secondary">Copy debug payload</button>
+                    </div>
+                </details>
+            `;
+        }
+
+        function updateProtacLigandDebugPanel(payload, selectedContext) {
+            if (!ligandDebugEnabled()) return;
+            const panel = $('#protac-ligand-debug-panel');
+            if (!panel.length) return;
+            const debugUrl = `/api/debug/ligand_context/${encodeURIComponent(payload.pdbCode || '')}/${encodeURIComponent(payload.ligandResname || '')}?chain=${encodeURIComponent(payload.ligandChain || '')}&residue_id=${encodeURIComponent(payload.ligandResidueId || '')}`;
+            const coordinateDebugUrl = `/api/debug/coordinate_ligand_presence/${encodeURIComponent(payload.pdbCode || '')}/${encodeURIComponent(payload.ligandResname || '')}?chain=${encodeURIComponent(payload.ligandChain || '')}&residue_id=${encodeURIComponent(payload.ligandResidueId || '')}`;
+            const servedCoordinateDebugUrl = `/api/debug/served_coordinate/${encodeURIComponent(payload.pdbCode || '')}/${encodeURIComponent(payload.ligandResname || '')}?chain=${encodeURIComponent(payload.ligandChain || '')}&residue_id=${encodeURIComponent(payload.ligandResidueId || '')}`;
+            const mappingDebugUrl = `/api/debug/ligand_instance_mapping/${encodeURIComponent(payload.pdbCode || '')}/${encodeURIComponent(payload.ligandResname || '')}?auth_chain=${encodeURIComponent(payload.ligandChain || '')}&auth_seq_id=${encodeURIComponent(payload.ligandResidueId || '')}`;
+            const text = {
+                selectedLigandContext: selectedContext,
+                viewerPayloadSent: payload,
+                loadedStructureSource: latestProtacLoadedSourceUrl,
+                backendDebugUrl: debugUrl,
+                coordinateDebugUrl: coordinateDebugUrl,
+                servedCoordinateDebugUrl: servedCoordinateDebugUrl,
+                mappingDebugUrl: mappingDebugUrl
+            };
+            $('#protac-ligand-debug-text').text(JSON.stringify(text, null, 2));
+            $('#protac-ligand-debug-link').attr('href', debugUrl);
+            if (!document.getElementById('protac-coordinate-debug-link')) {
+                $('<a id="protac-coordinate-debug-link" class="button-secondary" target="_blank" rel="noopener noreferrer">Open coordinate debug</a>').insertBefore('#copy-protac-debug-payload');
+            }
+            if (!document.getElementById('protac-served-coordinate-debug-link')) {
+                $('<a id="protac-served-coordinate-debug-link" class="button-secondary" target="_blank" rel="noopener noreferrer">Open served-coordinate debug</a>').insertBefore('#copy-protac-debug-payload');
+            }
+            if (!document.getElementById('protac-mapping-debug-link')) {
+                $('<a id="protac-mapping-debug-link" class="button-secondary" target="_blank" rel="noopener noreferrer">Open ligand mapping debug</a>').insertBefore('#copy-protac-debug-payload');
+            }
+            $('#protac-coordinate-debug-link').attr('href', coordinateDebugUrl);
+            $('#protac-served-coordinate-debug-link').attr('href', servedCoordinateDebugUrl);
+            $('#protac-mapping-debug-link').attr('href', mappingDebugUrl);
+            $('#copy-protac-debug-payload').off('click').on('click', function() {
+                navigator.clipboard.writeText(JSON.stringify(payload, null, 2)).catch(function() {});
+            });
+        }
+
+        const metricConfigs = {
+            targets: [
+                ['Targets assessed', 'Virus/protein target groups in the current filtered result set.'],
+                ['Mapped/exposed warheads', 'Rows with mapped ligand atoms and solvent-exposed mapped atoms.'],
+                ['High warhead linkability', 'Rows with strong ligand-centered warhead-linkability evidence.'],
+                ['High degrader readiness', 'Targets with strong overall degrader-design readiness.'],
+                ['Average readiness', 'Average degrader-design readiness across the filtered targets.']
+            ],
+            summary: [
+                ['Structures summarized', 'Structure-level groups in the current filtered result set.'],
+                ['Mapped/exposed warheads', 'Rows with mapped ligand atoms and solvent-exposed mapped atoms.'],
+                ['High warhead linkability', 'Rows with strong ligand-centered warhead-linkability evidence.'],
+                ['High degrader readiness', 'Structures with strong overall degrader-design readiness.'],
+                ['Average readiness', 'Average degrader-design readiness across grouped structures.']
+            ],
+            protein: [
+                ['Protein groups', 'Distinct virus/protein summaries after collapsing repeated structure contexts.'],
+                ['Mapped/exposed warheads', 'Rows with mapped ligand atoms and solvent-exposed mapped atoms.'],
+                ['High warhead linkability', 'Protein groups with strong ligand-centered warhead evidence.'],
+                ['High degrader readiness', 'Protein groups with strong overall degrader-design readiness.'],
+                ['Average readiness', 'Average degrader-design readiness across grouped proteins.']
+            ],
+            chains: [
+                ['Chain rows', 'Raw chain-level assessment rows in the filtered result set.'],
+                ['Mapped/exposed warheads', 'Rows with mapped ligand atoms and solvent-exposed mapped atoms.'],
+                ['High warhead linkability', 'Chain rows with strong ligand-centered warhead evidence.'],
+                ['High degrader readiness', 'Chain rows with strong overall degrader-design readiness.'],
+                ['Average readiness', 'Average degrader-design readiness across chain rows.']
+            ]
+        };
+
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function getCurrentProtacParams() {
+            const params = new URLSearchParams();
+            ($('#protac-virus-name').val() || []).forEach(value => params.append('virus_name', value));
+            ($('#protac-protein-type').val() || []).forEach(value => params.append('protein_type', value));
+            ($('#protac-tier').val() || []).forEach(value => params.append('tier', value));
+            ($('#protac-readiness-tier').val() || []).forEach(value => params.append('readiness_tier', value));
+            ($('#protac-warhead-tier').val() || []).forEach(value => params.append('warhead_tier', value));
+            ($('#protac-evidence-level').val() || []).forEach(value => params.append('evidence_level', value));
+            ($('#protac-smiles-source').val() || []).forEach(value => params.append('smiles_source', value));
+
+            const pdbCode = ($('#protac-pdb-code').val() || '').trim();
+            const minScore = ($('#protac-min-score').val() || '').trim();
+            const minReadinessScore = ($('#protac-min-readiness-score').val() || '').trim();
+            const minWarheadScore = ($('#protac-min-warhead-score').val() || '').trim();
+            const ligand = ($('#protac-ligand-filter').val() || '').trim();
+            const ligandPresence = ($('#protac-ligand-presence').val() || '').trim();
+            const ligandContextClass = ($('#protac-ligand-context-class').val() || '').trim();
+
+            if (pdbCode) params.set('pdb_code', pdbCode);
+            if (minScore) params.set('min_score', minScore);
+            if (minReadinessScore) params.set('min_readiness_score', minReadinessScore);
+            if (minWarheadScore) params.set('min_warhead_score', minWarheadScore);
+            if (ligand) params.set('ligand', ligand);
+            if (ligandPresence) params.set('ligand_presence', ligandPresence);
+            if (ligandContextClass) params.set('ligand_context_class', ligandContextClass);
+
+            if ($('#toggle-has-exposed-lysine').is(':checked')) params.set('has_exposed_lysine', '1');
+            if ($('#toggle-has-ligand-proximal-exposed-lysine').is(':checked')) params.set('has_ligand_proximal_exposed_lysine', '1');
+            if ($('#toggle-has-candidate-linker-atoms').is(':checked')) params.set('has_candidate_linker_atoms', '1');
+            if ($('#toggle-has-solvent-exposed-ligand-atoms').is(':checked')) params.set('has_solvent_exposed_ligand_atoms', '1');
+            if ($('#toggle-has-mapped-atoms').is(':checked')) params.set('has_mapped_atoms', '1');
+            if ($('#toggle-has-valid-rdkit-smiles').is(':checked')) params.set('has_valid_rdkit_smiles', '1');
+            if ($('#toggle-has-exposed-target-lysines').is(':checked')) params.set('has_exposed_target_lysines', '1');
+
+            params.set('view', protacState.view);
+            params.set('collapse_labels', $('#toggle-collapse-labels').is(':checked') ? '1' : '0');
+            params.set('limit', String(protacState.limit));
+            params.set('offset', String(protacState.offset));
+            params.set('sort', $('#protac-sort').val() || protacState.currentSort);
+            return params;
+        }
+
+        function formatValue(value, digits = 2) {
+            if (value === null || value === undefined || value === '') return '—';
+            const num = Number(value);
+            return Number.isFinite(num) ? num.toFixed(digits) : value;
+        }
+
+        function tierBadgeClass(tier) {
+            if (!tier) return 'tier-badge tier-unknown';
+            if (tier.toLowerCase().includes('high')) return 'tier-badge tier-high';
+            if (tier.toLowerCase().includes('moderate')) return 'tier-badge tier-moderate';
+            if (tier.toLowerCase().includes('low')) return 'tier-badge tier-low';
+            return 'tier-badge tier-unknown';
+        }
+
+        function evidenceBadgeClass(label) {
+            const text = String(label || '').toLowerCase();
+            if (text.includes('high')) return 'tier-badge tier-high';
+            if (text.includes('moderate')) return 'tier-badge tier-moderate';
+            if (text.includes('exploratory')) return 'tier-badge tier-low';
+            if (text.includes('weak')) return 'tier-badge tier-unknown';
+            return 'tier-badge tier-unknown';
+        }
+
+        function boolText(value) {
+            return Number(value) ? 'Yes' : 'No';
+        }
+
+        function renderConcernBadges(row) {
+            const badges = [];
+            if (row.degrader_design_readiness_tier) badges.push(`<span class="${evidenceBadgeClass(row.degrader_design_readiness_tier)}">${escapeHtml(row.degrader_design_readiness_tier)}</span>`);
+            if (row.warhead_linkability_tier) badges.push(`<span class="${evidenceBadgeClass(row.warhead_linkability_tier)}">${escapeHtml(row.warhead_linkability_tier)}</span>`);
+            if (!Number(row.smiles_available || 0)) badges.push('<span class="ligand-context-badge context-common_buffer_only">Missing SMILES</span>');
+            if (String(row.smiles_source || '').toLowerCase().includes('component')) badges.push('<span class="ligand-context-badge context-glycan_common_mixed">Component SMILES only</span>');
+            if (!Number(row.has_mapped_atoms || 0)) badges.push('<span class="ligand-context-badge context-common_buffer_only">No mapped atoms</span>');
+            if (!Number(row.has_candidate_linker_atoms || 0)) badges.push('<span class="ligand-context-badge context-common_buffer_only">No candidate linker atoms</span>');
+            if (!Number(row.has_exposed_target_lysines || 0)) badges.push('<span class="ligand-context-badge context-no_ligand_context">No exposed target lysines</span>');
+            if (row.ligand_context_class === 'glycan_only') badges.push('<span class="ligand-context-badge context-glycan_only">Glycan-only</span>');
+            if (row.ligand_context_class === 'common_buffer_only') badges.push('<span class="ligand-context-badge context-common_buffer_only">Common-buffer ligand</span>');
+            return badges.length ? `<div class="ligand-chip-box">${badges.join('')}</div>` : '<div class="ligand-chip-box"><span class="ligand-chip muted">No major flags</span></div>';
+        }
+
+        function ligandContextBadge(row) {
+            const contextClass = row.ligand_context_class || 'no_ligand_context';
+            const label = row.ligand_context_label || 'No ligand context';
+            return `<span class="ligand-context-badge context-${escapeHtml(contextClass)}">${escapeHtml(label)}</span>`;
+        }
+
+        function renderLigandPreview(text, count) {
+            const safeText = escapeHtml(text || 'None');
+            const safeCount = Number(count || 0);
+            const countChip = safeCount ? `<span class="ligand-more-chip">${safeCount} total</span>` : '';
+            return `<div class="ligand-preview-cell"><div class="ligand-chip-list"><span class="ligand-chip">${safeText}</span>${countChip}</div></div>`;
+        }
+
+        function renderLigandChips(fullText) {
+            const items = String(fullText || '').split(';').map(item => item.trim()).filter(Boolean);
+            if (!items.length) {
+                return '<div class="ligand-chip-box"><span class="ligand-chip muted">None</span></div>';
+            }
+            return `<div class="ligand-chip-box">${items.map(item => `<span class="ligand-chip">${escapeHtml(item)}</span>`).join('')}</div>`;
+        }
+
+        function renderLigandContextSelector(contexts, selected) {
+            const rows = Array.isArray(contexts) ? contexts : [];
+            if (!rows.length) {
+                return '<p class="page-subtitle">No explicit ligand inventory context available for 3D highlighting.</p>';
+            }
+            const selectedKey = `${selected?.ligand_resname || ''}|${selected?.ligand_chain || ''}|${selected?.ligand_residue_id || ''}`;
+            const options = rows.map(row => {
+                const key = `${row.ligand_resname || ''}|${row.ligand_chain || ''}|${row.ligand_residue_id || ''}`;
+                const label = row.label || [row.ligand_resname, row.ligand_chain, row.ligand_residue_id].filter(Boolean).join(' ');
+                return `<option value="${escapeHtml(key)}" ${key === selectedKey ? 'selected' : ''}>${escapeHtml(label || 'Unknown ligand context')}</option>`;
+            }).join('');
+            return `
+                <label for="protac-ligand-context-select"><strong>3D ligand context</strong></label>
+                <select id="protac-ligand-context-select">${options}</select>
+            `;
+        }
+
+        function updateMetricCards(view, summary) {
+            const config = metricConfigs[view];
+            const valuesByView = {
+                targets: [
+                    summary.targets_assessed ?? 0,
+                    summary.candidate_warheads_with_exposed_mapped_atoms ?? 0,
+                    summary.high_warhead_linkability_ligands ?? 0,
+                    summary.high_degrader_readiness_targets ?? 0,
+                    summary.average_degrader_readiness ?? '—'
+                ],
+                summary: [
+                    summary.targets_assessed ?? 0,
+                    summary.candidate_warheads_with_exposed_mapped_atoms ?? 0,
+                    summary.high_warhead_linkability_ligands ?? 0,
+                    summary.high_degrader_readiness_targets ?? 0,
+                    summary.average_degrader_readiness ?? '—'
+                ],
+                protein: [
+                    summary.targets_assessed ?? 0,
+                    summary.candidate_warheads_with_exposed_mapped_atoms ?? 0,
+                    summary.high_warhead_linkability_ligands ?? 0,
+                    summary.high_degrader_readiness_targets ?? 0,
+                    summary.average_degrader_readiness ?? '—'
+                ],
+                chains: [
+                    summary.targets_assessed ?? 0,
+                    summary.candidate_warheads_with_exposed_mapped_atoms ?? 0,
+                    summary.high_warhead_linkability_ligands ?? 0,
+                    summary.high_degrader_readiness_targets ?? 0,
+                    summary.average_degrader_readiness ?? '—'
+                ]
+            };
+
+            config.forEach((item, index) => {
+                const slot = index + 1;
+                $(`#metric-${slot}-label`).text(item[0]);
+                $(`#metric-${slot}-meta`).text(item[1]);
+                $(`#metric-${slot}-value`).text(valuesByView[view][index]);
+            });
+        }
+
+        function updateResultsNote(view) {
+            const notes = {
+                targets: 'Target Browser prioritizes overall degrader readiness while keeping warhead linkability distinct from target lysine accessibility and ternary geometry cues.',
+                summary: 'Structure Summary highlights representative PDB systems with explicit warhead evidence, separate lysine accessibility, and hypothesis-only ternary geometry cues.',
+                protein: 'Protein Summary collapses repeated structures so target-level degrader-readiness interpretation is easier to scan first.',
+                chains: 'Chain Details exposes the raw chain-level evidence, including mapped atoms, candidate linker atoms, and separate target-lysine accessibility fields.'
+            };
+            $('#protac-results-note').text(notes[view]);
+        }
+
+        function setTableHead(columns) {
+            $('#protacability-table-head').html(`<tr>${columns.map(column => `<th>${column}</th>`).join('')}</tr>`);
+        }
+
+        function showEmptyState(message) {
+            setTableHead(['Status']);
+            $('#protacability-table-body').html(`<tr><td>${escapeHtml(message)}</td></tr>`);
+            updateMetricCards(protacState.view, {});
+            $('#protac-page-summary, #protac-page-summary-bottom').text('No results to display.');
+        }
+
+        function renderRows(view, rows) {
+            const tbody = $('#protacability-table-body');
+            const targetBrowser = $('#protac-target-browser');
+            const tableWrap = $('.protac-results-section .table-wrap').first();
+            tbody.empty();
+            targetBrowser.empty();
+
+            if (!rows.length) {
+                tableWrap.show();
+                targetBrowser.hide();
+                tbody.append(`<tr><td colspan="12">No assessment rows match the current filters.</td></tr>`);
+                return;
+            }
+
+            if (view === 'targets') {
+                tableWrap.hide();
+                targetBrowser.show();
+                rows.forEach(row => {
+                    targetBrowser.append(`
+                        <article class="page-card protac-target-card">
+                            <div class="protac-target-card-head">
+                                <div>
+                                    <span class="page-kicker">Target Browser</span>
+                                    <h3>${escapeHtml(row.virus_name || '—')} · ${escapeHtml(row.protein_type || '—')}</h3>
+                                    <p><strong>Overall degrader readiness:</strong> ${formatValue(row.degrader_design_readiness_score, 2)} | <strong>PDBs:</strong> ${row.pdb_count ?? 0} | <strong>Chains:</strong> ${row.chain_count ?? 0}</p>
+                                </div>
+                                <span class="${evidenceBadgeClass(row.degrader_design_readiness_tier)}">${escapeHtml(row.degrader_design_readiness_tier || 'Readiness pending')}</span>
+                            </div>
+                            <div class="protac-target-stats">
+                                <span class="workflow-step">Warhead linkability: ${formatValue(row.warhead_linkability_score, 2)} (${escapeHtml(row.warhead_linkability_tier || '—')})</span>
+                                <span class="workflow-step">Target lysine accessibility: ${formatValue(row.target_lysine_accessibility_score, 2)}</span>
+                                <span class="workflow-step">Protein structural priority: ${formatValue(row.protein_structural_priority_score, 2)}</span>
+                                <span class="workflow-step">Ternary geometry cue: ${formatValue(row.ternary_geometry_cue_score, 2)}</span>
+                                <span class="workflow-step">Evidence level: ${escapeHtml(row.evidence_level || '—')}</span>
+                                <span class="workflow-step">Representative: ${escapeHtml(row.best_pdb_code || '—')} / ${escapeHtml(row.best_chain_id || '—')} / ${escapeHtml(row.best_ligand_resname || row.top_candidate_ligands_preview || '—')}</span>
+                            </div>
+                            <p><strong>Top candidate ligands:</strong> ${escapeHtml(row.top_candidate_ligands_preview || 'None')}</p>
+                            <p><strong>Interpretation:</strong> ${escapeHtml(row.interpretation_note || '—')}</p>
+                            ${renderConcernBadges(row)}
+                            <div class="action-row">
+                                <button type="button" class="button-secondary protac-target-action" data-action="structures" data-virus="${escapeHtml(row.virus_name)}" data-protein="${escapeHtml(row.protein_type)}">View structures</button>
+                                <button type="button" class="button-secondary protac-target-action" data-action="ligands" data-virus="${escapeHtml(row.virus_name)}" data-protein="${escapeHtml(row.protein_type)}">View ligands</button>
+                                <button type="button" class="button-secondary protac-target-action" data-action="best3d" data-virus="${escapeHtml(row.virus_name)}" data-protein="${escapeHtml(row.protein_type)}">View best 3D context</button>
+                                <button type="button" class="button-secondary protac-detail-button" data-view="targets" data-virus="${escapeHtml(row.virus_name)}" data-protein="${escapeHtml(row.protein_type)}">Details</button>
+                            </div>
+                        </article>
+                    `);
+                });
+                return;
+            }
+
+            tableWrap.show();
+            targetBrowser.hide();
+            if (view === 'protein') {
+                setTableHead(['Readiness', 'Warhead', 'Evidence', 'Virus', 'Protein', 'PDBs', 'Top PDB', 'Best Ligand', 'Flags', 'Details']);
+                rows.forEach(row => {
+                    tbody.append(`
+                        <tr>
+                            <td class="compact-cell"><strong>${formatValue(row.degrader_design_readiness_score, 2)}</strong></td>
+                            <td class="compact-cell">${formatValue(row.warhead_linkability_score, 2)}</td>
+                            <td><span class="${evidenceBadgeClass(row.evidence_level)}">${escapeHtml(row.evidence_level || '—')}</span></td>
+                            <td class="text-wrap-cell">${escapeHtml(row.virus_name || '—')}</td>
+                            <td class="text-wrap-cell">${escapeHtml(row.protein_type || '—')}</td>
+                            <td class="compact-cell">${row.pdb_count ?? '—'}</td>
+                            <td class="compact-cell">${escapeHtml(row.top_pdb_code || '—')}</td>
+                            <td class="compact-cell">${escapeHtml(row.best_ligand_resname || row.distinct_ligands || '—')}</td>
+                            <td>${renderConcernBadges(row)}</td>
+                            <td class="compact-cell"><button type="button" class="button-secondary protac-detail-button compact-detail-button" data-view="protein" data-virus="${escapeHtml(row.virus_name)}" data-protein="${escapeHtml(row.protein_type)}">Details</button></td>
+                        </tr>
+                    `);
+                });
+                return;
+            }
+
+            if (view === 'summary') {
+                setTableHead(['Readiness', 'Warhead', 'Lys Access', 'Protein Priority', 'Virus', 'Protein', 'PDB', 'Chain', 'Best Ligand', 'Details']);
+                rows.forEach(row => {
+                    tbody.append(`
+                        <tr>
+                            <td class="compact-cell"><strong>${formatValue(row.degrader_design_readiness_score, 2)}</strong></td>
+                            <td class="compact-cell">${formatValue(row.warhead_linkability_score, 2)}</td>
+                            <td class="compact-cell">${formatValue(row.target_lysine_accessibility_score, 2)}</td>
+                            <td class="compact-cell">${formatValue(row.protein_structural_priority_score, 2)}</td>
+                            <td class="text-wrap-cell">${escapeHtml(row.virus_name || '—')}</td>
+                            <td class="text-wrap-cell">${escapeHtml(row.protein_type || '—')}</td>
+                            <td class="compact-cell">${escapeHtml(row.pdb_code || '—')}</td>
+                            <td class="compact-cell">${escapeHtml(row.representative_chain_id || '—')}</td>
+                            <td>${escapeHtml(row.best_ligand_resname || row.candidate_ligand_resnames || '—')}</td>
+                            <td class="compact-cell"><button type="button" class="button-secondary protac-detail-button compact-detail-button" data-view="summary" data-pdb="${escapeHtml(row.pdb_code)}" data-virus="${escapeHtml(row.virus_name)}" data-protein="${escapeHtml(row.protein_type)}">Details</button></td>
+                        </tr>
+                    `);
+                });
+                return;
+            }
+
+            setTableHead(['Readiness', 'Warhead', 'Warhead Tier', 'Lys Access', 'Protein Priority', 'Virus', 'Protein', 'PDB', 'Chain', 'Best Ligand', 'Details']);
+            rows.forEach(row => {
+                tbody.append(`
+                    <tr>
+                        <td class="compact-cell"><strong>${formatValue(row.degrader_design_readiness_score, 2)}</strong></td>
+                        <td class="compact-cell">${formatValue(row.warhead_linkability_score, 2)}</td>
+                        <td><span class="${evidenceBadgeClass(row.warhead_linkability_tier)}">${escapeHtml(row.warhead_linkability_tier || '—')}</span></td>
+                        <td class="compact-cell">${formatValue(row.target_lysine_accessibility_score, 2)}</td>
+                        <td class="compact-cell">${formatValue(row.protein_structural_priority_score || row.protacability_proxy_score, 2)}</td>
+                        <td class="text-wrap-cell">${escapeHtml(row.virus_name || '—')}</td>
+                        <td class="text-wrap-cell">${escapeHtml(row.display_protein_type || row.protein_type || '—')}</td>
+                        <td class="compact-cell">${escapeHtml(row.pdb_code || '—')}</td>
+                        <td class="compact-cell">${escapeHtml(row.chain_id || '—')}</td>
+                        <td>${escapeHtml(row.best_ligand_resname || row.candidate_ligand_resnames_display || '—')}</td>
+                        <td class="compact-cell"><button type="button" class="button-secondary protac-detail-button compact-detail-button" data-view="chains" data-pdb="${escapeHtml(row.pdb_code)}" data-chain="${escapeHtml(row.chain_id)}">Details</button></td>
+                    </tr>
+                `);
+            });
+        }
+
+        function updatePagination(totalRows, offset, limit, hasMore) {
+            protacState.totalRows = totalRows;
+            protacState.hasMore = hasMore;
+            const start = totalRows ? offset + 1 : 0;
+            const end = Math.min(totalRows, offset + limit);
+            const summaryText = `Showing ${start}-${end} of ${totalRows}`;
+            $('#protac-page-summary, #protac-page-summary-bottom').text(summaryText);
+            $('#protac-prev-page, #protac-prev-page-bottom').prop('disabled', offset <= 0);
+            $('#protac-next-page, #protac-next-page-bottom').prop('disabled', !hasMore);
+        }
+
+        function renderChainDetail(data) {
+            const assessment = data.assessment;
+            const lysRows = data.lysine_rows || [];
+            const ligands = data.ligand_inventory || [];
+            const ligandContexts = data.ligand_contexts || [];
+            const related = data.related_chains || [];
+            const ligandRecord = (ligands || []).find(row => (row.ligand_resname || '').toUpperCase() === String((assessment.candidate_ligand_resnames_full || '').split(';')[0] || '').trim().toUpperCase()) || (ligands || [])[0] || {};
+            const linkerIds = Array.isArray(assessment.candidate_linker_atom_ids_list) ? assessment.candidate_linker_atom_ids_list.join(', ') : (assessment.candidate_linker_atom_ids || '—');
+
+            const lysHtml = lysRows.length ? lysRows.map(row => `
+                <tr><td>${row.lys_residue_id ?? '—'}</td><td>${row.lys_observed_index ?? '—'}</td><td>${formatValue(row.lysine_sasa_a2, 1)}</td><td>${row.is_surface_exposed ? 'Yes' : 'No'}</td><td>${row.nearest_ligand_resname || '—'}</td><td>${formatValue(row.nearest_ligand_distance_a, 2)}</td><td>${row.linker_site_class || '—'}</td></tr>
+            `).join('') : '<tr><td colspan="7">No lysine geometry rows available.</td></tr>';
+
+            const ligandHtml = ligands.length ? ligands.map(row => `
+                <tr><td>${row.ligand_resname || '—'}</td><td>${row.ligand_chain || '—'}</td><td>${row.ligand_residue_id || '—'}</td><td>${row.ligand_atom_count || '—'}</td><td>${formatValue(row.centroid_x, 2)}, ${formatValue(row.centroid_y, 2)}, ${formatValue(row.centroid_z, 2)}</td></tr>
+            `).join('') : '<tr><td colspan="5">No ligand inventory rows available.</td></tr>';
+
+            const relatedHtml = related.length ? related.map(row => `
+                <span class="workflow-step">${escapeHtml(row.chain_id)}: ${formatValue(row.protacability_proxy_score, 2)} (${escapeHtml(row.protacability_tier || 'Unknown')})</span>
+            `).join('') : '<span class="workflow-step">No related chain rows</span>';
+
+            $('#protac-detail-content').html(`
+                <div class="section-heading"><span class="page-kicker">Chain Detail</span><h2 class="page-title">${escapeHtml(assessment.virus_name)} · ${escapeHtml(assessment.display_protein_type || assessment.protein_type)}</h2><p class="page-subtitle">PDB ${escapeHtml(assessment.pdb_code)} · Chain ${escapeHtml(assessment.chain_id)}</p></div>
+                <div class="protac-detail-two-col">
+                    <div class="page-card protacability-detail-card"><div id="protac-ngl-viewer" class="protac-ngl-viewer"></div><p id="protac-ngl-status" class="viewer-status"></p>${renderLigandDebugPanel()}<div class="action-row"><button id="protac-use-warhead" type="button" class="button-secondary">Use as Warhead</button></div></div>
+                    <div class="page-card protacability-detail-card"><p><strong>Ligand context:</strong> ${ligandContextBadge(assessment)}</p><p><strong>Overall degrader readiness:</strong> ${formatValue(assessment.degrader_design_readiness_score, 2)}</p><p><strong>Evidence level:</strong> <span class="${evidenceBadgeClass(assessment.evidence_level)}">${escapeHtml(assessment.evidence_level || '—')}</span></p>${renderConcernBadges(assessment)}</div>
+                </div>
+                <div class="tool-grid protacability-detail-grid">
+                    <article class="tool-card status-card"><h3>${formatValue(assessment.degrader_design_readiness_score, 2)}</h3><p>Overall degrader readiness</p></article>
+                    <article class="tool-card status-card"><h3>${formatValue(assessment.protein_structural_priority_score || assessment.protacability_proxy_score, 2)}</h3><p>Protein structural priority</p></article>
+                    <article class="tool-card status-card"><h3>${formatValue(assessment.warhead_linkability_score, 2)}</h3><p>Warhead linkability</p></article>
+                    <article class="tool-card status-card"><h3>${formatValue(assessment.target_lysine_accessibility_score, 2)}</h3><p>Target lysine accessibility</p></article>
+                </div>
+                <div class="page-card protacability-detail-card">
+                    <h3>Degrader Readiness Overview</h3>
+                    <p><strong>Overall degrader readiness:</strong> ${formatValue(assessment.degrader_design_readiness_score, 2)} <span class="${evidenceBadgeClass(assessment.degrader_design_readiness_tier)}">${escapeHtml(assessment.degrader_design_readiness_tier || '—')}</span></p>
+                    <p><strong>Protein structural priority:</strong> ${formatValue(assessment.protein_structural_priority_score || assessment.protacability_proxy_score, 2)}</p>
+                    <p><strong>Warhead linkability:</strong> ${formatValue(assessment.warhead_linkability_score, 2)} <span class="${evidenceBadgeClass(assessment.warhead_linkability_tier)}">${escapeHtml(assessment.warhead_linkability_tier || '—')}</span></p>
+                    <p><strong>Target lysine accessibility:</strong> ${formatValue(assessment.target_lysine_accessibility_score, 2)}</p>
+                    <p><strong>Ternary geometry cue:</strong> ${formatValue(assessment.ternary_geometry_cue_score, 2)}</p>
+                    <p><strong>Readiness notes:</strong> ${escapeHtml(assessment.readiness_notes || '—')}</p>
+                </div>
+                <div class="page-card protacability-detail-card">
+                    <h3>Warhead Evidence</h3>
+                    <p><strong>SMILES available:</strong> ${boolText(assessment.smiles_available)}</p>
+                    <p><strong>SMILES source:</strong> ${escapeHtml(assessment.smiles_source || '—')}</p>
+                    <p><strong>RDKit valid:</strong> ${boolText(assessment.rdkit_valid_smiles)}</p>
+                    <p><strong>Mol weight:</strong> ${formatValue(assessment.mol_weight, 2)}</p>
+                    <p><strong>TPSA:</strong> ${formatValue(assessment.tpsa, 2)}</p>
+                    <p><strong>HBD / HBA:</strong> ${formatValue(assessment.hbd, 0)} / ${formatValue(assessment.hba, 0)}</p>
+                    <p><strong>Rotatable bonds:</strong> ${formatValue(assessment.rotatable_bonds, 0)}</p>
+                    <p><strong>PDB-to-SMILES mapped atoms:</strong> ${formatValue(assessment.pdb_to_smiles_mapped_atom_count, 0)}</p>
+                    <p><strong>Solvent-exposed ligand atoms:</strong> ${formatValue(assessment.solvent_exposed_ligand_atom_count, 0)}</p>
+                    <p><strong>Solvent-exposed mapped atoms:</strong> ${formatValue(assessment.solvent_exposed_mapped_atom_count, 0)}</p>
+                    <p><strong>Functional groups:</strong> ${formatValue(assessment.functional_group_count, 0)}</p>
+                    <p><strong>Meaningful contacts:</strong> ${formatValue(assessment.meaningful_contact_count, 0)}</p>
+                    <p><strong>Strong contacts:</strong> ${formatValue(assessment.strong_contact_count, 0)}</p>
+                    <p><strong>Candidate linker atom count:</strong> ${formatValue(assessment.candidate_linker_atom_count, 0)}</p>
+                    <p><strong>Candidate linker atom IDs:</strong> ${escapeHtml(linkerIds)}</p>
+                    <p><strong>Interaction preservation score:</strong> ${formatValue(assessment.interaction_preservation_score, 2)}</p>
+                    <p><strong>Warhead flags:</strong> ${escapeHtml(assessment.warhead_flags || '—')}</p>
+                    <p><strong>Warhead notes:</strong> ${escapeHtml(assessment.warhead_notes || '—')}</p>
+                </div>
+                <div class="page-card protacability-detail-card">
+                    <h3>Target Lysine Accessibility</h3>
+                    <p><strong>Lysine count:</strong> ${assessment.lys_count ?? '—'}</p>
+                    <p><strong>Exposed lysine count:</strong> ${assessment.exposed_lys_count ?? '—'}</p>
+                    <p><strong>Exposed lysine fraction:</strong> ${formatValue(assessment.exposed_lys_fraction, 3)}</p>
+                    <p><strong>Lysine surface fraction:</strong> ${formatValue(assessment.lysine_surface_fraction, 3)}</p>
+                </div>
+                <div class="page-card protacability-detail-card">
+                    <h3>Ternary Geometry Cue</h3>
+                    <p><strong>Minimum lysine-ligand distance:</strong> ${formatValue(assessment.min_lys_ligand_distance_a, 2)} Å</p>
+                    <p><strong>Near-ligand exposed lysines:</strong> ${formatValue(assessment.near_ligand_exposed_lys_count, 0)}</p>
+                    <p><strong>Short linker feasible:</strong> ${boolText(assessment.short_linker_geometry_feasible)}</p>
+                    <p><strong>Medium linker feasible:</strong> ${boolText(assessment.medium_linker_geometry_feasible)}</p>
+                    <p><strong>Long linker feasible:</strong> ${boolText(assessment.long_linker_geometry_feasible)}</p>
+                    <p><strong>Best linker geometry class:</strong> ${escapeHtml(assessment.best_linker_geometry_class || '—')}</p>
+                    <p><strong>Warning:</strong> Ternary geometry cues are hypothesis-generating only and should not be interpreted as proof of productive degradation.</p>
+                </div>
+                <div class="page-card protacability-detail-card">
+                    <h3>Candidate Linker Atoms</h3>
+                    <p><strong>Count:</strong> ${formatValue(assessment.candidate_linker_atom_count, 0)}</p>
+                    <p><strong>Atom IDs:</strong> ${escapeHtml(linkerIds)}</p>
+                    <p><strong>Prepared for viewer payload:</strong> Candidate linker atom IDs are included for future atom highlighting.</p>
+                </div>
+                <div class="page-card protacability-detail-card">
+                    <h3>Ligand Context</h3>
+                    <p>${ligandContextBadge(assessment)}</p>
+                    ${renderLigandChips(assessment.candidate_ligand_resnames_full || assessment.candidate_ligand_resnames_display)}
+                    ${renderLigandContextSelector(ligandContexts, ligandRecord)}
+                </div>
+                <div class="page-card protacability-detail-card">
+                    <h3>Interpretation / Concerns</h3>
+                    <p><strong>Readiness flags:</strong> ${escapeHtml(assessment.readiness_flags || '—')}</p>
+                    <p><strong>Readiness notes:</strong> ${escapeHtml(assessment.readiness_notes || '—')}</p>
+                    <p><strong>Structural proxy note:</strong> ${escapeHtml(assessment.notes || '—')}</p>
+                    ${renderConcernBadges(assessment)}
+                </div>
+                <div class="page-card protacability-detail-card">
+                    <h3>Chain-level evidence</h3>
+                    <div class="workflow-steps">${relatedHtml}</div>
+                </div>
+                <div class="page-card protacability-detail-card">
+                    <h3>Lysine / ligand geometry cues</h3>
+                    <div class="table-wrap"><table><thead><tr><th>Residue ID</th><th>Observed Index</th><th>SASA</th><th>Exposed</th><th>Nearest Ligand</th><th>Distance (Å)</th><th>Linker Site Class</th></tr></thead><tbody>${lysHtml}</tbody></table></div>
+                </div>
+                <div class="page-card protacability-detail-card">
+                    <h3>Ligand inventory</h3>
+                    <div class="table-wrap"><table><thead><tr><th>Ligand</th><th>Chain</th><th>Residue ID</th><th>Atom Count</th><th>Centroid</th></tr></thead><tbody>${ligandHtml}</tbody></table></div>
+                </div>
+            `);
+            const ligand = String(ligandRecord.ligand_resname || (assessment.candidate_ligand_resnames_full || '').split(';')[0] || '').trim();
+            if (ligandDebugEnabled()) {
+                console.log('[protacability] detail payload', data);
+                console.log('[protacability] ligand_contexts', ligandContexts);
+                console.log('[protacability] selected ligand context', ligandRecord);
+            }
+            attachProtacViewerControls(assessment.pdb_code, assessment.chain_id, ligand, ligandRecord.ligand_chain || '', ligandRecord.ligand_residue_id || '', ligand, assessment.candidate_linker_atom_ids_list || []);
+        }
+
+        function renderStructureDetail(data) {
+            const summary = data.summary;
+            const chains = data.chain_rows || [];
+            const ligands = data.ligand_inventory || [];
+            const ligandContexts = data.ligand_contexts || [];
+            const lysRows = data.lysine_rows || [];
+            const representativeLigand = data.representative_ligand || {
+                ligand_resname: data.representative_ligand_resname || '',
+                ligand_chain: data.representative_ligand_chain || '',
+                ligand_residue_id: data.representative_ligand_residue_id || ''
+            };
+            const linkerIds = Array.isArray(summary.candidate_linker_atom_ids_list) ? summary.candidate_linker_atom_ids_list.join(', ') : (summary.candidate_linker_atom_ids || '—');
+
+            const chainRowsHtml = chains.length ? chains.map(row => `
+                <tr><td>${escapeHtml(row.chain_id || '—')}</td><td>${formatValue(row.protacability_proxy_score, 2)}</td><td><span class="${tierBadgeClass(row.protacability_tier)}">${escapeHtml(row.protacability_tier || 'Unknown')}</span></td><td>${formatValue(row.exposed_lys_fraction, 3)}</td><td>${renderLigandPreview(row.candidate_ligand_resnames_display, row.ligand_names ? row.ligand_names.length : 0)}</td></tr>
+            `).join('') : '<tr><td colspan="5">No chain rows available.</td></tr>';
+
+            const lysHtml = lysRows.length ? lysRows.map(row => `
+                <tr><td>${row.lys_residue_id ?? '—'}</td><td>${row.lys_observed_index ?? '—'}</td><td>${formatValue(row.lysine_sasa_a2, 1)}</td><td>${row.is_surface_exposed ? 'Yes' : 'No'}</td><td>${row.nearest_ligand_resname || '—'}</td><td>${formatValue(row.nearest_ligand_distance_a, 2)}</td><td>${row.linker_site_class || '—'}</td></tr>
+            `).join('') : '<tr><td colspan="7">No representative-chain lysine rows available.</td></tr>';
+
+            const ligandHtml = ligands.length ? ligands.map(row => `
+                <tr><td>${row.ligand_resname || '—'}</td><td>${row.ligand_chain || '—'}</td><td>${row.ligand_residue_id || '—'}</td><td>${row.ligand_atom_count || '—'}</td><td>${formatValue(row.centroid_x, 2)}, ${formatValue(row.centroid_y, 2)}, ${formatValue(row.centroid_z, 2)}</td></tr>
+            `).join('') : '<tr><td colspan="5">No ligand inventory rows available.</td></tr>';
+
+            $('#protac-detail-content').html(`
+                <div class="section-heading"><span class="page-kicker">Structure Summary</span><h2 class="page-title">${escapeHtml(summary.virus_name)} · ${escapeHtml(summary.protein_type)}</h2><p class="page-subtitle">PDB ${escapeHtml(summary.pdb_code)} · ${summary.chain_count} chains summarized</p></div>
+                <div class="protac-detail-two-col">
+                    <div class="page-card protacability-detail-card"><div id="protac-ngl-viewer" class="protac-ngl-viewer"></div><p id="protac-ngl-status" class="viewer-status"></p>${renderLigandDebugPanel()}<div class="action-row"><button id="protac-use-warhead" type="button" class="button-secondary">Use as Warhead</button></div></div>
+                    <div class="page-card protacability-detail-card"><p><strong>Ligand context:</strong> ${ligandContextBadge(summary)}</p><p><strong>Overall degrader readiness:</strong> ${formatValue(summary.degrader_design_readiness_score, 2)}</p><p><strong>Representative chain:</strong> ${escapeHtml(data.representative_chain_id || '—')}</p>${renderConcernBadges(summary)}</div>
+                </div>
+                <div class="tool-grid protacability-detail-grid">
+                    <article class="tool-card status-card"><h3>${formatValue(summary.degrader_design_readiness_score, 2)}</h3><p>Overall degrader readiness</p></article>
+                    <article class="tool-card status-card"><h3>${formatValue(summary.protein_structural_priority_score || summary.best_score, 2)}</h3><p>Protein structural priority</p></article>
+                    <article class="tool-card status-card"><h3>${formatValue(summary.warhead_linkability_score, 2)}</h3><p>Warhead linkability</p></article>
+                    <article class="tool-card status-card"><h3>${formatValue(summary.target_lysine_accessibility_score, 2)}</h3><p>Target lysine accessibility</p></article>
+                </div>
+                <div class="page-card protacability-detail-card">
+                    <h3>Degrader Readiness Overview</h3>
+                    <p><strong>Overall degrader readiness:</strong> ${formatValue(summary.degrader_design_readiness_score, 2)} <span class="${evidenceBadgeClass(summary.degrader_design_readiness_tier)}">${escapeHtml(summary.degrader_design_readiness_tier || '—')}</span></p>
+                    <p><strong>Evidence level:</strong> ${escapeHtml(summary.evidence_level || '—')}</p>
+                    <p><strong>Warhead linkability:</strong> ${formatValue(summary.warhead_linkability_score, 2)} <span class="${evidenceBadgeClass(summary.warhead_linkability_tier)}">${escapeHtml(summary.warhead_linkability_tier || '—')}</span></p>
+                    <p><strong>Target lysine accessibility:</strong> ${formatValue(summary.target_lysine_accessibility_score, 2)}</p>
+                    <p><strong>Ternary geometry cue:</strong> ${formatValue(summary.ternary_geometry_cue_score, 2)}</p>
+                </div>
+                <div class="page-card protacability-detail-card">
+                    <h3>Warhead Evidence</h3>
+                    <p><strong>SMILES available:</strong> ${boolText(summary.smiles_available)}</p>
+                    <p><strong>SMILES source:</strong> ${escapeHtml(summary.smiles_source || '—')}</p>
+                    <p><strong>RDKit valid:</strong> ${boolText(summary.rdkit_valid_smiles)}</p>
+                    <p><strong>PDB-to-SMILES mapped atoms:</strong> ${formatValue(summary.pdb_to_smiles_mapped_atom_count, 0)}</p>
+                    <p><strong>Solvent-exposed ligand atoms:</strong> ${formatValue(summary.solvent_exposed_ligand_atom_count, 0)}</p>
+                    <p><strong>Solvent-exposed mapped atoms:</strong> ${formatValue(summary.solvent_exposed_mapped_atom_count, 0)}</p>
+                    <p><strong>Functional groups:</strong> ${formatValue(summary.functional_group_count, 0)}</p>
+                    <p><strong>Candidate linker atom count:</strong> ${formatValue(summary.candidate_linker_atom_count, 0)}</p>
+                    <p><strong>Candidate linker atom IDs:</strong> ${escapeHtml(linkerIds)}</p>
+                    <p><strong>Interaction preservation score:</strong> ${formatValue(summary.interaction_preservation_score, 2)}</p>
+                    <p><strong>Warhead flags / notes:</strong> ${escapeHtml(summary.warhead_flags || '—')} / ${escapeHtml(summary.warhead_notes || '—')}</p>
+                </div>
+                <div class="page-card protacability-detail-card">
+                    <h3>Target Lysine Accessibility</h3>
+                    <p><strong>Lysine count:</strong> ${summary.total_lys_count ?? '—'}</p>
+                    <p><strong>Exposed lysine count:</strong> ${summary.total_exposed_lys_count ?? '—'}</p>
+                    <p><strong>Exposed lysine fraction:</strong> ${formatValue(summary.best_exposed_lys_fraction, 3)}</p>
+                    <p><strong>Lysine surface fraction:</strong> ${formatValue(summary.max_lysine_surface_fraction, 3)}</p>
+                </div>
+                <div class="page-card protacability-detail-card">
+                    <h3>Ternary Geometry Cue</h3>
+                    <p><strong>Minimum lysine-ligand distance:</strong> ${formatValue(summary.min_lys_ligand_distance_a, 2)} Å</p>
+                    <p><strong>Near-ligand exposed lysines:</strong> ${formatValue(summary.near_ligand_exposed_lys_count, 0)}</p>
+                    <p><strong>Short / medium / long linker feasible:</strong> ${boolText(summary.short_linker_geometry_feasible)} / ${boolText(summary.medium_linker_geometry_feasible)} / ${boolText(summary.long_linker_geometry_feasible)}</p>
+                    <p><strong>Best linker geometry class:</strong> ${escapeHtml(summary.best_linker_geometry_class || '—')}</p>
+                    <p><strong>Warning:</strong> Ternary geometry cues are hypothesis-generating only and should not be interpreted as proof of productive degradation.</p>
+                </div>
+                <div class="page-card protacability-detail-card">
+                    <h3>Candidate Linker Atoms</h3>
+                    <p><strong>Count:</strong> ${formatValue(summary.candidate_linker_atom_count, 0)}</p>
+                    <p><strong>Atom IDs:</strong> ${escapeHtml(linkerIds)}</p>
+                </div>
+                <div class="page-card protacability-detail-card">
+                    <h3>Ligand context</h3>
+                    ${renderLigandChips(summary.candidate_ligand_resnames_full || summary.candidate_ligand_resnames)}
+                    ${renderLigandContextSelector(ligandContexts, representativeLigand)}
+                </div>
+                <div class="page-card protacability-detail-card">
+                    <h3>Chain-level evidence</h3>
+                    <button type="button" class="button-secondary show-raw-chains-button" data-pdb="${escapeHtml(summary.pdb_code)}" data-virus="${escapeHtml(summary.virus_name)}" data-protein="${escapeHtml(summary.protein_type)}">View raw chains</button>
+                    <div class="table-wrap"><table><thead><tr><th>Chain</th><th>Score</th><th>Tier</th><th>Exposed Fraction</th><th>Ligands</th></tr></thead><tbody>${chainRowsHtml}</tbody></table></div>
+                </div>
+                <div class="page-card protacability-detail-card">
+                    <h3>Lysine / ligand geometry cues</h3>
+                    <p class="page-subtitle">Representative chain: ${escapeHtml(data.representative_chain_id || '—')}</p>
+                    <div class="table-wrap"><table><thead><tr><th>Residue ID</th><th>Observed Index</th><th>SASA</th><th>Exposed</th><th>Nearest Ligand</th><th>Distance (Å)</th><th>Linker Site Class</th></tr></thead><tbody>${lysHtml}</tbody></table></div>
+                </div>
+                <div class="page-card protacability-detail-card">
+                    <h3>Ligand inventory</h3>
+                    <div class="table-wrap"><table><thead><tr><th>Ligand</th><th>Chain</th><th>Residue ID</th><th>Atom Count</th><th>Centroid</th></tr></thead><tbody>${ligandHtml}</tbody></table></div>
+                </div>
+                <div class="page-card protacability-detail-card">
+                    <h3>Interpretation / concerns</h3>
+                    <p><strong>Readiness flags:</strong> ${escapeHtml(summary.readiness_flags || '—')}</p>
+                    <p><strong>Readiness notes:</strong> ${escapeHtml(summary.readiness_notes || '—')}</p>
+                    <p>This grouped view collapses repeated chains and duplicate protein labels to make the table easier to interpret. Warhead linkability remains ligand-centered; target lysine accessibility is evaluated separately.</p>
+                </div>
+            `);
+            if (ligandDebugEnabled()) {
+                console.log('[protacability] detail payload', data);
+                console.log('[protacability] ligand_contexts', ligandContexts);
+                console.log('[protacability] selected ligand context', representativeLigand);
+            }
+            attachProtacViewerControls(
+                summary.pdb_code,
+                data.representative_chain_id || '',
+                representativeLigand.ligand_resname || '',
+                representativeLigand.ligand_chain || '',
+                representativeLigand.ligand_residue_id || '',
+                representativeLigand.ligand_resname || '',
+                summary.candidate_linker_atom_ids_list || []
+            );
+        }
+
+        function renderProteinDetail(data) {
+            const summary = data.summary;
+            const structures = data.top_structures || [];
+            const tiers = data.tier_distribution || {};
+
+            const structureHtml = structures.length ? structures.map(row => `
+                <tr><td>${escapeHtml(row.pdb_code || '—')}</td><td>${escapeHtml(row.representative_chain_id || '—')}</td><td>${formatValue(row.best_score, 2)}</td><td><span class="${tierBadgeClass(row.best_tier)}">${escapeHtml(row.best_tier || 'Unknown')}</span></td><td>${renderLigandPreview(row.candidate_ligand_resnames, row.distinct_ligand_count)}</td></tr>
+            `).join('') : '<tr><td colspan="5">No grouped structures available.</td></tr>';
+
+            const tierHtml = Object.keys(tiers).length ? Object.entries(tiers).map(([tier, count]) => `<span class="workflow-step">${escapeHtml(tier)}: ${count}</span>`).join('') : '<span class="workflow-step">No tier distribution available.</span>';
+
+            $('#protac-detail-content').html(`
+                <div class="section-heading"><span class="page-kicker">Protein Summary</span><h2 class="page-title">${escapeHtml(summary.virus_name)} · ${escapeHtml(summary.protein_type)}</h2><p class="page-subtitle">${summary.pdb_count} structures · ${summary.chain_count} chains represented</p></div>
+                <div class="protac-detail-two-col">
+                    <div class="page-card protacability-detail-card"><div id="protac-ngl-viewer" class="protac-ngl-viewer"></div><p id="protac-ngl-status" class="viewer-status"></p>${renderLigandDebugPanel()}<div class="action-row"><button id="protac-use-warhead" type="button" class="button-secondary">Use as Warhead</button></div></div>
+                    <div class="page-card protacability-detail-card"><p><strong>Top PDB:</strong> ${escapeHtml(summary.top_pdb_code || '—')} / ${escapeHtml(summary.top_chain_id || '—')}</p><p><strong>Ligand context:</strong> ${ligandContextBadge(summary)}</p><p><strong>Best score:</strong> ${formatValue(summary.best_score, 2)}</p></div>
+                </div>
+                <div class="tool-grid protacability-detail-grid">
+                    <article class="tool-card status-card"><h3>${formatValue(summary.best_score, 2)}</h3><p>Best grouped score</p></article>
+                    <article class="tool-card status-card"><h3>${summary.pdb_count}</h3><p>Structures represented</p></article>
+                    <article class="tool-card status-card"><h3>${summary.ligand_context_count}</h3><p>Candidate-ligand structures</p></article>
+                    <article class="tool-card status-card"><h3>${summary.glycan_only_context_count ?? 0}</h3><p>Glycan-only structures</p></article>
+                </div>
+                <div class="page-card protacability-detail-card">
+                    <h3>Summary</h3>
+                    <p><strong>Best annotation:</strong> ${escapeHtml(summary.best_annotation || '—')}</p>
+                    <p><strong>Ligand context:</strong> ${ligandContextBadge(summary)}</p>
+                    <p><strong>Interpretation:</strong> ${escapeHtml(data.explanation || '')}</p>
+                </div>
+                <div class="page-card protacability-detail-card">
+                    <h3>Ligand context</h3>
+                    ${renderLigandChips(summary.distinct_ligands_full || summary.distinct_ligands)}
+                </div>
+                <div class="page-card protacability-detail-card">
+                    <h3>Chain-level evidence</h3>
+                    <div class="workflow-steps">${tierHtml}</div>
+                </div>
+                <div class="page-card protacability-detail-card">
+                    <h3>Top grouped structures</h3>
+                    <div class="table-wrap"><table><thead><tr><th>PDB</th><th>Rep. Chain</th><th>Best Score</th><th>Tier</th><th>Ligands</th></tr></thead><tbody>${structureHtml}</tbody></table></div>
+                </div>
+                <div class="page-card protacability-detail-card">
+                    <h3>Interpretation note</h3>
+                    <p>This protein-level view groups multiple structures under one viral protein class so repeated biological contexts do not dominate the first pass of target triage.</p>
+                </div>
+            `);
+            const ligand = String(summary.distinct_ligands_full || '').split(';').map(v => v.trim()).filter(Boolean)[0] || '';
+            attachProtacViewerControls(summary.top_pdb_code, summary.top_chain_id || '', ligand, '', '', ligand);
+        }
+
+        function attachProtacViewerControls(pdbCode, chainId, ligandResname, ligandChain, ligandResidueId, warheadLigandCode, candidateLinkerAtomIds = []) {
+            const containerId = 'protac-ngl-viewer';
+            const status = $('#protac-ngl-status');
+            status.text('Loading protein PDB and ligand instance SDF...');
+            const viewerPayload = {
+                pdbCode: pdbCode,
+                chainId: chainId || '',
+                ligandResname: ligandResname || '',
+                ligandChain: ligandChain || '',
+                ligandResidueId: ligandResidueId || '',
+                proteinStructureUrl: `/api/coordinates/${encodeURIComponent(String(pdbCode || '').toUpperCase())}.pdb?protein_only=1`,
+                proteinStructureExt: 'pdb',
+                ligandSdfUrl: `/api/ligand_instance_sdf/${encodeURIComponent(String(pdbCode || '').toUpperCase())}/${encodeURIComponent(String(ligandResname || '').toUpperCase())}.sdf?auth_chain=${encodeURIComponent(ligandChain || '')}&auth_seq_id=${encodeURIComponent(ligandResidueId || '')}`,
+                ligandMappingUrl: `/api/ligand_instance_sdf_url/${encodeURIComponent(String(pdbCode || '').toUpperCase())}/${encodeURIComponent(String(ligandResname || '').toUpperCase())}?auth_chain=${encodeURIComponent(ligandChain || '')}&auth_seq_id=${encodeURIComponent(ligandResidueId || '')}`,
+                structureUrl: `/api/coordinates/${encodeURIComponent(String(pdbCode || '').toUpperCase())}.pdb?ligand_code=${encodeURIComponent(String(ligandResname || '').toUpperCase())}&chain=${encodeURIComponent(ligandChain || '')}&residue_id=${encodeURIComponent(ligandResidueId || '')}`,
+                structureExt: 'pdb',
+                useDirectRcsbPdb: useDirectRcsbPdb,
+                ligandColorMode: 'element',
+                defaultFocus: 'ligand',
+                candidateLinkerAtomIds: Array.isArray(candidateLinkerAtomIds) ? candidateLinkerAtomIds : []
+            };
+            latestProtacViewerPayload = viewerPayload;
+            if (ligandDebugEnabled()) {
+                console.log('[protacability] selected ligand context', viewerPayload);
+                console.log('[protacability] viewer payload', viewerPayload);
+            }
+            VLNGLViewer.initCleanProteinLigandViewer(containerId, {
+                pdbCode: viewerPayload.pdbCode,
+                chainId: viewerPayload.chainId,
+                ligandResname: viewerPayload.ligandResname,
+                ligandChain: viewerPayload.ligandChain,
+                ligandResidueId: viewerPayload.ligandResidueId,
+                proteinStructureUrl: viewerPayload.proteinStructureUrl,
+                proteinStructureExt: viewerPayload.proteinStructureExt,
+                ligandSdfUrl: viewerPayload.ligandSdfUrl,
+                structureUrl: viewerPayload.structureUrl,
+                structureExt: viewerPayload.structureExt,
+                useDirectRcsbPdb: viewerPayload.useDirectRcsbPdb,
+                ligandColorMode: viewerPayload.ligandColorMode,
+                defaultFocus: viewerPayload.defaultFocus,
+                allowBroadLigandFallback: false,
+                focusLigand: true,
+                retryCifOnLigandMiss: ligandDebugEnabled(),
+                proteinColor: '#005030',
+                ligandColor: '#f4a261',
+                backgroundColor: 'white',
+                onStatus: function(message) {
+                    status.text(message || '');
+                },
+                onSourceLoaded: function(sourceUrl) {
+                    latestProtacLoadedSourceUrl = sourceUrl || null;
+                    if (ligandDebugEnabled()) updateProtacLigandDebugPanel(viewerPayload, viewerPayload);
+                }
+            }).catch(() => status.text('Unable to load 3D context from RCSB right now.'));
+            updateProtacLigandDebugPanel(viewerPayload, viewerPayload);
+            $('#protac-reset-view').off('click').on('click', function() { VLNGLViewer.resetView(containerId); });
+            $('#protac-focus-ligand').off('click').on('click', function() { VLNGLViewer.focusLigand(containerId); });
+            $('#protac-fit-all').off('click').on('click', function() { VLNGLViewer.fitAll(containerId); });
+            $('#protac-toggle-surface').off('click').on('click', function() {
+                protacState.modalSurfaceOn = !protacState.modalSurfaceOn;
+                VLNGLViewer.toggleSurface(containerId, protacState.modalSurfaceOn);
+            });
+            $('#protac-open-rcsb').off('click').on('click', function() { window.open(`https://www.rcsb.org/structure/${encodeURIComponent(pdbCode)}`, '_blank'); });
+            $('#protac-open-full-viewer').off('click').on('click', function() { window.open(`https://www.rcsb.org/3d-view/${encodeURIComponent(pdbCode)}`, '_blank'); });
+            const warheadButton = $('#protac-use-warhead');
+            if (warheadButton.length) {
+                const cleanCode = String(warheadLigandCode || ligandResname || '').trim().toUpperCase();
+                warheadButton.prop('disabled', !cleanCode);
+                warheadButton.off('click').on('click', function() {
+                    if (!cleanCode) return;
+                    const url = `https://protacbuilder.com/builder?ligand=${encodeURIComponent(cleanCode)}`;
+                    console.log('[warhead handoff]', { ligandCode: cleanCode, url: url });
+                    window.open(url, '_blank', 'noopener,noreferrer');
+                });
+            }
+            const ligandSelect = $('#protac-ligand-context-select');
+            if (ligandSelect.length) {
+                ligandSelect.off('change').on('change', function() {
+                    const [nextResname, nextChain, nextResid] = String($(this).val() || '').split('|');
+                    if (ligandDebugEnabled()) {
+                        console.log('[protacability] 3D ligand context changed', {
+                            ligandResname: nextResname || '',
+                            ligandChain: nextChain || '',
+                            ligandResidueId: nextResid || ''
+                        });
+                    }
+                    attachProtacViewerControls(
+                        pdbCode,
+                        chainId,
+                        nextResname || '',
+                        nextChain || '',
+                        nextResid || '',
+                        nextResname || ''
+                    );
+                });
+            }
+        }
+
+        function renderTargetDetail(data) {
+            const summary = data.target_summary || {};
+            const structures = data.structure_rows || [];
+            const ligands = data.ligand_groups || [];
+            const contexts = data.representative_contexts || {};
+            const representativeLigand = data.representative_ligand || {};
+            const ligandContexts = data.ligand_contexts || [];
+            const best = contexts.best_candidate_small_molecule_context || contexts.best_candidate_plus_glycan_context || contexts.best_glycan_only_context || {};
+            const structureRows = structures.length ? structures.map(row => `<tr><td>${escapeHtml(row.pdb_code || '—')}</td><td>${formatValue(row.best_score, 2)}</td><td>${escapeHtml(row.best_tier || '—')}</td><td>${row.chain_count ?? 0}</td><td>${ligandContextBadge(row)}</td><td>${escapeHtml(row.candidate_ligand_resnames || 'None')}</td></tr>`).join('') : '<tr><td colspan=\"6\">No structures available.</td></tr>';
+            const ligandRows = ligands.length ? ligands.map(row => `<tr><td>${escapeHtml(row.ligand_resname || '—')}</td><td>${escapeHtml(row.context_class || '—')}</td><td>${row.pdb_count ?? 0}</td><td>${escapeHtml(row.top_pdb_code || '—')}</td><td>${escapeHtml((row.associated_protein_chains || []).join(', ') || '—')}</td><td>${formatValue(row.best_score, 2)}</td></tr>`).join('') : '<tr><td colspan=\"6\">No ligand groups available.</td></tr>';
+            $('#protac-detail-content').html(`
+                <div class="section-heading"><span class="page-kicker">Target Browser Detail</span><h2 class="page-title">${escapeHtml(summary.virus_name || '—')} · ${escapeHtml(summary.protein_type || '—')}</h2><p class="page-subtitle">${escapeHtml(summary.interpretation_label || '')} · ${escapeHtml(summary.interpretation_note || '')}</p></div>
+                <div class="protac-detail-two-col">
+                    <div class="page-card protacability-detail-card">
+                        <div id="protac-ngl-viewer" class="protac-ngl-viewer"></div>
+                        <p id="protac-ngl-status" class="viewer-status"></p>
+                        ${renderLigandDebugPanel()}
+                        <div class="action-row">
+                            <button id="protac-reset-view" type="button" class="button-secondary">Reset view</button>
+                            <button id="protac-focus-ligand" type="button" class="button-secondary">Focus ligand</button>
+                            <button id="protac-fit-all" type="button" class="button-secondary">Fit full complex</button>
+                            <button id="protac-toggle-surface" type="button" class="button-secondary">Toggle surface</button>
+                            <button id="protac-use-warhead" type="button" class="button-secondary">Use as Warhead</button>
+                            <button id="protac-open-rcsb" type="button" class="button-secondary">Open RCSB</button>
+                            <button id="protac-open-full-viewer" type="button" class="button-secondary">Open full viewer</button>
+                        </div>
+                    </div>
+                    <div class="page-card protacability-detail-card">
+                        <p><strong>Best representative:</strong> ${escapeHtml(summary.best_pdb_code || '—')} / ${escapeHtml(summary.best_chain_id || '—')}</p>
+                        <p><strong>Best score:</strong> ${formatValue(summary.best_score, 2)}</p>
+                        <p><strong>PDBs:</strong> ${summary.pdb_count ?? 0} | <strong>Chains:</strong> ${summary.chain_count ?? 0}</p>
+                        <p><strong>Top ligands:</strong> ${escapeHtml(summary.top_candidate_ligands_preview || 'None')}</p>
+                        <p><strong>pI range:</strong> ${formatValue(summary.pI_min, 2)}–${formatValue(summary.pI_max, 2)}</p>
+                        <p><strong>Exposed lys summary:</strong> ${summary.exposed_lys_total ?? 0} | best fraction ${formatValue(summary.best_exposed_lys_fraction, 3)}</p>
+                        ${renderLigandContextSelector(ligandContexts, representativeLigand)}
+                    </div>
+                </div>
+                <div class="page-card protacability-detail-card"><h3>Structures</h3><div class="table-wrap"><table><thead><tr><th>PDB</th><th>Best score</th><th>Tier</th><th>Chains</th><th>Context</th><th>Ligands</th></tr></thead><tbody>${structureRows}</tbody></table></div></div>
+                <div class="page-card protacability-detail-card"><h3>Ligand Groups</h3><div class="table-wrap"><table><thead><tr><th>Ligand</th><th>Context</th><th>PDBs</th><th>Top PDB</th><th>Chains</th><th>Best score</th></tr></thead><tbody>${ligandRows}</tbody></table></div></div>
+            `);
+            if (ligandDebugEnabled()) {
+                console.log('[protacability] detail payload', data);
+                console.log('[protacability] ligand_contexts', ligandContexts);
+                console.log('[protacability] selected ligand context', representativeLigand);
+            }
+            attachProtacViewerControls(
+                best.pdb_code || summary.best_pdb_code,
+                best.chain_id || summary.best_chain_id,
+                representativeLigand.ligand_resname || best.ligand_resname || '',
+                representativeLigand.ligand_chain || best.ligand_chain || '',
+                representativeLigand.ligand_residue_id || best.ligand_residue_id || '',
+                representativeLigand.ligand_resname || best.ligand_resname || ''
+            );
+        }
+
+        function fetchDetail(button) {
+            const view = button.data('view');
+            $('#protac-detail-content').html('<h2 class="page-title">Loading detail...</h2>');
+            $('#protacability-detail-modal').show();
+            if (view === 'targets') {
+                const params = new URLSearchParams({ virus_name: button.data('virus'), protein_type: button.data('protein'), collapse_labels: $('#toggle-collapse-labels').is(':checked') ? '1' : '0' });
+                $.getJSON(`/api/protacability/target_detail?${params.toString()}`, renderTargetDetail).fail(() => $('#protac-detail-content').html('<h2 class="page-title">Unable to load target detail.</h2>'));
+                return;
+            }
+            if (view === 'protein') {
+                const params = new URLSearchParams({ virus_name: button.data('virus'), protein_type: button.data('protein'), collapse_labels: $('#toggle-collapse-labels').is(':checked') ? '1' : '0' });
+                $.getJSON(`/api/protacability/protein_detail?${params.toString()}`, renderProteinDetail).fail(() => $('#protac-detail-content').html('<h2 class="page-title">Unable to load protein summary detail.</h2>'));
+                return;
+            }
+            if (view === 'summary') {
+                const params = new URLSearchParams({ virus_name: button.data('virus'), protein_type: button.data('protein'), collapse_labels: $('#toggle-collapse-labels').is(':checked') ? '1' : '0' });
+                $.getJSON(`/api/protacability/structure_detail/${encodeURIComponent(button.data('pdb'))}?${params.toString()}`, renderStructureDetail).fail(() => $('#protac-detail-content').html('<h2 class="page-title">Unable to load structure summary detail.</h2>'));
+                return;
+            }
+            $.getJSON(`/api/protacability/detail/${encodeURIComponent(button.data('pdb'))}/${encodeURIComponent(button.data('chain'))}`, renderChainDetail).fail(() => $('#protac-detail-content').html('<h2 class="page-title">Unable to load chain detail.</h2>'));
+        }
+
+        function syncSortOptions() {
+            const sortSelect = $('#protac-sort');
+            const previous = sortSelect.val();
+            sortSelect.empty();
+            const optionsByView = {
+                targets: [
+                    ['readiness_priority_desc', 'Readiness-first evidence priority'],
+                    ['best_score_desc', 'Best score'],
+                    ['warhead_score_desc', 'Warhead linkability'],
+                    ['avg_score_desc', 'Average score'],
+                    ['pdb_count_desc', 'PDB count'],
+                    ['protein_type_asc', 'Protein type']
+                ],
+                summary: [
+                    ['readiness_priority_desc', 'Readiness-first evidence priority'],
+                    ['best_score_desc', 'Best score'],
+                    ['warhead_score_desc', 'Warhead linkability'],
+                    ['exposed_fraction_desc', 'Exposed lysine fraction'],
+                    ['candidate_ligand_count_desc', 'Candidate ligand count'],
+                    ['pdb_code_asc', 'PDB code'],
+                    ['protein_type_asc', 'Protein type']
+                ],
+                protein: [
+                    ['readiness_priority_desc', 'Readiness-first evidence priority'],
+                    ['best_score_desc', 'Best score'],
+                    ['warhead_score_desc', 'Warhead linkability'],
+                    ['avg_score_desc', 'Average score'],
+                    ['ligand_context_count_desc', 'Candidate ligand contexts'],
+                    ['pdb_count_desc', 'PDB count'],
+                    ['protein_type_asc', 'Protein type']
+                ],
+                chains: [
+                    ['readiness_priority_desc', 'Readiness-first evidence priority'],
+                    ['protacability_proxy_score_desc', 'Legacy proxy score'],
+                    ['warhead_score_desc', 'Warhead linkability'],
+                    ['exposed_fraction_desc', 'Exposed lysine fraction'],
+                    ['candidate_ligand_count_desc', 'Candidate ligand count'],
+                    ['pdb_code_asc', 'PDB code'],
+                    ['protein_type_asc', 'Protein type']
+                ]
+            };
+            optionsByView[protacState.view].forEach(([value, label]) => sortSelect.append(`<option value="${value}">${label}</option>`));
+            if (optionsByView[protacState.view].some(([value]) => value === previous)) sortSelect.val(previous);
+            else sortSelect.val(optionsByView[protacState.view][0][0]);
+            protacState.currentSort = sortSelect.val();
+        }
+
+        function selectView(view) {
+            protacState.view = view;
+            protacState.offset = 0;
+            $('#protac-view').val(view);
+            $('.protac-view-button').removeClass('is-active');
+            $(`.protac-view-button[data-view="${view}"]`).addClass('is-active');
+            syncSortOptions();
+        }
+
+        function searchProtacability() {
+            if (!initialProtacabilityDataAvailable) {
+                showEmptyState('PROTACability data has not been imported yet. Run tools/import_protacability_data.py after generating the expansion outputs.');
+                return;
+            }
+            const params = getCurrentProtacParams();
+            $.getJSON(`/api/protacability/search?${params.toString()}`, function(data) {
+                if (!data.data_available) {
+                    showEmptyState(data.message);
+                    return;
+                }
+                protacState.view = data.view;
+                protacState.limit = Number(data.limit || protacState.limit);
+                protacState.offset = Number(data.offset || 0);
+                protacState.currentSort = data.sort || protacState.currentSort;
+                updateMetricCards(data.view, data.summary || {});
+                updateResultsNote(data.view);
+                renderRows(data.view, data.rows || []);
+                updatePagination(data.total_rows || 0, data.offset || 0, data.limit || protacState.limit, Boolean(data.has_more));
+            }).fail(function() {
+                showEmptyState('Unable to load PROTACability assessment data right now.');
+            });
+        }
+
+        function setFilterFeedback(message) {
+            $('#protac-filter-feedback').text(message || '');
+        }
+
+        function ensureSelect2($el, placeholder) {
+            const config = { placeholder: placeholder, width: '100%' };
+            if (!$el.prop('multiple')) config.allowClear = true;
+            if ($el.hasClass('select2-hidden-accessible')) {
+                $el.trigger('change.select2');
+                return;
+            }
+            $el.select2(config);
+        }
+
+        function getSelectValuesArray($el) {
+            const value = $el.val();
+            if (Array.isArray(value)) return value;
+            if (value === null || value === undefined || value === '') return [];
+            return [value];
+        }
+
+        function setSelectValuesSilently($el, values) {
+            $el.val(values);
+            $el.trigger('change.select2');
+        }
+
+        function updateDynamicSelectOptions($el, values, placeholder) {
+            const current = getSelectValuesArray($el);
+            const valueSet = new Set(values || []);
+            const preserved = current.filter(value => valueSet.has(value));
+            const removed = current.filter(value => !valueSet.has(value));
+
+            $el.empty();
+            if (!$el.prop('multiple')) {
+                $el.append('<option value=""></option>');
+            }
+            (values || []).forEach(value => {
+                $el.append(`<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`);
+            });
+
+            if ($el.prop('multiple')) setSelectValuesSilently($el, preserved);
+            else setSelectValuesSilently($el, preserved[0] || '');
+            ensureSelect2($el, placeholder);
+            return removed;
+        }
+
+        function updateLigandOptions(values) {
+            return updateDynamicSelectOptions($('#protac-ligand-filter'), values || [], 'Any ligand');
+        }
+
+        function updateLigandContextOptions(items) {
+            const $el = $('#protac-ligand-context-class');
+            const current = getSelectValuesArray($el);
+            const values = (items || []).map(item => item.value);
+            const valueSet = new Set(values);
+            const preserved = current.filter(value => valueSet.has(value));
+            const removed = current.filter(value => !valueSet.has(value));
+
+            $el.empty().append('<option value=""></option>');
+            (items || []).forEach(item => {
+                $el.append(`<option value="${escapeHtml(item.value)}">${escapeHtml(item.label)}<\/option>`);
+            });
+
+            setSelectValuesSilently($el, preserved[0] || '');
+            ensureSelect2($el, 'Any context');
+            return removed;
+        }
+
+        function updateStaticSelectOptions($el, placeholder) {
+            const current = getSelectValuesArray($el);
+            const values = $el.find('option').map(function() { return $(this).attr('value') || ''; }).get();
+            const valueSet = new Set(values);
+            const preserved = current.filter(value => valueSet.has(value));
+            const removed = current.filter(value => !valueSet.has(value));
+            setSelectValuesSilently($el, preserved[0] || '');
+            ensureSelect2($el, placeholder);
+            return removed;
+        }
+
+        function formatRemovedFilterMessage(removedByField) {
+            const messages = [];
+            Object.entries(removedByField).forEach(([label, values]) => {
+                if (!values.length) return;
+                messages.push(`${label}: ${values.join(', ')}`);
+            });
+            if (!messages.length) return '';
+            return `Removed unavailable selections after filter narrowing: ${messages.join(' | ')}`;
+        }
+
+        function refreshDynamicFilterOptions() {
+            if (!initialProtacabilityDataAvailable) {
+                return $.Deferred().resolve().promise();
+            }
+            if (refreshingFilterOptions) {
+                return $.Deferred().resolve().promise();
+            }
+
+            const params = getCurrentProtacParams();
+            params.delete('view');
+            params.delete('offset');
+            params.delete('limit');
+            params.delete('sort');
+
+            refreshingFilterOptions = true;
+            return $.getJSON(`/api/protacability/filter_options?${params.toString()}`, function(data) {
+                if (!data.data_available) {
+                    setFilterFeedback(data.message || 'Unable to refresh filter options.');
+                    return;
+                }
+
+                const removedByField = {
+                    viruses: updateDynamicSelectOptions($('#protac-virus-name'), data.virus_names || [], 'All viruses'),
+                    proteins: updateDynamicSelectOptions($('#protac-protein-type'), data.protein_types || [], 'All protein types'),
+                    tiers: updateDynamicSelectOptions($('#protac-tier'), data.tiers || [], 'All tiers'),
+                    readiness: updateDynamicSelectOptions($('#protac-readiness-tier'), data.readiness_tiers || [], 'All readiness tiers'),
+                    warhead: updateDynamicSelectOptions($('#protac-warhead-tier'), data.warhead_tiers || [], 'All warhead tiers'),
+                    evidence: updateDynamicSelectOptions($('#protac-evidence-level'), data.evidence_levels || [], 'All evidence levels'),
+                    smiles: updateDynamicSelectOptions($('#protac-smiles-source'), data.smiles_sources || [], 'All SMILES sources'),
+                    ligands: updateLigandOptions(data.ligands || []),
+                    contexts: updateLigandContextOptions(data.ligand_context_classes || []),
+                };
+                const feedback = formatRemovedFilterMessage(removedByField);
+                setFilterFeedback(feedback);
+                if (feedback) console.info('[protacability] dynamic filters narrowed selections', removedByField);
+            }).fail(function() {
+                setFilterFeedback('Unable to refresh filter options.');
+            }).always(function() {
+                refreshingFilterOptions = false;
+            });
+        }
+
+        function applyUrlFilters() {
+            const params = new URLSearchParams(window.location.search);
+            $('#protac-pdb-code').val(params.get('pdb_code') || '');
+            $('#protac-min-score').val(params.get('min_score') || '');
+            $('#protac-min-readiness-score').val(params.get('min_readiness_score') || '');
+            $('#protac-min-warhead-score').val(params.get('min_warhead_score') || '');
+            setSelectValuesSilently($('#protac-ligand-filter'), params.get('ligand') || '');
+            const ligandPresence = params.get('ligand_presence') || (params.get('has_candidate_ligand') === '1' ? 'has_candidate_ligand' : '');
+            setSelectValuesSilently($('#protac-ligand-presence'), ligandPresence);
+            setSelectValuesSilently($('#protac-ligand-context-class'), params.get('ligand_context_class') || '');
+
+            const virusNames = params.getAll('virus_name');
+            const proteinTypes = params.getAll('protein_type');
+            const tiers = params.getAll('tier');
+            const readinessTiers = params.getAll('readiness_tier');
+            const warheadTiers = params.getAll('warhead_tier');
+            const evidenceLevels = params.getAll('evidence_level');
+            const smilesSources = params.getAll('smiles_source');
+            if (virusNames.length) setSelectValuesSilently($('#protac-virus-name'), virusNames);
+            if (proteinTypes.length) setSelectValuesSilently($('#protac-protein-type'), proteinTypes);
+            if (tiers.length) setSelectValuesSilently($('#protac-tier'), tiers);
+            if (readinessTiers.length) setSelectValuesSilently($('#protac-readiness-tier'), readinessTiers);
+            if (warheadTiers.length) setSelectValuesSilently($('#protac-warhead-tier'), warheadTiers);
+            if (evidenceLevels.length) setSelectValuesSilently($('#protac-evidence-level'), evidenceLevels);
+            if (smilesSources.length) setSelectValuesSilently($('#protac-smiles-source'), smilesSources);
+            if (params.get('collapse_labels') === '0') $('#toggle-collapse-labels').prop('checked', false);
+            if (params.get('has_exposed_lysine') === '1') $('#toggle-has-exposed-lysine').prop('checked', true);
+            if (params.get('has_ligand_proximal_exposed_lysine') === '1') $('#toggle-has-ligand-proximal-exposed-lysine').prop('checked', true);
+            if (params.get('has_candidate_linker_atoms') === '1') $('#toggle-has-candidate-linker-atoms').prop('checked', true);
+            if (params.get('has_solvent_exposed_ligand_atoms') === '1') $('#toggle-has-solvent-exposed-ligand-atoms').prop('checked', true);
+            if (params.get('has_mapped_atoms') === '1') $('#toggle-has-mapped-atoms').prop('checked', true);
+            if (params.get('has_valid_rdkit_smiles') === '1') $('#toggle-has-valid-rdkit-smiles').prop('checked', true);
+            if (params.get('has_exposed_target_lysines') === '1') $('#toggle-has-exposed-target-lysines').prop('checked', true);
+            selectView(params.get('view') || 'targets');
+        }
+
+        $(document).ready(function() {
+            protacState.limit = Number($('#protac-page-size').val());
+            syncSortOptions();
+
+            $.getJSON('/api/protacability/filter_options', function(data) {
+                if (!data.data_available) {
+                    showEmptyState(data.message);
+                    return;
+                }
+                updateDynamicSelectOptions($('#protac-virus-name'), data.virus_names || [], 'All viruses');
+                updateDynamicSelectOptions($('#protac-protein-type'), data.protein_types || [], 'All protein types');
+                updateDynamicSelectOptions($('#protac-tier'), data.tiers || [], 'All tiers');
+                updateDynamicSelectOptions($('#protac-readiness-tier'), data.readiness_tiers || [], 'All readiness tiers');
+                updateDynamicSelectOptions($('#protac-warhead-tier'), data.warhead_tiers || [], 'All warhead tiers');
+                updateDynamicSelectOptions($('#protac-evidence-level'), data.evidence_levels || [], 'All evidence levels');
+                updateDynamicSelectOptions($('#protac-smiles-source'), data.smiles_sources || [], 'All SMILES sources');
+                updateLigandOptions(data.ligands || []);
+                updateStaticSelectOptions($('#protac-ligand-presence'), 'Any ligand status');
+                updateLigandContextOptions(data.ligand_context_classes || []);
+                applyUrlFilters();
+                refreshDynamicFilterOptions().always(function() {
+                    searchProtacability();
+                });
+            }).fail(function() {
+                showEmptyState('Unable to load PROTACability filter metadata.');
+            });
+
+            $('#protac-virus-name, #protac-protein-type, #protac-tier, #protac-readiness-tier, #protac-warhead-tier, #protac-evidence-level, #protac-smiles-source, #protac-ligand-filter, #protac-ligand-context-class, #protac-ligand-presence').on('change', function() {
+                if (refreshingFilterOptions) return;
+                protacState.offset = 0;
+                refreshDynamicFilterOptions();
+            });
+            $('#toggle-collapse-labels, #toggle-has-exposed-lysine, #toggle-has-ligand-proximal-exposed-lysine, #toggle-has-candidate-linker-atoms, #toggle-has-solvent-exposed-ligand-atoms, #toggle-has-mapped-atoms, #toggle-has-valid-rdkit-smiles, #toggle-has-exposed-target-lysines').on('change', function() {
+                if (refreshingFilterOptions) return;
+                protacState.offset = 0;
+                refreshDynamicFilterOptions();
+            });
+
+            $('.protac-view-button').on('click', function() {
+                selectView($(this).data('view'));
+                searchProtacability();
+            });
+            $('#apply-protac-filters').on('click', function() {
+                protacState.offset = 0;
+                refreshDynamicFilterOptions().always(function() {
+                    searchProtacability();
+                });
+            });
+            $('#reset-protac-filters').on('click', function() {
+                $('#protacability-filter-form')[0].reset();
+                setFilterFeedback('');
+                setSelectValuesSilently($('#protac-virus-name'), []);
+                setSelectValuesSilently($('#protac-protein-type'), []);
+                setSelectValuesSilently($('#protac-tier'), []);
+                setSelectValuesSilently($('#protac-readiness-tier'), []);
+                setSelectValuesSilently($('#protac-warhead-tier'), []);
+                setSelectValuesSilently($('#protac-evidence-level'), []);
+                setSelectValuesSilently($('#protac-smiles-source'), []);
+                setSelectValuesSilently($('#protac-ligand-filter'), '');
+                setSelectValuesSilently($('#protac-ligand-presence'), '');
+                setSelectValuesSilently($('#protac-ligand-context-class'), '');
+                $('#toggle-collapse-labels').prop('checked', true);
+                $('#toggle-has-candidate-linker-atoms, #toggle-has-solvent-exposed-ligand-atoms, #toggle-has-mapped-atoms, #toggle-has-valid-rdkit-smiles, #toggle-has-exposed-target-lysines, #toggle-has-exposed-lysine, #toggle-has-ligand-proximal-exposed-lysine').prop('checked', false);
+                $('#protac-page-size').val('50');
+                protacState.limit = 50;
+                selectView('targets');
+                protacState.offset = 0;
+                refreshDynamicFilterOptions().always(function() {
+                    searchProtacability();
+                });
+            });
+            $('#protac-sort').on('change', function() { protacState.currentSort = $(this).val(); protacState.offset = 0; searchProtacability(); });
+            $('#protac-page-size').on('change', function() { protacState.limit = Number($(this).val()); protacState.offset = 0; searchProtacability(); });
+            $('#protac-prev-page, #protac-prev-page-bottom').on('click', function() { protacState.offset = Math.max(0, protacState.offset - protacState.limit); searchProtacability(); });
+            $('#protac-next-page, #protac-next-page-bottom').on('click', function() { if (protacState.hasMore) { protacState.offset += protacState.limit; searchProtacability(); } });
+            $('#export-protac-csv').on('click', function() {
+                const params = getCurrentProtacParams();
+                params.delete('offset');
+                const rawExport = ($('#protac-export-type').val() || '').trim();
+                if (rawExport) params.set('raw_export', rawExport);
+                window.location.href = `/api/protacability/export?${params.toString()}`;
+            });
+            $(document).on('click', '.protac-detail-button', function() { fetchDetail($(this)); });
+            $(document).on('click', '.protac-target-action', function() {
+                const button = $(this);
+                const action = button.data('action');
+                const virus = button.data('virus');
+                const protein = button.data('protein');
+                if (action === 'best3d') {
+                    $('#protac-detail-content').html('<h2 class="page-title">Loading detail...</h2>');
+                    $('#protacability-detail-modal').show();
+                    const params = new URLSearchParams({ virus_name: virus, protein_type: protein, collapse_labels: $('#toggle-collapse-labels').is(':checked') ? '1' : '0' });
+                    $.getJSON(`/api/protacability/target_detail?${params.toString()}`, renderTargetDetail).fail(() => $('#protac-detail-content').html('<h2 class="page-title">Unable to load target detail.</h2>'));
+                    return;
+                }
+                if (action === 'structures') {
+                    selectView('summary');
+                } else if (action === 'ligands') {
+                    setSelectValuesSilently($('#protac-ligand-context-class'), 'candidate_small_molecule');
+                    selectView('summary');
+                }
+                setSelectValuesSilently($('#protac-virus-name'), [virus]);
+                setSelectValuesSilently($('#protac-protein-type'), [protein]);
+                protacState.offset = 0;
+                refreshDynamicFilterOptions().always(function() {
+                    searchProtacability();
+                });
+            });
+            $(document).on('click', '.show-raw-chains-button', function() {
+                const button = $(this);
+                $('#protacability-detail-modal').hide();
+                selectView('chains');
+                $('#protac-pdb-code').val(button.data('pdb'));
+                setSelectValuesSilently($('#protac-virus-name'), [button.data('virus')]);
+                setSelectValuesSilently($('#protac-protein-type'), [button.data('protein')]);
+                protacState.offset = 0;
+                refreshDynamicFilterOptions().always(function() {
+                    searchProtacability();
+                });
+            });
+            $('#close-protac-detail').on('click', function() { VLNGLViewer.disposeViewer('protac-ngl-viewer'); $('#protacability-detail-modal').hide(); });
+            $('#protacability-detail-modal').on('click', function(event) { if (event.target.id === 'protacability-detail-modal') { VLNGLViewer.disposeViewer('protac-ngl-viewer'); $('#protacability-detail-modal').hide(); } });
+        });
+    </script>
+{% endblock %}

@@ -1,0 +1,619 @@
+{% extends "base.html" %}
+
+{% block title %}{{ images[0].virus_name }} | {{ images[0].ligand_code }}{% endblock %}
+
+{% block body_class %}app-shell display-images-page{% endblock %}
+
+{% block head_extra %}
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-beta.1/css/select2.min.css" rel="stylesheet" />
+    <script>
+        window.VLISEMOD_DEBUG_LIGANDS = window.VLISEMOD_DEBUG_LIGANDS === true;
+        (function () {
+            try {
+                const params = new URLSearchParams(window.location.search);
+                if (params.get("debug_ligands") === "1") window.VLISEMOD_DEBUG_LIGANDS = true;
+                if (window.localStorage && localStorage.getItem("vlisemod_debug_ligands") === "1") window.VLISEMOD_DEBUG_LIGANDS = true;
+            } catch (e) {}
+        })();
+        function ligandDebugEnabled() {
+            return window.VLISEMOD_DEBUG_LIGANDS === true ||
+                new URLSearchParams(window.location.search).get("debug_ligands") === "1" ||
+                localStorage.getItem("vlisemod_debug_ligands") === "1";
+        }
+    </script>
+{% endblock %}
+
+{% block content %}
+    {% set TUTORIAL_URL = "https://youtu.be/0tyw-ZfJxkk?si=xnDocGriI4OOsamt" %}
+    {% set primary_image = images[0] %}
+    {% set regular_image_url = url_for('static', filename=primary_image.path.split('static/')[1]) %}
+    {% set solvent_image_url = url_for('static', filename=primary_image.solvent_exposed_path.split('static/')[1]) %}
+    {% set solvent_filename = primary_image.solvent_exposed_path.split('/')[-1] %}
+    {% include "_tutorial_flyover.html" %}  
+    <section class="page-intro">
+        <span class="page-kicker">Ligand Display</span>
+        <h1>{{ primary_image.virus_name }} / {{ primary_image.pdb_id }} / {{ primary_image.ligand_code }}</h1>
+        <p>Review generated 2D ligand images, switch into the 3D viewer, inspect solvent-exposed atoms, and export V-LiSEMOD assets without leaving the parent application.</p>
+    </section>
+
+    <!-- Load jQuery before any other scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <!-- Add Select2 JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-beta.1/js/select2.min.js"></script>
+
+    <script src="https://unpkg.com/ngl@2.0.0-dev.37/dist/ngl.js"></script>
+    <script src="{{ url_for('static', filename='js/ngl_viewer_helpers.js') }}?v=pdb-only-handle-validation-v3"></script>
+
+<section class="content-container result-card page-section">
+    <h2 class="page-title" style="text-align:center;">
+        {{ primary_image.virus_name }} | PDB ID: {{ primary_image.pdb_id }} | Ligand: {{ primary_image.ligand_code }}
+    </h2>
+
+    <div class="viewer-card data-panel">
+        <div class="viewer-layout">
+            <div class="viewer-panel-main">
+                <div class="structure-view-frame">
+                    <div id="image-viewer" class="ligand-view-frame">
+                        <img src="{{ regular_image_url }}" alt="{{ primary_image.ligand_code }}" id="ligand-image">
+                    </div>
+                    <div id="viewport" class="clean-ngl-frame"></div>
+                </div>
+                <p id="viewer-status" class="viewer-status" role="status" aria-live="polite"></p>
+                <details id="ligand-debug-panel" class="page-card" style="display:none;">
+                    <summary>Ligand debug</summary>
+                    <pre id="ligand-debug-text"></pre>
+                    <div class="action-row">
+                        <a id="ligand-debug-link" class="button-secondary" target="_blank" rel="noopener noreferrer">Open backend ligand debug</a>
+                        <button id="copy-ligand-debug-payload" type="button" class="button-secondary">Copy debug payload</button>
+                    </div>
+                </details>
+                <div class="buttons action-row viewer-actions">
+                    <button id="view-3d-in-window" type="button" onclick="replaceWith3D('{{ primary_image.pdb_id }}', '{{ primary_image.ligand_code }}')">View 3D Context</button>
+                    <button id="return-2d" type="button" class="button-secondary" style="display:none;" onclick="replaceWith2D()">Return to 2D</button>
+                    <button id="view-solvent-exposed" type="button" class="button-secondary" onclick="toggleSolventExposed()">View Solvent-Exposed 2D Image</button>
+                    <button id="view-regular-2d" type="button" class="button-secondary" onclick="showRegular2D()">View Regular 2D Image</button>
+                    <button id="use-as-warhead-btn" type="button" onclick="useAsWarhead('{{ primary_image.ligand_code }}')">🧪 Use as Warhead</button>
+                    <a class="button-secondary" href="{{ url_for('download_image', filename=primary_image.filename) }}" download="{{ primary_image.filename }}">Download 2D SVG</a>
+                    <a class="button-secondary" href="{{ url_for('download_SASA_image', filename=solvent_filename) }}" download="{{ solvent_filename }}">Download SASA SVG</a>
+                    <a class="button-ghost" href="{{ url_for('index') }}">Back to Main Page</a>
+                </div>
+            </div>
+
+            <aside class="viewer-panel-side">
+                <h3 class="secondary-panel-title">Interaction diagram selection</h3>
+                <div id="chain-residue-selection">
+                    <h3>Select Chain and Residue</h3>
+                    <form id="chain-residue-form">
+                        {% for chain, residue_id in chain_residues %}
+                        <label>
+                            <input type="checkbox" name="chain_residue" value="{{ chain }}_{{ residue_id }}" data-ligand-resname="{{ primary_image.ligand_code }}" data-ligand-chain="{{ chain }}" data-ligand-residue-id="{{ residue_id }}" onclick="selectOnlyOne(this)">
+                            Display {{ primary_image.ligand_code }} {{ residue_id }}{{ chain }}
+                        </label>
+                        {% endfor %}
+                    </form>
+                </div>
+                <button type="button" onclick="generateLigandInteractionDiagram()">Display Ligand Interaction Diagram</button>
+            </aside>
+        </div>
+    </div>
+</section>
+
+<!-- Modal for displaying the diagram -->
+<div id="poseviewModal" class="modal">
+  <div class="modal-content data-panel poseview-modal-content">
+    <button class="close modal-close-button" type="button" aria-label="Close interaction diagram">&times;</button>
+    <img id="poseviewDiagram" alt="PoseView Diagram" />
+    <div class="action-row poseview-actions">
+        <a id="downloadDiagram" target="_blank" rel="noopener noreferrer" download="PoseViewDiagram.png" class="button-secondary">Download Diagram</a>
+    </div>
+     <label for="ligand">
+        Interaction Diagram
+         <span class="tooltip">ℹ️
+             <span class="tooltip-text">
+                 <strong>Interaction Patterns:</strong><br>
+                 - <strong>Hydrogen Bonds:</strong> Represented as black dashed lines.<br>
+                 - <strong>π Interactions:</strong> Represented as green dashed lines with dots indicating the participating π systems.<br>
+                 - <strong>Hydrophobic Contacts:</strong> Shown with residue labels and spline segments along the contacting hydrophobic ligand parts.
+             </span>
+         </span>
+     </label>
+  </div>
+</div>
+
+<!-- Modal for displaying the spinner and potential errors -->
+<div id="loadingModal" class="modal">
+    <div class="modal-content data-panel">
+        <button class="close modal-close-button" type="button" aria-label="Close loading status">&times;</button>
+        <div id="spinner-container">
+            <div class="spinner"></div>
+        </div>
+        <p id="error-message" style="display: none;">Unable to generate the Ligand Interaction Diagram. Please try again later.</p>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+
+
+<!-- Chatbot HTML -->
+
+
+   <!-- Chatbot Icon -->
+   <div id="chatbot-icon" onclick="toggleChatbot()">💬</div>
+    
+    
+
+   <!-- Chatbot Popup -->
+   <div id="chatbot-popup">
+       
+       <!-- "X" Close Button -->
+       <button id="close-chatbot" onclick="closeChatbotPopup()">✖</button>
+   
+       <!-- Chatbot Frame (Hidden Initially) -->
+       <iframe id="chatbot-frame" style="width: 100%; height: 90%; border: none; display: none;"></iframe>
+   
+       <!-- Coming Soon Message (Hidden Initially) -->
+       <div id="coming-soon-message" style="text-align: center; display: none;">
+           <h2>JARI Drug Insight Bot Coming Soon</h2>
+       </div>
+   </div>
+   
+   
+   
+   <script>
+       let isDrugAppAvailable = false; // Default to false
+   
+       async function checkDrugApp() {
+           try {
+               // Try fetching the chatbot page
+               const response = await fetch("/drugapp/", { method: "HEAD" });
+   
+               if (response.ok) {
+                   isDrugAppAvailable = true; // ✅ DrugApp is available
+               } else {
+                   console.warn("DrugApp is not available.");
+               }
+           } catch (error) {
+               console.warn("Error checking DrugApp availability:", error);
+           }
+       }
+   
+       // Run check when the page loads
+       checkDrugApp();
+   
+       function toggleChatbot() {
+           document.getElementById("chatbot-frame").src = window.location.origin + "/drugapp/";
+           const chatbotPopup = document.getElementById("chatbot-popup");
+           const chatbotFrame = document.getElementById("chatbot-frame");
+           const comingSoonMessage = document.getElementById("coming-soon-message");
+   
+           if (chatbotPopup.style.display === "none" || chatbotPopup.style.display === "") {
+               // If popup is closed, open it
+               if (isDrugAppAvailable) {
+                   chatbotFrame.style.display = "block";
+                   comingSoonMessage.style.display = "none";
+               } else {
+                   chatbotFrame.style.display = "none";
+                   comingSoonMessage.style.display = "block";
+               }
+               chatbotPopup.style.display = "block"; // Show popup
+           } else {
+               // If popup is open, close it
+               chatbotPopup.style.display = "none";
+           }
+       }
+   
+   
+       function closeChatbotPopup() {
+           document.getElementById("chatbot-popup").style.display = "none";
+       }
+   </script>
+
+<script>
+const regularImageUrl = "{{ regular_image_url }}";
+const solventExposedImageUrl = "{{ solvent_image_url }}";
+const initialStructureUrl = {{ (structure_url|tojson) if structure_url is defined else 'null' }};
+const useDirectRcsbPdb = (new URLSearchParams(window.location.search).get('useDirectRcsbPdb') === 'true');
+let isSolventExposedView = false;
+let latestDisplayViewerPayload = null;
+let latestLoadedSourceUrl = null;
+
+function getAllLigandContexts() {
+    return Array.from(document.querySelectorAll('input[name="chain_residue"]')).map(function(input) {
+        return {
+            value: input.value,
+            checked: input.checked,
+            dataset: Object.assign({}, input.dataset),
+            ligandResname: String(input.dataset.ligandResname || '{{ primary_image.ligand_code }}').trim().toUpperCase(),
+            ligandChain: String(input.dataset.ligandChain || '').trim(),
+            ligandResidueId: String(input.dataset.ligandResidueId || '').trim()
+        };
+    });
+}
+
+function getSelectedLigandContext() {
+    const checkedValues = Array.from(document.querySelectorAll('input[name="chain_residue"]:checked'));
+    let selectedValue = checkedValues[0] || document.querySelector('input[name="chain_residue"]');
+    if (!selectedValue) return { ligandResname: '', ligandChain: '', ligandResidueId: '' };
+    const ligandResname = String(selectedValue.dataset.ligandResname || '{{ primary_image.ligand_code }}').trim().toUpperCase();
+    const ligandChain = String(selectedValue.dataset.ligandChain || '').trim();
+    const ligandResidueId = String(selectedValue.dataset.ligandResidueId || '').trim();
+    return { ligandResname, ligandChain, ligandResidueId, multipleSelected: checkedValues.length > 1 };
+}
+
+    // Ensure only one checkbox can be selected at a time
+    function selectOnlyOne(checkbox) {
+        const checkboxes = document.querySelectorAll('input[name="chain_residue"]');
+        checkboxes.forEach((item) => {
+            if (item !== checkbox) item.checked = false;
+        });
+    }
+     
+    // Use the selected chain-residue pair to generate the diagram
+    function generateLigandInteractionDiagram() {
+        const selectedValue = document.querySelector('input[name="chain_residue"]:checked');
+        if (selectedValue) {
+            const [chain, residue] = selectedValue.value.split('_');
+            console.log('Selected Chain:', chain, 'Residue:', residue);
+            submitChainResidue(chain, residue);
+        } else {
+            alert('Please select a chain and residue to display.');
+        }
+    }
+
+    // Function to submit chain and residue
+    function submitChainResidue(chain, residue) {
+        const pdbId = '{{ primary_image.pdb_id }}'; 
+        const ligandCode = '{{ primary_image.ligand_code }}';
+
+        const requestData = {
+            poseview: {
+                pdbCode: pdbId,
+                ligand: `${ligandCode}_${chain}_${residue}`
+            }
+        };
+
+        const loadingModal = document.getElementById("loadingModal");
+        const spinner = document.getElementById("spinner-container");
+        const errorMessage = document.getElementById("error-message");
+
+        spinner.style.display = "block";
+        errorMessage.style.display = "none";
+        loadingModal.style.display = "block";
+
+        fetch('https://proteins.plus/api/poseview_rest', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(requestData),
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.status_code === 202 || data.status_code === 200) {
+                if (data.location) {
+                    pollPoseView(data.location);
+                } else {
+                    spinner.style.display = "none";
+                    errorMessage.style.display = "block";
+                }
+            } else {
+                spinner.style.display = "none";
+                errorMessage.style.display = "block";
+            }
+        })
+        .catch((error) => {
+            console.error("Error:", error);
+            spinner.style.display = "none";
+            errorMessage.style.display = "block";
+        });
+    }
+
+    // Polling function to check for the result
+    function pollPoseView(location) {
+        const spinner = document.getElementById("spinner-container");
+        const errorMessage = document.getElementById("error-message");
+        const loadingModal = document.getElementById("loadingModal");
+
+        setTimeout(() => {
+            fetch(location)
+                .then(res => res.json())
+                .then(resultData => {
+                    if (resultData.result_png_picture) {
+                        spinner.style.display = "none";
+                        openModal(resultData.result_png_picture);
+                        loadingModal.style.display = "none";
+                    } else {
+                        pollPoseView(location);
+                    }
+                })
+                .catch((error) => {
+                    console.error("Error fetching PoseView result:", error);
+                    spinner.style.display = "none";
+                    errorMessage.style.display = "block";
+                });
+        }, 5000);
+    }
+
+    // Function to open the modal and display the diagram
+    function openModal(diagramUrl) {
+        const modal = document.getElementById("poseviewModal");
+        const diagramImg = document.getElementById("poseviewDiagram");
+        const downloadLink = document.getElementById("downloadDiagram");
+
+        diagramImg.src = diagramUrl;
+        downloadLink.href = diagramUrl;
+        modal.style.display = "block";
+    }
+
+    // Close the modal when clicking the "x" button
+    document.querySelectorAll(".close").forEach(function(closeButton) {
+        closeButton.onclick = function() {
+            document.getElementById("poseviewModal").style.display = "none";
+            document.getElementById("loadingModal").style.display = "none";
+        };
+    });
+
+    // Close the modal when clicking outside of the modal content
+    window.onclick = function(event) {
+        const poseviewModal = document.getElementById("poseviewModal");
+        const loadingModal = document.getElementById("loadingModal");
+        
+        if (event.target == poseviewModal) {
+            poseviewModal.style.display = "none";
+        }
+
+        if (event.target == loadingModal) {
+            loadingModal.style.display = "none";
+        }
+    }
+</script>
+
+
+
+<script>
+// Function to toggle between solvent-exposed and regular 2D ligand image
+function toggleSolventExposed() {
+    const ligandImage = document.getElementById('ligand-image');
+    replaceWith2D({ preserveButton: true });
+    isSolventExposedView = !isSolventExposedView;
+    ligandImage.src = isSolventExposedView ? solventExposedImageUrl : regularImageUrl;
+}
+
+function showRegular2D() {
+    replaceWith2D({ preserveButton: true });
+    isSolventExposedView = false;
+    document.getElementById('ligand-image').src = regularImageUrl;
+}
+
+
+// 3D Molecule Viewer button logic
+function replaceWith3D(pdb_id, ligand_code) {
+    const imageViewer = document.getElementById('image-viewer');
+    const viewport = document.getElementById('viewport');
+    const viewerStatus = document.getElementById('viewer-status');
+    const viewerButton = document.getElementById('view-3d-in-window');
+    const returnButton = document.getElementById('return-2d');
+
+    const ligandCtx = getSelectedLigandContext();
+    const selectedCheckbox = document.querySelector('input[name="chain_residue"]:checked');
+    const payload = {
+        pdbCode: pdb_id,
+        ligandResname: ligandCtx.ligandResname || ligand_code,
+        ligandChain: ligandCtx.ligandChain,
+        ligandResidueId: ligandCtx.ligandResidueId,
+        proteinStructureUrl: `/api/coordinates/${encodeURIComponent(String(pdb_id || '').toUpperCase())}.pdb?protein_only=1`,
+        proteinStructureExt: "pdb",
+        ligandSdfUrl: `/api/ligand_instance_sdf/${encodeURIComponent(String(pdb_id || '').toUpperCase())}/${encodeURIComponent(String((ligandCtx.ligandResname || ligand_code || '').toUpperCase()))}.sdf?auth_chain=${encodeURIComponent(ligandCtx.ligandChain || '')}&auth_seq_id=${encodeURIComponent(ligandCtx.ligandResidueId || '')}`,
+        ligandMappingUrl: `/api/ligand_instance_sdf_url/${encodeURIComponent(String(pdb_id || '').toUpperCase())}/${encodeURIComponent(String((ligandCtx.ligandResname || ligand_code || '').toUpperCase()))}?auth_chain=${encodeURIComponent(ligandCtx.ligandChain || '')}&auth_seq_id=${encodeURIComponent(ligandCtx.ligandResidueId || '')}`,
+        structureUrl: initialStructureUrl ? `${initialStructureUrl}&chain=${encodeURIComponent(ligandCtx.ligandChain || '')}&residue_id=${encodeURIComponent(ligandCtx.ligandResidueId || '')}` : `/api/coordinates/${encodeURIComponent(String(pdb_id || '').toUpperCase())}.pdb?ligand_code=${encodeURIComponent(String((ligandCtx.ligandResname || ligand_code || '').toUpperCase()))}&chain=${encodeURIComponent(ligandCtx.ligandChain || '')}&residue_id=${encodeURIComponent(ligandCtx.ligandResidueId || '')}`,
+        structureExt: "pdb",
+        useDirectRcsbPdb: useDirectRcsbPdb,
+        ligandColorMode: "element",
+        defaultFocus: "ligand"
+    };
+    latestDisplayViewerPayload = payload;
+    if (ligandDebugEnabled()) {
+        console.group("[display_images] ligand 3D handoff");
+        console.log("all checkbox contexts", getAllLigandContexts());
+        console.log("selected checkbox value", selectedCheckbox ? selectedCheckbox.value : null);
+        console.log("selected checkbox dataset", selectedCheckbox ? Object.assign({}, selectedCheckbox.dataset) : null);
+        console.log("selected context", ligandCtx);
+        console.log("viewer payload", payload);
+        console.groupEnd();
+    }
+    viewerStatus.textContent = "Loading protein PDB and ligand instance SDF...";
+    viewerStatus.classList.add('is-visible');
+    if (ligandCtx.multipleSelected) {
+        viewerStatus.textContent = "Using first selected ligand context for 3D view.";
+    }
+    imageViewer.style.display = 'none';
+    viewport.style.display = 'block';
+    returnButton.style.display = 'inline-flex';
+    viewerButton.disabled = true;
+
+    VLNGLViewer.initCleanProteinLigandViewer('viewport', {
+        pdbCode: payload.pdbCode,
+        ligandResname: payload.ligandResname,
+        ligandChain: payload.ligandChain,
+        ligandResidueId: payload.ligandResidueId,
+        proteinStructureUrl: payload.proteinStructureUrl,
+        proteinStructureExt: payload.proteinStructureExt,
+        ligandSdfUrl: payload.ligandSdfUrl,
+        structureUrl: payload.structureUrl,
+        structureExt: payload.structureExt,
+        useDirectRcsbPdb: payload.useDirectRcsbPdb,
+        ligandColorMode: payload.ligandColorMode,
+        defaultFocus: payload.defaultFocus,
+        allowBroadLigandFallback: false,
+        focusLigand: true,
+        retryCifOnLigandMiss: ligandDebugEnabled(),
+        proteinColor: '#005030',
+        ligandColor: '#f4a261',
+        backgroundColor: 'white',
+        onStatus: function(message) {
+            viewerStatus.textContent = message || '';
+            if (message) viewerStatus.classList.add('is-visible');
+            else viewerStatus.classList.remove('is-visible');
+        },
+        onSourceLoaded: function(sourceUrl) {
+            latestLoadedSourceUrl = sourceUrl || null;
+            if (ligandDebugEnabled()) updateLigandDebugPanel(payload, ligandCtx);
+        }
+    }).catch(function() {
+        viewerStatus.textContent = "The 3D viewer could not load this structure from RCSB right now. Please try again later.";
+        viewerStatus.classList.add('is-visible');
+        replaceWith2D({ preserveButton: true });
+    });
+    updateLigandDebugPanel(payload, ligandCtx);
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            if (window.VLNGLViewer && typeof VLNGLViewer.resizeViewer === 'function') {
+                VLNGLViewer.resizeViewer('viewport');
+            }
+        });
+    });
+}
+
+// Function to replace the 3D viewer with the original 2D image
+function replaceWith2D(options = {}) {
+    const imageViewer = document.getElementById('image-viewer');
+    const viewport = document.getElementById('viewport');
+    const viewerButton = document.getElementById('view-3d-in-window');
+    const returnButton = document.getElementById('return-2d');
+    VLNGLViewer.disposeViewer('viewport');
+
+    imageViewer.style.display = 'flex';
+    viewport.style.display = 'none';
+    viewport.innerHTML = '';
+    returnButton.style.display = 'none';
+    viewerButton.disabled = false;
+
+    if (!options.preserveButton) {
+        viewerButton.innerText = "3D Molecule Viewer";
+    } else {
+        viewerButton.innerText = "View 3D Context";
+    }
+    viewerButton.setAttribute('onclick', `replaceWith3D('{{ primary_image.pdb_id }}', '{{ primary_image.ligand_code }}')`);
+    const viewerStatus = document.getElementById('viewer-status');
+    viewerStatus.textContent = '';
+    viewerStatus.classList.remove('is-visible');
+}
+
+window.addEventListener('resize', function() {
+    if (window.VLNGLViewer && typeof VLNGLViewer.resizeViewer === 'function') {
+        VLNGLViewer.resizeViewer('viewport');
+    }
+});
+
+
+
+
+</script>
+<script>
+function useAsWarhead(ligandCode) {
+    const cleanCode = String(ligandCode || '').trim().toUpperCase();
+    if (!cleanCode) {
+        alert("Ligand code not found.");
+        return;
+    }
+
+    const targetUrl = `https://protacbuilder.com/builder?ligand=${encodeURIComponent(cleanCode)}`;
+    console.log("[warhead handoff]", { ligandCode: cleanCode, url: targetUrl });
+    window.open(targetUrl, "_blank", "noopener,noreferrer");
+}
+
+function updateLigandDebugPanel(payload, ligandCtx) {
+    const panel = document.getElementById('ligand-debug-panel');
+    if (!panel) return;
+    if (!ligandDebugEnabled()) {
+        panel.style.display = 'none';
+        return;
+    }
+    panel.style.display = 'block';
+    const debugUrl = `/api/debug/ligand_context/${encodeURIComponent(payload.pdbCode)}/${encodeURIComponent(payload.ligandResname)}?chain=${encodeURIComponent(payload.ligandChain || '')}&residue_id=${encodeURIComponent(payload.ligandResidueId || '')}`;
+    const coordinateDebugUrl = `/api/debug/coordinate_ligand_presence/${encodeURIComponent(payload.pdbCode)}/${encodeURIComponent(payload.ligandResname)}?chain=${encodeURIComponent(payload.ligandChain || '')}&residue_id=${encodeURIComponent(payload.ligandResidueId || '')}`;
+    const servedCoordinateDebugUrl = `/api/debug/served_coordinate/${encodeURIComponent(payload.pdbCode)}/${encodeURIComponent(payload.ligandResname)}?chain=${encodeURIComponent(payload.ligandChain || '')}&residue_id=${encodeURIComponent(payload.ligandResidueId || '')}`;
+    const mappingDebugUrl = `/api/debug/ligand_instance_mapping/${encodeURIComponent(payload.pdbCode)}/${encodeURIComponent(payload.ligandResname)}?auth_chain=${encodeURIComponent(payload.ligandChain || '')}&auth_seq_id=${encodeURIComponent(payload.ligandResidueId || '')}`;
+    const text = {
+        allCheckboxContexts: getAllLigandContexts(),
+        selectedLigandContext: ligandCtx,
+        viewerPayloadSent: payload,
+        loadedStructureSource: latestLoadedSourceUrl,
+        backendDebugUrl: debugUrl,
+        coordinateDebugUrl: coordinateDebugUrl,
+        servedCoordinateDebugUrl: servedCoordinateDebugUrl,
+        mappingDebugUrl: mappingDebugUrl
+    };
+    document.getElementById('ligand-debug-text').textContent = JSON.stringify(text, null, 2);
+    const link = document.getElementById('ligand-debug-link');
+    if (link) {
+        link.href = debugUrl;
+        link.textContent = "Open backend ligand debug";
+    }
+    const actionRow = link ? link.parentElement : null;
+    if (actionRow && !document.getElementById('ligand-coordinate-debug-link')) {
+        const coordLink = document.createElement('a');
+        coordLink.id = 'ligand-coordinate-debug-link';
+        coordLink.className = 'button-secondary';
+        coordLink.target = '_blank';
+        coordLink.rel = 'noopener noreferrer';
+        coordLink.textContent = 'Open coordinate debug';
+        actionRow.insertBefore(coordLink, document.getElementById('copy-ligand-debug-payload'));
+    }
+    const coordLink = document.getElementById('ligand-coordinate-debug-link');
+    if (coordLink) coordLink.href = coordinateDebugUrl;
+    if (actionRow && !document.getElementById('ligand-served-coordinate-debug-link')) {
+        const servedLink = document.createElement('a');
+        servedLink.id = 'ligand-served-coordinate-debug-link';
+        servedLink.className = 'button-secondary';
+        servedLink.target = '_blank';
+        servedLink.rel = 'noopener noreferrer';
+        servedLink.textContent = 'Open served-coordinate debug';
+        actionRow.insertBefore(servedLink, document.getElementById('copy-ligand-debug-payload'));
+    }
+    const servedLink = document.getElementById('ligand-served-coordinate-debug-link');
+    if (servedLink) servedLink.href = servedCoordinateDebugUrl;
+    if (actionRow && !document.getElementById('ligand-mapping-debug-link')) {
+        const mappingLink = document.createElement('a');
+        mappingLink.id = 'ligand-mapping-debug-link';
+        mappingLink.className = 'button-secondary';
+        mappingLink.target = '_blank';
+        mappingLink.rel = 'noopener noreferrer';
+        mappingLink.textContent = 'Open ligand mapping debug';
+        actionRow.insertBefore(mappingLink, document.getElementById('copy-ligand-debug-payload'));
+    }
+    const mappingLink = document.getElementById('ligand-mapping-debug-link');
+    if (mappingLink) mappingLink.href = mappingDebugUrl;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const first = document.querySelector('input[name="chain_residue"]');
+    if (first && !document.querySelector('input[name="chain_residue"]:checked')) {
+        first.checked = true;
+    }
+    document.querySelectorAll('input[name="chain_residue"]').forEach(function(input) {
+        input.addEventListener('change', function() {
+            if (document.getElementById('viewport').style.display !== 'none') {
+                replaceWith3D('{{ primary_image.pdb_id }}', '{{ primary_image.ligand_code }}');
+            }
+        });
+    });
+    const copyBtn = document.getElementById('copy-ligand-debug-payload');
+    if (copyBtn) {
+        copyBtn.addEventListener('click', function() {
+            if (!latestDisplayViewerPayload) return;
+            const payloadText = JSON.stringify(latestDisplayViewerPayload, null, 2);
+            navigator.clipboard.writeText(payloadText).catch(function() {});
+        });
+    }
+});
+</script>
+
+{% endblock %}

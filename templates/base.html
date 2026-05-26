@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}V-LiSEMOD | Viral Ligand Solvent-Exposed Moiety Database{% endblock %}</title>
+    <meta name="description" content="{% block meta_description %}V-LiSEMOD supports viral ligand discovery through solvent-exposed moiety analysis, PyMOL session generation, ligand comparison, and degrader-aware molecular design workflows.{% endblock %}">
+    <script>
+        (function() {
+            try {
+                var theme = localStorage.getItem("vlisemod_theme") || "light";
+                document.documentElement.setAttribute("data-theme", theme === "dark" ? "dark" : "light");
+            } catch (e) {
+                document.documentElement.setAttribute("data-theme", "light");
+            }
+        })();
+    </script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='images/favicon.png') }}" type="image/png">
+    <script src="{{ url_for('static', filename='js/theme-toggle.js') }}" defer></script>
+    {% block head_extra %}{% endblock %}
+</head>
+<body class="{% block body_class %}app-shell{% endblock %}">
+    <header class="site-header">
+        <div class="site-header-inner">
+            <a class="brand-lockup" href="{{ url_for('index') }}">
+                <span class="brand-mark">V-LiSEMOD</span>
+                <span class="brand-subtitle">Viral Ligand Solvent-Exposed Moiety Database</span>
+            </a>
+            <nav class="site-nav" aria-label="Primary">
+                <a class="{% if request.endpoint == 'index' %}is-active{% endif %}" href="{{ url_for('index') }}">Home</a>
+                <a class="{% if request.endpoint == 'about_page' %}is-active{% endif %}" href="{{ url_for('about_page') }}">About</a>
+                <a class="{% if request.endpoint == 'query_protein_virus_page' %}is-active{% endif %}" href="{{ url_for('query_protein_virus_page') }}">Protein Query</a>
+                <a class="{% if request.endpoint == 'protacability_page' %}is-active{% endif %}" href="{{ url_for('protacability_page') }}">PROTACability</a>
+                <a class="{% if request.endpoint == 'ligand_indexer' %}is-active{% endif %}" href="{{ url_for('ligand_indexer') }}">Ligand Indexer</a>
+                <a class="{% if request.endpoint == 'compare_ligands' %}is-active{% endif %}" href="{{ url_for('compare_ligands') }}">Ligand Comparison</a>
+                {% if show_drug_gpt_nav %}
+                <a class="{% if request.path.startswith('/drugapp') %}is-active{% endif %}" href="{% if enable_drug_gpt %}{{ url_for('dp.home') }}{% else %}/drugapp/{% endif %}">Drug GPT</a>
+                {% endif %}
+                <a class="nav-external" href="https://protacbuilder.com/builder" target="_blank" rel="noopener noreferrer">PROTAC Builder ↗</a>
+            </nav>
+            <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Toggle dark mode" aria-pressed="false">
+                <span class="theme-toggle-icon" aria-hidden="true">🌙</span>
+                <span class="theme-toggle-label">Dark</span>
+            </button>
+        </div>
+    </header>
+
+    <main class="site-main app-main">
+        <div class="page-container">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="site-footer-inner">
+            <div class="footer-topline">
+                <p>Part of a connected toolkit for viral ligand analysis, warhead discovery, E3 ligase exploration, and PROTAC design.</p>
+            </div>
+            <div class="footer-link-row">
+                <a href="{{ url_for('about_page') }}">About V-LiSEMOD</a>
+            </div>
+            <div class="footer-tool-grid">
+                <article class="footer-tool-card">
+                    <h3>V-LiSEMOD</h3>
+                    <p>Curated viral ligand solvent-exposed moiety analysis, PyMOL exports, and structure-guided query workflows.</p>
+                </article>
+                <article class="footer-tool-card">
+                    <h3><a href="https://warheadhunter.com" target="_blank" rel="noopener noreferrer">Warhead Hunter</a></h3>
+                    <p>Identify and evaluate warhead-like ligands and fragmentable chemotypes for follow-on molecular design.</p>
+                </article>
+                <article class="footer-tool-card">
+                    <h3><a href="https://e3ligandalyzer.com" target="_blank" rel="noopener noreferrer">E3 Ligandalyzer</a></h3>
+                    <p>Explore E3 ligase recruiter structures, ligandability, scaffold context, and attachment-vector opportunities.</p>
+                </article>
+                <article class="footer-tool-card footer-tool-card-accent">
+                    <h3><a href="https://protacbuilder.com" target="_blank" rel="noopener noreferrer">PROTAC Builder</a></h3>
+                    <p>Move from ligand and warhead analysis into degrader design through the standalone builder.</p>
+                </article>
+            </div>
+        </div>
+    </footer>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>
