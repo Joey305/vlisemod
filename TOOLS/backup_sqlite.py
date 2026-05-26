@@ -19,7 +19,6 @@ import sys
 PROJECT_ROOT = Path(__file__).resolve().parents[1]  # repo root (.. from TOOLS/)
 DBS = [
     PROJECT_ROOT / "viral_data.db",
-    PROJECT_ROOT / "users.db",
 ]
 BACKUP_DIR = PROJECT_ROOT / "backups" / "sqlite"
 KEEP_PER_DB = int(os.environ.get("SQLITE_BACKUP_KEEP", "14"))  # keep last 14 by default

@@ -2871,3 +2871,1218 @@ html[data-theme="dark"] .protacability-page .ligand-chip.muted {
     background: rgba(180, 230, 205, 0.10);
     color: #c2dbcf;
 }
+
+
+/* ==========================================================================
+   About page refresh
+   Scoped to .about-page to avoid changing query/protacability/comparison pages.
+   Append this block near the end of static/css/styles.css.
+   ========================================================================== */
+
+.about-page .about-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 0.92fr) minmax(360px, 1.08fr);
+    gap: 26px;
+    align-items: center;
+    width: min(1320px, 100%);
+    margin-inline: auto;
+    padding: 28px;
+    border-radius: 30px;
+    background:
+        radial-gradient(circle at 12% 18%, rgba(244, 115, 33, 0.16), transparent 28%),
+        radial-gradient(circle at 86% 22%, rgba(11, 83, 53, 0.16), transparent 26%),
+        var(--card-bg);
+    border: 1px solid var(--border-soft);
+    box-shadow: var(--shadow-panel);
+    overflow: hidden;
+}
+
+.about-page .about-hero-copy {
+    display: grid;
+    gap: 18px;
+    min-width: 0;
+}
+
+.about-page .about-hero h1 {
+    margin: 0;
+    color: var(--heading-color);
+    font-size: clamp(2.35rem, 5vw, 4.45rem);
+    line-height: 0.98;
+    letter-spacing: -0.055em;
+    max-width: 11.8ch;
+}
+
+.about-page .about-hero-lede {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: clamp(1.03rem, 1.5vw, 1.18rem);
+    line-height: 1.7;
+    max-width: 760px;
+}
+
+.about-page .about-hero-actions {
+    justify-content: flex-start;
+}
+
+.about-page .about-signal-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 6px;
+}
+
+.about-page .about-signal-card {
+    display: grid;
+    gap: 3px;
+    padding: 16px;
+    border-radius: 20px;
+    background: rgba(11, 83, 53, 0.07);
+    border: 1px solid rgba(11, 83, 53, 0.11);
+}
+
+.about-page .about-signal-number {
+    color: var(--accent-orange);
+    font-size: 2rem;
+    line-height: 1;
+    font-weight: 850;
+}
+
+.about-page .about-signal-label {
+    color: var(--text-muted);
+    font-size: 0.88rem;
+    line-height: 1.35;
+    font-weight: 700;
+}
+
+.about-page .about-hero-visual {
+    min-width: 0;
+}
+
+.about-page .about-abstract-frame {
+    margin: 0;
+    padding: 12px;
+    border-radius: 26px;
+    background: rgba(255, 255, 255, 0.72);
+    border: 1px solid rgba(11, 83, 53, 0.12);
+    box-shadow: 0 18px 42px rgba(8, 58, 37, 0.12);
+}
+
+.about-page .about-abstract-frame img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 18px;
+    background: #ffffff;
+}
+
+.about-page .about-abstract-frame figcaption {
+    margin: 10px 6px 2px;
+    color: var(--text-muted);
+    font-size: 0.86rem;
+    line-height: 1.5;
+    text-align: center;
+}
+
+.about-page .about-local-nav {
+    position: sticky;
+    top: 76px;
+    z-index: 25;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    width: min(1120px, 100%);
+    margin: 0 auto 24px;
+    padding: 10px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--card-bg) 86%, transparent);
+    border: 1px solid var(--border-soft);
+    box-shadow: var(--shadow-soft);
+    backdrop-filter: blur(12px);
+}
+
+.about-page .about-local-nav a {
+    padding: 9px 13px;
+    border-radius: 999px;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 0.88rem;
+    font-weight: 800;
+    transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.about-page .about-local-nav a:hover,
+.about-page .about-local-nav a.is-active {
+    transform: translateY(-1px);
+    background: rgba(11, 83, 53, 0.10);
+    color: var(--heading-color);
+}
+
+.about-page .about-reveal {
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.45s ease, transform 0.45s ease;
+}
+
+.about-page .about-reveal.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.about-page .about-two-column,
+.about-page .about-origin-layout,
+.about-page .about-evidence-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 0.72fr);
+    gap: 22px;
+    align-items: start;
+}
+
+.about-page .about-two-column p,
+.about-page .about-origin-copy p,
+.about-page .about-final-cta p {
+    margin: 0 0 1rem;
+    color: var(--text-muted);
+    line-height: 1.75;
+}
+
+.about-page .about-two-column p:last-child,
+.about-page .about-origin-copy p:last-child,
+.about-page .about-final-cta p:last-child {
+    margin-bottom: 0;
+}
+
+.about-page .about-callout-card,
+.about-page .about-paper-card,
+.about-page .about-flow-panel,
+.about-page .about-evidence-panel,
+.about-page .about-tool-card,
+.about-page .about-feature-card {
+    border-radius: 22px;
+    border: 1px solid var(--border-soft);
+    background: var(--card-bg-soft);
+    box-shadow: var(--shadow-soft);
+}
+
+.about-page .about-callout-card,
+.about-page .about-paper-card {
+    padding: 22px;
+}
+
+.about-page .about-callout-card h3,
+.about-page .about-paper-card h3,
+.about-page .about-flow-panel h3,
+.about-page .about-evidence-panel h3,
+.about-page .about-feature-card h3,
+.about-page .about-tool-card h3 {
+    margin: 0;
+    color: var(--heading-color);
+}
+
+.about-page .about-callout-card p,
+.about-page .about-paper-card p,
+.about-page .about-flow-panel p,
+.about-page .about-evidence-panel p,
+.about-page .about-feature-card p,
+.about-page .about-tool-card p {
+    margin: 0;
+    color: var(--text-muted);
+    line-height: 1.62;
+}
+
+.about-page .about-card-eyebrow {
+    display: inline-flex;
+    align-self: start;
+    color: var(--accent-orange);
+    font-size: 0.72rem;
+    font-weight: 850;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.about-page .about-paper-card {
+    display: grid;
+    gap: 13px;
+    background:
+        linear-gradient(180deg, rgba(244, 115, 33, 0.11), transparent 82%),
+        var(--card-bg-soft);
+}
+
+.about-page .about-paper-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.about-page .about-paper-actions .button-secondary,
+.about-page .about-paper-actions .button-ghost {
+    min-height: 42px;
+    padding: 10px 14px;
+}
+
+.about-page .about-copy-feedback {
+    min-height: 1.2em;
+    color: var(--accent-green) !important;
+    font-weight: 800;
+    font-size: 0.9rem;
+}
+
+.about-page .about-workflow-shell {
+    display: grid;
+    gap: 18px;
+}
+
+.about-page .about-workflow-tabs,
+.about-page .about-evidence-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.about-page .about-flow-tab,
+.about-page .about-evidence-tab {
+    min-height: 44px;
+    padding: 10px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--border-soft);
+    background: var(--button-secondary-bg);
+    color: var(--text-muted);
+    box-shadow: none;
+    font-size: 0.92rem;
+    font-weight: 850;
+}
+
+.about-page .about-flow-tab span {
+    display: inline-grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    margin-right: 6px;
+    border-radius: 50%;
+    background: rgba(11, 83, 53, 0.10);
+    color: var(--accent-green);
+    font-size: 0.76rem;
+}
+
+.about-page .about-flow-tab:hover,
+.about-page .about-evidence-tab:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-soft);
+}
+
+.about-page .about-flow-tab.is-active,
+.about-page .about-evidence-tab.is-active {
+    background: linear-gradient(135deg, var(--accent-green), var(--accent-green-dark));
+    border-color: transparent;
+    color: #ffffff;
+}
+
+.about-page .about-flow-tab.is-active span {
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+}
+
+.about-page .about-flow-panel {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 18px;
+    padding: 24px;
+    background:
+        radial-gradient(circle at top left, rgba(244, 115, 33, 0.13), transparent 28%),
+        var(--card-bg-soft);
+}
+
+.about-page .about-flow-icon {
+    display: grid;
+    place-items: center;
+    width: 64px;
+    height: 64px;
+    border-radius: 20px;
+    background: rgba(11, 83, 53, 0.10);
+    font-size: 2rem;
+}
+
+.about-page .about-flow-panel ul {
+    display: grid;
+    gap: 8px;
+    margin: 14px 0 0;
+    padding-left: 1.15rem;
+    color: var(--text-muted);
+    line-height: 1.55;
+}
+
+.about-page .about-capability-grid,
+.about-page .about-ecosystem-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(235px, 1fr));
+    gap: 16px;
+}
+
+.about-page .about-feature-card,
+.about-page .about-tool-card {
+    display: grid;
+    gap: 12px;
+    align-content: start;
+    padding: 22px;
+    min-height: 100%;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.about-page .about-feature-card:hover,
+.about-page .about-tool-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(244, 115, 33, 0.24);
+    box-shadow: 0 22px 44px rgba(8, 58, 37, 0.14);
+}
+
+.about-page .about-feature-card-accent,
+.about-page .about-tool-card-accent {
+    background:
+        linear-gradient(180deg, rgba(244, 115, 33, 0.12), transparent 78%),
+        var(--card-bg-soft);
+}
+
+.about-page .about-card-link {
+    align-self: end;
+    color: var(--link-color);
+    font-weight: 850;
+    text-decoration: none;
+}
+
+.about-page .about-card-link:hover,
+.about-page .about-tool-card a:hover {
+    text-decoration: underline;
+}
+
+.about-page .about-warning-strip {
+    padding: 16px 18px;
+    border-radius: 18px;
+    border: 1px solid var(--callout-warning-border);
+    background: var(--callout-warning-bg);
+    color: var(--text-main);
+    line-height: 1.6;
+    margin-bottom: 20px;
+}
+
+.about-page .about-warning-strip strong {
+    color: var(--heading-color);
+}
+
+.about-page .about-evidence-tabs {
+    align-content: start;
+}
+
+.about-page .about-evidence-tab {
+    width: 100%;
+    justify-content: flex-start;
+    border-radius: 16px;
+}
+
+.about-page .about-evidence-panel {
+    display: grid;
+    gap: 14px;
+    padding: 26px;
+}
+
+.about-page .about-evidence-meter {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 5px;
+    margin-top: 4px;
+}
+
+.about-page .about-evidence-meter span {
+    height: 12px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, rgba(11, 83, 53, 0.22), var(--accent-green));
+}
+
+.about-page .about-evidence-meter span:nth-child(2) { opacity: 0.78; }
+.about-page .about-evidence-meter span:nth-child(3) { opacity: 0.62; }
+.about-page .about-evidence-meter span:nth-child(4) { opacity: 0.46; }
+.about-page .about-evidence-meter span:nth-child(5) { opacity: 0.30; }
+
+.about-page .about-tool-icon {
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 17px;
+    background: rgba(11, 83, 53, 0.10);
+    font-size: 1.5rem;
+}
+
+.about-page .about-tool-card h3 a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.about-page .about-accordion {
+    display: grid;
+    gap: 10px;
+}
+
+.about-page .about-accordion-trigger {
+    justify-content: space-between;
+    width: 100%;
+    min-height: 54px;
+    border-radius: 16px;
+    background: var(--button-secondary-bg);
+    border: 1px solid var(--button-secondary-border);
+    color: var(--heading-color);
+    box-shadow: none;
+    text-align: left;
+}
+
+.about-page .about-accordion-trigger span {
+    font-size: 1.2rem;
+}
+
+.about-page .about-accordion-panel {
+    padding: 0 18px 8px;
+}
+
+.about-page .about-accordion-panel p {
+    margin: 0;
+    color: var(--text-muted);
+    line-height: 1.65;
+}
+
+.about-page .about-final-cta {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 24px;
+    align-items: center;
+    width: min(1120px, 100%);
+    margin-inline: auto;
+    padding: 28px;
+    border-radius: 28px;
+    background:
+        linear-gradient(135deg, rgba(11, 83, 53, 0.12), rgba(244, 115, 33, 0.12)),
+        var(--card-bg);
+    border: 1px solid var(--border-soft);
+    box-shadow: var(--shadow-panel);
+}
+
+.about-page .about-final-cta h2 {
+    margin: 0 0 10px;
+    color: var(--heading-color);
+    font-size: clamp(1.75rem, 3vw, 2.6rem);
+    line-height: 1.1;
+}
+
+html[data-theme="dark"] .about-page .about-abstract-frame {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+html[data-theme="dark"] .about-page .about-signal-card,
+html[data-theme="dark"] .about-page .about-flow-icon,
+html[data-theme="dark"] .about-page .about-tool-icon,
+html[data-theme="dark"] .about-page .about-flow-tab span {
+    background: rgba(56, 211, 139, 0.12);
+    border-color: rgba(180, 230, 205, 0.16);
+}
+
+html[data-theme="dark"] .about-page .about-local-nav {
+    background: rgba(16, 42, 32, 0.86);
+}
+
+html[data-theme="dark"] .about-page .about-local-nav a:hover,
+html[data-theme="dark"] .about-page .about-local-nav a.is-active {
+    background: rgba(56, 211, 139, 0.14);
+    color: var(--heading-color);
+}
+
+html[data-theme="dark"] .about-page .about-flow-tab.is-active,
+html[data-theme="dark"] .about-page .about-evidence-tab.is-active {
+    background: linear-gradient(135deg, var(--accent-green-dark), var(--accent-orange));
+}
+
+html[data-theme="dark"] .about-page .about-warning-strip {
+    color: var(--callout-warning-text);
+}
+
+@media (max-width: 1050px) {
+    .about-page .about-hero,
+    .about-page .about-two-column,
+    .about-page .about-origin-layout,
+    .about-page .about-evidence-layout,
+    .about-page .about-final-cta {
+        grid-template-columns: 1fr;
+    }
+
+    .about-page .about-hero h1 {
+        max-width: 14ch;
+    }
+
+    .about-page .about-final-cta .action-row {
+        justify-content: flex-start;
+    }
+}
+
+@media (max-width: 760px) {
+    .about-page .about-hero {
+        padding: 20px;
+        border-radius: 24px;
+    }
+
+    .about-page .about-signal-grid,
+    .about-page .about-flow-panel {
+        grid-template-columns: 1fr;
+    }
+
+    .about-page .about-local-nav {
+        position: static;
+        justify-content: flex-start;
+        border-radius: 22px;
+    }
+
+    .about-page .about-local-nav a,
+    .about-page .about-flow-tab,
+    .about-page .about-evidence-tab {
+        width: 100%;
+        justify-content: center;
+        text-align: center;
+    }
+
+    .about-page .about-paper-actions > *,
+    .about-page .about-hero-actions > *,
+    .about-page .about-final-cta .action-row > * {
+        width: 100%;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .about-page .about-reveal,
+    .about-page .about-feature-card,
+    .about-page .about-tool-card,
+    .about-page .about-flow-tab,
+    .about-page .about-evidence-tab {
+        transition: none;
+    }
+}
+
+/* Fix About page publication CTA contrast in light/dark mode */
+.about-page .about-paper-card .button-secondary.external-link {
+    background: rgba(11, 83, 53, 0.08);
+    border: 1px solid rgba(11, 83, 53, 0.18);
+    color: var(--heading-color);
+    box-shadow: none;
+}
+
+.about-page .about-paper-card .button-secondary.external-link:hover,
+.about-page .about-paper-card .button-secondary.external-link:focus-visible {
+    background: rgba(244, 115, 33, 0.14);
+    border-color: rgba(244, 115, 33, 0.28);
+    color: var(--accent-orange);
+    text-decoration: none;
+    outline: none;
+}
+
+html[data-theme="dark"] .about-page .about-paper-card .button-secondary.external-link {
+    background: rgba(56, 211, 139, 0.10);
+    border-color: rgba(180, 230, 205, 0.22);
+    color: var(--text-main);
+}
+
+html[data-theme="dark"] .about-page .about-paper-card .button-secondary.external-link:hover,
+html[data-theme="dark"] .about-page .about-paper-card .button-secondary.external-link:focus-visible {
+    background: rgba(255, 138, 61, 0.16);
+    border-color: rgba(255, 138, 61, 0.34);
+    color: #ffb07d;
+}
+
+
+/* ==========================================================================
+   Home quick-start launcher refresh
+   Scoped to .app-shell-home / .quickstart-launcher-modal.
+   Append near the end of static/css/styles.css.
+   ========================================================================== */
+
+body.quickstart-open {
+    overflow: hidden;
+}
+
+.app-shell-home .quickstart-launcher-modal {
+    padding: 24px 16px;
+    background:
+        radial-gradient(circle at 22% 12%, rgba(244, 115, 33, 0.18), transparent 24%),
+        radial-gradient(circle at 78% 24%, rgba(56, 211, 139, 0.14), transparent 26%),
+        rgba(7, 33, 22, 0.48);
+    backdrop-filter: blur(11px);
+}
+
+.app-shell-home .upgraded-quickstart-modal {
+    width: min(1120px, calc(100vw - 32px));
+    max-height: min(88vh, 860px);
+    overflow-y: auto;
+    margin: 3vh auto 0;
+    padding: 30px;
+    border-radius: 32px;
+    background:
+        radial-gradient(circle at top left, rgba(244, 115, 33, 0.13), transparent 28%),
+        radial-gradient(circle at top right, rgba(11, 83, 53, 0.12), transparent 28%),
+        var(--modal-bg);
+    border: 1px solid var(--border-soft);
+    box-shadow: 0 34px 90px rgba(5, 24, 16, 0.34);
+}
+
+.app-shell-home .quickstart-close-button {
+    top: 20px;
+    right: 20px;
+    z-index: 2;
+}
+
+.app-shell-home .quickstart-modal-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 0.92fr) minmax(340px, 1.08fr);
+    gap: 26px;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.app-shell-home .quickstart-modal-copy {
+    display: grid;
+    gap: 15px;
+    min-width: 0;
+}
+
+.app-shell-home .quickstart-modal-copy h2 {
+    margin: 0;
+    max-width: 14ch;
+    color: var(--heading-color);
+    font-size: clamp(2.2rem, 5vw, 4.35rem);
+    line-height: 0.98;
+    letter-spacing: -0.055em;
+}
+
+.app-shell-home .quickstart-modal-copy p {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 1.02rem;
+    line-height: 1.7;
+}
+
+.app-shell-home .quickstart-primary-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    margin-top: 4px;
+}
+
+.app-shell-home .quickstart-primary-cta,
+.app-shell-home .quickstart-about-cta {
+    min-height: 50px;
+}
+
+.app-shell-home .quickstart-mini-note {
+    padding: 14px 16px;
+    border-radius: 18px;
+    background: rgba(11, 83, 53, 0.07);
+    border: 1px solid rgba(11, 83, 53, 0.11);
+    color: var(--text-muted);
+    line-height: 1.58;
+    font-size: 0.94rem;
+}
+
+.app-shell-home .quickstart-mini-note strong {
+    color: var(--heading-color);
+}
+
+.app-shell-home .quickstart-modal-visual {
+    display: grid;
+    gap: 12px;
+    min-width: 0;
+}
+
+.app-shell-home .quickstart-abstract-card {
+    padding: 10px;
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.76);
+    border: 1px solid rgba(11, 83, 53, 0.12);
+    box-shadow: 0 18px 42px rgba(8, 58, 37, 0.12);
+}
+
+.app-shell-home .quickstart-abstract-card img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 17px;
+    background: #ffffff;
+}
+
+.app-shell-home .quickstart-evidence-strip {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 7px;
+}
+
+.app-shell-home .quickstart-evidence-strip span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 34px;
+    padding: 7px 8px;
+    border-radius: 999px;
+    background: rgba(11, 83, 53, 0.08);
+    color: var(--heading-color);
+    font-size: 0.78rem;
+    font-weight: 850;
+    text-align: center;
+}
+
+.app-shell-home .quickstart-workflow-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 13px;
+    margin-top: 12px;
+}
+
+.app-shell-home .quickstart-workflow-card {
+    display: grid;
+    gap: 9px;
+    align-content: start;
+    min-height: 196px;
+    padding: 18px;
+    border-radius: 22px;
+    border: 1px solid var(--border-soft);
+    background: var(--card-bg-soft);
+    color: var(--text-main);
+    text-align: left;
+    box-shadow: var(--shadow-soft);
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.app-shell-home .quickstart-workflow-card:hover,
+.app-shell-home .quickstart-workflow-card:focus-visible {
+    transform: translateY(-4px);
+    border-color: rgba(244, 115, 33, 0.32);
+    box-shadow: 0 24px 48px rgba(8, 58, 37, 0.18);
+    outline: none;
+}
+
+.app-shell-home .quickstart-workflow-card:focus-visible {
+    box-shadow:
+        0 0 0 4px var(--focus-ring),
+        0 24px 48px rgba(8, 58, 37, 0.18);
+}
+
+.app-shell-home .quickstart-workflow-card-accent {
+    background:
+        linear-gradient(180deg, rgba(244, 115, 33, 0.13), transparent 78%),
+        var(--card-bg-soft);
+}
+
+.app-shell-home .quickstart-workflow-icon {
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 17px;
+    background: rgba(11, 83, 53, 0.10);
+    font-size: 1.45rem;
+}
+
+.app-shell-home .quickstart-workflow-label {
+    display: inline-flex;
+    justify-self: start;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(11, 83, 53, 0.08);
+    color: var(--accent-green);
+    font-size: 0.72rem;
+    font-weight: 850;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+}
+
+.app-shell-home .quickstart-workflow-card strong {
+    color: var(--heading-color);
+    font-size: 1.04rem;
+    line-height: 1.25;
+}
+
+.app-shell-home .quickstart-workflow-card small {
+    color: var(--text-muted);
+    font-size: 0.88rem;
+    line-height: 1.48;
+}
+
+.app-shell-home .quickstart-footer-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    flex-wrap: wrap;
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px solid var(--border-soft);
+}
+
+.app-shell-home .quickstart-preference {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.92rem;
+    font-weight: 700;
+}
+
+.app-shell-home .quickstart-preference input {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--accent-orange);
+}
+
+.app-shell-home .quickstart-dismiss {
+    color: var(--accent-green);
+    font-weight: 850;
+}
+
+.app-shell-home .home-landing-hero .hero-actions {
+    gap: 12px;
+}
+
+html[data-theme="dark"] .app-shell-home .quickstart-abstract-card {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(180, 230, 205, 0.16);
+}
+
+html[data-theme="dark"] .app-shell-home .quickstart-mini-note,
+html[data-theme="dark"] .app-shell-home .quickstart-evidence-strip span,
+html[data-theme="dark"] .app-shell-home .quickstart-workflow-icon,
+html[data-theme="dark"] .app-shell-home .quickstart-workflow-label {
+    background: rgba(56, 211, 139, 0.12);
+    border-color: rgba(180, 230, 205, 0.16);
+}
+
+html[data-theme="dark"] .app-shell-home .quickstart-workflow-card-accent {
+    background:
+        linear-gradient(180deg, rgba(255, 138, 61, 0.12), transparent 78%),
+        var(--card-bg-soft);
+}
+
+@media (max-width: 1050px) {
+    .app-shell-home .quickstart-modal-grid,
+    .app-shell-home .quickstart-workflow-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .app-shell-home .quickstart-modal-copy h2 {
+        max-width: 16ch;
+    }
+
+    .app-shell-home .quickstart-workflow-card {
+        min-height: auto;
+    }
+}
+
+@media (max-width: 680px) {
+    .app-shell-home .upgraded-quickstart-modal {
+        width: min(100%, calc(100vw - 18px));
+        max-height: 92vh;
+        padding: 22px;
+        border-radius: 24px;
+    }
+
+    .app-shell-home .quickstart-primary-actions > *,
+    .app-shell-home .quickstart-footer-row > *,
+    .app-shell-home .quickstart-preference {
+        width: 100%;
+    }
+
+    .app-shell-home .quickstart-evidence-strip {
+        grid-template-columns: 1fr;
+    }
+
+    .app-shell-home .quickstart-footer-row {
+        align-items: stretch;
+    }
+}
+
+
+/* ==========================================================================
+   Graphical abstract readability upgrade
+   Works on both the Home quick-start launcher and About page.
+   Append near the end of static/css/styles.css.
+   ========================================================================== */
+
+body.graphical-abstract-open {
+    overflow: hidden;
+}
+
+.graphical-abstract-preview-card {
+    position: relative;
+}
+
+.graphical-abstract-preview-button,
+.home-abstract-preview {
+    display: block;
+    width: 100%;
+    min-height: 0;
+    padding: 0;
+    border: 0;
+    border-radius: inherit;
+    background: transparent;
+    color: inherit;
+    cursor: zoom-in;
+    box-shadow: none;
+    overflow: hidden;
+    position: relative;
+}
+
+.graphical-abstract-preview-button:hover,
+.graphical-abstract-preview-button:focus-visible,
+.home-abstract-preview:hover,
+.home-abstract-preview:focus-visible {
+    transform: none;
+    box-shadow: none;
+    outline: none;
+}
+
+.graphical-abstract-preview-button img,
+.home-abstract-preview img {
+    display: block;
+    width: 100%;
+    height: auto;
+    transition: transform 0.25s ease, filter 0.25s ease;
+}
+
+.graphical-abstract-preview-overlay {
+    position: absolute;
+    inset: auto 14px 14px 14px;
+    display: grid;
+    gap: 2px;
+    padding: 12px 14px;
+    border-radius: 16px;
+    background: rgba(8, 58, 37, 0.88);
+    color: #ffffff;
+    text-align: left;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    backdrop-filter: blur(8px);
+    pointer-events: none;
+}
+
+.graphical-abstract-preview-overlay span {
+    font-weight: 850;
+    font-size: 0.94rem;
+}
+
+.graphical-abstract-preview-overlay small {
+    color: rgba(255, 255, 255, 0.76);
+    font-size: 0.78rem;
+    line-height: 1.35;
+}
+
+.graphical-abstract-preview-button:hover img,
+.graphical-abstract-preview-button:focus-visible img,
+.home-abstract-preview:hover img,
+.home-abstract-preview:focus-visible img {
+    transform: scale(1.025);
+    filter: saturate(1.04);
+}
+
+.graphical-abstract-preview-button:hover .graphical-abstract-preview-overlay,
+.graphical-abstract-preview-button:focus-visible .graphical-abstract-preview-overlay,
+.home-abstract-preview:hover .graphical-abstract-preview-overlay,
+.home-abstract-preview:focus-visible .graphical-abstract-preview-overlay {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.graphical-abstract-modal {
+    padding: 18px;
+    background:
+        radial-gradient(circle at 18% 12%, rgba(244, 115, 33, 0.16), transparent 26%),
+        radial-gradient(circle at 82% 18%, rgba(56, 211, 139, 0.14), transparent 28%),
+        rgba(2, 15, 10, 0.72);
+    backdrop-filter: blur(12px);
+}
+
+.graphical-abstract-modal-content {
+    width: min(1560px, calc(100vw - 32px));
+    max-height: calc(100vh - 36px);
+    overflow: auto;
+    margin: 0 auto;
+    padding: 24px;
+    border-radius: 30px;
+    background: var(--modal-bg);
+    border: 1px solid var(--border-soft);
+    box-shadow: 0 34px 96px rgba(0, 0, 0, 0.42);
+}
+
+.graphical-abstract-modal-head {
+    display: grid;
+    gap: 8px;
+    padding-right: 58px;
+    margin-bottom: 18px;
+}
+
+.graphical-abstract-modal-head h2 {
+    margin: 0;
+    color: var(--heading-color);
+    font-size: clamp(1.9rem, 4vw, 3.2rem);
+    line-height: 1.05;
+}
+
+.graphical-abstract-modal-head p {
+    margin: 0;
+    color: var(--text-muted);
+    line-height: 1.65;
+    max-width: 980px;
+}
+
+.graphical-abstract-zoom-frame {
+    padding: 12px;
+    border-radius: 24px;
+    background: #ffffff;
+    border: 1px solid rgba(11, 83, 53, 0.12);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.graphical-abstract-zoom-frame img {
+    display: block;
+    width: max(100%, 1450px);
+    height: auto;
+    border-radius: 16px;
+    background: #ffffff;
+}
+
+.graphical-abstract-modal-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: flex-end;
+    align-items: center;
+    margin-top: 18px;
+}
+
+.graphical-abstract-close,
+.graphical-abstract-close-secondary {
+    cursor: pointer;
+}
+
+.about-page .about-inline-abstract-link {
+    display: inline-flex;
+    min-height: 0;
+    padding: 0;
+    margin-left: 8px;
+    border: 0;
+    background: transparent;
+    color: var(--link-color);
+    box-shadow: none;
+    font-size: inherit;
+    font-weight: 850;
+    text-decoration: underline;
+    text-underline-offset: 0.18em;
+}
+
+.about-page .about-inline-abstract-link:hover,
+.about-page .about-inline-abstract-link:focus-visible {
+    transform: none;
+    background: transparent;
+    box-shadow: none;
+    outline: none;
+    color: var(--accent-orange);
+}
+
+.app-shell-home .home-graphical-abstract-section {
+    width: min(1320px, 100%);
+}
+
+.app-shell-home .home-abstract-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.18fr) minmax(280px, 0.55fr);
+    gap: 22px;
+    align-items: center;
+}
+
+.app-shell-home .home-abstract-preview {
+    padding: 10px;
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.76);
+    border: 1px solid rgba(11, 83, 53, 0.12);
+    box-shadow: 0 18px 42px rgba(8, 58, 37, 0.12);
+}
+
+.app-shell-home .home-abstract-preview img {
+    border-radius: 17px;
+    background: #ffffff;
+}
+
+.app-shell-home .home-abstract-copy {
+    display: grid;
+    gap: 18px;
+}
+
+.app-shell-home .home-abstract-step-list {
+    display: grid;
+    gap: 9px;
+}
+
+.app-shell-home .home-abstract-step-list span {
+    display: flex;
+    align-items: center;
+    min-height: 42px;
+    padding: 10px 13px;
+    border-radius: 999px;
+    background: rgba(11, 83, 53, 0.08);
+    border: 1px solid rgba(11, 83, 53, 0.11);
+    color: var(--heading-color);
+    font-size: 0.92rem;
+    font-weight: 850;
+}
+
+html[data-theme="dark"] .graphical-abstract-preview-overlay {
+    background: rgba(4, 18, 12, 0.90);
+}
+
+html[data-theme="dark"] .app-shell-home .home-abstract-preview {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(180, 230, 205, 0.16);
+}
+
+html[data-theme="dark"] .app-shell-home .home-abstract-step-list span {
+    background: rgba(56, 211, 139, 0.12);
+    border-color: rgba(180, 230, 205, 0.16);
+}
+
+@media (max-width: 1050px) {
+    .app-shell-home .home-abstract-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .graphical-abstract-zoom-frame img {
+        width: max(100%, 1180px);
+    }
+}
+
+@media (max-width: 720px) {
+    .graphical-abstract-modal {
+        padding: 8px;
+    }
+
+    .graphical-abstract-modal-content {
+        width: calc(100vw - 16px);
+        max-height: calc(100vh - 16px);
+        padding: 18px;
+        border-radius: 24px;
+    }
+
+    .graphical-abstract-modal-head {
+        padding-right: 48px;
+    }
+
+    .graphical-abstract-zoom-frame img {
+        width: max(100%, 980px);
+    }
+
+    .graphical-abstract-modal-actions > * {
+        width: 100%;
+    }
+}

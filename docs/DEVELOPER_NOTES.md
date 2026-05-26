@@ -4,7 +4,7 @@
 
 The main application lives in `app.py` and exposes most public routes directly from a single Flask app instance. An optional Drug GPT assistant module lives in `DRUGapp.py` and is registered as the `dp` blueprint at `/drugapp` only when `ENABLE_DRUG_GPT` is enabled.
 
-Auth/session handling also lives in `app.py`, even though there is an `auth/` directory in the repository.
+The public app is no-login by default. Authentication routes, `users.db`, and Flask-Login have been removed from the runtime path.
 
 ## Route Inventory Instructions
 
@@ -91,7 +91,7 @@ Additional static/generated areas are used for charts, coordinate caches, ligand
 
 ## Auth Note
 
-`EXEMPT_PATH_PREFIXES` currently includes `/`, which effectively exempts the full app from the global login gate logic. This is important context for maintainers, but this documentation pass does not change application behavior.
+`users.db` is no longer part of the application runtime. Keep any lingering documentation references limited to deprecation or migration notes only.
 
 ## Suggested Future Test Coverage
 

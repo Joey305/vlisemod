@@ -114,7 +114,7 @@ These assets are operationally important but should generally be treated as gene
 Do not commit the following to public GitHub unless a deliberate redacted sample is created:
 
 - production or local copies of `viral_data.db`
-- `users.db` and any user/session records
+- legacy `users.db` files that may still exist in older local worktrees; the current app does not use them
 - `PDB_FILES/` bulk structure or generated CSV bundles
 - generated caches in `static/coordinate_cache/`, `static/ligand_sdf_cache/`, `static/charts/`, and ligand-image folders
 - PyMOL sessions, exports, and temporary outputs

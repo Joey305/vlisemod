@@ -2,7 +2,7 @@
 
 ## Overview
 
-V-LiSEMOD is organized around structure-guided viral ligand analysis. Users can begin from a structure, a target, or a ligand and then move toward solvent exposure review, interaction interpretation, and degrader-readiness triage.
+V-LiSEMOD is organized around structure-guided viral ligand analysis. Users can begin from a structure, a target, or a ligand and then move toward solvent exposure review, interaction interpretation, and degrader-readiness triage without account creation or login.
 
 ## Home / Structure Explorer
 

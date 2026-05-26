@@ -15,6 +15,8 @@ Structure-guided viral protein-ligand analysis for solvent exposure review, inte
 
 V-LiSEMOD is a Flask-based structural bioinformatics platform for exploring curated viral protein-ligand co-crystal structures and the ligand-centered evidence that matters for follow-on design. It brings together viral protein metadata, ligand identity layers, atom-level interaction context, solvent-exposed atom analysis, functional-group annotations, and degrader-readiness heuristics in a single web workflow.
 
+The public repository is now no-login by default. The web app does not require `users.db`, user accounts, or Flask-Login to access the scientific workflows.
+
 The platform is intended for manuscript-ready structural interpretation, ligand prioritization, and hypothesis generation rather than black-box prediction.
 
 ## Scientific Motivation
@@ -115,6 +117,11 @@ Not intended for public GitHub inclusion:
 - large regenerated structure bundles and caches
 - local-only model weights and checkpoints
 - generated exports and other ephemeral outputs
+
+Authentication note:
+
+- `users.db` is no longer used by the application and should not be created, provisioned, or committed.
+- `FLASK_SECRET_KEY` is still recommended because Flask may use anonymous browser sessions for temporary UI state.
 
 ## Quick Start
 

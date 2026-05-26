@@ -2,7 +2,7 @@
 
 ## Local Development Overview
 
-V-LiSEMOD is a Flask application backed by SQLite and a set of locally available structure-derived assets. A minimal deployment requires the Python dependencies, the expected database and generated data files, and any environment variables needed for optional features.
+V-LiSEMOD is a public Flask application backed by `viral_data.db` and a set of locally available structure-derived assets. A minimal deployment requires the Python dependencies, the expected scientific data files, and any environment variables needed for optional features.
 
 ## Environment Variables
 
@@ -14,8 +14,6 @@ Confirmed from the current codebase:
 - `ENABLE_LOCAL_LLM`: allow local model loading for the optional assistant module
 - `MODEL_ID` or `LLM_MODEL_ID`: local assistant model identifier
 - `PROTAC_BUILDER_EXTERNAL_URL`: override default external handoff URL
-- `MAX_SESSIONS_PER_USER`: auth/session concurrency setting
-- `SESSION_CONCURRENCY_MODE`: session policy mode
 
 Optional Drug GPT-related variables in `DRUGapp.py` also include:
 
@@ -59,7 +57,7 @@ No `Procfile` is currently present in the repository root, and `gunicorn` is not
 Recommended public-repo workflow:
 
 1. Keep source, templates, and docs in GitHub.
-2. Keep `viral_data.db`, `users.db`, generated caches, model weights, and large structure assets out of the repository.
+2. Keep `viral_data.db`, generated caches, model weights, and large structure assets out of the repository.
 3. Provision the runtime environment first.
 4. Upload or mount required data artifacts separately.
 5. Set environment variables in the hosting platform.
@@ -98,7 +96,6 @@ Use this as a basic deployment smoke check after startup.
 The repository expects significant local data outside the public source footprint:
 
 - `viral_data.db`
-- `users.db`
 - `PDB_FILES/`
 - generated caches and exports in `static/` and output folders
 
@@ -113,7 +110,7 @@ Treat these as provisioned runtime assets. Public GitHub should carry code and d
 
 ### Missing environment variables
 
-- Symptom: weak session security, incorrect external handoff URL, or optional modules not behaving as intended.
+- Symptom: weak anonymous session security, incorrect external handoff URL, or optional modules not behaving as intended.
 - Fix: set `FLASK_SECRET_KEY` and any feature flags explicitly in the deployment environment.
 
 ### Optional model loading

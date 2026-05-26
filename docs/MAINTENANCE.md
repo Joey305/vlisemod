@@ -49,7 +49,7 @@ These should usually remain ignored by Git and can often be regenerated.
 ## Local Database Handling
 
 - `viral_data.db` is the main app database and should be handled as a provisioned local/runtime asset.
-- `users.db` stores local auth data and should remain private.
+- `users.db` is deprecated and no longer used by the application.
 - before replacing or regenerating a local database, make a separate backup outside routine Git operations.
 
 ## Files / Folders That Should Stay Gitignored

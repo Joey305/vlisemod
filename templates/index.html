@@ -13,22 +13,124 @@
     {% set TUTORIAL_URL = "https://youtu.be/0tyw-ZfJxkk?si=xnDocGriI4OOsamt" %}
     {% include "_tutorial_flyover.html" %}  
     
-    <div id="betaModal" class="modal">
-        <div class="modal-content quickstart-modal">
-            <button class="close modal-close-button" type="button" aria-label="Close quick start panel">&times;</button>
-            <span class="page-kicker">Quick Start</span>
-            <h2>Choose a workflow — or build a PyMOL session below.</h2>
-            <p>Start with the main V-LiSEMOD session builder to select a virus, PDB structure, and ligand, then download a PyMOL-ready 3D session with binding pocket, SASA/solvent-exposed atoms, and functional group annotations. You can also jump into ligand comparison or protein-based querying.</p>
-            <div class="action-row quickstart-actions">
-                <button id="useMainBuilderButton" class="button-primary" type="button">Use Main PyMOL Session Builder</button>
-                <button id="tryBetaButton" class="button-secondary" onclick="window.location.href='/compare_ligands'">Open Ligand Comparison</button>
-                <button id="proteinQueryButton" class="button-secondary" onclick="window.location.href='/query_protein_virus_page'">Open Protein Query</button>
+    <div id="betaModal" class="modal quickstart-launcher-modal" aria-hidden="true">
+        <div class="modal-content quickstart-modal upgraded-quickstart-modal" role="dialog" aria-modal="true" aria-labelledby="quickstart-title" aria-describedby="quickstart-description">
+            <button class="close modal-close-button quickstart-close-button" type="button" aria-label="Close quick start panel">&times;</button>
+
+            <div class="quickstart-modal-grid">
+                <div class="quickstart-modal-copy">
+                    <span class="page-kicker">Quick Start</span>
+                    <h2 id="quickstart-title">Start with the workflow that matches your question.</h2>
+                    <p id="quickstart-description">
+                        V-LiSEMOD connects viral protein-ligand structures, solvent-exposed ligand atoms,
+                        interaction evidence, and degrader-readiness triage in one structure-guided workspace.
+                    </p>
+
+                    <div class="quickstart-primary-actions">
+                        <button id="useMainBuilderButton" class="button-primary quickstart-primary-cta" type="button">
+                            Build a PyMOL analysis session
+                        </button>
+                        <button class="button-secondary quickstart-abstract-cta" type="button" data-abstract-open>
+                            View graphical abstract
+                        </button>
+                        <a class="button-secondary quickstart-about-cta" href="/about">
+                            Learn about this tool
+                        </a>
+                    </div>
+
+                    <div class="quickstart-mini-note">
+                        <strong>Best first step:</strong>
+                        choose a virus, PDB structure, and ligand to generate a PyMOL-ready 3D session with
+                        binding pocket, SASA/solvent-exposed atoms, and functional-group annotations.
+                    </div>
+                </div>
+
+                <div class="quickstart-modal-visual" aria-label="V-LiSEMOD graphical abstract preview">
+                    <div class="quickstart-abstract-card graphical-abstract-preview-card">
+                        <button class="graphical-abstract-preview-button" type="button" data-abstract-open aria-label="Open full V-LiSEMOD graphical abstract">
+                            <img src="{{ url_for('static', filename='images/Graphical_Abstract.png') }}"
+                                 alt="V-LiSEMOD graphical abstract showing the workflow from viral protein-ligand structures to downstream design handoff."
+                                 loading="lazy">
+                            <span class="graphical-abstract-preview-overlay">
+                                <span>View full graphical abstract</span>
+                                <small>Open large readable workflow view</small>
+                            </span>
+                        </button>
+                    </div>
+                    <div class="quickstart-evidence-strip">
+                        <span>Structures</span>
+                        <span>Interactions</span>
+                        <span>Exposure</span>
+                        <span>Linkability</span>
+                        <span>Triage</span>
+                    </div>
+                </div>
             </div>
-            <div class="quickstart-dismiss-row">
-                <button id="skipQuickStartButton" class="quickstart-dismiss" type="button">Continue browsing this page</button>
+
+            <div class="quickstart-workflow-grid" aria-label="Choose a V-LiSEMOD workflow">
+                <button type="button" class="quickstart-workflow-card" data-quickstart-action="builder">
+                    <span class="quickstart-workflow-icon">🧬</span>
+                    <span class="quickstart-workflow-label">Structure Explorer</span>
+                    <strong>Generate PyMOL sessions</strong>
+                    <small>Virus → PDB → ligand → annotated structural outputs.</small>
+                </button>
+
+                <button type="button" class="quickstart-workflow-card" data-quickstart-action="protein">
+                    <span class="quickstart-workflow-icon">🎯</span>
+                    <span class="quickstart-workflow-label">Protein Query</span>
+                    <strong>Search by target</strong>
+                    <small>Filter viral proteins, ligands, structures, and export-ready datasets.</small>
+                </button>
+
+                <button type="button" class="quickstart-workflow-card" data-quickstart-action="ligand">
+                    <span class="quickstart-workflow-icon">📊</span>
+                    <span class="quickstart-workflow-label">Ligand Comparison</span>
+                    <strong>Compare ligand behavior</strong>
+                    <small>Review interaction signatures and atom-level burden across structures.</small>
+                </button>
+
+                <button type="button" class="quickstart-workflow-card quickstart-workflow-card-accent" data-quickstart-action="protacability">
+                    <span class="quickstart-workflow-icon">🔗</span>
+                    <span class="quickstart-workflow-label">PROTACability</span>
+                    <strong>Review degrader-readiness evidence</strong>
+                    <small>Warhead linkability, lysine accessibility, structural priority, and triage.</small>
+                </button>
+            </div>
+
+            <div class="quickstart-footer-row">
+                <label class="quickstart-preference">
+                    <input type="checkbox" id="dontShowQuickStartAgain">
+                    <span>Do not show this launcher again on this browser</span>
+                </label>
+                <button id="skipQuickStartButton" class="quickstart-dismiss" type="button">
+                    Continue browsing this page
+                </button>
             </div>
         </div>
     </div>
+
+    <div id="graphicalAbstractModal" class="modal graphical-abstract-modal" aria-hidden="true">
+        <div class="modal-content graphical-abstract-modal-content" role="dialog" aria-modal="true" aria-labelledby="graphical-abstract-title">
+            <button class="close modal-close-button graphical-abstract-close" type="button" aria-label="Close graphical abstract">&times;</button>
+            <div class="graphical-abstract-modal-head">
+                <span class="page-kicker">Graphical Abstract</span>
+                <h2 id="graphical-abstract-title">V-LiSEMOD workflow overview</h2>
+                <p>
+                    Follow the full pipeline from viral protein-ligand structures to interaction analysis,
+                    solvent-exposed atoms, warhead linkability, PROTACability triage, and downstream design handoff.
+                </p>
+            </div>
+            <div class="graphical-abstract-zoom-frame">
+                <img src="{{ url_for('static', filename='images/Graphical_Abstract.png') }}"
+                     alt="Expanded V-LiSEMOD graphical abstract showing the workflow from viral protein-ligand structures through interaction analysis, solvent-exposed atom mapping, warhead linkability, PROTACability triage, and downstream design handoff.">
+            </div>
+            <div class="graphical-abstract-modal-actions">
+                <a class="button-primary" href="/about">Learn about V-LiSEMOD</a>
+                <button class="button-secondary graphical-abstract-close-secondary" type="button">Close abstract</button>
+            </div>
+        </div>
+    </div>
+
         
     <section class="page-intro page-intro-hero">
         <span class="page-kicker">V-LiSEMOD Workspace</span>
@@ -43,6 +145,42 @@
         <div class="action-row hero-actions">
             <a class="button-primary" href="#pymol-session-builder">Start a ligand analysis session</a>
             <a class="button-secondary" href="{{ url_for('query_protein_virus_page') }}">Browse by protein target</a>
+            <a class="button-ghost" href="/about">Learn about V-LiSEMOD</a>
+        </div>
+    </section>
+
+    <section class="page-card page-section landing-card-shell home-graphical-abstract-section">
+        <div class="section-heading">
+            <span class="page-kicker">Visual Overview</span>
+            <h2 class="page-title">See the complete V-LiSEMOD structure-to-design workflow.</h2>
+            <p class="page-subtitle">
+                The graphical abstract summarizes how the platform connects viral structures, interaction evidence,
+                solvent exposure, linkability, PROTACability, and downstream design handoff.
+            </p>
+        </div>
+
+        <div class="home-abstract-layout">
+            <button class="home-abstract-preview graphical-abstract-preview-button" type="button" data-abstract-open aria-label="Open full V-LiSEMOD graphical abstract">
+                <img src="{{ url_for('static', filename='images/Graphical_Abstract.png') }}"
+                     alt="V-LiSEMOD graphical abstract preview."
+                     loading="lazy">
+                <span class="graphical-abstract-preview-overlay">
+                    <span>View full graphical abstract</span>
+                    <small>Large readable workflow view</small>
+                </span>
+            </button>
+
+            <div class="home-abstract-copy">
+                <div class="home-abstract-step-list">
+                    <span>01 Viral structures</span>
+                    <span>02 Interaction analysis</span>
+                    <span>03 Solvent-exposed atoms</span>
+                    <span>04 Warhead linkability</span>
+                    <span>05 PROTACability triage</span>
+                    <span>06 Design handoff</span>
+                </div>
+                <button class="button-primary" type="button" data-abstract-open>Open full-size abstract</button>
+            </div>
         </div>
     </section>
 
@@ -59,10 +197,22 @@
                 <a class="button-secondary" href="{{ url_for('query_protein_virus_page') }}">Open Protein Query</a>
             </article>
             <article class="tool-card feature-card">
+                <span class="feature-badge">Ligand First</span>
+                <h3>Ligand Indexer</h3>
+                <p>Start from a ligand code or synonym and locate mapped PDB-chain-residue contexts.</p>
+                <a class="button-secondary" href="/ligand_indexer">Open Ligand Indexer</a>
+            </article>
+            <article class="tool-card feature-card">
                 <span class="feature-badge">Comparative Analysis</span>
                 <h3>Ligand Comparison</h3>
                 <p>Compare ligand interaction signatures across PDB structures and inspect warhead-ready candidates.</p>
                 <a class="button-secondary" href="{{ url_for('compare_ligands') }}">Open Comparison</a>
+            </article>
+            <article class="tool-card feature-card">
+                <span class="feature-badge">Evidence Triage</span>
+                <h3>PROTACability</h3>
+                <p>Review warhead linkability, target lysine accessibility, structure priority, and degrader-readiness heuristics.</p>
+                <a class="button-secondary" href="/protacability_page">Open PROTACability</a>
             </article>
             {% if show_drug_gpt_nav %}
             <article class="tool-card feature-card">
@@ -224,37 +374,174 @@
     <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
 
     <script>
-        $(document).ready(function() {
+        (function () {
+            const QUICKSTART_HIDE_KEY = "vlisemod_quickstart_hide";
+            const QUICKSTART_SESSION_KEY = "vlisemod_quickstart_seen_session";
+            const modal = document.getElementById("betaModal");
+            const closeButtons = modal ? modal.querySelectorAll(".close, #skipQuickStartButton") : [];
+            const dontShowCheckbox = document.getElementById("dontShowQuickStartAgain");
+            const useMainBuilderButton = document.getElementById("useMainBuilderButton");
+            let lastFocusedElement = null;
+
+            function shouldShowQuickStart() {
+                try {
+                    return localStorage.getItem(QUICKSTART_HIDE_KEY) !== "1" &&
+                           sessionStorage.getItem(QUICKSTART_SESSION_KEY) !== "1";
+                } catch (error) {
+                    return true;
+                }
+            }
+
+            function markQuickStartSeen() {
+                try {
+                    sessionStorage.setItem(QUICKSTART_SESSION_KEY, "1");
+                    if (dontShowCheckbox && dontShowCheckbox.checked) {
+                        localStorage.setItem(QUICKSTART_HIDE_KEY, "1");
+                    }
+                } catch (error) {
+                    // Storage may be disabled; failing silently keeps the launcher usable.
+                }
+            }
+
+            function openQuickStart() {
+                if (!modal) return;
+                lastFocusedElement = document.activeElement;
+                modal.style.display = "block";
+                modal.setAttribute("aria-hidden", "false");
+                document.body.classList.add("quickstart-open");
+                const firstAction = modal.querySelector("#useMainBuilderButton");
+                if (firstAction) {
+                    window.setTimeout(() => firstAction.focus({ preventScroll: true }), 80);
+                }
+            }
+
             function closeQuickStart() {
-                $('#betaModal').hide();
+                if (!modal) return;
+                markQuickStartSeen();
+                modal.style.display = "none";
+                modal.setAttribute("aria-hidden", "true");
+                document.body.classList.remove("quickstart-open");
+                if (lastFocusedElement && typeof lastFocusedElement.focus === "function") {
+                    lastFocusedElement.focus({ preventScroll: true });
+                }
             }
 
             function scrollToMainBuilder() {
                 closeQuickStart();
-                const target = document.getElementById('pymol-session-builder') || document.getElementById('pymolForm');
+                const target = document.getElementById("pymol-session-builder") || document.getElementById("pymolForm");
                 if (target) {
-                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    target.scrollIntoView({ behavior: "smooth", block: "start" });
+                    window.setTimeout(() => {
+                        const firstSelect = document.getElementById("virus");
+                        if (firstSelect && typeof firstSelect.focus === "function") {
+                            firstSelect.focus({ preventScroll: true });
+                        }
+                    }, 500);
                 }
             }
 
-            // Open the beta modal when the document is ready
-            $('#betaModal').show();
-            
-            // Close the modal when the close button is clicked
-            $('.close').click(function() {
-                closeQuickStart();
+            function goTo(path) {
+                markQuickStartSeen();
+                window.location.href = path;
+            }
+
+            closeButtons.forEach((button) => {
+                button.addEventListener("click", closeQuickStart);
             });
 
-            $('#skipQuickStartButton').click(function() {
-                closeQuickStart();
+            if (useMainBuilderButton) {
+                useMainBuilderButton.addEventListener("click", scrollToMainBuilder);
+            }
+
+            document.querySelectorAll("[data-quickstart-action]").forEach((button) => {
+                button.addEventListener("click", () => {
+                    const action = button.dataset.quickstartAction;
+                    if (action === "builder") {
+                        scrollToMainBuilder();
+                    } else if (action === "protein") {
+                        goTo("/query_protein_virus_page");
+                    } else if (action === "ligand") {
+                        goTo("/compare_ligands");
+                    } else if (action === "protacability") {
+                        goTo("/protacability_page");
+                    }
+                });
             });
 
-            $('#useMainBuilderButton').click(function() {
-                scrollToMainBuilder();
+            document.addEventListener("keydown", (event) => {
+                if (event.key === "Escape" && modal && modal.style.display === "block") {
+                    closeQuickStart();
+                }
             });
+
+            if (modal) {
+                modal.addEventListener("click", (event) => {
+                    if (event.target === modal) {
+                        closeQuickStart();
+                    }
+                });
+            }
+
+            document.addEventListener("DOMContentLoaded", () => {
+                if (shouldShowQuickStart()) {
+                    window.setTimeout(openQuickStart, 280);
+                }
+            });
+
+    function initializeGraphicalAbstractModal() {
+        const abstractModal = document.getElementById("graphicalAbstractModal");
+        const abstractTriggers = document.querySelectorAll("[data-abstract-open]");
+        const abstractCloseButtons = document.querySelectorAll(".graphical-abstract-close, .graphical-abstract-close-secondary");
+        let abstractLastFocus = null;
+
+        function openAbstractModal() {
+            if (!abstractModal) return;
+            abstractLastFocus = document.activeElement;
+            abstractModal.style.display = "block";
+            abstractModal.setAttribute("aria-hidden", "false");
+            document.body.classList.add("graphical-abstract-open");
+            const closeButton = abstractModal.querySelector(".graphical-abstract-close");
+            if (closeButton) {
+                window.setTimeout(() => closeButton.focus({ preventScroll: true }), 80);
+            }
+        }
+
+        function closeAbstractModal() {
+            if (!abstractModal) return;
+            abstractModal.style.display = "none";
+            abstractModal.setAttribute("aria-hidden", "true");
+            document.body.classList.remove("graphical-abstract-open");
+            if (abstractLastFocus && typeof abstractLastFocus.focus === "function") {
+                abstractLastFocus.focus({ preventScroll: true });
+            }
+        }
+
+        abstractTriggers.forEach((trigger) => {
+            trigger.addEventListener("click", openAbstractModal);
         });
 
+        abstractCloseButtons.forEach((button) => {
+            button.addEventListener("click", closeAbstractModal);
+        });
 
+        if (abstractModal) {
+            abstractModal.addEventListener("click", (event) => {
+                if (event.target === abstractModal) {
+                    closeAbstractModal();
+                }
+            });
+        }
+
+        document.addEventListener("keydown", (event) => {
+            if (event.key === "Escape" && abstractModal && abstractModal.style.display === "block") {
+                closeAbstractModal();
+            }
+        });
+    }
+
+    initializeGraphicalAbstractModal();
+
+        })();
     </script>
    <!-- Chatbot HTML -->
 

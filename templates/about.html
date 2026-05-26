@@ -2,115 +2,704 @@
 
 {% block title %}About V-LiSEMOD | Viral Ligand Solvent-Exposed Moiety Database{% endblock %}
 
-{% block meta_description %}Learn how V-LiSEMOD supports viral ligand discovery through solvent-exposed moiety analysis, PyMOL session generation, ligand comparison, and degrader-aware molecular design workflows.{% endblock %}
+{% block meta_description %}Learn how V-LiSEMOD connects viral protein-ligand structures, ligand interaction analysis, solvent-exposed atom mapping, warhead linkability, and PROTACability-style degrader-readiness triage.{% endblock %}
 
 {% block body_class %}app-shell about-page{% endblock %}
 
 {% block content %}
-    <section class="page-intro">
+<section class="about-hero page-section" id="about-top">
+    <div class="about-hero-copy">
         <span class="page-kicker">About V-LiSEMOD</span>
-        <h1>A structure-first workspace for viral ligand discovery.</h1>
-        <p>V-LiSEMOD helps researchers move from curated viral protein-ligand structures to solvent-exposed moiety analysis, PyMOL-ready visualization sessions, and degrader-aware ligand comparison workflows.</p>
-    </section>
+        <h1>Viral structures, ligand exposure, and degrader-readiness evidence in one workspace.</h1>
+        <p class="about-hero-lede">
+            V-LiSEMOD helps researchers move from viral protein-ligand co-crystal structures to interpretable
+            ligand interaction evidence, solvent-exposed moiety analysis, warhead/linkability review, and
+            PROTACability-style triage.
+        </p>
 
-    <section class="page-card page-section">
-        <div class="section-heading">
-            <h2 class="page-title">Why this project exists</h2>
-            <p class="page-subtitle">Viral drug discovery needs better structure-aware tools for reasoning from experimentally resolved complexes toward next-generation antiviral design ideas.</p>
+        <div class="about-hero-actions action-row">
+            <a class="button-primary" href="/">Start exploring</a>
+            <button class="button-secondary" type="button" data-abstract-open>View graphical abstract</button>
+            <a class="button-secondary" href="/query_protein_virus_page">Open Protein Query</a>
+            <a class="button-ghost" href="#about-workflow">View workflow</a>
         </div>
-        <p>Many antiviral ligands are known structurally, but their solvent-exposed atoms, binding context, and fragment or warhead potential are not easy to compare in one coherent workflow. V-LiSEMOD organizes those structures into a practical workspace for exploring ligand exposure, protein context, and downstream design opportunities rooted in real structural data.</p>
-        <p>The aim is to help researchers reason from resolved viral protein-ligand structures toward next-generation viral inhibitors, warhead-like starting points, and degrader-inspired antiviral strategies without overclaiming what any single ligand can become.</p>
-    </section>
 
-    <section class="page-card page-section">
-        <div class="section-heading">
-            <span class="page-kicker">Origin and scientific foundation</span>
-            <h2 class="page-title">From antiviral degrader concepts to linkable ligand analysis</h2>
-            <p class="page-subtitle">V-LiSEMOD grew from the need to inspect viral inhibitor co-crystal structures for solvent-exposed, modifiable atoms.</p>
+        <div class="about-signal-grid" aria-label="V-LiSEMOD evidence highlights">
+            <article class="about-signal-card">
+                <span class="about-signal-number" data-count-to="6">0</span>
+                <span class="about-signal-label">Core modules</span>
+            </article>
+            <article class="about-signal-card">
+                <span class="about-signal-number" data-count-to="5">0</span>
+                <span class="about-signal-label">PROTACability evidence layers</span>
+            </article>
+            <article class="about-signal-card">
+                <span class="about-signal-number" data-count-to="3">0</span>
+                <span class="about-signal-label">Companion design tools</span>
+            </article>
         </div>
-        <p>V-LiSEMOD was motivated in part by the structure-guided questions raised during work on “Targeted degrader technologies as prospective SARS-CoV-2 therapies” in <em>Drug Discovery Today</em>. That review examined how known viral inhibitor co-crystal structures, especially SARS-CoV-2 3CLpro inhibitor complexes, could inform targeted protein degradation strategies.</p>
-        <p>A central lesson from that work was that an inhibitor is not automatically a useful warhead. To reason about degrader potential, researchers need to ask whether the bound ligand presents solvent-accessible atoms, plausible linker attachment vectors, and a protein environment compatible with downstream degrader design. V-LiSEMOD turns that recurring manual inspection problem into a searchable workflow across viral protein-ligand structures.</p>
-        <p><a class="external-link" href="https://www.sciencedirect.com/science/article/abs/pii/S135964462300363X" target="_blank" rel="noopener noreferrer">Khurshid, Schulz, Hu, Snowden, Reynolds, and Schürer. Targeted degrader technologies as prospective SARS-CoV-2 therapies. <em>Drug Discovery Today</em>, 2024. DOI: 10.1016/j.drudis.2023.103847.</a></p>
-    </section>
+    </div>
 
-    <section class="page-card page-section">
-        <div class="section-heading">
-            <h2 class="page-title">What V-LiSEMOD does</h2>
-        </div>
-        <div class="tool-grid">
-            <article class="tool-card feature-card">
-                <h3>Curated viral structure exploration</h3>
-                <p>Select virus, PDB structure, ligand, and chain or residue context from the curated workspace.</p>
-            </article>
-            <article class="tool-card feature-card">
-                <h3>Solvent-exposed moiety analysis</h3>
-                <p>Highlight accessible atoms using SASA and Shrake-Rupley-informed logic to support solvent-exposed vector reasoning.</p>
-            </article>
-            <article class="tool-card feature-card">
-                <h3>PyMOL-ready session generation</h3>
-                <p>Export 3D sessions with ligand, binding pocket, exposure, and functional group annotations ready for inspection.</p>
-            </article>
-            <article class="tool-card feature-card">
-                <h3>Ligand comparison</h3>
-                <p>Compare interaction fingerprints across multiple PDB contexts to understand structure-dependent behavior.</p>
-            </article>
-            <article class="tool-card feature-card">
-                <h3>Warhead and linker-vector reasoning</h3>
-                <p>Inspect ligand atoms that remain exposed in the bound pose and evaluate whether they may serve as chemically plausible modification vectors for downstream design.</p>
-            </article>
-            <article class="tool-card feature-card feature-card-external">
-                <h3>Degrader-aware handoff</h3>
-                <p>Move promising ligands and warhead candidates into PROTAC Builder or companion tools when design work progresses downstream.</p>
-            </article>
-        </div>
-    </section>
+    <div class="about-hero-visual">
+        <figure class="about-abstract-frame graphical-abstract-preview-card">
+            <button class="graphical-abstract-preview-button" type="button" data-abstract-open aria-label="Open full V-LiSEMOD graphical abstract">
+                <img src="{{ url_for('static', filename='images/Graphical_Abstract.png') }}"
+                     alt="V-LiSEMOD graphical abstract showing viral protein-ligand structures, interaction analysis, solvent-exposed atoms, warhead linkability, PROTACability triage, and downstream design handoff."
+                     loading="lazy">
+                <span class="graphical-abstract-preview-overlay">
+                    <span>View full graphical abstract</span>
+                    <small>Open large readable workflow view</small>
+                </span>
+            </button>
+            <figcaption>
+                V-LiSEMOD connects structural biology, ligand interaction analysis, solvent exposure mapping,
+                and degrader-readiness heuristics.
+                <button class="about-inline-abstract-link" type="button" data-abstract-open>Open full-size abstract</button>
+            </figcaption>
+        </figure>
+    </div>
+</section>
 
-    <section class="page-card page-section">
-        <div class="section-heading">
-            <h2 class="page-title">Scientific motivation</h2>
-        </div>
-        <p>Structure-guided antiviral design benefits from understanding which ligand atoms are buried, which remain solvent exposed, and where modification vectors may exist. V-LiSEMOD is designed to support that reasoning by keeping protein-ligand interaction context close to solvent-exposure analysis and structural export workflows.</p>
-        <p>In practical terms, V-LiSEMOD focuses on the question that repeatedly appears when considering inhibitor-derived warheads: which atoms remain exposed after binding, and could any of those atoms support modification without destroying the binding pose? The platform therefore pairs ligand exposure maps, interaction diagrams, and structure-specific context so users can reason about linkable positions before moving into PROTAC Builder or other degrader-design tools.</p>
-        <p>These views can help prioritize candidates for medicinal chemistry follow-up, fragmentable ligand analysis, and warhead discovery efforts. They may also reveal chemically useful vectors for linker attachment, conjugation, or other modification strategies, while recognizing that solvent exposure alone does not guarantee downstream compatibility with degrader design.</p>
-    </section>
 
-    <section class="page-card page-section">
-        <div class="section-heading">
-            <h2 class="page-title">Connected ecosystem</h2>
-            <p class="page-subtitle">V-LiSEMOD sits upstream of a broader structure-guided molecular design toolkit.</p>
+<div id="graphicalAbstractModal" class="modal graphical-abstract-modal" aria-hidden="true">
+    <div class="modal-content graphical-abstract-modal-content" role="dialog" aria-modal="true" aria-labelledby="graphical-abstract-title">
+        <button class="close modal-close-button graphical-abstract-close" type="button" aria-label="Close graphical abstract">&times;</button>
+        <div class="graphical-abstract-modal-head">
+            <span class="page-kicker">Graphical Abstract</span>
+            <h2 id="graphical-abstract-title">V-LiSEMOD workflow overview</h2>
+            <p>
+                Follow the full pipeline from viral protein-ligand structures to interaction analysis,
+                solvent-exposed atoms, warhead linkability, PROTACability triage, and downstream design handoff.
+            </p>
         </div>
-        <div class="tool-grid">
-            <article class="tool-card">
-                <h3><a href="https://warheadhunter.com" target="_blank" rel="noopener noreferrer">Warhead Hunter</a></h3>
-                <p>Identify and evaluate warhead-like ligands and fragmentable chemotypes for follow-on molecular design.</p>
-            </article>
-            <article class="tool-card">
-                <h3><a href="https://e3ligandalyzer.com" target="_blank" rel="noopener noreferrer">E3 Ligandalyzer</a></h3>
-                <p>Explore E3 ligase recruiter structures, ligandability, scaffold context, and attachment-vector opportunities.</p>
-            </article>
-            <article class="tool-card feature-card-external">
-                <h3><a href="https://protacbuilder.com" target="_blank" rel="noopener noreferrer">PROTAC Builder</a></h3>
-                <p>Continue from ligand and warhead analysis into standalone degrader design workflows.</p>
-            </article>
+        <div class="graphical-abstract-zoom-frame">
+            <img src="{{ url_for('static', filename='images/Graphical_Abstract.png') }}"
+                 alt="Expanded V-LiSEMOD graphical abstract showing the workflow from viral protein-ligand structures through interaction analysis, solvent-exposed atom mapping, warhead linkability, PROTACability triage, and downstream design handoff.">
         </div>
-    </section>
+        <div class="graphical-abstract-modal-actions">
+            <a class="button-primary" href="/">Start exploring</a>
+            <button class="button-secondary graphical-abstract-close-secondary" type="button">Close abstract</button>
+        </div>
+    </div>
+</div>
 
-    <section class="page-card page-section">
-        <div class="section-heading">
-            <h2 class="page-title">Responsible use and limitations</h2>
-        </div>
-        <p>V-LiSEMOD is an exploratory research tool. Solvent exposure, interaction patterns, and chain-specific structural context are useful for hypothesis generation, but they remain context dependent and should be interpreted alongside broader structural, computational, and experimental evidence.</p>
-        <p>Generated sessions, charts, and comparative views are intended to support structure-guided reasoning rather than replace medicinal chemistry validation, docking, biophysical assays, or biological testing.</p>
-    </section>
 
-    <section class="page-card page-section">
-        <div class="section-heading">
-            <h2 class="page-title">Start exploring</h2>
+<nav class="about-local-nav" aria-label="About page sections">
+    <a href="#about-why" data-about-nav>Why it exists</a>
+    <a href="#about-origin" data-about-nav>Origin</a>
+    <a href="#about-workflow" data-about-nav>Workflow</a>
+    <a href="#about-capabilities" data-about-nav>Capabilities</a>
+    <a href="#about-protacability" data-about-nav>PROTACability</a>
+    <a href="#about-ecosystem" data-about-nav>Ecosystem</a>
+</nav>
+
+<section class="page-card page-section about-reveal" id="about-why">
+    <div class="section-heading">
+        <span class="page-kicker">Scientific purpose</span>
+        <h2 class="page-title">Why this project exists</h2>
+        <p class="page-subtitle">
+            Viral drug discovery needs tools that keep protein-ligand structure, interaction evidence,
+            solvent exposure, and modification logic close together.
+        </p>
+    </div>
+
+    <div class="about-two-column">
+        <div>
+            <p>
+                Many viral inhibitors are structurally characterized, but the information needed to reason about
+                chemical modification is often fragmented across PDB files, ligand identifiers, interaction outputs,
+                solvent accessibility calculations, and custom downstream scripts.
+            </p>
+            <p>
+                V-LiSEMOD organizes those evidence layers into a public-access web platform so researchers can
+                ask structure-aware questions before moving into medicinal chemistry, linker design, or downstream
+                degrader modeling.
+            </p>
         </div>
-        <div class="action-row">
-            <a class="button-primary" href="{{ url_for('index') }}">Start a V-LiSEMOD session</a>
-            <a class="button-secondary" href="{{ url_for('compare_ligands') }}">Compare ligands</a>
-            <a class="button-primary external-link" href="https://protacbuilder.com/builder" target="_blank" rel="noopener noreferrer">Open PROTAC Builder ↗</a>
+
+        <aside class="about-callout-card">
+            <h3>The central design question</h3>
+            <p>
+                Which ligand atoms remain exposed after binding, and could any of those atoms support
+                chemical modification without obviously destroying the observed binding pose?
+            </p>
+        </aside>
+    </div>
+</section>
+
+<section class="page-card page-section about-reveal" id="about-origin">
+    <div class="section-heading">
+        <span class="page-kicker">Origin and foundation</span>
+        <h2 class="page-title">From antiviral degrader concepts to linkable ligand analysis</h2>
+        <p class="page-subtitle">
+            V-LiSEMOD grew from the repeated need to inspect viral inhibitor co-crystal structures for exposed,
+            chemically useful ligand positions.
+        </p>
+    </div>
+
+    <div class="about-origin-layout">
+        <div class="about-origin-copy">
+            <p>
+                The project was motivated in part by the structure-guided questions raised during work on
+                <em>Targeted degrader technologies as prospective SARS-CoV-2 therapies</em> in
+                <em>Drug Discovery Today</em>. That review considered how known viral inhibitor structures,
+                including SARS-CoV-2 3CLpro inhibitor complexes, could inform targeted protein degradation strategies.
+            </p>
+            <p>
+                A key lesson was that a binder is not automatically a useful warhead. Researchers need to ask
+                whether the bound ligand presents solvent-accessible atoms, plausible linker attachment vectors,
+                preserved interaction context, and a protein environment worth deeper degrader-oriented review.
+            </p>
         </div>
-    </section>
+
+        <div class="about-paper-card">
+            <span class="about-card-eyebrow">Related publication</span>
+            <h3>Targeted degrader technologies as prospective SARS-CoV-2 therapies</h3>
+            <p>Khurshid, Schulz, Hu, Snowden, Reynolds, and Schürer. <em>Drug Discovery Today</em>, 2024.</p>
+            <div class="about-paper-actions">
+                <a class="button-secondary external-link"
+                   href="https://www.sciencedirect.com/science/article/abs/pii/S135964462300363X"
+                   target="_blank"
+                   rel="noopener noreferrer">Open article ↗</a>
+                <button type="button" class="button-ghost" data-copy-citation>Copy citation</button>
+            </div>
+            <p class="about-copy-feedback" role="status" aria-live="polite"></p>
+        </div>
+    </div>
+</section>
+
+<section class="page-card page-section about-reveal" id="about-workflow">
+    <div class="section-heading">
+        <span class="page-kicker">Interactive workflow</span>
+        <h2 class="page-title">How V-LiSEMOD moves from structure to design evidence</h2>
+        <p class="page-subtitle">
+            Select a step below to see how the platform transforms viral structural data into interpretable
+            ligand modification and degrader-readiness evidence.
+        </p>
+    </div>
+
+    <div class="about-workflow-shell">
+        <div class="about-workflow-tabs" role="tablist" aria-label="V-LiSEMOD workflow steps">
+            <button type="button" class="about-flow-tab is-active" role="tab" aria-selected="true" data-flow-step="structures">
+                <span>01</span> Structures
+            </button>
+            <button type="button" class="about-flow-tab" role="tab" aria-selected="false" data-flow-step="interactions">
+                <span>02</span> Interactions
+            </button>
+            <button type="button" class="about-flow-tab" role="tab" aria-selected="false" data-flow-step="exposure">
+                <span>03</span> Exposure
+            </button>
+            <button type="button" class="about-flow-tab" role="tab" aria-selected="false" data-flow-step="linkability">
+                <span>04</span> Linkability
+            </button>
+            <button type="button" class="about-flow-tab" role="tab" aria-selected="false" data-flow-step="triage">
+                <span>05</span> Triage
+            </button>
+            <button type="button" class="about-flow-tab" role="tab" aria-selected="false" data-flow-step="handoff">
+                <span>06</span> Handoff
+            </button>
+        </div>
+
+        <article class="about-flow-panel" data-flow-panel>
+            <div class="about-flow-icon" data-flow-icon>🧬</div>
+            <div>
+                <span class="about-card-eyebrow" data-flow-eyebrow>Step 01</span>
+                <h3 data-flow-title>Viral protein-ligand structures</h3>
+                <p data-flow-copy>
+                    Begin from curated viral protein-ligand structures organized by virus, PDB ID, ligand,
+                    chain, and residue context.
+                </p>
+                <ul data-flow-list>
+                    <li>Search viral targets and protein classes.</li>
+                    <li>Select ligand-bound structural contexts.</li>
+                    <li>Keep chain and residue identity visible for interpretation.</li>
+                </ul>
+            </div>
+        </article>
+    </div>
+</section>
+
+<section class="page-card page-section about-reveal" id="about-capabilities">
+    <div class="section-heading">
+        <span class="page-kicker">Platform modules</span>
+        <h2 class="page-title">What V-LiSEMOD does</h2>
+        <p class="page-subtitle">
+            The app supports structure-first, target-first, and ligand-first ways to explore viral protein-ligand evidence.
+        </p>
+    </div>
+
+    <div class="about-capability-grid">
+        <article class="about-feature-card" data-about-card>
+            <span class="feature-badge">Structure Explorer</span>
+            <h3>Curated viral structure exploration</h3>
+            <p>Select virus, PDB structure, ligand, chain, and residue context from the curated workspace.</p>
+            <a href="/" class="about-card-link">Open explorer →</a>
+        </article>
+
+        <article class="about-feature-card" data-about-card>
+            <span class="feature-badge">Protein Query</span>
+            <h3>Target-centric search and export</h3>
+            <p>Filter viral structures by target and ligand context, then assemble export-ready datasets.</p>
+            <a href="/query_protein_virus_page" class="about-card-link">Open Protein Query →</a>
+        </article>
+
+        <article class="about-feature-card" data-about-card>
+            <span class="feature-badge">Ligand Indexer</span>
+            <h3>Ligand-first lookup</h3>
+            <p>Start with a ligand code or synonym and find mapped PDB-chain-residue contexts.</p>
+            <a href="/ligand_indexer" class="about-card-link">Open Ligand Indexer →</a>
+        </article>
+
+        <article class="about-feature-card" data-about-card>
+            <span class="feature-badge">Comparison</span>
+            <h3>Cross-structure ligand comparison</h3>
+            <p>Compare interaction fingerprints, distance profiles, and atom-level burden across structures.</p>
+            <a href="/compare_ligands" class="about-card-link">Compare ligands →</a>
+        </article>
+
+        <article class="about-feature-card" data-about-card>
+            <span class="feature-badge">Exposure</span>
+            <h3>Solvent-exposed moiety analysis</h3>
+            <p>Use SASA and atom annotations to reason about exposed, potentially modifiable ligand positions.</p>
+            <a href="#about-workflow" class="about-card-link">View workflow →</a>
+        </article>
+
+        <article class="about-feature-card about-feature-card-accent" data-about-card>
+            <span class="feature-badge">Design handoff</span>
+            <h3>Warhead and linker-vector reasoning</h3>
+            <p>Move promising ligand contexts into downstream degrader design tools when the evidence supports review.</p>
+            <a href="https://protacbuilder.com/builder" target="_blank" rel="noopener noreferrer" class="about-card-link">Open PROTAC Builder ↗</a>
+        </article>
+    </div>
+</section>
+
+<section class="page-card page-section about-reveal" id="about-protacability">
+    <div class="section-heading">
+        <span class="page-kicker">PROTACability</span>
+        <h2 class="page-title">Transparent degrader-readiness triage</h2>
+        <p class="page-subtitle">
+            PROTACability in V-LiSEMOD is a structure-guided prioritization framework, not an experimental
+            degradation prediction.
+        </p>
+    </div>
+
+    <div class="about-warning-strip">
+        <strong>Interpretation guardrail:</strong>
+        PROTACability outputs are structural-priority and design-readiness heuristics. They support hypothesis
+        generation and triage, but they are not experimentally validated degradation predictions.
+    </div>
+
+    <div class="about-evidence-layout">
+        <div class="about-evidence-tabs" role="tablist" aria-label="PROTACability evidence layers">
+            <button type="button" class="about-evidence-tab is-active" data-evidence-layer="warhead" aria-selected="true">Warhead Linkability</button>
+            <button type="button" class="about-evidence-tab" data-evidence-layer="lysine" aria-selected="false">Target Lysine Accessibility</button>
+            <button type="button" class="about-evidence-tab" data-evidence-layer="priority" aria-selected="false">Protein Structural Priority</button>
+            <button type="button" class="about-evidence-tab" data-evidence-layer="geometry" aria-selected="false">Ternary Geometry Cue</button>
+            <button type="button" class="about-evidence-tab" data-evidence-layer="readiness" aria-selected="false">Overall Readiness</button>
+        </div>
+
+        <article class="about-evidence-panel" data-evidence-panel>
+            <span class="about-card-eyebrow" data-evidence-eyebrow>Ligand-centered evidence</span>
+            <h3 data-evidence-title>Warhead Linkability</h3>
+            <p data-evidence-copy>
+                Evaluates whether a bound ligand contains solvent-exposed, chemically interpretable atoms
+                that may tolerate linker attachment while preserving key interaction context.
+            </p>
+            <div class="about-evidence-meter" aria-hidden="true">
+                <span></span><span></span><span></span><span></span><span></span>
+            </div>
+        </article>
+    </div>
+</section>
+
+
+<section class="page-card page-section about-reveal" id="about-ecosystem">
+    <div class="section-heading">
+        <span class="page-kicker">Connected ecosystem</span>
+        <h2 class="page-title">A modular workflow for induced-proximity design</h2>
+        <p class="page-subtitle">
+            V-LiSEMOD sits upstream of companion tools for warhead analysis, E3 recruiter review, and degrader construction.
+        </p>
+    </div>
+
+    <div class="about-ecosystem-grid">
+        <a class="about-tool-card about-tool-link-card"
+           href="https://warheadhunter.com"
+           target="_blank"
+           rel="noopener noreferrer"
+           aria-label="Open Warhead Hunter">
+            <span class="about-tool-icon">🎯</span>
+            <h3>Warhead Hunter</h3>
+            <p>Structure-aware solvent exposure and exit-vector analysis for bound ligands.</p>
+            <span class="about-tool-cta">Open Warhead Hunter ↗</span>
+        </a>
+
+        <a class="about-tool-card about-tool-link-card"
+           href="https://e3ligandalyzer.com"
+           target="_blank"
+           rel="noopener noreferrer"
+           aria-label="Open E3 Ligandalyzer">
+            <span class="about-tool-icon">🧲</span>
+            <h3>E3 Ligandalyzer</h3>
+            <p>E3 ligase recruiter structure analytics, scaffold context, and attachment-vector review.</p>
+            <span class="about-tool-cta">Open E3 Ligandalyzer ↗</span>
+        </a>
+
+        <a class="about-tool-card about-tool-link-card about-tool-card-accent"
+           href="https://protacbuilder.com"
+           target="_blank"
+           rel="noopener noreferrer"
+           aria-label="Open PROTAC Builder">
+            <span class="about-tool-icon">🔗</span>
+            <h3>PROTAC Builder</h3>
+            <p>Downstream linker, recruiter, and warhead assembly for PROTAC-like molecule design.</p>
+            <span class="about-tool-cta">Open PROTAC Builder ↗</span>
+        </a>
+    </div>
+</section>
+
+<section class="page-card page-section about-reveal" id="about-limitations">
+    <div class="section-heading">
+        <span class="page-kicker">Responsible use</span>
+        <h2 class="page-title">Interpretation and limitations</h2>
+    </div>
+
+    <div class="about-accordion" data-about-accordion>
+        <button type="button" class="about-accordion-trigger" aria-expanded="true">
+            What V-LiSEMOD is best for
+            <span aria-hidden="true">−</span>
+        </button>
+        <div class="about-accordion-panel">
+            <p>
+                V-LiSEMOD is best used for structure-guided review, ligand interaction analysis, solvent-exposed
+                atom discovery, and transparent prioritization before deeper computational or experimental work.
+            </p>
+        </div>
+
+        <button type="button" class="about-accordion-trigger" aria-expanded="false">
+            What V-LiSEMOD does not prove
+            <span aria-hidden="true">+</span>
+        </button>
+        <div class="about-accordion-panel" hidden>
+            <p>
+                It does not prove degradation, guarantee ternary complex formation, replace SAR, or validate that
+                a ligand can become a successful warhead. Experimental and medicinal chemistry review remain essential.
+            </p>
+        </div>
+
+        <button type="button" class="about-accordion-trigger" aria-expanded="false">
+            How to use the outputs responsibly
+            <span aria-hidden="true">+</span>
+        </button>
+        <div class="about-accordion-panel" hidden>
+            <p>
+                Treat charts, exposure maps, PyMOL outputs, and PROTACability tables as evidence layers for
+                hypothesis generation. Review structure quality, ligand chemistry, interaction context, and
+                downstream feasibility before making design decisions.
+            </p>
+        </div>
+    </div>
+</section>
+
+<section class="about-final-cta page-section about-reveal">
+    <div>
+        <span class="page-kicker">Start exploring</span>
+        <h2>Use V-LiSEMOD to turn viral structural data into design-ready evidence.</h2>
+        <p>
+            Begin with a target, a ligand, or a structure, then move toward interaction review, solvent-exposed
+            atom analysis, and degrader-readiness triage.
+        </p>
+    </div>
+    <div class="action-row">
+        <a class="button-primary" href="/">Open Structure Explorer</a>
+        <a class="button-secondary" href="/protacability_page">Open PROTACability</a>
+        <a class="button-primary external-link" href="https://protacbuilder.com/builder" target="_blank" rel="noopener noreferrer">Open PROTAC Builder ↗</a>
+    </div>
+</section>
+
+<script>
+(function () {
+    const prefersReducedMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    const workflowContent = {
+        structures: {
+            icon: "🧬",
+            eyebrow: "Step 01",
+            title: "Viral protein-ligand structures",
+            copy: "Begin from curated viral protein-ligand structures organized by virus, PDB ID, ligand, chain, and residue context.",
+            bullets: [
+                "Search viral targets and protein classes.",
+                "Select ligand-bound structural contexts.",
+                "Keep chain and residue identity visible for interpretation."
+            ]
+        },
+        interactions: {
+            icon: "🧪",
+            eyebrow: "Step 02",
+            title: "Interaction analysis",
+            copy: "Inspect contacts, binding-pocket context, and atom-level interaction burden to separate protected binding atoms from more permissive positions.",
+            bullets: [
+                "Compare contact types and distances.",
+                "Review ligand-protein interaction patterns.",
+                "Use atom-level burden to guide modification caution."
+            ]
+        },
+        exposure: {
+            icon: "💧",
+            eyebrow: "Step 03",
+            title: "Solvent-exposed ligand atoms",
+            copy: "Overlay solvent exposure, functional-group annotations, and mapped atom identities to identify positions that may tolerate chemical growth.",
+            bullets: [
+                "Highlight solvent-accessible atoms.",
+                "Connect exposure to functional groups.",
+                "Separate buried atoms from exposed vector candidates."
+            ]
+        },
+        linkability: {
+            icon: "🔗",
+            eyebrow: "Step 04",
+            title: "Warhead linkability",
+            copy: "Reason about whether the bound ligand presents chemically useful, solvent-facing atoms that could support linker attachment.",
+            bullets: [
+                "Evaluate candidate linker atoms.",
+                "Preserve critical interaction context.",
+                "Prioritize exit vectors that avoid obvious steric clashes."
+            ]
+        },
+        triage: {
+            icon: "📊",
+            eyebrow: "Step 05",
+            title: "PROTACability triage",
+            copy: "Combine ligand-centered warhead evidence with target-side lysine accessibility and structure-priority cues.",
+            bullets: [
+                "Review evidence layers separately.",
+                "Avoid treating scores as experimental predictions.",
+                "Use results for follow-up prioritization."
+            ]
+        },
+        handoff: {
+            icon: "🚀",
+            eyebrow: "Step 06",
+            title: "Downstream design handoff",
+            copy: "Move promising ligand contexts into PROTAC Builder, Warhead Hunter, or E3 Ligandalyzer for deeper design work.",
+            bullets: [
+                "Continue linker and recruiter exploration.",
+                "Generate new design hypotheses.",
+                "Prioritize experiments and modeling next steps."
+            ]
+        }
+    };
+
+    const evidenceContent = {
+        warhead: {
+            eyebrow: "Ligand-centered evidence",
+            title: "Warhead Linkability",
+            copy: "Evaluates whether a bound ligand contains solvent-exposed, chemically interpretable atoms that may tolerate linker attachment while preserving key interaction context."
+        },
+        lysine: {
+            eyebrow: "Target-side evidence",
+            title: "Target Lysine Accessibility",
+            copy: "Reviews exposed lysine context as a ubiquitination-readiness cue. This is not proof that ubiquitination or degradation will occur."
+        },
+        priority: {
+            eyebrow: "Structure-level evidence",
+            title: "Protein Structural Priority",
+            copy: "Ranks structures as design-review starting points using target context, ligand context, lysine context, and available annotation coverage."
+        },
+        geometry: {
+            eyebrow: "Hypothesis-only cue",
+            title: "Ternary Geometry Cue",
+            copy: "Provides a simplified geometry-informed cue based on ligand and lysine spatial context. It does not model full ternary complex formation."
+        },
+        readiness: {
+            eyebrow: "Combined triage",
+            title: "Overall Degrader Readiness",
+            copy: "Summarizes multiple evidence layers into a transparent prioritization score for follow-up review, not a validated degradation prediction."
+        }
+    };
+
+    function updateWorkflow(stepKey) {
+        const data = workflowContent[stepKey];
+        if (!data) return;
+
+        document.querySelectorAll("[data-flow-step]").forEach((button) => {
+            const active = button.dataset.flowStep === stepKey;
+            button.classList.toggle("is-active", active);
+            button.setAttribute("aria-selected", active ? "true" : "false");
+        });
+
+        const panel = document.querySelector("[data-flow-panel]");
+        if (!panel) return;
+
+        panel.querySelector("[data-flow-icon]").textContent = data.icon;
+        panel.querySelector("[data-flow-eyebrow]").textContent = data.eyebrow;
+        panel.querySelector("[data-flow-title]").textContent = data.title;
+        panel.querySelector("[data-flow-copy]").textContent = data.copy;
+
+        const list = panel.querySelector("[data-flow-list]");
+        list.innerHTML = "";
+        data.bullets.forEach((item) => {
+            const li = document.createElement("li");
+            li.textContent = item;
+            list.appendChild(li);
+        });
+    }
+
+    function updateEvidence(layerKey) {
+        const data = evidenceContent[layerKey];
+        if (!data) return;
+
+        document.querySelectorAll("[data-evidence-layer]").forEach((button) => {
+            const active = button.dataset.evidenceLayer === layerKey;
+            button.classList.toggle("is-active", active);
+            button.setAttribute("aria-selected", active ? "true" : "false");
+        });
+
+        const panel = document.querySelector("[data-evidence-panel]");
+        if (!panel) return;
+
+        panel.querySelector("[data-evidence-eyebrow]").textContent = data.eyebrow;
+        panel.querySelector("[data-evidence-title]").textContent = data.title;
+        panel.querySelector("[data-evidence-copy]").textContent = data.copy;
+    }
+
+    document.querySelectorAll("[data-flow-step]").forEach((button) => {
+        button.addEventListener("click", () => updateWorkflow(button.dataset.flowStep));
+    });
+
+    document.querySelectorAll("[data-evidence-layer]").forEach((button) => {
+        button.addEventListener("click", () => updateEvidence(button.dataset.evidenceLayer));
+    });
+
+    document.querySelectorAll(".about-accordion-trigger").forEach((trigger) => {
+        trigger.addEventListener("click", () => {
+            const panel = trigger.nextElementSibling;
+            const isOpen = trigger.getAttribute("aria-expanded") === "true";
+            trigger.setAttribute("aria-expanded", isOpen ? "false" : "true");
+            trigger.querySelector("span").textContent = isOpen ? "+" : "−";
+            if (panel) panel.hidden = isOpen;
+        });
+    });
+
+    const copyButton = document.querySelector("[data-copy-citation]");
+    if (copyButton && navigator.clipboard) {
+        copyButton.addEventListener("click", async () => {
+            const citation = "Khurshid S, Schulz JM, Hu B, Snowden TS, Reynolds RC, Schürer SC. Targeted degrader technologies as prospective SARS-CoV-2 therapies. Drug Discovery Today. 2024. DOI: 10.1016/j.drudis.2023.103847.";
+            const feedback = document.querySelector(".about-copy-feedback");
+            try {
+                await navigator.clipboard.writeText(citation);
+                if (feedback) feedback.textContent = "Citation copied.";
+            } catch (error) {
+                if (feedback) feedback.textContent = "Citation copy unavailable in this browser.";
+            }
+        });
+    }
+
+    if (!prefersReducedMotion && "IntersectionObserver" in window) {
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add("is-visible");
+                    revealObserver.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.12 });
+
+        document.querySelectorAll(".about-reveal").forEach((element) => revealObserver.observe(element));
+    } else {
+        document.querySelectorAll(".about-reveal").forEach((element) => element.classList.add("is-visible"));
+    }
+
+    const navLinks = Array.from(document.querySelectorAll("[data-about-nav]"));
+    const navTargets = navLinks
+        .map((link) => document.querySelector(link.getAttribute("href")))
+        .filter(Boolean);
+
+    if ("IntersectionObserver" in window && navTargets.length) {
+        const navObserver = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (!entry.isIntersecting) return;
+                navLinks.forEach((link) => {
+                    link.classList.toggle("is-active", link.getAttribute("href") === "#" + entry.target.id);
+                });
+            });
+        }, { rootMargin: "-30% 0px -55% 0px", threshold: 0.01 });
+
+        navTargets.forEach((target) => navObserver.observe(target));
+    }
+
+    const countElements = document.querySelectorAll("[data-count-to]");
+    countElements.forEach((element) => {
+        const target = Number(element.dataset.countTo || "0");
+        if (prefersReducedMotion || !target) {
+            element.textContent = String(target);
+            return;
+        }
+
+        let frame = 0;
+        const frames = 32;
+        const tick = () => {
+            frame += 1;
+            const progress = Math.min(frame / frames, 1);
+            element.textContent = String(Math.round(target * progress));
+            if (progress < 1) window.requestAnimationFrame(tick);
+        };
+        window.requestAnimationFrame(tick);
+    });
+
+    function initializeGraphicalAbstractModal() {
+        const abstractModal = document.getElementById("graphicalAbstractModal");
+        const abstractTriggers = document.querySelectorAll("[data-abstract-open]");
+        const abstractCloseButtons = document.querySelectorAll(".graphical-abstract-close, .graphical-abstract-close-secondary");
+        let abstractLastFocus = null;
+
+        function openAbstractModal() {
+            if (!abstractModal) return;
+            abstractLastFocus = document.activeElement;
+            abstractModal.style.display = "block";
+            abstractModal.setAttribute("aria-hidden", "false");
+            document.body.classList.add("graphical-abstract-open");
+            const closeButton = abstractModal.querySelector(".graphical-abstract-close");
+            if (closeButton) {
+                window.setTimeout(() => closeButton.focus({ preventScroll: true }), 80);
+            }
+        }
+
+        function closeAbstractModal() {
+            if (!abstractModal) return;
+            abstractModal.style.display = "none";
+            abstractModal.setAttribute("aria-hidden", "true");
+            document.body.classList.remove("graphical-abstract-open");
+            if (abstractLastFocus && typeof abstractLastFocus.focus === "function") {
+                abstractLastFocus.focus({ preventScroll: true });
+            }
+        }
+
+        abstractTriggers.forEach((trigger) => {
+            trigger.addEventListener("click", openAbstractModal);
+        });
+
+        abstractCloseButtons.forEach((button) => {
+            button.addEventListener("click", closeAbstractModal);
+        });
+
+        if (abstractModal) {
+            abstractModal.addEventListener("click", (event) => {
+                if (event.target === abstractModal) {
+                    closeAbstractModal();
+                }
+            });
+        }
+
+        document.addEventListener("keydown", (event) => {
+            if (event.key === "Escape" && abstractModal && abstractModal.style.display === "block") {
+                closeAbstractModal();
+            }
+        });
+    }
+
+    initializeGraphicalAbstractModal();
+
+})();
+</script>
 {% endblock %}
