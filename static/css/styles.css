@@ -4047,6 +4047,274 @@ html[data-theme="dark"] .app-shell-home .home-abstract-preview {
     border-color: rgba(180, 230, 205, 0.16);
 }
 
+
+/* ==========================================================================
+   Resource/supporting pages
+   Scoped to .resource-page and shared resource clusters.
+   ========================================================================== */
+
+.resource-page .page-container {
+    display: grid;
+    gap: 4px;
+}
+
+.resource-page .resource-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 0.42fr);
+    gap: 22px;
+    align-items: stretch;
+    width: min(1120px, 100%);
+    margin-inline: auto;
+    padding: 28px;
+    border-radius: 30px;
+    background:
+        radial-gradient(circle at 10% 18%, rgba(244, 115, 33, 0.14), transparent 26%),
+        radial-gradient(circle at 88% 20%, rgba(11, 83, 53, 0.14), transparent 26%),
+        var(--card-bg);
+    border: 1px solid var(--border-soft);
+    box-shadow: var(--shadow-panel);
+}
+
+.resource-page .resource-hero h1 {
+    margin: 0 0 12px;
+    color: var(--heading-color);
+    font-size: clamp(2.1rem, 4.6vw, 3.8rem);
+    line-height: 1;
+    letter-spacing: -0.045em;
+    max-width: 14ch;
+}
+
+.resource-page .resource-lede {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 1.03rem;
+    line-height: 1.72;
+    max-width: 760px;
+}
+
+.resource-page .resource-hero-actions {
+    justify-content: flex-start;
+    margin-top: 18px;
+}
+
+.resource-page .resource-callout,
+.resource-page .resource-link-panel,
+.resource-page .resource-card,
+.resource-page .resource-list-card {
+    border-radius: 22px;
+    border: 1px solid var(--border-soft);
+    background: var(--card-bg-soft);
+    box-shadow: var(--shadow-soft);
+}
+
+.resource-page .resource-callout {
+    display: grid;
+    align-content: start;
+    gap: 10px;
+    padding: 22px;
+}
+
+.resource-page .resource-callout p,
+.resource-page .resource-card p,
+.resource-page .resource-link-panel p,
+.resource-page .resource-list-card p,
+.resource-page .resource-faq-item p,
+.resource-page .resource-split p {
+    margin: 0;
+    color: var(--text-muted);
+    line-height: 1.68;
+}
+
+.resource-page .resource-callout-label,
+.resource-page .resource-card-cta {
+    color: var(--accent-orange);
+    font-size: 0.74rem;
+    font-weight: 850;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.resource-page .resource-callout-warning {
+    background:
+        linear-gradient(180deg, rgba(244, 115, 33, 0.11), transparent 78%),
+        var(--card-bg-soft);
+}
+
+.resource-page .resource-section {
+    width: min(1120px, 100%);
+    margin-inline: auto;
+}
+
+.resource-page .resource-grid,
+.resource-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 16px;
+}
+
+.resource-grid-compact {
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+}
+
+.resource-page .resource-card,
+.resource-card {
+    display: grid;
+    gap: 12px;
+    align-content: start;
+    min-height: 100%;
+    padding: 22px;
+}
+
+.resource-page .resource-card h2,
+.resource-page .resource-card h3,
+.resource-card h3,
+.resource-page .resource-list-card h3 {
+    margin: 0;
+    color: var(--heading-color);
+}
+
+.resource-page .resource-card-link,
+.resource-card-link {
+    color: inherit;
+    text-decoration: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.resource-page .resource-card-link:hover,
+.resource-page .resource-card-link:focus-visible,
+.resource-card-link:hover,
+.resource-card-link:focus-visible,
+.about-page a.about-feature-card:hover,
+.about-page a.about-feature-card:focus-visible {
+    transform: translateY(-3px);
+    border-color: rgba(244, 115, 33, 0.24);
+    box-shadow: 0 22px 44px rgba(8, 58, 37, 0.14);
+    outline: none;
+}
+
+.resource-page .resource-card-cta,
+.resource-card-cta {
+    align-self: end;
+}
+
+.resource-page .resource-split {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 0.74fr);
+    gap: 22px;
+    align-items: start;
+}
+
+.resource-page .resource-list-card {
+    padding: 22px;
+}
+
+.resource-page .resource-list-card ul {
+    margin: 12px 0 0;
+    padding-left: 1.15rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+}
+
+.resource-page .resource-stack {
+    display: grid;
+    gap: 16px;
+}
+
+.resource-page .resource-link-panel {
+    display: grid;
+    gap: 16px;
+    padding: 24px;
+}
+
+.resource-page .resource-faq {
+    display: grid;
+    gap: 12px;
+}
+
+.resource-page .resource-faq-item {
+    padding: 0 18px;
+    border-radius: 18px;
+    border: 1px solid var(--button-secondary-border);
+    background: var(--button-secondary-bg);
+}
+
+.resource-page .resource-faq-item summary {
+    padding: 18px 0;
+    cursor: pointer;
+    color: var(--heading-color);
+    font-weight: 800;
+}
+
+.resource-page .resource-faq-item p {
+    padding: 0 0 18px;
+}
+
+.resource-page .resource-copy-block {
+    display: grid;
+    gap: 12px;
+}
+
+.resource-page .resource-copy-button {
+    justify-self: flex-start;
+}
+
+.resource-page .resource-copy-feedback {
+    margin: 16px 0 0;
+    min-height: 1.2em;
+    color: var(--accent-green);
+    font-weight: 800;
+}
+
+.resource-cluster-section {
+    width: min(1120px, 100%);
+    margin-inline: auto;
+}
+
+.about-page a.about-feature-card {
+    color: inherit;
+    text-decoration: none;
+}
+
+.about-page a.about-feature-card .about-card-link {
+    text-decoration: none;
+}
+
+html[data-theme="dark"] .resource-page .resource-callout,
+html[data-theme="dark"] .resource-page .resource-card,
+html[data-theme="dark"] .resource-page .resource-list-card,
+html[data-theme="dark"] .resource-page .resource-link-panel,
+html[data-theme="dark"] .resource-page .resource-faq-item,
+html[data-theme="dark"] .resource-card,
+html[data-theme="dark"] .about-page a.about-feature-card {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+html[data-theme="dark"] .resource-page .resource-hero {
+    background:
+        radial-gradient(circle at 10% 18%, rgba(255, 138, 61, 0.11), transparent 26%),
+        radial-gradient(circle at 88% 20%, rgba(56, 211, 139, 0.11), transparent 26%),
+        var(--card-bg);
+}
+
+@media (max-width: 900px) {
+    .resource-page .resource-hero,
+    .resource-page .resource-split {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 680px) {
+    .resource-page .resource-hero {
+        padding: 20px;
+        border-radius: 24px;
+    }
+
+    .resource-page .resource-hero-actions > *,
+    .resource-page .resource-link-panel .action-row > * {
+        width: 100%;
+    }
+}
+
 html[data-theme="dark"] .app-shell-home .home-abstract-step-list span {
     background: rgba(56, 211, 139, 0.12);
     border-color: rgba(180, 230, 205, 0.16);

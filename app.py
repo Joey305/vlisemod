@@ -184,6 +184,38 @@ def index_page():
 def about_page():
     return render_template('about.html')
 
+@app.route('/contact')
+def contact_page():
+    return render_template('contact.html')
+
+@app.route('/use-cases')
+def use_cases_page():
+    return render_template('use_cases.html')
+
+@app.route('/viral-protac-design')
+def viral_protac_design_page():
+    return render_template('viral_protac_design.html')
+
+@app.route('/viral-drug-targets')
+def viral_drug_targets_page():
+    return render_template('viral_drug_targets.html')
+
+@app.route('/in-silico-virology-tools')
+def in_silico_virology_tools_page():
+    return render_template('in_silico_virology_tools.html')
+
+@app.route('/methods')
+def methods_page():
+    return render_template('methods.html')
+
+@app.route('/faq')
+def faq_page():
+    return render_template('faq.html')
+
+@app.route('/citation')
+def citation_page():
+    return render_template('citation.html')
+
 @app.route('/generate_ligand_images', methods=['POST'])
 def generate_ligand_images():
     # Retrieval of form data 

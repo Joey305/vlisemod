@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}FAQ | V-LiSEMOD{% endblock %}
+
+{% block meta_description %}Read the V-LiSEMOD FAQ covering solvent-exposed moieties, warhead linkability, PROTACability, PyMOL exports, project scope, citation, and contact information.{% endblock %}
+
+{% block body_class %}app-shell resource-page{% endblock %}
+
+{% block content %}
+<section class="resource-hero page-section">
+    <div>
+        <span class="page-kicker">FAQ</span>
+        <h1>Frequently asked questions</h1>
+        <p class="resource-lede">Short answers to common questions about what V-LiSEMOD is, how it should be used, and what its outputs do and do not mean.</p>
+    </div>
+</section>
+
+<section class="page-card resource-section">
+    <div class="resource-faq">
+        <details class="resource-faq-item" open>
+            <summary>What is V-LiSEMOD?</summary>
+            <p>V-LiSEMOD is a viral structure-guided web platform for exploring protein-ligand co-crystal structures, interaction evidence, solvent-exposed ligand atoms, PyMOL outputs, and PROTACability-style triage.</p>
+        </details>
+        <details class="resource-faq-item">
+            <summary>What does solvent-exposed moiety mean?</summary>
+            <p>It refers to a ligand region or atom set that remains relatively exposed to solvent in the observed bound pose, making it a potential starting point for modification review.</p>
+        </details>
+        <details class="resource-faq-item">
+            <summary>What is warhead linkability?</summary>
+            <p>Warhead linkability is a structure-guided assessment of whether a bound ligand may present an interpretable attachment point for follow-up chemistry while preserving critical binding context.</p>
+        </details>
+        <details class="resource-faq-item">
+            <summary>What is PROTACability?</summary>
+            <p>Within V-LiSEMOD, PROTACability is a hypothesis-generating structural triage framework that combines ligand-side and target-side evidence relevant to degrader design review.</p>
+        </details>
+        <details class="resource-faq-item">
+            <summary>Does V-LiSEMOD prove degradation?</summary>
+            <p>No. It does not prove degradation, ternary complex formation, or ubiquitination. It helps prioritize structures and ligand contexts for deeper follow-up.</p>
+        </details>
+        <details class="resource-faq-item">
+            <summary>Can I use it for non-viral proteins?</summary>
+            <p>V-LiSEMOD is currently curated around viral protein-ligand structures. Some concepts are generalizable, but the platform is designed primarily for viral structure-guided discovery workflows.</p>
+        </details>
+        <details class="resource-faq-item">
+            <summary>How is it related to PROTAC Builder?</summary>
+            <p>V-LiSEMOD sits upstream. It helps identify and interpret promising viral ligand contexts before users move into downstream bifunctional design in <a href="https://protacbuilder.com" target="_blank" rel="noopener noreferrer">PROTAC Builder</a>.</p>
+        </details>
+        <details class="resource-faq-item">
+            <summary>What exports are available?</summary>
+            <p>The platform supports outputs such as PyMOL sessions and related structure-review artifacts, along with query-driven data exploration and comparison views.</p>
+        </details>
+        <details class="resource-faq-item">
+            <summary>Why generate PyMOL sessions?</summary>
+            <p>PyMOL sessions make it easier to share binding-pocket context, solvent exposure, and ligand-specific evidence with collaborators in a familiar visual format.</p>
+        </details>
+        <details class="resource-faq-item">
+            <summary>How do I cite the project?</summary>
+            <p>Visit the citation page for suggested software citation language and related publication context.</p>
+        </details>
+        <details class="resource-faq-item">
+            <summary>Who should I contact?</summary>
+            <p>For collaboration or project questions, visit the <a href="{{ url_for('contact_page') }}">contact page</a>.</p>
+        </details>
+    </div>
+</section>
+{% endblock %}

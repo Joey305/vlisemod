@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Use Cases for V-LiSEMOD | Viral Structure-Guided Discovery{% endblock %}
+
+{% block meta_description %}Explore practical V-LiSEMOD use cases for antiviral target review, ligand comparison, solvent-exposed atom discovery, PROTACability screening, and PyMOL-based structure communication.{% endblock %}
+
+{% block body_class %}app-shell resource-page{% endblock %}
+
+{% block content %}
+<section class="resource-hero page-section">
+    <div>
+        <span class="page-kicker">Use Cases</span>
+        <h1>How researchers can use V-LiSEMOD</h1>
+        <p class="resource-lede">
+            V-LiSEMOD supports several entry points into viral structure-guided discovery, from target-centric browsing
+            to ligand-first review and degrader-oriented structural triage.
+        </p>
+    </div>
+    <aside class="resource-callout">
+        <span class="resource-callout-label">Who this helps</span>
+        <p>Researchers in antiviral discovery, computational biology, medicinal chemistry, structural bioinformatics, and teaching environments can use the platform to organize structure-backed design questions.</p>
+    </aside>
+</section>
+
+<section class="page-card resource-section">
+    <div class="section-heading">
+        <span class="page-kicker">Research workflows</span>
+        <h2 class="page-title">Common ways to work with the platform</h2>
+    </div>
+    <div class="resource-grid">
+        <article class="resource-card">
+            <h3>Antiviral target exploration</h3>
+            <p>Browse viral protein targets and inspect which co-crystal ligands are already available for structure-guided follow-up.</p>
+        </article>
+        <article class="resource-card">
+            <h3>Viral ligand structure review</h3>
+            <p>Examine binding context, ligand identity, residue environment, and structure-specific evidence before drawing design conclusions.</p>
+        </article>
+        <article class="resource-card">
+            <h3>Warhead and linkability triage</h3>
+            <p>Review whether a known viral ligand presents chemically interpretable, solvent-facing positions that may merit linker-attachment discussion.</p>
+        </article>
+        <article class="resource-card">
+            <h3>Solvent-exposed atom discovery</h3>
+            <p>Use solvent accessibility and atom-level annotation to separate buried binding atoms from more permissive attachment-vector candidates.</p>
+        </article>
+        <article class="resource-card">
+            <h3>PROTACability screening</h3>
+            <p>Use the structural evidence layers as a hypothesis-generating triage system rather than a validated degradation predictor.</p>
+        </article>
+        <article class="resource-card">
+            <h3>Ligand comparison across PDB structures</h3>
+            <p>Compare how related ligands behave in different binding contexts and inspect interaction burden across structures.</p>
+        </article>
+        <article class="resource-card">
+            <h3>PyMOL session generation</h3>
+            <p>Create visual review packages for team discussion, figure preparation, or medicinal chemistry handoff.</p>
+        </article>
+        <article class="resource-card">
+            <h3>Teaching and demo workflows</h3>
+            <p>Show students or collaborators how structural data informs ligand optimization, solvent exposure reasoning, and careful degrader design triage.</p>
+        </article>
+    </div>
+</section>
+
+<section class="page-card resource-section">
+    <div class="section-heading">
+        <span class="page-kicker">Start points</span>
+        <h2 class="page-title">Choose the workflow that matches your question</h2>
+    </div>
+    <div class="resource-grid">
+        <a class="resource-card resource-card-link" href="{{ url_for('index') }}">
+            <h3>Start with Structure Explorer</h3>
+            <p>Open the main workspace and build a PyMOL-ready structure review session.</p>
+            <span class="resource-card-cta">Open Structure Explorer →</span>
+        </a>
+        <a class="resource-card resource-card-link" href="{{ url_for('query_protein_virus_page') }}">
+            <h3>Browse by Protein Target</h3>
+            <p>Search viral proteins, inspect structure coverage, and export target-focused results.</p>
+            <span class="resource-card-cta">Open Protein Query →</span>
+        </a>
+        <a class="resource-card resource-card-link" href="{{ url_for('compare_ligands') }}">
+            <h3>Compare Ligands</h3>
+            <p>Review interaction signatures and cross-structure behavior for viral ligands.</p>
+            <span class="resource-card-cta">Open Ligand Comparison →</span>
+        </a>
+        <a class="resource-card resource-card-link" href="{{ url_for('protacability_page') }}">
+            <h3>Review PROTACability</h3>
+            <p>Inspect structural triage evidence for linkerability, lysine context, and follow-up prioritization.</p>
+            <span class="resource-card-cta">Open PROTACability →</span>
+        </a>
+    </div>
+</section>
+{% endblock %}

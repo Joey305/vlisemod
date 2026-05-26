@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}Viral PROTAC Design and Antiviral Degrader Design | V-LiSEMOD{% endblock %}
+
+{% block meta_description %}Learn how V-LiSEMOD supports early viral PROTAC design and antiviral degrader design triage using ligand pose review, solvent-exposed atom analysis, exit-vector logic, and target-side structural evidence.{% endblock %}
+
+{% block body_class %}app-shell resource-page{% endblock %}
+
+{% block content %}
+<section class="resource-hero page-section">
+    <div>
+        <span class="page-kicker">Viral PROTAC Design</span>
+        <h1>Viral PROTAC design and antiviral degrader design</h1>
+        <p class="resource-lede">
+            Viral PROTAC design refers to the careful attempt to adapt a viral target binder into one part of a bifunctional
+            degrader concept. That step is challenging because a useful antiviral inhibitor is not automatically a useful degrader warhead.
+        </p>
+        <div class="action-row resource-hero-actions">
+            <a class="button-primary" href="{{ url_for('protacability_page') }}">Review PROTACability</a>
+            <a class="button-secondary" href="{{ url_for('about_page') }}">About V-LiSEMOD</a>
+            <a class="button-primary external-link" href="https://protacbuilder.com/builder" target="_blank" rel="noopener noreferrer">Open PROTAC Builder ↗</a>
+        </div>
+    </div>
+    <aside class="resource-callout resource-callout-warning">
+        <span class="resource-callout-label">Important limitation</span>
+        <p>V-LiSEMOD does not validate degradation; it prioritizes structures and ligand contexts for follow-up review.</p>
+    </aside>
+</section>
+
+<section class="page-card resource-section">
+    <div class="section-heading">
+        <span class="page-kicker">Why this is hard</span>
+        <h2 class="page-title">Viral targets create special design constraints</h2>
+    </div>
+    <div class="resource-split">
+        <div>
+            <p>Viral proteins can offer compact binding pockets, transient interfaces, conformational variability, and uncertain cellular accessibility in degrader-relevant settings. Even when a ligand binds well in a co-crystal structure, that does not mean it can tolerate linker growth or recruit an E3 ligase productively.</p>
+            <p>A degrader concept has to preserve enough binding affinity and pose fidelity to keep the viral target engaged while also opening a path toward ternary complex formation, ubiquitination, and cellular degradation. Each of those later steps remains uncertain from structure alone.</p>
+        </div>
+        <div class="resource-list-card">
+            <h3>Key design questions</h3>
+            <ul>
+                <li>Does the ligand binding pose expose a plausible attachment point?</li>
+                <li>Are any ligand atoms solvent-exposed enough to support exit-vector logic?</li>
+                <li>Could linker attachment preserve essential interaction context?</li>
+                <li>Is target lysine accessibility worth follow-up review?</li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<section class="page-card resource-section">
+    <div class="section-heading">
+        <span class="page-kicker">Evidence layers</span>
+        <h2 class="page-title">What a viral degrader concept needs beyond simple binding</h2>
+    </div>
+    <div class="resource-grid">
+        <article class="resource-card">
+            <h3>Ligand binding pose</h3>
+            <p>The observed pose helps define which atoms are buried, which interactions appear critical, and which regions may tolerate limited chemical growth.</p>
+        </article>
+        <article class="resource-card">
+            <h3>Solvent-exposed ligand atoms</h3>
+            <p>Exposure mapping can highlight atoms or moieties that remain outward-facing after binding and therefore may be more compatible with modification.</p>
+        </article>
+        <article class="resource-card">
+            <h3>Exit-vector logic</h3>
+            <p>Attachment is not just about exposure. The direction of growth matters for sterics, pocket escape, and downstream linker routing.</p>
+        </article>
+        <article class="resource-card">
+            <h3>Linker attachment</h3>
+            <p>Chemical tractability, synthetic feasibility, and preservation of target engagement all matter when moving from binder to candidate warhead.</p>
+        </article>
+        <article class="resource-card">
+            <h3>Target lysine accessibility</h3>
+            <p>Accessible lysine context may support follow-up review, but it does not prove productive ubiquitination will occur.</p>
+        </article>
+        <article class="resource-card">
+            <h3>E3 recruiter selection</h3>
+            <p>Recruiter choice can shape geometry, permeability, selectivity, and feasibility, making downstream partner selection a major source of uncertainty.</p>
+        </article>
+        <article class="resource-card">
+            <h3>Ternary complex uncertainty</h3>
+            <p>Even promising structural cues cannot guarantee that a productive ternary complex will form or persist in cells.</p>
+        </article>
+    </div>
+</section>
+
+<section class="page-card resource-section">
+    <div class="section-heading">
+        <span class="page-kicker">How V-LiSEMOD helps</span>
+        <h2 class="page-title">Early triage before deeper modeling or experimental work</h2>
+    </div>
+    <div class="resource-link-panel">
+        <p>V-LiSEMOD helps prioritize viral structures for follow-up by combining ligand context, interaction evidence, solvent exposure, and target-side cues into a transparent review workflow. It is best used to narrow candidate structures and frame design conversations before medicinal chemistry, ternary modeling, or biological testing.</p>
+        <div class="action-row">
+            <a class="button-secondary" href="{{ url_for('protacability_page') }}">Open PROTACability</a>
+            <a class="button-secondary" href="{{ url_for('compare_ligands') }}">Compare ligands</a>
+            <a class="button-secondary external-link" href="https://e3ligandalyzer.com" target="_blank" rel="noopener noreferrer">Open E3 Ligandalyzer ↗</a>
+        </div>
+    </div>
+</section>
+{% endblock %}

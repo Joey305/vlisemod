@@ -100,7 +100,7 @@
             <div class="quickstart-footer-row">
                 <label class="quickstart-preference">
                     <input type="checkbox" id="dontShowQuickStartAgain">
-                    <span>Do not show this launcher again on this browser</span>
+                    <span>Hide this launcher on this browser</span>
                 </label>
                 <button id="skipQuickStartButton" class="quickstart-dismiss" type="button">
                     Continue browsing this page
@@ -134,7 +134,7 @@
         
     <section class="page-intro page-intro-hero">
         <span class="page-kicker">V-LiSEMOD Workspace</span>
-        <h1 class="page-title">Explore viral protein-ligand structures, surface exposure, and degrader-ready chemistry from one curated workspace.</h1>
+        <h1 class="page-title">Explore viral protein-ligand structures, surface exposure, and degrader-readiness evidence from one curated workspace.</h1>
         <p class="page-subtitle">Select a virus, choose a PDB structure, inspect the bound ligand, and generate PyMOL sessions, ligand imagery, or query-ready outputs without leaving the V-LiSEMOD environment.</p>
         <div class="hero-signal-bar">
             <span>Select virus</span>
@@ -187,7 +187,7 @@
     <section class="page-card page-section landing-card-shell">
         <div class="section-heading">
             <span class="page-kicker">Workflow Modules</span>
-            <h2 class="page-title">Move between structure query, ligand comparison, and molecule support without switching mental context.</h2>
+            <h2 class="page-title">Move between structure query, ligand comparison, and design triage in one workflow.</h2>
         </div>
         <div class="tool-grid">
             <article class="tool-card feature-card">
@@ -205,7 +205,7 @@
             <article class="tool-card feature-card">
                 <span class="feature-badge">Comparative Analysis</span>
                 <h3>Ligand Comparison</h3>
-                <p>Compare ligand interaction signatures across PDB structures and inspect warhead-ready candidates.</p>
+                <p>Compare ligand interaction signatures across PDB structures and inspect warhead-relevant ligand contexts.</p>
                 <a class="button-secondary" href="{{ url_for('compare_ligands') }}">Open Comparison</a>
             </article>
             <article class="tool-card feature-card">
@@ -218,7 +218,7 @@
             <article class="tool-card feature-card">
                 <span class="feature-badge">Embedded Assistant</span>
                 <h3>Drug GPT</h3>
-                <p>Launch the local Drug GPT workspace for molecule-focused support without leaving the V-LiSEMOD shell.</p>
+                <p>Launch the embedded Drug GPT workspace for molecule-focused support alongside the V-LiSEMOD workflow.</p>
                 <a class="button-secondary" href="{% if enable_drug_gpt %}{{ url_for('dp.home') }}{% else %}/drugapp/{% endif %}">Open Drug GPT</a>
             </article>
             {% endif %}
@@ -267,7 +267,6 @@
                 </div>
             </div>
 
-          <!-- Chain container to select chain when multiple chains are present -->
             <div id="chain-container" class="form-group chain-group" style="display:none;">
                 <label for="chain">Select Chain:</label>
                 <select id="chain" name="chain" class="searchable-select">
@@ -275,8 +274,6 @@
                 </select>
             </div>
 
-            
-            <!-- Checkbox container for additional selections -->
             <div class="checkbox-container option-card-grid">
                 <label class="checkbox-label">
                     <input type="checkbox" name="binding_pocket" id="binding_pocket" value="1">
@@ -291,28 +288,6 @@
                         </span>
                     </span>
                 </label>
-
-                <!-- <label class="checkbox-label">
-                    <input type="checkbox" name="hydrated_atoms" id="hydrated_atoms" value="1">
-                    Hydrated Atoms
-                    <span class="tooltip">ℹ️
-                        <span class="tooltip-text">
-                            Hydrated atoms are atoms that were within 5 Angstroms of one or more H2O molecules in the crystal structure.
-                            Selecting this option creates an object that colors the ligand atoms cyan.
-                        </span>
-                    </span>
-                </label>
-
-                <label class="checkbox-label">
-                    <input type="checkbox" name="distal_atoms" id="distal_atoms" value="1">
-                    Distal Atoms
-                    <span class="tooltip">ℹ️
-                        <span class="tooltip-text">
-                            Distal atoms were atoms that were found 4.15 Angstroms away from the nearest protein atoms. 
-                            Selecting this option creates an object and colors the object blue.
-                        </span>
-                    </span>
-                </label> -->
 
                 <label class="checkbox-label">
                     <input type="checkbox" name="solvent_exposed_atoms" id="solvent_exposed_atoms" value="1">
@@ -346,29 +321,54 @@
                 </label>
             </div>
 
-            <!-- Add the buttons inside a flexbox to align side-by-side -->
             <div class="buttons-container action-row">
                 <button type="submit">Generate PyMOL Session</button>
                 <button class="button-secondary" type="button" id="generateLigandImagesButton" disabled title="No SMILES file present in the database" onclick="submitLigandImagesForm()">Generate Ligand Images</button>
             </div>
         </form>
 
-        <!-- The hidden ligand images form, triggered by the button above -->
         <form id="ligandImagesForm" action="/generate_ligand_images" method="POST" style="display:none;">
             <input type="hidden" name="virus" id="virus_hidden" />
             <input type="hidden" name="pdb_code" id="pdb_code_hidden" />
             <input type="hidden" name="ligand" id="ligand_hidden" />
-            <input type="hidden" name="chain" id="chain_hidden" /> <!-- New hidden input for chain -->
+            <input type="hidden" name="chain" id="chain_hidden" />
         </form>
     </section>
 
+    <section class="page-card page-section landing-card-shell resource-cluster-section">
+        <div class="section-heading">
+            <span class="page-kicker">Project resources</span>
+            <h2 class="page-title">Learn more without leaving the workflow</h2>
+            <p class="page-subtitle">Explore methods, use cases, viral PROTAC design context, collaboration, and citation guidance.</p>
+        </div>
+        <div class="resource-grid resource-grid-compact">
+            <a class="resource-card resource-card-link" href="{{ url_for('use_cases_page') }}">
+                <h3>Use cases</h3>
+                <p>See how target-first, ligand-first, and degrader-oriented users work with V-LiSEMOD.</p>
+                <span class="resource-card-cta">Read more →</span>
+            </a>
+            <a class="resource-card resource-card-link" href="{{ url_for('viral_protac_design_page') }}">
+                <h3>Viral PROTAC design</h3>
+                <p>Understand the structural logic and limitations behind antiviral degrader concepts.</p>
+                <span class="resource-card-cta">Read more →</span>
+            </a>
+            <a class="resource-card resource-card-link" href="{{ url_for('methods_page') }}">
+                <h3>Methods overview</h3>
+                <p>Review curation, interaction analysis, exposure mapping, and reproducibility framing.</p>
+                <span class="resource-card-cta">Read more →</span>
+            </a>
+            <a class="resource-card resource-card-link" href="{{ url_for('contact_page') }}">
+                <h3>Contact and collaboration</h3>
+                <p>Reach out about scientific collaboration, software development, and dataset growth.</p>
+                <span class="resource-card-cta">Read more →</span>
+            </a>
+        </div>
+    </section>
+
     <div class="action-row page-section">
-        <a class="button-ghost" href="{{ url_for('coming_soon') }}">Learn More About Upcoming Features</a>
+        <a class="button-ghost" href="{{ url_for('coming_soon') }}">View planned features</a>
     </div>
 
-
-
-    <!-- JavaScript for popup and form functionalities -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-beta.1/js/select2.min.js"></script>
     <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
@@ -543,78 +543,5 @@
 
         })();
     </script>
-   <!-- Chatbot HTML -->
-
-
-   <!-- Chatbot Icon -->
-<div id="chatbot-icon" onclick="toggleChatbot()">💬</div>
-    
-    
-
-<!-- Chatbot Popup -->
-<div id="chatbot-popup">
-    
-    <!-- "X" Close Button -->
-    <button id="close-chatbot" onclick="closeChatbotPopup()">✖</button>
-
-    <!-- Chatbot Frame (Hidden Initially) -->
-    <iframe id="chatbot-frame" style="width: 100%; height: 90%; border: none; display: none;"></iframe>
-
-    <!-- Coming Soon Message (Hidden Initially) -->
-    <div id="coming-soon-message" style="text-align: center; display: none;">
-        <h2>JARI Drug Insight Bot Coming Soon</h2>
-    </div>
-</div>
-
-
-
-<script>
-    let isDrugAppAvailable = false; // Default to false
-
-    async function checkDrugApp() {
-        try {
-            // Try fetching the chatbot page
-            const response = await fetch("/drugapp/", { method: "HEAD" });
-
-            if (response.ok) {
-                isDrugAppAvailable = true; // ✅ DrugApp is available
-            } else {
-                console.warn("DrugApp is not available.");
-            }
-        } catch (error) {
-            console.warn("Error checking DrugApp availability:", error);
-        }
-    }
-
-    // Run check when the page loads
-    checkDrugApp();
-
-    function toggleChatbot() {
-        document.getElementById("chatbot-frame").src = window.location.origin + "/drugapp/";
-        const chatbotPopup = document.getElementById("chatbot-popup");
-        const chatbotFrame = document.getElementById("chatbot-frame");
-        const comingSoonMessage = document.getElementById("coming-soon-message");
-
-        if (chatbotPopup.style.display === "none" || chatbotPopup.style.display === "") {
-            // If popup is closed, open it
-            if (isDrugAppAvailable) {
-                chatbotFrame.style.display = "block";
-                comingSoonMessage.style.display = "none";
-            } else {
-                chatbotFrame.style.display = "none";
-                comingSoonMessage.style.display = "block";
-            }
-            chatbotPopup.style.display = "block"; // Show popup
-        } else {
-            // If popup is open, close it
-            chatbotPopup.style.display = "none";
-        }
-    }
-
-
-    function closeChatbotPopup() {
-        document.getElementById("chatbot-popup").style.display = "none";
-    }
-</script>
 {% endblock %}
  

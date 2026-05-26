@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Citation and Attribution | V-LiSEMOD{% endblock %}
+
+{% block meta_description %}Find suggested V-LiSEMOD citation language, related publication details, and attribution guidance for public use of the platform and its structure-guided outputs.{% endblock %}
+
+{% block body_class %}app-shell resource-page{% endblock %}
+
+{% block content %}
+<section class="resource-hero page-section">
+    <div>
+        <span class="page-kicker">Citation</span>
+        <h1>Citation and attribution</h1>
+        <p class="resource-lede">
+            If you use V-LiSEMOD in research, presentations, or collaborative analysis, please cite the project
+            and any related publications that informed the scientific framing.
+        </p>
+    </div>
+    <aside class="resource-callout">
+        <span class="resource-callout-label">Project description</span>
+        <p>V-LiSEMOD is a structure-guided viral ligand analysis platform focused on interaction review, solvent-exposed atoms, warhead/linkability evidence, PyMOL exports, and PROTACability-style triage.</p>
+    </aside>
+</section>
+
+<section class="page-card resource-section">
+    <div class="resource-stack">
+        <article class="resource-card">
+            <h2>Suggested software citation</h2>
+            <div class="resource-copy-block" data-copy-block>
+                <p id="software-citation">Schulz, J.-M. V-LiSEMOD: Viral Ligand Solvent-Exposed Moiety Database for Structure-Guided Warhead Discovery and Degrader-Readiness Triage. Research software and web platform.</p>
+                <button class="button-secondary resource-copy-button" type="button" data-copy-target="software-citation">Copy software citation</button>
+            </div>
+        </article>
+        <article class="resource-card">
+            <h2>Related publication</h2>
+            <div class="resource-copy-block" data-copy-block>
+                <p id="related-publication">Khurshid, Schulz, Hu, Snowden, Reynolds, and Schurer. Targeted degrader technologies as prospective SARS-CoV-2 therapies. Drug Discovery Today. 2024. DOI: 10.1016/j.drudis.2023.103847</p>
+                <button class="button-secondary resource-copy-button" type="button" data-copy-target="related-publication">Copy publication citation</button>
+            </div>
+            <p><a class="external-link" href="https://doi.org/10.1016/j.drudis.2023.103847" target="_blank" rel="noopener noreferrer">Open DOI record ↗</a></p>
+        </article>
+    </div>
+    <p class="resource-copy-feedback" id="citation-copy-feedback" role="status" aria-live="polite"></p>
+</section>
+
+<section class="page-card resource-section">
+    <div class="action-row">
+        <a class="button-secondary" href="{{ url_for('methods_page') }}">Methods</a>
+        <a class="button-secondary" href="{{ url_for('contact_page') }}">Contact</a>
+        <a class="button-secondary" href="{{ url_for('about_page') }}">About</a>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    const feedback = document.getElementById("citation-copy-feedback");
+    const buttons = document.querySelectorAll("[data-copy-target]");
+
+    async function copyText(text) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(text);
+            return;
+        }
+        const helper = document.createElement("textarea");
+        helper.value = text;
+        document.body.appendChild(helper);
+        helper.select();
+        document.execCommand("copy");
+        document.body.removeChild(helper);
+    }
+
+    buttons.forEach((button) => {
+        button.addEventListener("click", async () => {
+            const target = document.getElementById(button.dataset.copyTarget);
+            if (!target) return;
+            try {
+                await copyText(target.textContent.trim());
+                if (feedback) feedback.textContent = "Citation copied.";
+            } catch (error) {
+                if (feedback) feedback.textContent = "Copy failed. Please copy manually.";
+            }
+        });
+    });
+})();
+</script>
+{% endblock %}

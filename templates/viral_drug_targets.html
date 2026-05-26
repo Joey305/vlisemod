@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}Viral Protein Drug Targets | V-LiSEMOD{% endblock %}
+
+{% block meta_description %}Explore viral protein drug targets in structure-guided antiviral discovery, including proteases, polymerases, reverse transcriptase, integrase, fusion proteins, helicases, and other structurally supported target classes.{% endblock %}
+
+{% block body_class %}app-shell resource-page{% endblock %}
+
+{% block content %}
+<section class="resource-hero page-section">
+    <div>
+        <span class="page-kicker">Viral Targets</span>
+        <h1>Viral protein drug targets in structure-guided antiviral discovery</h1>
+        <p class="resource-lede">
+            Viral drug targets are often evaluated through co-crystal ligand structures that reveal how inhibitors engage
+            catalytic motifs, nucleic-acid handling regions, or allosteric pockets. Those structures can guide both classical inhibitor optimization and degrader-oriented follow-up.
+        </p>
+    </div>
+    <aside class="resource-callout">
+        <span class="resource-callout-label">Use V-LiSEMOD for</span>
+        <p>Target-first exploration, ligand context review, binding pocket inspection, and cautious warhead-readiness triage across curated viral structures.</p>
+    </aside>
+</section>
+
+<section class="page-card resource-section">
+    <div class="section-heading">
+        <span class="page-kicker">Target classes</span>
+        <h2 class="page-title">Examples of structurally important viral proteins</h2>
+    </div>
+    <div class="resource-grid">
+        <article class="resource-card">
+            <h3>Proteases</h3>
+            <p>Viral proteases remain central small-molecule targets because active-site and covalent or noncovalent inhibitor complexes often provide interpretable structural design cues.</p>
+        </article>
+        <article class="resource-card">
+            <h3>Polymerases</h3>
+            <p>RNA and DNA polymerase structures can support review of nucleotide analogs, non-nucleoside binders, and pocket-specific optimization strategies.</p>
+        </article>
+        <article class="resource-card">
+            <h3>Reverse transcriptase</h3>
+            <p>Reverse transcriptase complexes remain important for understanding antiviral ligand positioning, resistance-sensitive regions, and comparative binding behavior.</p>
+        </article>
+        <article class="resource-card">
+            <h3>Integrase</h3>
+            <p>Integrase structures and inhibitor complexes can reveal metal coordination, conserved binding patterns, and structural liabilities relevant to follow-up chemistry.</p>
+        </article>
+        <article class="resource-card">
+            <h3>Spike, envelope, and fusion proteins</h3>
+            <p>Where structurally supported, entry-associated proteins can provide ligand or interface context relevant to inhibitor design and mechanistic interpretation.</p>
+        </article>
+        <article class="resource-card">
+            <h3>Helicases and accessory proteins</h3>
+            <p>Additional viral proteins may become tractable when structural coverage, bound ligands, and interpretable pockets are available.</p>
+        </article>
+    </div>
+</section>
+
+<section class="page-card resource-section">
+    <div class="section-heading">
+        <span class="page-kicker">Why co-crystal structures matter</span>
+        <h2 class="page-title">What structure-backed ligand data can support</h2>
+    </div>
+    <div class="resource-grid">
+        <article class="resource-card">
+            <h3>Inhibitor optimization</h3>
+            <p>Binding pose and interaction evidence help identify which ligand regions are likely to be protected versus more modifiable.</p>
+        </article>
+        <article class="resource-card">
+            <h3>Ligand comparison</h3>
+            <p>Cross-structure analysis helps reveal conserved contacts, context-dependent liabilities, and target-specific series behavior.</p>
+        </article>
+        <article class="resource-card">
+            <h3>Binding pocket analysis</h3>
+            <p>Researchers can inspect residue context, pocket openness, and local geometry before proposing structural changes.</p>
+        </article>
+        <article class="resource-card">
+            <h3>Warhead selection</h3>
+            <p>Some structures may better support warhead-oriented follow-up when solvent-facing atoms and attachment logic remain interpretable.</p>
+        </article>
+        <article class="resource-card">
+            <h3>Degrader-readiness triage</h3>
+            <p>Target structures can be prioritized for hypothesis-generating PROTACability review without overstating what structural data alone can prove.</p>
+        </article>
+    </div>
+</section>
+
+<section class="page-card resource-section">
+    <div class="resource-link-panel">
+        <p>To explore viral targets directly, start with the target-centric query interface or move from the main structure explorer into ligand-specific follow-up.</p>
+        <div class="action-row">
+            <a class="button-primary" href="{{ url_for('query_protein_virus_page') }}">Browse by protein target</a>
+            <a class="button-secondary" href="{{ url_for('index') }}">Open Structure Explorer</a>
+        </div>
+    </div>
+</section>
+{% endblock %}

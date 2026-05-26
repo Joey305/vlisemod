@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}Methods Overview | V-LiSEMOD{% endblock %}
+
+{% block meta_description %}Read a public methods overview for V-LiSEMOD covering data curation, ligand indexing, interaction analysis, solvent exposure mapping, PyMOL session generation, and PROTACability evidence layers.{% endblock %}
+
+{% block body_class %}app-shell resource-page{% endblock %}
+
+{% block content %}
+<section class="resource-hero page-section">
+    <div>
+        <span class="page-kicker">Methods</span>
+        <h1>Methods overview</h1>
+        <p class="resource-lede">
+            This page summarizes the methodology behind V-LiSEMOD, including data curation, ligand indexing,
+            interaction analysis, solvent exposure mapping, PyMOL session generation, and PROTACability evidence layers.
+        </p>
+    </div>
+    <aside class="resource-callout resource-callout-warning">
+        <span class="resource-callout-label">Scope</span>
+        <p>The platform is designed for structure-guided interpretation, annotation, and triage. It should not be treated as a substitute for experimental validation.</p>
+    </aside>
+</section>
+
+<section class="page-card resource-section">
+    <div class="resource-stack">
+        <article class="resource-card">
+            <h2>Data sources and curation</h2>
+            <p>V-LiSEMOD organizes viral protein-ligand structures from public structural resources and project curation workflows. The goal is to preserve interpretable links among virus identity, protein target, structure, ligand, chain context, and downstream annotations.</p>
+        </article>
+        <article class="resource-card">
+            <h2>Ligand and structure indexing</h2>
+            <p>Structures and ligands are indexed to support structure-first, target-first, and ligand-first discovery workflows. This makes it easier to move between PDB identifiers, ligand codes, mapped residue context, and comparative review.</p>
+        </article>
+        <article class="resource-card">
+            <h2>Protein-ligand interaction analysis</h2>
+            <p>Interaction review layers summarize contacts between viral proteins and bound ligands so users can distinguish conserved interaction anchors from regions that may be more permissive. Arpeggio-style contact data contributes to this interpretation layer when interaction annotations are available.</p>
+        </article>
+        <article class="resource-card">
+            <h2>Solvent exposure mapping</h2>
+            <p>Ligand atom exposure is evaluated using solvent-accessibility logic consistent with Shrake-Rupley SASA calculations and a 1.4 Angstrom probe radius using the platform’s solvent-exposure workflow. These outputs help highlight ligand atoms that remain more outward-facing in the observed bound pose.</p>
+        </article>
+        <article class="resource-card">
+            <h2>Functional group and SMILES-linked annotations</h2>
+            <p>Ligand records may be linked to functional-group and SMILES-based annotations so solvent exposure and atom identity can be interpreted in a chemically meaningful way rather than as isolated atom numbers.</p>
+        </article>
+        <article class="resource-card">
+            <h2>PyMOL session generation</h2>
+            <p>The app can package selected structures, binding-pocket context, and ligand-focused annotations into PyMOL sessions for collaborative visual review, figure preparation, and downstream design discussion.</p>
+        </article>
+        <article class="resource-card">
+            <h2>PROTACability evidence layers</h2>
+            <p>PROTACability in V-LiSEMOD combines ligand-centered and target-centered evidence, including warhead linkability, solvent exposure, target lysine context, and related structural cues. These are intended as transparent hypothesis-generating layers for triage rather than experimentally validated degradation predictions.</p>
+        </article>
+        <article class="resource-card">
+            <h2>Exports and reproducibility</h2>
+            <p>The platform emphasizes traceable structure identifiers, queryable outputs, and reusable visual review artifacts so users can revisit the same structural context and communicate it across collaborators.</p>
+        </article>
+        <article class="resource-card">
+            <h2>Limitations</h2>
+            <p>Structure-derived annotations do not prove cellular activity, warhead viability, ternary complex formation, ubiquitination, or degradation. Results should be interpreted together with chemistry, assay data, and broader biological context.</p>
+        </article>
+    </div>
+</section>
+
+<section class="page-card resource-section">
+    <div class="action-row">
+        <a class="button-secondary" href="{{ url_for('citation_page') }}">Citation</a>
+        <a class="button-secondary" href="{{ url_for('contact_page') }}">Contact</a>
+        <a class="button-secondary" href="{{ url_for('about_page') }}">About</a>
+    </div>
+</section>
+{% endblock %}

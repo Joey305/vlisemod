@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}In Silico Virology Tools and Structure-Guided Antiviral Workflows | V-LiSEMOD{% endblock %}
+
+{% block meta_description %}See how V-LiSEMOD fits into in silico virology workflows spanning PDB structure mining, ligand interaction analysis, solvent accessibility review, PyMOL visualization, and degrader-oriented triage.{% endblock %}
+
+{% block body_class %}app-shell resource-page{% endblock %}
+
+{% block content %}
+<section class="resource-hero page-section">
+    <div>
+        <span class="page-kicker">In Silico Virology</span>
+        <h1>In silico virology tools for structure-guided antiviral discovery</h1>
+        <p class="resource-lede">
+            In silico virology brings together structural biology, cheminformatics, interaction analysis, and visual review
+            to help researchers organize antiviral discovery questions before deeper modeling or experiments.
+        </p>
+    </div>
+    <aside class="resource-callout">
+        <span class="resource-callout-label">Where V-LiSEMOD fits</span>
+        <p>The platform connects curated viral protein-ligand structures with exposure mapping, interaction evidence, PyMOL outputs, and degrader-oriented structural triage.</p>
+    </aside>
+</section>
+
+<section class="page-card resource-section">
+    <div class="section-heading">
+        <span class="page-kicker">Workflow components</span>
+        <h2 class="page-title">A practical structure-guided stack</h2>
+    </div>
+    <div class="resource-grid">
+        <article class="resource-card">
+            <h3>PDB structure mining</h3>
+            <p>Curated structure mining helps researchers identify viral targets, ligands, and protein-ligand contexts that deserve closer review.</p>
+        </article>
+        <article class="resource-card">
+            <h3>Ligand interaction analysis</h3>
+            <p>Contact-aware views help interpret which atoms contribute to binding and which regions may be less constrained.</p>
+        </article>
+        <article class="resource-card">
+            <h3>Solvent accessibility analysis</h3>
+            <p>Solvent-exposed atom mapping can support modification logic, exit-vector discussion, and figure generation.</p>
+        </article>
+        <article class="resource-card">
+            <h3>Cheminformatics and annotation</h3>
+            <p>Functional-group and ligand identity layers can make structural outputs easier to communicate across computational and medicinal teams.</p>
+        </article>
+        <article class="resource-card">
+            <h3>PyMOL visualization</h3>
+            <p>PyMOL session generation enables shareable structure review packages for teaching, collaborative analysis, and design discussions.</p>
+        </article>
+        <article class="resource-card">
+            <h3>PROTAC and degrader triage</h3>
+            <p>For suitable questions, V-LiSEMOD can help prioritize ligand contexts for more careful degrader-oriented follow-up.</p>
+        </article>
+    </div>
+</section>
+
+<section class="page-card resource-section">
+    <div class="section-heading">
+        <span class="page-kicker">Companion ecosystem</span>
+        <h2 class="page-title">Connected tools for downstream design</h2>
+    </div>
+    <div class="resource-grid">
+        <a class="resource-card resource-card-link" href="https://warheadhunter.com" target="_blank" rel="noopener noreferrer">
+            <h3>Warhead Hunter</h3>
+            <p>Continue structure-aware warhead and exit-vector review for viral ligands.</p>
+            <span class="resource-card-cta">Open Warhead Hunter ↗</span>
+        </a>
+        <a class="resource-card resource-card-link" href="https://e3ligandalyzer.com" target="_blank" rel="noopener noreferrer">
+            <h3>E3 Ligandalyzer</h3>
+            <p>Inspect recruiter-side structure context and E3 ligand design questions.</p>
+            <span class="resource-card-cta">Open E3 Ligandalyzer ↗</span>
+        </a>
+        <a class="resource-card resource-card-link" href="https://protacbuilder.com" target="_blank" rel="noopener noreferrer">
+            <h3>PROTAC Builder</h3>
+            <p>Move from structural triage into bifunctional design assembly and concept exploration.</p>
+            <span class="resource-card-cta">Open PROTAC Builder ↗</span>
+        </a>
+    </div>
+    <div class="action-row">
+        <a class="button-secondary" href="{{ url_for('about_page') }}">About V-LiSEMOD</a>
+        <a class="button-secondary" href="{{ url_for('methods_page') }}">Methods overview</a>
+        <a class="button-secondary" href="{{ url_for('compare_ligands') }}">Compare ligands</a>
+    </div>
+</section>
+{% endblock %}

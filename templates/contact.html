@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Contact and Collaboration | V-LiSEMOD{% endblock %}
+
+{% block meta_description %}Contact V-LiSEMOD for collaboration in viral drug discovery, structural bioinformatics, targeted protein degradation, antiviral degrader concepts, and scientific software development.{% endblock %}
+
+{% block body_class %}app-shell resource-page{% endblock %}
+
+{% block content %}
+<section class="resource-hero page-section">
+    <div>
+        <span class="page-kicker">Contact</span>
+        <h1>Contact and collaboration</h1>
+        <p class="resource-lede">
+            V-LiSEMOD is a research and software project for structure-guided viral ligand analysis,
+            solvent-exposed atom review, warhead/linkability assessment, PyMOL session generation,
+            and PROTACability-style hypothesis generation.
+        </p>
+        <div class="action-row resource-hero-actions">
+            <a class="button-primary" href="mailto:jxs794@miami.edu">Email Joseph-Michael Schulz</a>
+            <a class="button-secondary" href="{{ url_for('about_page') }}">About V-LiSEMOD</a>
+            <a class="button-ghost" href="{{ url_for('citation_page') }}">Citation guidance</a>
+        </div>
+    </div>
+    <aside class="resource-callout">
+        <span class="resource-callout-label">Collaboration areas</span>
+        <p>V-LiSEMOD is especially relevant for teams working at the interface of structural biology, medicinal chemistry, cheminformatics, and degrader-oriented antiviral design.</p>
+    </aside>
+</section>
+
+<section class="page-card resource-section">
+    <div class="section-heading">
+        <span class="page-kicker">Ways to collaborate</span>
+        <h2 class="page-title">Topics that fit this project well</h2>
+        <p class="page-subtitle">The project emphasizes careful, structure-guided scientific use, transparent interpretation, and collaboration around antiviral discovery workflows.</p>
+    </div>
+    <div class="resource-grid">
+        <article class="resource-card">
+            <h3>Viral drug discovery</h3>
+            <p>Structure-guided review of viral co-crystal complexes, ligand series, and tractable target classes for follow-up analysis.</p>
+        </article>
+        <article class="resource-card">
+            <h3>Structural bioinformatics</h3>
+            <p>Dataset curation, structure mining, annotation workflows, and methods development around viral protein-ligand complexes.</p>
+        </article>
+        <article class="resource-card">
+            <h3>Targeted protein degradation</h3>
+            <p>Hypothesis-generating degrader-readiness triage for viral targets, including warhead context and lysine accessibility review.</p>
+        </article>
+        <article class="resource-card">
+            <h3>PROTAC design</h3>
+            <p>Early-stage exit-vector reasoning, linker attachment questions, and handoff into downstream design tools.</p>
+        </article>
+        <article class="resource-card">
+            <h3>Antiviral degrader concepts</h3>
+            <p>Exploratory design discussions for induced-proximity strategies against viral proteins and viral-host interfaces.</p>
+        </article>
+        <article class="resource-card">
+            <h3>Dataset expansion</h3>
+            <p>New viral target classes, additional curated structures, annotation coverage, and benchmarking-ready public data layers.</p>
+        </article>
+        <article class="resource-card">
+            <h3>Manuscript and software collaboration</h3>
+            <p>Joint work on scientific communication, reproducible methods, web tools, and companion platform integration.</p>
+        </article>
+    </div>
+</section>
+
+<section class="page-card resource-section">
+    <div class="section-heading">
+        <span class="page-kicker">Get in touch</span>
+        <h2 class="page-title">Start with a concise project note</h2>
+    </div>
+    <div class="resource-link-panel">
+        <p>For collaboration, citation questions, platform feedback, or research discussions related to V-LiSEMOD, send a brief note describing the project, dataset, collaboration idea, or question.</p>
+        <div class="action-row">
+            <a class="button-primary" href="mailto:jxs794@miami.edu?subject=V-LiSEMOD%20collaboration">Contact about V-LiSEMOD</a>
+            <a class="button-secondary" href="{{ url_for('methods_page') }}">Methods overview</a>
+            <a class="button-secondary" href="{{ url_for('citation_page') }}">Citation page</a>
+        </div>
+    </div>
+</section>
+{% endblock %}
