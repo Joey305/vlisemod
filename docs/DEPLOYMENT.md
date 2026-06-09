@@ -10,6 +10,7 @@ Confirmed from the current codebase:
 
 - `FLASK_SECRET_KEY`: session secret; should be overridden outside local testing
 - `VLISMOD_DATA_BACKEND`: data source mode for the simple lookup routes; `local`, `randy`, or `auto`
+- `VLISMOD_BACKUP_URL`: preferred production-style RANDY V-LiSEMOD base URL, for example `https://randy.rove-vernier.ts.net/backup/vlismod`
 - `RANDY_API_BASE_URL`: base URL for the RANDY service, for example `http://127.0.0.1:5001`
 - `RANDY_API_TOKEN`: bearer token used by V-LiSEMOD when calling RANDY
 - `SHOW_DRUG_GPT_NAV`: show or hide the Drug GPT navigation entry
@@ -28,6 +29,7 @@ Additional variables used by the RANDY backend:
 
 - `VLISMOD_API_TOKEN`: bearer token expected by RANDY for `/api/vlismod/*`
 - `VLISMOD_DB_PATH`: filesystem path to the SQLite database RANDY should query
+- `RANDY_BACKUP_TOKEN` or `PROTAC_BACKUP_TOKEN`: accepted as fallback token env vars for `/backup/vlismod/*` if you want V-LiSEMOD to follow the same backup-token convention as the other RANDY services
 
 ## Running With `python app.py`
 
@@ -57,8 +59,11 @@ No `Procfile` is currently present in the repository root, and `gunicorn` is not
 
 ## Procfile Notes
 
-- No root `Procfile` was found during inspection.
-- If deploying to a platform that expects a `Procfile`, add one intentionally and keep it aligned with the true runtime command.
+- The repository root now includes `Procfile` for the main V-LiSEMOD Flask app using `gunicorn app:app`.
+- A separate `Procfile.randy` is also available for RANDY-only deployment and uses `gunicorn app:APP --chdir RANDY ...`.
+- Heroku only consumes a root `Procfile`, so separate Heroku apps still need an explicit deployment workflow:
+  - deploy V-LiSEMOD with the root `Procfile`
+  - deploy RANDY from a repo layout, branch, or build step that makes the `Procfile.randy` command the active web process
 
 ## GitHub-First Deployment Workflow
 
@@ -91,13 +96,15 @@ RANDY service:
 
 - set `VLISMOD_API_TOKEN`
 - set `VLISMOD_DB_PATH`
-- confirm `GET /api/vlismod/health` and authenticated `GET /api/vlismod/db-health`
+- confirm `GET /backup/vlismod/health` and authenticated `GET /backup/vlismod/db-health`
+- preserve `/api/vlismod/*` only as a compatibility alias if useful
 
 V-LiSEMOD service:
 
 - set `VLISMOD_DATA_BACKEND=randy` for strict remote mode or `VLISMOD_DATA_BACKEND=auto` for fallback mode
-- set `RANDY_API_BASE_URL`
+- set `VLISMOD_BACKUP_URL=https://randy.rove-vernier.ts.net/backup/vlismod`
 - set `RANDY_API_TOKEN`
+- optionally keep `RANDY_API_BASE_URL` only for local/dev compatibility
 - keep `viral_data.db` available only if you want local fallback when using `auto`
 
 Suggested local verification flow:
@@ -112,10 +119,29 @@ Then in a second shell:
 
 ```bash
 export VLISMOD_DATA_BACKEND=auto
-export RANDY_API_BASE_URL="http://127.0.0.1:5001"
+export VLISMOD_BACKUP_URL="http://127.0.0.1:8787/backup/vlismod"
 export RANDY_API_TOKEN="dev-token"
 python app.py
 ```
+
+Base-URL precedence in the app:
+
+1. `VLISMOD_BACKUP_URL`
+2. `RANDY_API_BASE_URL`
+3. local-only behavior when RANDY mode is not configured
+
+If you set `VLISMOD_BACKUP_URL`, the client appends route names like `viruses` or `pdb-codes` directly under that base, which avoids `/api/vlismod` double-prefix bugs.
+
+### Storage Caveat For Heroku
+
+RANDY currently reads a SQLite file from `VLISMOD_DB_PATH`. That is workable for local testing and for a persistent non-Heroku host, but it is not a durable Heroku storage strategy by itself.
+
+Key implications:
+
+- Heroku dyno filesystems are ephemeral, so a database copied onto a dyno will not be durable across restarts or deploys.
+- Bundling a large SQLite file into the slug risks slug-size and startup-time issues, and the file remains effectively immutable at runtime.
+- If the durable database stays on another machine, Heroku will need a reachable API layer or another transport path to access that data safely.
+- If long-term hosted durability is required, plan a persistent database or object-storage-backed strategy before production rollout.
 
 ## Azure Notes
 

@@ -12,8 +12,6 @@ from werkzeug.exceptions import HTTPException
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_DB_PATH = PROJECT_ROOT / "viral_data.db"
 
-vlismod_data_bp = Blueprint("vlismod_data", __name__, url_prefix="/api/vlismod")
-
 REQUIRED_TABLES = (
     "ligand_atoms",
     "Ligand_Atoms_Smiles",
@@ -27,7 +25,11 @@ REQUIRED_TABLES = (
 
 
 def _configured_token() -> str:
-    return os.environ.get("VLISMOD_API_TOKEN", "").strip()
+    return (
+        os.environ.get("VLISMOD_API_TOKEN", "").strip()
+        or os.environ.get("RANDY_BACKUP_TOKEN", "").strip()
+        or os.environ.get("PROTAC_BACKUP_TOKEN", "").strip()
+    )
 
 
 def _db_path() -> Path:
@@ -35,10 +37,6 @@ def _db_path() -> Path:
     if configured:
         return Path(configured).expanduser()
     return DEFAULT_DB_PATH
-
-
-def _row_dict(row: sqlite3.Row) -> dict[str, Any]:
-    return {key: row[key] for key in row.keys()}
 
 
 def _connect() -> sqlite3.Connection:
@@ -92,239 +90,230 @@ def _fetch_rows(query: str, params: tuple[Any, ...]) -> list[sqlite3.Row]:
         return conn.execute(query, params).fetchall()
 
 
-@vlismod_data_bp.errorhandler(HTTPException)
-def _json_http_error(error: HTTPException):
-    return _json_error(error.description or error.name, error.code or 500)
+def create_vlismod_blueprint(blueprint_name: str, url_prefix: str) -> Blueprint:
+    bp = Blueprint(blueprint_name, __name__, url_prefix=url_prefix)
 
+    @bp.errorhandler(HTTPException)
+    def _json_http_error(error: HTTPException):
+        return _json_error(error.description or error.name, error.code or 500)
 
-@vlismod_data_bp.errorhandler(FileNotFoundError)
-def _json_missing_file(error: FileNotFoundError):
-    return _json_error(str(error), 404)
+    @bp.errorhandler(FileNotFoundError)
+    def _json_missing_file(error: FileNotFoundError):
+        return _json_error(str(error), 404)
 
+    @bp.errorhandler(sqlite3.OperationalError)
+    def _json_sqlite_error(error: sqlite3.OperationalError):
+        message = str(error)
+        status = 404 if "no such table" in message.lower() else 500
+        return _json_error(message, status)
 
-@vlismod_data_bp.errorhandler(sqlite3.OperationalError)
-def _json_sqlite_error(error: sqlite3.OperationalError):
-    message = str(error)
-    status = 404 if "no such table" in message.lower() else 500
-    return _json_error(message, status)
+    @bp.errorhandler(ValueError)
+    def _json_value_error(error: ValueError):
+        return _json_error(str(error), 400)
 
+    @bp.errorhandler(Exception)
+    def _json_unhandled_error(error: Exception):
+        current_app.logger.exception("Unhandled V-LiSEMOD RANDY route error")
+        return _json_error("Internal server error.", 500)
 
-@vlismod_data_bp.errorhandler(ValueError)
-def _json_value_error(error: ValueError):
-    return _json_error(str(error), 400)
+    @bp.get("/health")
+    def vlismod_health():
+        db_path = _db_path()
+        return jsonify(
+            {
+                "ok": True,
+                "service": "vlismod-data",
+                "db_path": str(db_path),
+                "db_exists": db_path.exists(),
+                "auth_configured": bool(_configured_token()),
+            }
+        )
 
-
-@vlismod_data_bp.errorhandler(Exception)
-def _json_unhandled_error(error: Exception):
-    current_app.logger.exception("Unhandled V-LiSEMOD RANDY route error")
-    return _json_error("Internal server error.", 500)
-
-
-@vlismod_data_bp.get("/health")
-def vlismod_health():
-    db_path = _db_path()
-    return jsonify(
-        {
-            "ok": True,
-            "service": "vlismod-data",
-            "db_path": str(db_path),
-            "db_exists": db_path.exists(),
-            "auth_configured": bool(_configured_token()),
-        }
-    )
-
-
-@vlismod_data_bp.get("/db-health")
-@require_token
-def vlismod_db_health():
-    db_path = _db_path()
-    table_status: dict[str, bool] = {}
-
-    with _connect() as conn:
-        existing = {
-            row["name"]
-            for row in conn.execute(
-                "SELECT name FROM sqlite_master WHERE type = 'table' AND name IN ({})".format(
-                    ",".join("?" for _ in REQUIRED_TABLES)
-                ),
-                REQUIRED_TABLES,
-            ).fetchall()
-        }
-    for table in REQUIRED_TABLES:
-        table_status[table] = table in existing
-
-    return jsonify(
-        {
-            "ok": True,
-            "db_path": str(db_path),
-            "db_exists": db_path.exists(),
-            "required_tables": table_status,
-        }
-    )
-
-
-@vlismod_data_bp.get("/viruses")
-@require_token
-def get_viruses():
-    viruses = _fetch_scalar_list(
-        "SELECT DISTINCT virus_name FROM ligand_atoms ORDER BY virus_name",
-        (),
-    )
-    return jsonify(viruses=viruses)
-
-
-@vlismod_data_bp.get("/pdb-codes")
-@require_token
-def get_pdb_codes():
-    virus_name = _required_arg("virus_name")
-    pdb_codes = _fetch_scalar_list(
-        """
-        SELECT DISTINCT pdb_id
-        FROM ligand_Atoms_Smiles
-        WHERE virus_name = ?
-        ORDER BY pdb_id
-        """,
-        (virus_name,),
-    )
-    return jsonify(pdb_codes=pdb_codes)
-
-
-@vlismod_data_bp.get("/ligands")
-@require_token
-def get_ligands():
-    pdb_code = _required_arg("pdb_code")
-    rows = _fetch_rows(
-        """
-        SELECT ligand, MIN(chain) AS chain,
-               MAX(
-                   CASE
-                       WHEN EXISTS (
-                           SELECT 1
-                           FROM Functional_GROUPED fg
-                           WHERE fg.pdb_id = ligand_atoms.pdb_id
-                             AND fg.ligand = ligand_atoms.ligand
-                             AND fg.smiles IS NOT NULL
-                             AND fg.smiles != ''
-                       ) THEN 1 ELSE 0
-                   END
-               ) AS has_smiles
-        FROM ligand_atoms
-        WHERE pdb_id = ?
-        GROUP BY ligand
-        ORDER BY ligand
-        """,
-        (pdb_code,),
-    )
-    ligands = [
-        {"ligand": row["ligand"], "chain": row["chain"], "has_smiles": row["has_smiles"]}
-        for row in rows
-    ]
-    return jsonify(ligands=ligands)
-
-
-@vlismod_data_bp.get("/functional-groups/check")
-@require_token
-def check_functional_groups():
-    pdb_code = _required_arg("pdb_code")
-    rows = _fetch_rows(
-        """
-        SELECT COUNT(*) AS functional_group_count
-        FROM Functional_Group_Atoms
-        WHERE pdb_id = ?
-        """,
-        (pdb_code,),
-    )
-    count = int(rows[0]["functional_group_count"]) if rows else 0
-    return jsonify({"has_functional_groups": count > 0})
-
-
-@vlismod_data_bp.get("/ligands/list")
-@require_token
-def get_ligands_list():
-    ligands = _fetch_scalar_list(
-        "SELECT DISTINCT ligand FROM Ligand_Atoms_Smiles ORDER BY ligand",
-        (),
-    )
-    return jsonify(ligands=ligands)
-
-
-@vlismod_data_bp.get("/viruses/by-ligand")
-@require_token
-def get_viruses_by_ligand():
-    ligand_code = _required_arg("ligand_code")
-    viruses = _fetch_scalar_list(
-        """
-        SELECT DISTINCT Virus_Name
-        FROM Arpeggio_Contacts_Data
-        WHERE Ligand = ?
-        ORDER BY Virus_Name
-        """,
-        (ligand_code,),
-    )
-    return jsonify(viruses=viruses)
-
-
-@vlismod_data_bp.get("/pdb-residues/by-ligand")
-@require_token
-def get_pdb_residue_by_ligand():
-    ligand_code = _required_arg("ligand_code")
-    rows = _fetch_rows(
-        """
-        SELECT DISTINCT pdb_id, chain, ligand_id
-        FROM Ligand_Arp_Diagram
-        WHERE ligand = ?
-        ORDER BY pdb_id, chain, ligand_id
-        """,
-        (ligand_code,),
-    )
-    pairs = [
-        {"pdb_id": row["pdb_id"], "chain": row["chain"], "ligand_id": row["ligand_id"]}
-        for row in rows
-    ]
-    return jsonify(pairs=pairs)
-
-
-@vlismod_data_bp.get("/pdb-mapping")
-@require_token
-def get_pdb_mapping():
-    ligand_code = _required_arg("ligand_code")
-    rows = _fetch_rows(
-        """
-        SELECT DISTINCT pdb_id, chain, ligand_id, virus_name, ligand
-        FROM Ligand_Atoms_Smiles
-        WHERE ligand = ?
-        ORDER BY pdb_id, chain, ligand_id
-        """,
-        (ligand_code,),
-    )
-
-    pdb_mapping: dict[str, dict[str, Any]] = {}
-    for row in rows:
-        unique_key = f"{row['pdb_id']}-{row['ligand_id']}-{row['chain']}"
-        if unique_key not in pdb_mapping:
-            pdb_mapping[unique_key] = {
-                "pdb_id": row["pdb_id"],
-                "ligand_id": row["ligand_id"],
-                "chain": row["chain"],
-                "virus_name": row["virus_name"],
-                "ligand": row["ligand"],
+    @bp.get("/db-health")
+    @require_token
+    def vlismod_db_health():
+        db_path = _db_path()
+        with _connect() as conn:
+            existing = {
+                row["name"]
+                for row in conn.execute(
+                    "SELECT name FROM sqlite_master WHERE type = 'table' AND name IN ({})".format(
+                        ",".join("?" for _ in REQUIRED_TABLES)
+                    ),
+                    REQUIRED_TABLES,
+                ).fetchall()
             }
 
-    return jsonify(pdb_mapping=pdb_mapping)
+        table_status = {table: table in existing for table in REQUIRED_TABLES}
+        return jsonify(
+            {
+                "ok": True,
+                "db_path": str(db_path),
+                "db_exists": db_path.exists(),
+                "required_tables": table_status,
+            }
+        )
+
+    @bp.get("/viruses")
+    @require_token
+    def get_viruses():
+        viruses = _fetch_scalar_list(
+            "SELECT DISTINCT virus_name FROM ligand_atoms ORDER BY virus_name",
+            (),
+        )
+        return jsonify(viruses=viruses)
+
+    @bp.get("/pdb-codes")
+    @require_token
+    def get_pdb_codes():
+        virus_name = _required_arg("virus_name")
+        pdb_codes = _fetch_scalar_list(
+            """
+            SELECT DISTINCT pdb_id
+            FROM ligand_Atoms_Smiles
+            WHERE virus_name = ?
+            ORDER BY pdb_id
+            """,
+            (virus_name,),
+        )
+        return jsonify(pdb_codes=pdb_codes)
+
+    @bp.get("/ligands")
+    @require_token
+    def get_ligands():
+        pdb_code = _required_arg("pdb_code")
+        rows = _fetch_rows(
+            """
+            SELECT ligand, MIN(chain) AS chain,
+                   MAX(
+                       CASE
+                           WHEN EXISTS (
+                               SELECT 1
+                               FROM Functional_GROUPED fg
+                               WHERE fg.pdb_id = ligand_atoms.pdb_id
+                                 AND fg.ligand = ligand_atoms.ligand
+                                 AND fg.smiles IS NOT NULL
+                                 AND fg.smiles != ''
+                           ) THEN 1 ELSE 0
+                       END
+                   ) AS has_smiles
+            FROM ligand_atoms
+            WHERE pdb_id = ?
+            GROUP BY ligand
+            ORDER BY ligand
+            """,
+            (pdb_code,),
+        )
+        ligands = [
+            {"ligand": row["ligand"], "chain": row["chain"], "has_smiles": row["has_smiles"]}
+            for row in rows
+        ]
+        return jsonify(ligands=ligands)
+
+    @bp.get("/functional-groups/check")
+    @require_token
+    def check_functional_groups():
+        pdb_code = _required_arg("pdb_code")
+        rows = _fetch_rows(
+            """
+            SELECT COUNT(*) AS functional_group_count
+            FROM Functional_Group_Atoms
+            WHERE pdb_id = ?
+            """,
+            (pdb_code,),
+        )
+        count = int(rows[0]["functional_group_count"]) if rows else 0
+        return jsonify({"has_functional_groups": count > 0})
+
+    @bp.get("/ligands/list")
+    @require_token
+    def get_ligands_list():
+        ligands = _fetch_scalar_list(
+            "SELECT DISTINCT ligand FROM Ligand_Atoms_Smiles ORDER BY ligand",
+            (),
+        )
+        return jsonify(ligands=ligands)
+
+    @bp.get("/viruses/by-ligand")
+    @require_token
+    def get_viruses_by_ligand():
+        ligand_code = _required_arg("ligand_code")
+        viruses = _fetch_scalar_list(
+            """
+            SELECT DISTINCT Virus_Name
+            FROM Arpeggio_Contacts_Data
+            WHERE Ligand = ?
+            ORDER BY Virus_Name
+            """,
+            (ligand_code,),
+        )
+        return jsonify(viruses=viruses)
+
+    @bp.get("/pdb-residues/by-ligand")
+    @require_token
+    def get_pdb_residue_by_ligand():
+        ligand_code = _required_arg("ligand_code")
+        rows = _fetch_rows(
+            """
+            SELECT DISTINCT pdb_id, chain, ligand_id
+            FROM Ligand_Arp_Diagram
+            WHERE ligand = ?
+            ORDER BY pdb_id, chain, ligand_id
+            """,
+            (ligand_code,),
+        )
+        pairs = [
+            {"pdb_id": row["pdb_id"], "chain": row["chain"], "ligand_id": row["ligand_id"]}
+            for row in rows
+        ]
+        return jsonify(pairs=pairs)
+
+    @bp.get("/pdb-mapping")
+    @require_token
+    def get_pdb_mapping():
+        ligand_code = _required_arg("ligand_code")
+        rows = _fetch_rows(
+            """
+            SELECT DISTINCT pdb_id, chain, ligand_id, virus_name, ligand
+            FROM Ligand_Atoms_Smiles
+            WHERE ligand = ?
+            ORDER BY pdb_id, chain, ligand_id
+            """,
+            (ligand_code,),
+        )
+
+        pdb_mapping: dict[str, dict[str, Any]] = {}
+        for row in rows:
+            unique_key = f"{row['pdb_id']}-{row['ligand_id']}-{row['chain']}"
+            if unique_key not in pdb_mapping:
+                pdb_mapping[unique_key] = {
+                    "pdb_id": row["pdb_id"],
+                    "ligand_id": row["ligand_id"],
+                    "chain": row["chain"],
+                    "virus_name": row["virus_name"],
+                    "ligand": row["ligand"],
+                }
+
+        return jsonify(pdb_mapping=pdb_mapping)
+
+    @bp.get("/sasa-chains")
+    @require_token
+    def get_sasa_chains():
+        pdb_code = _required_arg("pdb_code")
+        ligand_name = _required_arg("ligand_name")
+        rows = _fetch_rows(
+            """
+            SELECT atom_id, chain
+            FROM RUPLEY_SASA_DATA
+            WHERE pdb_id = ? AND ligand = ?
+            """,
+            (pdb_code, ligand_name),
+        )
+        sasa_chains = [[row["atom_id"], row["chain"]] for row in rows]
+        return jsonify(sasa_chains)
+
+    return bp
 
 
-@vlismod_data_bp.get("/sasa-chains")
-@require_token
-def get_sasa_chains():
-    pdb_code = _required_arg("pdb_code")
-    ligand_name = _required_arg("ligand_name")
-    rows = _fetch_rows(
-        """
-        SELECT atom_id, chain
-        FROM RUPLEY_SASA_DATA
-        WHERE pdb_id = ? AND ligand = ?
-        """,
-        (pdb_code, ligand_name),
-    )
-    sasa_chains = [[row["atom_id"], row["chain"]] for row in rows]
-    return jsonify(sasa_chains)
+vlismod_data_bp = create_vlismod_blueprint("vlismod_data", "/api/vlismod")
+vlismod_backup_bp = create_vlismod_blueprint("vlismod_backup", "/backup/vlismod")

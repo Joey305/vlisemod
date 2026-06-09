@@ -22,9 +22,9 @@ except ImportError:
     from e3_data_routes import register_e3_routes
 
 try:
-    from backup_receiver.vlismod_data_routes import vlismod_data_bp
+    from backup_receiver.vlismod_data_routes import vlismod_backup_bp, vlismod_data_bp
 except ImportError:
-    from vlismod_data_routes import vlismod_data_bp
+    from vlismod_data_routes import vlismod_backup_bp, vlismod_data_bp
 
 APP = Flask(__name__)
 
@@ -45,6 +45,8 @@ load_env_file()
 register_e3_routes(APP)
 if "vlismod_data" not in APP.blueprints:
     APP.register_blueprint(vlismod_data_bp)
+if "vlismod_backup" not in APP.blueprints:
+    APP.register_blueprint(vlismod_backup_bp)
 
 def configured_backup_token() -> str:
     return (

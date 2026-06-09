@@ -60,12 +60,34 @@ def _normalized_backend_mode():
     return mode
 
 
-def _randy_base_url():
+def _vlismod_backup_url():
+    return os.environ.get("VLISMOD_BACKUP_URL", "").strip().rstrip("/")
+
+
+def _randy_api_base_url():
     return os.environ.get("RANDY_API_BASE_URL", "").strip().rstrip("/")
 
 
+def _randy_base_url():
+    backup_url = _vlismod_backup_url()
+    if backup_url:
+        return backup_url
+
+    legacy_base = _randy_api_base_url()
+    if not legacy_base:
+        return ""
+
+    if legacy_base.endswith("/api/vlismod") or legacy_base.endswith("/backup/vlismod"):
+        return legacy_base
+
+    return f"{legacy_base}/api/vlismod"
+
+
 def _randy_api_token():
-    return os.environ.get("RANDY_API_TOKEN", "").strip()
+    return (
+        os.environ.get("RANDY_API_TOKEN", "").strip()
+        or os.environ.get("VLISMOD_API_TOKEN", "").strip()
+    )
 
 
 def use_randy_backend():
@@ -80,7 +102,7 @@ def randy_get(path, params=None):
     if not randy_available():
         raise RandyBackendError("RANDY API is not configured.")
 
-    url = f"{_randy_base_url()}{path}"
+    url = f"{_randy_base_url()}/{str(path or '').lstrip('/')}"
     headers = {"Authorization": f"Bearer {_randy_api_token()}"}
 
     try:
@@ -90,12 +112,15 @@ def randy_get(path, params=None):
 
     try:
         payload = response.json()
-    except ValueError as exc:
-        raise RandyBackendError("RANDY API returned non-JSON response.") from exc
+    except ValueError:
+        payload = None
 
     if response.status_code >= 400:
         message = payload.get("error") if isinstance(payload, dict) else None
         raise RandyBackendError(message or f"RANDY API request failed with status {response.status_code}.")
+
+    if payload is None:
+        raise RandyBackendError("RANDY API returned non-JSON response.")
 
     return payload
 
@@ -776,14 +801,14 @@ def _local_get_pdb_mapping_payload(ligand_code):
 @app.route('/get_viruses')
 def get_viruses():
     return _dispatch_supported_lookup(
-        '/api/vlismod/viruses',
+        'viruses',
         local_loader=lambda: jsonify(_local_get_viruses_payload()),
     )
 
 @app.route('/get_pdb_codes/<virus_name>')
 def get_pdb_codes(virus_name):
     return _dispatch_supported_lookup(
-        '/api/vlismod/pdb-codes',
+        'pdb-codes',
         params={'virus_name': virus_name},
         local_loader=lambda: jsonify(_local_get_pdb_codes_payload(virus_name)),
     )
@@ -793,7 +818,7 @@ def get_pdb_codes(virus_name):
 @app.route('/get_ligands/<pdb_code>')
 def get_ligands(pdb_code):
     return _dispatch_supported_lookup(
-        '/api/vlismod/ligands',
+        'ligands',
         params={'pdb_code': pdb_code},
         local_loader=lambda: jsonify(_local_get_ligands_payload(pdb_code)),
     )
@@ -804,7 +829,7 @@ def get_ligands(pdb_code):
 @app.route('/check_functional_groups/<pdb_code>')
 def check_functional_groups(pdb_code):
     return _dispatch_supported_lookup(
-        '/api/vlismod/functional-groups/check',
+        'functional-groups/check',
         params={'pdb_code': pdb_code},
         local_loader=lambda: jsonify(_local_check_functional_groups_payload(pdb_code)),
     )
@@ -835,7 +860,7 @@ def view_ligand_3d(ligand_code, pdb_id):
 @app.route('/get_ligands_list', methods=['GET'])
 def get_ligands_list():
     return _dispatch_supported_lookup(
-        '/api/vlismod/ligands/list',
+        'ligands/list',
         local_loader=lambda: jsonify(_local_get_ligands_list_payload()),
     )
 
@@ -844,7 +869,7 @@ def get_ligands_list():
 @app.route('/get_viruses_by_ligand/<ligand_code>')
 def get_viruses_by_ligand(ligand_code):
     return _dispatch_supported_lookup(
-        '/api/vlismod/viruses/by-ligand',
+        'viruses/by-ligand',
         params={'ligand_code': ligand_code},
         local_loader=lambda: jsonify(_local_get_viruses_by_ligand_payload(ligand_code)),
     )
@@ -898,7 +923,7 @@ def ligand_indexer():
 @app.route('/get_pdb_residue_by_ligand/<ligand_code>')
 def get_pdb_residue_by_ligand(ligand_code):
     return _dispatch_supported_lookup(
-        '/api/vlismod/pdb-residues/by-ligand',
+        'pdb-residues/by-ligand',
         params={'ligand_code': ligand_code},
         local_loader=lambda: jsonify(_local_get_pdb_residue_by_ligand_payload(ligand_code)),
     )
@@ -1147,7 +1172,7 @@ def generate_charts():
 @app.route('/get_sasa_chains/<pdb_code>/<ligand_name>', methods=['GET'])
 def get_sasa_chains(pdb_code, ligand_name):
     return _dispatch_supported_lookup(
-        '/api/vlismod/sasa-chains',
+        'sasa-chains',
         params={'pdb_code': pdb_code, 'ligand_name': ligand_name},
         local_loader=lambda: jsonify(_local_get_sasa_chains_payload(pdb_code, ligand_name)),
     )
@@ -1364,7 +1389,7 @@ def plot_atom_interactions_comparison(df_list, output_file, pdb_ids, ligand_code
 @app.route('/get_pdb_mapping/<ligand_code>')
 def get_pdb_mapping(ligand_code):
     return _dispatch_supported_lookup(
-        '/api/vlismod/pdb-mapping',
+        'pdb-mapping',
         params={'ligand_code': ligand_code},
         local_loader=lambda: jsonify(_local_get_pdb_mapping_payload(ligand_code)),
     )

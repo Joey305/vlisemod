@@ -136,8 +136,10 @@ At a high level:
 Remote data note:
 
 - The simple V-LiSEMOD lookup routes can run against a separate RANDY API by setting `VLISMOD_DATA_BACKEND=randy` or `auto`.
-- RANDY should be configured with `VLISMOD_API_TOKEN` and `VLISMOD_DB_PATH`.
-- V-LiSEMOD should be configured with `RANDY_API_BASE_URL`, `RANDY_API_TOKEN`, and `VLISMOD_DATA_BACKEND`.
+- For production-style RANDY routing, prefer `VLISMOD_BACKUP_URL=https://randy.rove-vernier.ts.net/backup/vlismod`.
+- RANDY should be configured with `VLISMOD_DB_PATH` and either `VLISMOD_API_TOKEN` or a shared RANDY backup token env var.
+- V-LiSEMOD should be configured with `VLISMOD_BACKUP_URL`, `RANDY_API_TOKEN`, and `VLISMOD_DATA_BACKEND`.
+- `RANDY_API_BASE_URL` is still supported for local/dev compatibility and will default to `/api/vlismod` if you provide only a host URL.
 - If no RANDY configuration is provided, V-LiSEMOD continues to use local `viral_data.db` behavior.
 
 ## Project Status

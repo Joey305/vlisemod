@@ -1,5 +1,6 @@
 Flask
 Werkzeug
+gunicorn
 
 pandas
 numpy
@@ -9,13 +10,6 @@ rdkit
 Pillow
 matplotlib
 seaborn
-
-torch
-transformers
-accelerate
-huggingface-hub
-safetensors
-tokenizers
 
 pubchempy
 requests

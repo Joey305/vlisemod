@@ -1,84 +1,166 @@
 # Qodex.summary
 
 ## Task
-Set up authenticated RANDY API backend support for V-Lismod database access.
+Validate V-LiSEMOD against the real RANDY backup endpoint pattern.
 
 ## Original Goal
-Offload V-LiSEMOD database-backed lookup operations to RANDY so V-LiSEMOD does not require a local `viral_data.db` backup in production, while keeping the app deployable with Heroku-style environment-variable configuration and preserving local development fallback behavior.
+The user wants V-LiSEMOD to use RANDY the same way existing tools use:
+- `https://randy.rove-vernier.ts.net/backup/e3`
+- `https://randy.rove-vernier.ts.net/backup/hunter-job`
+- `https://randy.rove-vernier.ts.net/backup/protac-event`
+
+The goal is to confirm or implement:
+- `https://randy.rove-vernier.ts.net/backup/vlismod`
+
+before GitHub/Heroku deployment.
 
 ## Assumptions
 - RANDY and V-LiSEMOD are separate Flask apps that may be deployed independently.
-- Local testing uses `/Users/jxs794/Documents/VLISEMOD/viral_data.db` unless `VLISMOD_DB_PATH` is set differently.
-- The first migration batch should cover only the simple JSON lookup routes already used by templates and frontend JavaScript.
-- Complex chart generation, ligand rendering, PyMOL/session generation, interaction comparisons, SASA highlighting, and PROTACability routes remain local for now.
+- The live RANDY host is reachable from this environment over HTTPS/Tailscale-style routing.
+- The intended production database path on RANDY is `/home/jxs794/PROTAC_BUILDER/VLISEMOD/Database/viral_data.db`.
+- The current live RANDY service may not yet be running the latest V-LiSEMOD route prefix or env configuration.
+- `VLISMOD_BACKUP_URL` should be treated as the preferred production env var, with `RANDY_API_BASE_URL` kept for legacy/local compatibility.
 
 ## Files Inspected
-- `app.py`: identified SQLite-backed routes and preserved response shapes.
-- `RANDY/app.py`: checked Flask app creation and blueprint registration style.
-- `RANDY/e3_data_routes.py`: reused the existing bearer-token and JSON error-handling pattern.
-- `requirements.txt`: confirmed `requests` was already available.
-- `README.md`: updated high-level backend configuration notes.
-- `docs/DEPLOYMENT.md`: updated deployment and Heroku-style environment-variable guidance.
-- `Dockerfile`: confirmed no current Heroku runtime wiring lived there.
-- `setup.sh`: confirmed it was unrelated to the API migration.
+- `app.py`
+- `RANDY/app.py`
+- `RANDY/e3_data_routes.py`
+- `RANDY/vlismod_data_routes.py`
+- `README.md`
+- `docs/DEPLOYMENT.md`
+- `requirements.txt`
+- `Procfile`
+- `Procfile.randy`
+- `.gitignore`
 
 ## Files Changed
-- `app.py`: added RANDY client helpers and switched the supported lookup routes to local/RANDY/auto backend dispatch.
-- `RANDY/app.py`: registered the new V-LiSEMOD blueprint and made imports work in both package-style and local script execution.
-- `README.md`: added a short note about remote RANDY-backed data mode.
-- `docs/DEPLOYMENT.md`: documented RANDY/V-LiSEMOD environment variables and local verification flow.
+- `app.py`
+- `RANDY/app.py`
+- `RANDY/vlismod_data_routes.py`
+- `README.md`
+- `docs/DEPLOYMENT.md`
 
 ## Files Created
-- `RANDY/vlismod_data_routes.py`: authenticated RANDY blueprint for V-LiSEMOD data access.
-- `Qodex.summary.md`: this summary document.
+- `Qodex.summary.md`
 
 ## Implementation Summary
-Created a new RANDY blueprint at `/api/vlismod` that reads the database path from `VLISMOD_DB_PATH`, protects routes with `Authorization: Bearer <token>` using `VLISMOD_API_TOKEN`, and returns JSON-only responses with structured error handling. Added health and database-health endpoints plus the first batch of V-LiSEMOD lookup endpoints.
+Inspected the existing RANDY route conventions and confirmed that E3 already uses a backup-style blueprint under `/backup/e3`, while V-LiSEMOD had only been exposed under `/api/vlismod`.
 
-Updated the main V-LiSEMOD Flask app to support `VLISMOD_DATA_BACKEND=local|randy|auto`, using `RANDY_API_BASE_URL` and `RANDY_API_TOKEN` for authenticated HTTP calls to RANDY. In `auto` mode, supported routes fall back to the local SQLite queries if the RANDY request fails. Public V-LiSEMOD route URLs and response shapes were preserved.
+Updated the RANDY V-LiSEMOD route module so it now exposes both:
+- `/api/vlismod/*`
+- `/backup/vlismod/*`
+
+Updated the main V-LiSEMOD client helper so production can use:
+- `VLISMOD_BACKUP_URL=https://randy.rove-vernier.ts.net/backup/vlismod`
+
+while preserving:
+- `RANDY_API_BASE_URL`
+- `RANDY_API_TOKEN`
+- `VLISMOD_DATA_BACKEND`
+
+The client now avoids double-prefix bugs by appending route names like `viruses` directly under the configured base URL.
 
 ## Key Decisions
-- Token auth is environment-variable based so secrets stay out of source control and can be configured cleanly on Heroku.
-- Local SQLite fallback was preserved to avoid breaking current development and to keep rollout risk low.
-- Only the simple lookup routes were migrated first because they have stable JSON contracts and low coupling to local file generation or heavy processing.
+- Live RANDY URL testing is required because local Flask-client tests only prove code paths, not deployed routing, token configuration, or database wiring.
+- Local Flask-client checks were still used as secondary validation after code changes, but not treated as final proof.
+- `/api/vlismod` was preserved as a compatibility alias because the live RANDY host is already serving that prefix today.
+- `VLISMOD_BACKUP_URL` should be the preferred production env var going forward.
 
 ## Commands Run
-- Searched for SQLite usage, `viral_data.db` references, blueprint registration, and authorization handling with `rg`.
-- Inspected relevant file sections with `sed`.
-- Ran `python -m py_compile app.py RANDY/app.py RANDY/e3_data_routes.py RANDY/vlismod_data_routes.py`.
-- Ran import checks for both Flask apps with short Python snippets.
-- Ran Flask `test_client()` smoke checks for RANDY auth and V-LiSEMOD local/proxied lookup routes.
-- Ran a targeted secret-safety search over changed files.
+- Repo inspection commands:
+  - `pwd`
+  - `git status --short`
+  - `ls`
+  - `ls RANDY`
+  - `grep` searches for backup route patterns, blueprints, env vars, and `viral_data.db`
+  - `find` for `Procfile*`, `.gitignore`, and runtime files
+- Code inspection commands with `sed`
+- Syntax check:
+  - `python -m py_compile app.py RANDY/app.py RANDY/e3_data_routes.py RANDY/vlismod_data_routes.py`
+- Live HTTPS checks with `curl` and Python `requests` against:
+  - `https://randy.rove-vernier.ts.net/backup/e3/healthz`
+  - `https://randy.rove-vernier.ts.net/backup/vlismod/health`
+  - `https://randy.rove-vernier.ts.net/api/vlismod/health`
+  - `https://randy.rove-vernier.ts.net/api/vlismod/viruses`
+  - `https://randy.rove-vernier.ts.net/api/vlismod/db-health`
+  - `https://randy.rove-vernier.ts.net/api/vlismod/ligands/list`
+- Secondary local verification with Flask `test_client()` to confirm the new `/backup/vlismod` alias exists in code.
 
 ## Validation Results
-- Syntax compilation passed for `app.py`, `RANDY/app.py`, `RANDY/e3_data_routes.py`, and `RANDY/vlismod_data_routes.py`.
-- Main V-LiSEMOD app import check passed.
-- RANDY app import check passed when loaded with the `RANDY/` directory on `sys.path`, matching normal script execution.
-- RANDY `test_client()` checks passed for:
-  - `/api/vlismod/health`
-  - unauthorized `/api/vlismod/viruses` returning `401`
-  - authenticated `/api/vlismod/db-health`
-  - authenticated `/api/vlismod/viruses`
-- Main V-LiSEMOD `test_client()` checks passed in local mode for:
-  - `/get_viruses`
-  - `/get_ligands_list`
-  - `/check_functional_groups/6Y2F`
-- Main V-LiSEMOD proxy-mode checks passed with a mocked RANDY HTTP layer for:
-  - `/get_viruses`
-  - `/get_ligands_list`
-  - `/get_pdb_mapping/NAG`
+- Live RANDY URL tested:
+  - `https://randy.rove-vernier.ts.net/backup/vlismod`
+  - `https://randy.rove-vernier.ts.net/api/vlismod`
+
+- Live HTTPS status results:
+  - `GET /backup/e3/healthz` -> `401`
+  - `GET /backup/vlismod/health` -> `404`
+  - `GET /backup/vlismod/viruses` -> `404`
+  - `GET /api/vlismod/health` -> `200`
+  - `GET /api/vlismod/viruses` -> `500`
+  - `GET /api/vlismod/db-health` -> `500`
+  - `GET /api/vlismod/ligands/list` -> `500`
+
+- Live response interpretation:
+  - The live host is reachable.
+  - `/backup/vlismod` does not currently exist on the deployed RANDY service.
+  - `/api/vlismod` does exist on the deployed RANDY service.
+  - The deployed RANDY V-LiSEMOD service is currently misconfigured:
+    - `auth_configured` is `false`
+    - `db_exists` is `false`
+    - `db_path` is `/home/jxs794/PROTAC_BUILDER/viral_data.db`
+  - Because the live service has no configured V-LiSEMOD token, live unauthorized behavior for V-LiSEMOD could not be validated as `401`; the deployed `/api/vlismod/*` routes return `500` instead.
+
+- V-LiSEMOD strict `randy` mode using live `VLISMOD_BACKUP_URL`:
+  - `/get_viruses` -> `502`
+  - `/get_ligands_list` -> `502`
+  - `/get_pdb_codes/<known virus>` -> `502`
+  - `/get_ligands/<known pdb>` -> `502`
+  - `/check_functional_groups/<known pdb>` -> `502`
+  - `/get_pdb_mapping/<known ligand>` -> `502`
+  - Error is now explicit: `RANDY API request failed with status 404.`
+
+- Secondary local code validation:
+  - `/api/vlismod/health` exists
+  - `/backup/vlismod/health` exists
+  - `/backup/vlismod/viruses` works with bearer auth when the local app is configured
+
+- `VLISMOD_DATA_BACKEND=auto` fallback still works locally when RANDY is unavailable.
 
 ## Known Issues
-- Complex routes that build charts, images, PyMOL sessions, interaction payloads, or PROTACability outputs still query local SQLite directly.
-- There is still no root `Procfile`; deployment is documented but not fully packaged for Heroku within this repository.
-- The placeholder token string used in docs for manual verification should be replaced with a real secret only in environment configuration, never in code.
+- The deployed live RANDY service does not currently expose `/backup/vlismod`.
+- The deployed live RANDY V-LiSEMOD service is using the wrong database path and does not have a configured V-LiSEMOD token.
+- Live unauthorized `401` behavior for V-LiSEMOD cannot pass until the remote service is redeployed or reconfigured.
+- Strict V-LiSEMOD `randy` mode cannot pass against the live backup URL until `/backup/vlismod` is actually present on RANDY.
+- Production deployment still needs a durable strategy for the SQLite database outside ephemeral Heroku dyno storage.
 
 ## Manual Verification
-1. Start RANDY locally with `VLISMOD_API_TOKEN` and `VLISMOD_DB_PATH`.
-2. Call `/api/vlismod/db-health` with `Authorization: Bearer <token>`.
-3. Start V-LiSEMOD with `VLISMOD_DATA_BACKEND=randy` or `auto`, plus `RANDY_API_BASE_URL` and `RANDY_API_TOKEN`.
-4. Open pages that use virus, PDB, ligand, mapping, or SASA lookup routes.
-5. Confirm those pages load without V-LiSEMOD directly needing a local database backup in strict RANDY mode.
+If you want to verify the remote service from a machine that can reach RANDY, run:
+
+```bash
+export VLISMOD_BACKUP_URL="https://randy.rove-vernier.ts.net/backup/vlismod"
+export RANDY_API_TOKEN="<token from env only>"
+
+curl -i "$VLISMOD_BACKUP_URL/health"
+curl -i "$VLISMOD_BACKUP_URL/viruses"
+curl -i -H "Authorization: Bearer $RANDY_API_TOKEN" "$VLISMOD_BACKUP_URL/db-health"
+curl -i -H "Authorization: Bearer $RANDY_API_TOKEN" "$VLISMOD_BACKUP_URL/viruses"
+curl -i -H "Authorization: Bearer $RANDY_API_TOKEN" "$VLISMOD_BACKUP_URL/ligands/list"
+```
+
+If the live service still only exposes `/api/vlismod`, first confirm current state:
+
+```bash
+curl -i "https://randy.rove-vernier.ts.net/api/vlismod/health"
+curl -i -H "Authorization: Bearer $RANDY_API_TOKEN" "https://randy.rove-vernier.ts.net/api/vlismod/db-health"
+```
+
+On RANDY itself, also verify the runtime env:
+
+```bash
+echo "$VLISMOD_DB_PATH"
+ls -lh /home/jxs794/PROTAC_BUILDER/VLISEMOD/Database/viral_data.db
+test -r /home/jxs794/PROTAC_BUILDER/VLISEMOD/Database/viral_data.db && echo readable
+```
 
 ## Suggested Next Prompt
-Migrate the next batch of V-LiSEMOD database-backed routes to RANDY by adding authenticated API endpoints and proxy support for ligand interaction payloads, ligand comparison data, SASA highlighting support queries, `get_ligand_options`, `get_ligands_with_synonyms`, `get_ligand_info`, and the first safe subset of PROTACability JSON endpoints, while keeping chart/image generation local unless the data endpoint is straightforward to expose.
+Set up the final RANDY/V-LiSEMOD deployment alignment by updating the live RANDY service to load the new `/backup/vlismod` routes, point `VLISMOD_DB_PATH` at `/home/jxs794/PROTAC_BUILDER/VLISEMOD/Database/viral_data.db`, configure the server-side token env var, and then re-run live HTTPS validation before preparing GitHub and Heroku deployment steps.
