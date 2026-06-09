@@ -13,6 +13,7 @@ Confirmed from the current codebase:
 - `VLISMOD_BACKUP_URL`: preferred production-style RANDY V-LiSEMOD base URL, for example `https://randy.rove-vernier.ts.net/backup/vlismod`
 - `RANDY_API_BASE_URL`: base URL for the RANDY service, for example `http://127.0.0.1:5001`
 - `RANDY_API_TOKEN`: bearer token used by V-LiSEMOD when calling RANDY
+- `RANDY_API_TIMEOUT_SECONDS`: optional override for heavier RANDY-backed routes; defaults to longer production-safe request timeouts
 - `SHOW_DRUG_GPT_NAV`: show or hide the Drug GPT navigation entry
 - `ENABLE_DRUG_GPT`: enable or disable the `/drugapp/` blueprint
 - `ENABLE_LOCAL_LLM`: allow local model loading for the optional assistant module
@@ -104,8 +105,23 @@ V-LiSEMOD service:
 - set `VLISMOD_DATA_BACKEND=randy` for strict remote mode or `VLISMOD_DATA_BACKEND=auto` for fallback mode
 - set `VLISMOD_BACKUP_URL=https://randy.rove-vernier.ts.net/backup/vlismod`
 - set `RANDY_API_TOKEN`
+- set `RANDY_API_TIMEOUT_SECONDS=45` or higher if large comparison or PROTACability payloads need more than the default client timeout
 - optionally keep `RANDY_API_BASE_URL` only for local/dev compatibility
 - keep `viral_data.db` available only if you want local fallback when using `auto`
+
+Route groups now migrated for strict `randy` mode:
+
+- homepage lookup routes and ligand/PDB lookup helpers
+- Compare Ligands AJAX routes, including ligand synonyms, ligand info, ligand options, chart/interactions payloads, and SMILES lookup helpers
+- ligand image generation and PyMOL session data loading
+- Protein Query filter/export routes
+- PROTACability filter, search, detail, and export routes
+
+Still intentionally local or deferred:
+
+- debug-only routes under `/api/debug/*`
+- local coordinate-file and cached SDF file generation
+- any route that depends on local coordinate assets rather than SQLite
 
 Suggested local verification flow:
 

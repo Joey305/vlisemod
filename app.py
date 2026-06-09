@@ -63,6 +63,18 @@ LIGAND_IMAGE_REQUIRED_TABLES = (
     "RUPLEY_SASA_DATA",
     "SMILES_MAP_PDB",
 )
+COMPARE_LIGAND_REQUIRED_TABLES = (
+    "Arpeggio_Contacts_Data",
+    "SMILES_MAP_PDB",
+)
+LIGAND_SYNONYM_REQUIRED_TABLES = ("Ligand_Synonyms",)
+LIGAND_INFO_REQUIRED_TABLES = ("Ligand_Atoms_Smiles",)
+LIGAND_OPTIONS_REQUIRED_TABLES = ("Ligand_Arp_Diagram",)
+QUERY_PROTEIN_REQUIRED_TABLES = (
+    "Virus_Proteins",
+    "Ligand_Synonyms",
+    "Ligand_Arp_Diagram",
+)
 PYMOL_REQUIRED_TABLES = (
     "ligand_atoms",
     "Functional_Group_Atoms",
@@ -70,6 +82,27 @@ PYMOL_REQUIRED_TABLES = (
     "distal_atoms",
     "RUPLEY_SASA_DATA",
 )
+PROTACABILITY_ALL_TABLES = (
+    "protacability_assessment",
+    "protacability_lysine_proximity",
+    "protacability_ligand_inventory",
+    "protacability_warhead_linkability",
+    "protacability_degrader_readiness",
+)
+DATA_SET_REQUIRED_TABLES = {
+    "Solvent Exposed Atoms": ("RUPLEY_SASA_DATA",),
+    "Ligand Atoms": ("ligand_atoms",),
+    "Binding Pocket": ("receptor_binding_pocket",),
+    "Smiles and Functional Groups": ("Ligand_Atoms_Smiles",),
+    "Interatomic Interactions": ("Arpeggio_Contacts_Data",),
+    "Functional Group Atoms": ("Functional_Group_Atoms",),
+    "Smiles & PDB Mapping": ("SMILES_MAP_PDB",),
+    "PROTACability Assessment": ("protacability_assessment",),
+    "PROTACability Lysine Proximity": ("protacability_lysine_proximity",),
+    "PROTACability Ligand Inventory": ("protacability_ligand_inventory",),
+    "PROTACability Warhead Linkability": ("protacability_warhead_linkability",),
+    "PROTACability Degrader Readiness": ("protacability_degrader_readiness",),
+}
 
 
 def _normalized_backend_mode():
@@ -109,6 +142,16 @@ def _randy_api_token():
     )
 
 
+def _randy_api_timeout_seconds(default=30):
+    raw_value = os.environ.get("RANDY_API_TIMEOUT_SECONDS", "").strip()
+    if not raw_value:
+        return default
+    try:
+        return max(1, int(raw_value))
+    except ValueError:
+        return default
+
+
 def use_randy_backend():
     return _normalized_backend_mode() == "randy"
 
@@ -125,7 +168,12 @@ def randy_get(path, params=None):
     headers = {"Authorization": f"Bearer {_randy_api_token()}"}
 
     try:
-        response = requests.get(url, params=params, headers=headers, timeout=10)
+        response = requests.get(
+            url,
+            params=params,
+            headers=headers,
+            timeout=_randy_api_timeout_seconds(30),
+        )
     except requests.RequestException as exc:
         raise RandyBackendError(f"RANDY API request failed: {exc}", status_code=502) from exc
 
@@ -155,7 +203,12 @@ def randy_post(path, json=None):
     headers = {"Authorization": f"Bearer {_randy_api_token()}"}
 
     try:
-        response = requests.post(url, json=json, headers=headers, timeout=20)
+        response = requests.post(
+            url,
+            json=json,
+            headers=headers,
+            timeout=_randy_api_timeout_seconds(60),
+        )
     except requests.RequestException as exc:
         raise RandyBackendError(f"RANDY API request failed: {exc}", status_code=502) from exc
 
@@ -208,6 +261,131 @@ def _connect_local_db(required_tables=None):
 
 def _form_flag(name):
     return request.form.get(name) is not None
+
+
+def _remote_db_enabled():
+    mode = _normalized_backend_mode()
+    return mode == "randy" or (mode == "auto" and randy_available())
+
+
+def _remote_page_metadata():
+    return randy_get("page-metadata")
+
+
+def _local_page_metadata():
+    return {
+        "available_export_data_sets": get_available_export_data_sets(),
+        "protacability_data_available": protacability_tables_available(),
+    }
+
+
+def _required_tables_for_datasets(data_sets):
+    required = []
+    for data_set in data_sets:
+        for table_name in DATA_SET_REQUIRED_TABLES.get(data_set, ()):
+            if table_name not in required:
+                required.append(table_name)
+    return tuple(required)
+
+
+def _local_get_ligands_with_synonyms_payload():
+    with _connect_local_db(LIGAND_SYNONYM_REQUIRED_TABLES) as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT ligand, synonym FROM Ligand_Synonyms")
+        return [{'ligand_code': row[0], 'synonym': row[1]} for row in cursor.fetchall()]
+
+
+def _local_get_ligand_info_payload(ligand_code):
+    with _connect_local_db(LIGAND_INFO_REQUIRED_TABLES) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT ligand, pdb_id, smiles, molecular_weight
+            FROM Ligand_Atoms_Smiles
+            WHERE ligand = ?
+            """,
+            (ligand_code,),
+        )
+        ligand_data = cursor.fetchone()
+
+    if not ligand_data:
+        return None
+
+    return {
+        "ligand": ligand_data[0],
+        "pdb_id": ligand_data[1],
+        "smiles": ligand_data[2],
+        "molecular_weight": ligand_data[3],
+    }
+
+
+def _local_get_ligand_options_payload():
+    with _connect_local_db(LIGAND_OPTIONS_REQUIRED_TABLES) as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT virus_name, pdb_id, ligand, chain, ligand_id FROM Ligand_Arp_Diagram")
+        rows = cursor.fetchall()
+    return {
+        "options": [
+            {'value': f"{row[1]}-{row[2]}", 'text': f"{row[0]}, {row[1]}, {row[2]}, {row[3]}, {row[4]}"}
+            for row in rows
+        ]
+    }
+
+
+def _local_get_smiles_payload(ligand_code):
+    with _connect_local_db(LIGAND_INFO_REQUIRED_TABLES) as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT smiles FROM Ligand_Atoms_Smiles WHERE ligand = ?", (ligand_code,))
+        result = cursor.fetchone()
+    return {"ligand_id": ligand_code, "smiles": result[0]} if result and result[0] else None
+
+
+def _remote_smiles_payload(ligand_code):
+    return randy_get("ligand-smiles", params={"ligand_id": ligand_code})
+
+
+def _load_smiles_payload(ligand_code):
+    mode = _normalized_backend_mode()
+    if mode == "randy":
+        return _remote_smiles_payload(ligand_code)
+    if mode == "auto" and randy_available():
+        try:
+            return _remote_smiles_payload(ligand_code)
+        except RandyBackendError:
+            logging.warning("Falling back to local SMILES lookup for ligand %s", ligand_code)
+    return _local_get_smiles_payload(ligand_code)
+
+
+def _load_smiles_for_ligand(ligand_code):
+    payload = _load_smiles_payload(ligand_code)
+    return payload.get("smiles") if payload else None
+
+
+def _local_interaction_records_payload(pdb_id, ligand, ligand_id, chain):
+    with _connect_local_db(COMPARE_LIGAND_REQUIRED_TABLES) as conn:
+        query = '''
+            SELECT A.pdb_id, A.ligand, A.chain, A.Contact, A.Distance, A.exact_atom, A.atom_id,
+                   A.residue, A.residue_number, A.residue_atom, A.residue_chain,
+                   S.smiles_atom_index, A.virus_name, A.ligand_id
+            FROM Arpeggio_Contacts_Data A
+            LEFT JOIN SMILES_MAP_PDB S
+              ON A.atom_id = S.atom_id
+             AND A.pdb_id = S.pdb_id
+             AND A.chain = S.chain
+             AND A.exact_atom = S.exact_atom
+            WHERE A.pdb_id = ?
+              AND A.ligand_id = ?
+              AND A.chain = ?
+              AND A.ligand = ?
+        '''
+        df = pd.read_sql(query, conn, params=(pdb_id, ligand_id, chain, ligand))
+    return {"records": df.replace({np.nan: None}).to_dict(orient="records")}
+
+
+def _records_to_interaction_dataframe(records):
+    if not records:
+        return pd.DataFrame()
+    return pd.DataFrame(records)
 
 
 def _dispatch_supported_lookup(remote_path, *, params=None, local_loader):
@@ -281,6 +459,35 @@ def inject_feature_flags():
 @app.route("/healthz")
 def healthz():
     return {"ok": True}, 200
+
+
+@app.route("/backend-health")
+def backend_health():
+    mode = _normalized_backend_mode()
+    status = {
+        "ok": True,
+        "backend_mode": mode,
+        "backup_url_configured": bool(_vlismod_backup_url() or _randy_api_base_url()),
+        "randy_token_configured": bool(_randy_api_token()),
+        "strict_randy_disables_local_fallback": mode == "randy",
+        "randy_health": None,
+        "randy_db_health": None,
+    }
+    if randy_available():
+        try:
+            status["randy_health"] = randy_get("health")
+        except RandyBackendError as exc:
+            status["ok"] = False
+            status["randy_health"] = {"error": str(exc)}
+        try:
+            status["randy_db_health"] = randy_get("db-health")
+        except RandyBackendError as exc:
+            status["ok"] = False
+            status["randy_db_health"] = {"error": str(exc)}
+    elif mode == "randy":
+        status["ok"] = False
+        status["randy_health"] = {"error": "RANDY API is not configured."}
+    return jsonify(status)
 
 # Define a consistent color palette for interaction types
 INTERACTION_COLORS = {
@@ -1195,14 +1402,33 @@ def get_pdb_residue_by_ligand(ligand_code):
 
 # Function to generate the DataFrame from the SQLite database
 def get_interaction_data(pdb_id, ligand, ligand_id, chain):
-    conn = sqlite3.connect('viral_data.db')
-    query = '''
-        SELECT * FROM Arpeggio_Contacts_Data
-        WHERE pdb_id = ? AND ligand = ? AND ligand_id = ? AND chain = ?
-    '''
-    df = pd.read_sql(query, conn, params=(pdb_id, ligand, ligand_id, chain))
-    conn.close()
-    return df
+    mode = _normalized_backend_mode()
+
+    if mode == "randy":
+        payload = randy_get(
+            "interaction-records",
+            params={"pdb_id": pdb_id, "ligand": ligand, "ligand_id": ligand_id, "chain": chain},
+        )
+        return _records_to_interaction_dataframe(payload.get("records", []))
+
+    if mode == "auto" and randy_available():
+        try:
+            payload = randy_get(
+                "interaction-records",
+                params={"pdb_id": pdb_id, "ligand": ligand, "ligand_id": ligand_id, "chain": chain},
+            )
+            return _records_to_interaction_dataframe(payload.get("records", []))
+        except RandyBackendError:
+            logging.warning(
+                "Falling back to local interaction data for %s / %s / %s / %s",
+                pdb_id,
+                ligand,
+                ligand_id,
+                chain,
+            )
+
+    payload = _local_interaction_records_payload(pdb_id, ligand, ligand_id, chain)
+    return _records_to_interaction_dataframe(payload.get("records", []))
 
 # Function to clean and preprocess interactions (now applies to 'Contact')
 def preprocess_interactions(df):
@@ -1378,15 +1604,16 @@ def plot_interactions_per_atom(df, output_file, pdb_id, ligand_code, exclude_pro
 # Update generate_charts to include this new plot
 @app.route('/generate_charts', methods=['POST'])
 def generate_charts():
-    # Get the input from the form submission (AJAX POST request)
     data = request.json
     pdb_id = data['pdb_id']
     ligand = data['ligand']
-    ligand_id = data['ligand_id']  # Corresponds to ligand_id
+    ligand_id = data['ligand_id']
     chain = data['chain']
-    
-    # Query the database to get the relevant data
-    df = get_interaction_data(pdb_id, ligand, ligand_id, chain)
+
+    try:
+        df = get_interaction_data(pdb_id, ligand, ligand_id, chain)
+    except RandyBackendError as exc:
+        return jsonify({'error': str(exc)}), exc.status_code
 
     if df.empty:
         return jsonify({'error': 'No data found for the selected inputs'}), 404
@@ -1540,66 +1767,65 @@ def compare_ligand_interactions():
     selected_pdbs = data['pdb_ids']  # Format like ['PDB_ID-Residue-Chain', ...]
     ligand = data['ligand']
 
+    mode = _normalized_backend_mode()
+    if mode == "randy":
+        try:
+            payload = randy_post('ligand-interactions/compare', json=data)
+        except RandyBackendError as exc:
+            return jsonify({'error': str(exc)}), exc.status_code
+        return jsonify(payload)
+
+    if mode == "auto" and randy_available():
+        try:
+            payload = randy_post('ligand-interactions/compare', json=data)
+            return jsonify(payload)
+        except RandyBackendError:
+            logging.warning("Falling back to local ligand interaction comparison for %s", ligand)
+
     interactions_data = []
     smiles_interactions_data = []
+    with _connect_local_db(COMPARE_LIGAND_REQUIRED_TABLES) as conn:
+        for unique_key in selected_pdbs:
+            pdb_id, ligand_id, chain = unique_key.split('-')
+            query = '''
+            SELECT A.pdb_id, A.ligand, A.chain, A.Contact, A.Distance, A.exact_atom, A.atom_id,
+                A.residue, A.residue_number, A.residue_atom, A.residue_chain,
+                S.smiles_atom_index, A.virus_name, A.ligand_id
+            FROM Arpeggio_Contacts_Data A
+            LEFT JOIN SMILES_MAP_PDB S
+            ON A.atom_id = S.atom_id
+            AND A.pdb_id = S.pdb_id
+            AND A.chain = S.chain
+            AND A.exact_atom = S.exact_atom
+            WHERE A.pdb_id = ?
+            AND A.ligand_id = ?
+            AND A.chain = ?
+            AND A.ligand = ?
+            '''
+            df = pd.read_sql(query, conn, params=(pdb_id, ligand_id, chain, ligand))
+            df_clean = df.replace({np.nan: None})
+            df_clean = preprocess_interactions(df_clean)
+            df_clean = filter_valid_atom_ids(df_clean)
 
-    conn = sqlite3.connect('viral_data.db')
-    cursor = conn.cursor()
+            if not df_clean.empty:
+                interactions_data.append({
+                    'pdb_id': pdb_id,
+                    'virus_name': df_clean['virus_name'].iloc[0],
+                    'ligand_id': int(df_clean['ligand_id'].iloc[0]),
+                    'interactions': df_clean.to_dict(orient='records')
+                })
+            else:
+                logging.warning(f"No data found for PDB ID: {pdb_id}, Residue ID: {ligand_id}, Chain: {chain}, Ligand: {ligand}")
 
-    for unique_key in selected_pdbs:
-        pdb_id, ligand_id, chain = unique_key.split('-')
-
-        # Query Arpeggio_Contacts_Data and join with SMILES_MAP_PDB to get smiles_atom_index
-        query = '''
-        SELECT A.pdb_id, A.ligand, A.chain, A.Contact, A.Distance, A.exact_atom, A.atom_id,
-            A.residue, A.residue_number, A.residue_atom, A.residue_chain,
-            S.smiles_atom_index, A.virus_name, A.ligand_id
-        FROM Arpeggio_Contacts_Data A
-        LEFT JOIN SMILES_MAP_PDB S
-        ON A.atom_id = S.atom_id
-        AND A.pdb_id = S.pdb_id
-        AND A.chain = S.chain
-        AND A.exact_atom = S.exact_atom
-        WHERE A.pdb_id = ?
-        AND A.ligand_id = ?
-        AND A.chain = ?
-        AND A.ligand = ?
-    '''
-
-        df = pd.read_sql(query, conn, params=(pdb_id, ligand_id, chain, ligand))
-
-        # Replace NaN with None for proper JSON serialization
-        df_clean = df.replace({np.nan: None})
-
-        # Apply filtering and preprocessing to clean the data
-        df_clean = preprocess_interactions(df_clean)
-        df_clean = filter_valid_atom_ids(df_clean)
-
-        if not df_clean.empty:
-            interactions_data.append({
-                'pdb_id': pdb_id,
-                'virus_name': df_clean['virus_name'].iloc[0],
-                'ligand_id': int(df_clean['ligand_id'].iloc[0]),
-                'interactions': df_clean.to_dict(orient='records')
-            })
-        else:
-            logging.warning(f"No data found for PDB ID: {pdb_id}, Residue ID: {ligand_id}, Chain: {chain}, Ligand: {ligand}")
-
-        # Process SMILES Atom Index data
-        if 'smiles_atom_index' in df.columns:
-            smiles_df = df[['pdb_id', 'Contact', 'smiles_atom_index']].dropna(subset=['smiles_atom_index'])
-            
-            # Convert the SMILES atom index to integers and filter out NaN values
-            smiles_df['smiles_atom_index'] = smiles_df['smiles_atom_index'].astype(float).astype('Int64').replace({pd.NA: None})
-            
-            smiles_interactions_data.append({
-                'pdb_id': pdb_id,
-                'interactions': smiles_df.to_dict(orient='records')
-            })
-        else:
-            print(f"'smiles_atom_index' not found for PDB ID: {pdb_id}")
-
-    conn.close()
+            if 'smiles_atom_index' in df.columns:
+                smiles_df = df[['pdb_id', 'Contact', 'smiles_atom_index']].dropna(subset=['smiles_atom_index'])
+                smiles_df['smiles_atom_index'] = smiles_df['smiles_atom_index'].astype(float).astype('Int64').replace({pd.NA: None})
+                smiles_interactions_data.append({
+                    'pdb_id': pdb_id,
+                    'interactions': smiles_df.to_dict(orient='records')
+                })
+            else:
+                print(f"'smiles_atom_index' not found for PDB ID: {pdb_id}")
 
     return jsonify({
         'interactions_data': interactions_data,
@@ -1672,26 +1898,29 @@ def TESTPAGE():
     
 @app.route('/get_ligand_options')
 def get_ligand_options():
-    conn = sqlite3.connect('viral_data.db')
-    cursor = conn.cursor()
-    cursor.execute("SELECT virus_name, pdb_id, ligand, chain, ligand_id FROM Ligand_Arp_Diagram")
-    rows = cursor.fetchall()
-    options = [{'value': f"{row[1]}-{row[2]}", 'text': f"{row[0]}, {row[1]}, {row[2]}, {row[3]}, {row[4]}"} for row in rows]
-    conn.close()
-    return jsonify(options=options)
+    mode = _normalized_backend_mode()
+    if mode == "randy":
+        try:
+            payload = randy_get('ligand-options')
+        except RandyBackendError as exc:
+            return jsonify({'error': str(exc)}), exc.status_code
+        return jsonify(payload)
+    if mode == "auto" and randy_available():
+        try:
+            return jsonify(randy_get('ligand-options'))
+        except RandyBackendError:
+            logging.warning("Falling back to local ligand options")
+    try:
+        payload = _local_get_ligand_options_payload()
+    except RandyBackendError as exc:
+        return jsonify({'error': str(exc)}), 500
+    return jsonify(payload)
 
 
 
 # Function to get the SMILES string based on ligand_id
 def get_smiles_from_identifier(ligand):
-    conn = sqlite3.connect('viral_data.db')
-    cursor = conn.cursor()
-    cursor.execute("SELECT smiles FROM Ligand_Atoms_Smiles WHERE ligand = ?", (ligand,))
-    result = cursor.fetchone()
-    conn.close()
-    if result:
-        return result[0]
-    return None
+    return _load_smiles_for_ligand(ligand)
 
 # Function to generate SVG from SMILES
 def generate_svg_from_smiles(smiles):
@@ -3265,6 +3494,189 @@ def _prepare_protacability_result_set(conn, args, export_all=False):
     }
 
 
+def _build_protacability_filter_options_payload_from_rows(assessment_rows, readiness_rows, warhead_rows, args):
+    collapse_labels = _protacability_collapse_labels(args.get("collapse_labels"))
+    filters = _build_protacability_filters(args)
+    rows = _decorate_protacability_rows(
+        assessment_rows,
+        collapse_labels=collapse_labels,
+        readiness_rows=readiness_rows,
+        warhead_rows=warhead_rows,
+    )
+
+    virus_rows = _filter_options_for_context(rows, filters, collapse_labels=collapse_labels, ignore_key="virus_names")
+    protein_rows = _filter_options_for_context(rows, filters, collapse_labels=collapse_labels, ignore_key="protein_types")
+    tier_rows = _filter_options_for_context(rows, filters, collapse_labels=collapse_labels, ignore_key="tiers")
+    ligand_rows = _filter_options_for_context(rows, filters, collapse_labels=collapse_labels, ignore_key="ligand")
+    context_rows = _filter_options_for_context(rows, filters, collapse_labels=collapse_labels, ignore_key="ligand_context_class")
+
+    protein_field = "display_protein_type" if collapse_labels else "protein_type"
+    ligand_context_classes = [
+        {"value": "candidate_small_molecule", "label": "Candidate small-molecule context"},
+        {"value": "candidate_plus_glycan", "label": "Candidate + glycan context"},
+        {"value": "glycan_only", "label": "Glycan-only context"},
+        {"value": "glycan_common_mixed", "label": "Glycan/common structural context"},
+        {"value": "common_buffer_only", "label": "Common buffer/crystal context"},
+        {"value": "no_ligand_context", "label": "No ligand context"},
+    ]
+    available_contexts = {row.get("ligand_context_class") for row in context_rows if row.get("ligand_context_class")}
+
+    return {
+        "data_available": True,
+        "virus_names": sorted({row.get("virus_name") for row in virus_rows if row.get("virus_name")}),
+        "protein_types": sorted({row.get(protein_field) for row in protein_rows if row.get(protein_field)}),
+        "tiers": sorted(
+            {row.get("protacability_tier") for row in tier_rows if row.get("protacability_tier")},
+            key=lambda tier: (_tier_rank(tier), tier),
+        ),
+        "warhead_tiers": sorted({row.get("warhead_linkability_tier") for row in rows if row.get("warhead_linkability_tier")}),
+        "readiness_tiers": sorted({row.get("degrader_design_readiness_tier") for row in rows if row.get("degrader_design_readiness_tier")}),
+        "evidence_levels": sorted({row.get("evidence_level") for row in rows if row.get("evidence_level")}),
+        "smiles_sources": sorted({row.get("smiles_source") for row in rows if row.get("smiles_source")}),
+        "ligands": sorted({ligand for row in ligand_rows for ligand in (row.get("ligand_names") or []) if ligand}),
+        "ligand_context_classes": [item for item in ligand_context_classes if item["value"] in available_contexts],
+    }
+
+
+def _prepare_protacability_result_set_from_rows(assessment_rows, readiness_rows, warhead_rows, args, export_all=False):
+    view = _protacability_view_mode(args.get("view"))
+    collapse_labels = _protacability_collapse_labels(args.get("collapse_labels"))
+    limit = min(max(args.get("limit", type=int) or 50, 1), 100)
+    offset = max(args.get("offset", type=int) or 0, 0)
+    filters = _build_protacability_filters(args)
+
+    rows = _decorate_protacability_rows(
+        assessment_rows,
+        collapse_labels=collapse_labels,
+        readiness_rows=readiness_rows,
+        warhead_rows=warhead_rows,
+    )
+    filtered_rows = _filter_protacability_rows(rows, filters, collapse_labels=collapse_labels)
+
+    if view == "targets":
+        result_rows = _group_target_rows(filtered_rows)
+    elif view == "protein":
+        result_rows = _group_protein_rows(filtered_rows)
+    elif view == "chains":
+        result_rows = filtered_rows
+    else:
+        result_rows = _group_structure_rows(filtered_rows)
+
+    result_rows = _apply_ligand_context_filter(result_rows, filters.get("ligand_context_class"))
+    result_rows = _apply_ligand_presence_filter(result_rows, filters.get("ligand_presence"))
+
+    sorted_rows, sort_token = _sort_protacability_rows(result_rows, view, args.get("sort"))
+    summary = _build_summary_cards(view, sorted_rows)
+
+    if export_all:
+        page_rows = sorted_rows
+        total_rows = len(sorted_rows)
+        has_more = False
+        page_offset = 0
+    else:
+        page_rows, total_rows, has_more = _paginate_rows(sorted_rows, limit, offset)
+        page_offset = offset
+
+    return {
+        "view": view,
+        "collapse_labels": collapse_labels,
+        "rows": page_rows,
+        "summary": summary,
+        "total_rows": total_rows,
+        "has_more": has_more,
+        "limit": limit,
+        "offset": page_offset,
+        "sort": sort_token,
+        "all_rows": sorted_rows,
+        "filtered_chain_rows": filtered_rows,
+    }
+
+
+def _local_protacability_source_payload(*, pdb_code=None, virus_name=None, protein_type=None, include_lysine=False, include_inventory=False):
+    tables_ok, error_message = local_tables_available(PROTACABILITY_REQUIRED_TABLES)
+    if not tables_ok:
+        raise RandyBackendError(error_message)
+
+    with connect_db_row() as conn:
+        if not protacability_tables_available(conn):
+            return {
+                "data_available": False,
+                "assessment_rows": [],
+                "readiness_rows": [],
+                "warhead_rows": [],
+                "lysine_rows": [],
+                "ligand_inventory": [],
+            }
+
+        clauses = []
+        params = []
+        if pdb_code:
+            clauses.append("pdb_code = ?")
+            params.append(pdb_code)
+        if virus_name:
+            clauses.append("virus_name = ?")
+            params.append(virus_name)
+        if protein_type:
+            clauses.append("protein_type = ?")
+            params.append(protein_type)
+        where_sql = f" WHERE {' AND '.join(clauses)}" if clauses else ""
+
+        assessment_rows = [
+            dict(row)
+            for row in conn.execute(f"SELECT * FROM protacability_assessment{where_sql}", tuple(params)).fetchall()
+        ]
+        readiness_rows, warhead_rows = _load_protacability_enrichment_tables(conn)
+        lysine_rows = []
+        ligand_inventory = []
+        if include_lysine:
+            if pdb_code:
+                lysine_rows = [dict(row) for row in conn.execute("SELECT * FROM protacability_lysine_proximity WHERE pdb_code = ?", (pdb_code,)).fetchall()]
+            else:
+                lysine_rows = [dict(row) for row in conn.execute("SELECT * FROM protacability_lysine_proximity").fetchall()]
+        if include_inventory:
+            if pdb_code:
+                ligand_inventory = [dict(row) for row in conn.execute("SELECT * FROM protacability_ligand_inventory WHERE pdb_code = ?", (pdb_code,)).fetchall()]
+            else:
+                ligand_inventory = [dict(row) for row in conn.execute("SELECT * FROM protacability_ligand_inventory").fetchall()]
+
+    return {
+        "data_available": True,
+        "assessment_rows": assessment_rows,
+        "readiness_rows": readiness_rows,
+        "warhead_rows": warhead_rows,
+        "lysine_rows": lysine_rows,
+        "ligand_inventory": ligand_inventory,
+    }
+
+
+def _load_protacability_source_payload(*, pdb_code=None, virus_name=None, protein_type=None, include_lysine=False, include_inventory=False):
+    mode = _normalized_backend_mode()
+    params = {
+        "pdb_code": pdb_code or "",
+        "virus_name": virus_name or "",
+        "protein_type": protein_type or "",
+        "include_lysine": str(bool(include_lysine)).lower(),
+        "include_inventory": str(bool(include_inventory)).lower(),
+    }
+
+    if mode == "randy":
+        return randy_get("protacability/source", params=params)
+
+    if mode == "auto" and randy_available():
+        try:
+            return randy_get("protacability/source", params=params)
+        except RandyBackendError:
+            logging.warning("Falling back to local PROTACability source payload")
+
+    return _local_protacability_source_payload(
+        pdb_code=pdb_code,
+        virus_name=virus_name,
+        protein_type=protein_type,
+        include_lysine=include_lysine,
+        include_inventory=include_inventory,
+    )
+
+
 def _pick_representative_ligand_record(ligand_inventory, preferred_ligands=None, allow_glycan=False, preferred_chain=None):
     preferred = {str(name).strip().upper() for name in (preferred_ligands or []) if str(name).strip()}
     excluded = set(PROTACABILITY_COMMON_CONTEXT_LIGANDS) | (set() if allow_glycan else set(PROTACABILITY_GLYCAN_LIGANDS))
@@ -3895,17 +4307,19 @@ def _resolve_ligand_instance_mapping(pdb_code, ligand_code, auth_chain=None, aut
         "source": None,
     }
 
-    conn = connect_db_row()
-    try:
-        diagnostics["db_rows_found"] = _collect_ligand_mapping_db_rows(
-            conn,
-            pdb_upper,
-            ligand_upper,
-            auth_chain=auth_chain_upper,
-            auth_seq_id=auth_seq_text
-        )
-    finally:
-        conn.close()
+    mode = _normalized_backend_mode()
+    if mode != "randy":
+        conn = connect_db_row()
+        try:
+            diagnostics["db_rows_found"] = _collect_ligand_mapping_db_rows(
+                conn,
+                pdb_upper,
+                ligand_upper,
+                auth_chain=auth_chain_upper,
+                auth_seq_id=auth_seq_text
+            )
+        finally:
+            conn.close()
 
     local_cif_paths = _candidate_coordinate_files(pdb_upper, extensions=[".cif", ".mmcif"])
     for path in local_cif_paths:
@@ -4161,21 +4575,47 @@ def _resolve_coordinate_pdb(pdb_code, ligand_code=None, chain=None, residue_id=N
 
 @app.route('/get_virus_names_list_distinct', methods=['GET'])
 def get_virus_names_list_distinct():
-    conn = connect_db()
-    cursor = conn.cursor()
-    cursor.execute("SELECT DISTINCT virus_name FROM Virus_Proteins")
-    virus_names = [row[0] for row in cursor.fetchall()]
-    conn.close()
-    return jsonify(virus_names)
+    mode = _normalized_backend_mode()
+    if mode == "randy":
+        try:
+            return jsonify(randy_get('virus-proteins/virus-names'))
+        except RandyBackendError as exc:
+            return jsonify({"error": str(exc)}), exc.status_code
+    if mode == "auto" and randy_available():
+        try:
+            return jsonify(randy_get('virus-proteins/virus-names'))
+        except RandyBackendError:
+            logging.warning("Falling back to local virus names list")
+    try:
+        with _connect_local_db(QUERY_PROTEIN_REQUIRED_TABLES) as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT DISTINCT virus_name FROM Virus_Proteins")
+            virus_names = [row[0] for row in cursor.fetchall()]
+        return jsonify(virus_names)
+    except RandyBackendError as exc:
+        return jsonify({"error": str(exc)}), 500
 
 @app.route('/get_protein_types_list_distinct', methods=['GET'])
 def get_protein_types_list_distinct():
-    conn = connect_db()
-    cursor = conn.cursor()
-    cursor.execute("SELECT DISTINCT protein FROM Virus_Proteins")
-    protein_types = [row[0] for row in cursor.fetchall()]
-    conn.close()
-    return jsonify(protein_types)
+    mode = _normalized_backend_mode()
+    if mode == "randy":
+        try:
+            return jsonify(randy_get('virus-proteins/protein-types'))
+        except RandyBackendError as exc:
+            return jsonify({"error": str(exc)}), exc.status_code
+    if mode == "auto" and randy_available():
+        try:
+            return jsonify(randy_get('virus-proteins/protein-types'))
+        except RandyBackendError:
+            logging.warning("Falling back to local protein types list")
+    try:
+        with _connect_local_db(QUERY_PROTEIN_REQUIRED_TABLES) as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT DISTINCT protein FROM Virus_Proteins")
+            protein_types = [row[0] for row in cursor.fetchall()]
+        return jsonify(protein_types)
+    except RandyBackendError as exc:
+        return jsonify({"error": str(exc)}), 500
 
 
 
@@ -4183,35 +4623,41 @@ def get_protein_types_list_distinct():
 @app.route('/get_pdbs_for_virus_protein', methods=['POST'])
 def get_pdbs_for_virus_protein():
     data = request.json
+    mode = _normalized_backend_mode()
+    if mode == "randy":
+        try:
+            return jsonify(randy_post('virus-proteins/pdbs', json=data))
+        except RandyBackendError as exc:
+            return jsonify({"error": str(exc)}), exc.status_code
+    if mode == "auto" and randy_available():
+        try:
+            return jsonify(randy_post('virus-proteins/pdbs', json=data))
+        except RandyBackendError:
+            logging.warning("Falling back to local pdb lookup for virus/protein query")
+
     virus_name = data['virus_name']
     protein_types = data['protein_types']
-    ligand_filter = data.get('ligand', None)  # Optional ligand filter
-
-    conn = sqlite3.connect('viral_data.db')
-    cursor = conn.cursor()
-
-    # Basic query for PDB codes based on virus and protein types
-    placeholders = ', '.join(['?'] * len(protein_types))
-    query = f"SELECT DISTINCT pdb_id FROM Virus_Proteins WHERE virus_name = ? AND protein IN ({placeholders})"
-    params = [virus_name] + protein_types
-
-    # If a ligand filter is provided, include it in the query
-    if ligand_filter:
-        # Subquery to filter PDBs based on ligand or synonym presence
-        query += '''
-            AND pdb_id IN (
-                SELECT pdb_id FROM Ligand_ARP_Diagram WHERE ligand = ? OR ligand IN (
-                    SELECT synonym FROM Ligand_Synonyms WHERE ligand = ?
-                )
-            )
-        '''
-        params += [ligand_filter, ligand_filter]
-
-    cursor.execute(query, params)
-    pdb_codes = [row[0] for row in cursor.fetchall()]
-    conn.close()
-
-    return jsonify({'pdb_codes': pdb_codes})
+    ligand_filter = data.get('ligand', None)
+    try:
+        with _connect_local_db(QUERY_PROTEIN_REQUIRED_TABLES) as conn:
+            cursor = conn.cursor()
+            placeholders = ', '.join(['?'] * len(protein_types))
+            query = f"SELECT DISTINCT pdb_id FROM Virus_Proteins WHERE virus_name = ? AND protein IN ({placeholders})"
+            params = [virus_name] + protein_types
+            if ligand_filter:
+                query += '''
+                    AND pdb_id IN (
+                        SELECT pdb_id FROM Ligand_Arp_Diagram WHERE ligand = ? OR ligand IN (
+                            SELECT synonym FROM Ligand_Synonyms WHERE ligand = ?
+                        )
+                    )
+                '''
+                params += [ligand_filter, ligand_filter]
+            cursor.execute(query, params)
+            pdb_codes = [row[0] for row in cursor.fetchall()]
+        return jsonify({'pdb_codes': pdb_codes})
+    except RandyBackendError as exc:
+        return jsonify({"error": str(exc)}), 500
 
 
 
@@ -4230,33 +4676,59 @@ def export_data_to_excel():
     if not pdb_codes or not data_sets:
         return jsonify({'success': False, 'error': 'No PDB codes or datasets provided.'}), 400
 
-    allowed_data_sets = set(get_available_export_data_sets())
+    mode = _normalized_backend_mode()
+    if mode == "randy":
+        try:
+            page_metadata = _remote_page_metadata()
+        except RandyBackendError as exc:
+            return jsonify({'success': False, 'error': str(exc)}), exc.status_code
+    elif mode == "auto" and randy_available():
+        try:
+            page_metadata = _remote_page_metadata()
+        except RandyBackendError:
+            logging.warning("Falling back to local page metadata for export validation")
+            page_metadata = _local_page_metadata()
+    else:
+        page_metadata = _local_page_metadata()
+
+    allowed_data_sets = set(page_metadata.get("available_export_data_sets", []))
     invalid_data_sets = [data_set for data_set in data_sets if data_set not in allowed_data_sets]
     if invalid_data_sets:
         return jsonify({'success': False, 'error': f'Unsupported data sets requested: {invalid_data_sets}'}), 400
-
-    conn = connect_db()
     response = {}
     excel_file_path = os.path.join(output_dir, "combined_data.xlsx")
 
     try:
+        remote_payload = None
+        if mode == "randy":
+            remote_payload = randy_post('export-data', json=data)
+        elif mode == "auto" and randy_available():
+            try:
+                remote_payload = randy_post('export-data', json=data)
+            except RandyBackendError:
+                logging.warning("Falling back to local export data generation")
+
         # Create an ExcelWriter object to write multiple sheets
         with pd.ExcelWriter(excel_file_path, engine='xlsxwriter') as writer:
             for data_set in data_sets:
-                placeholders = ', '.join(['?'] * len(pdb_codes))
-                query = data_set_queries[data_set].format(placeholders=placeholders)
                 try:
-                    df = pd.read_sql(query, conn, params=pdb_codes)
+                    if remote_payload is not None:
+                        dataset_rows = (remote_payload.get("data_sets") or {}).get(data_set, [])
+                        df = pd.DataFrame(dataset_rows)
+                    else:
+                        with _connect_local_db(_required_tables_for_datasets([data_set])) as conn:
+                            placeholders = ', '.join(['?'] * len(pdb_codes))
+                            query = data_set_queries[data_set].format(placeholders=placeholders)
+                            df = pd.read_sql(query, conn, params=pdb_codes)
                     if not df.empty:
-                        # Write each dataset to a CSV file
                         csv_file_path = os.path.join(output_dir, f"{data_set.replace(' ', '_')}.csv")
                         df.to_csv(csv_file_path, index=False)
                         response[data_set] = f"File saved: {csv_file_path}"
-                        
-                        # Write each dataset as a sheet in the Excel file
                         df.to_excel(writer, sheet_name=data_set[:30], index=False)
                     else:
                         response[data_set] = "No data to save."
+                except RandyBackendError as e:
+                    return jsonify({'success': False, 'error': str(e)}), e.status_code
                 except Exception as e:
                     response[data_set] = f"Error querying database: {str(e)}"
                     logging.error("Error querying database: %s", e)
@@ -4284,8 +4756,6 @@ def export_data_to_excel():
     except Exception as e:
         logging.error("Failed during file creation: %s", e)
         return jsonify({'success': False, 'error': str(e)}), 500
-    finally:
-        conn.close()
 
 
 
@@ -4332,10 +4802,24 @@ def export_data_to_excel():
 
 @app.route('/query_protein_virus_page')
 def query_protein_virus_page():
+    mode = _normalized_backend_mode()
+    if mode == "randy":
+        try:
+            metadata = _remote_page_metadata()
+        except RandyBackendError as exc:
+            return render_template('query_protein_virus.html', available_export_data_sets=[], protacability_data_available=False, backend_error=str(exc)), exc.status_code
+    elif mode == "auto" and randy_available():
+        try:
+            metadata = _remote_page_metadata()
+        except RandyBackendError:
+            logging.warning("Falling back to local page metadata for query_protein_virus_page")
+            metadata = _local_page_metadata()
+    else:
+        metadata = _local_page_metadata()
     return render_template(
         'query_protein_virus.html',
-        available_export_data_sets=get_available_export_data_sets(),
-        protacability_data_available=protacability_tables_available()
+        available_export_data_sets=metadata.get("available_export_data_sets", []),
+        protacability_data_available=metadata.get("protacability_data_available", False)
     )
 
 
@@ -4346,12 +4830,21 @@ def query_protein_virus_page():
 
 @app.route('/get_ligands_with_synonyms', methods=['GET'])
 def get_ligands_with_synonyms():
-    conn = sqlite3.connect('viral_data.db')
-    cursor = conn.cursor()
-    cursor.execute("SELECT ligand, synonym FROM Ligand_Synonyms")
-    ligands = [{'ligand_code': row[0], 'synonym': row[1]} for row in cursor.fetchall()]
-    conn.close()
-    return jsonify(ligands)
+    mode = _normalized_backend_mode()
+    if mode == "randy":
+        try:
+            return jsonify(randy_get('ligands/with-synonyms'))
+        except RandyBackendError as exc:
+            return jsonify({"error": str(exc)}), exc.status_code
+    if mode == "auto" and randy_available():
+        try:
+            return jsonify(randy_get('ligands/with-synonyms'))
+        except RandyBackendError:
+            logging.warning("Falling back to local ligands with synonyms")
+    try:
+        return jsonify(_local_get_ligands_with_synonyms_payload())
+    except RandyBackendError as exc:
+        return jsonify({"error": str(exc)}), 500
 
 
 
@@ -4359,30 +4852,24 @@ def get_ligands_with_synonyms():
 
 @app.route("/get_ligand_info/<ligand_code>", methods=["GET"])
 def get_ligand_info(ligand_code):
-    """
-    Fetch ligand details (SMILES, PDB ID, molecular weight) from the Ligand_Atoms_Smiles.csv database.
-    """
-    conn = sqlite3.connect("viral_data.db")  # Connect to your database
-    cursor = conn.cursor()
-
-    cursor.execute("""
-        SELECT ligand, pdb_id, smiles, molecular_weight 
-        FROM Ligand_Atoms_Smiles 
-        WHERE ligand = ?
-    """, (ligand_code,))
-    
-    ligand_data = cursor.fetchone()
-    conn.close()
-
-    if ligand_data:
-        return jsonify({
-            "ligand": ligand_data[0],
-            "pdb_id": ligand_data[1],
-            "smiles": ligand_data[2],
-            "molecular_weight": ligand_data[3]
-        })
+    mode = _normalized_backend_mode()
+    if mode == "randy":
+        try:
+            payload = randy_get('ligand-info', params={"ligand_code": ligand_code})
+        except RandyBackendError as exc:
+            return jsonify({"error": str(exc)}), exc.status_code
+    elif mode == "auto" and randy_available():
+        try:
+            payload = randy_get('ligand-info', params={"ligand_code": ligand_code})
+        except RandyBackendError:
+            logging.warning("Falling back to local ligand info for %s", ligand_code)
+            payload = _local_get_ligand_info_payload(ligand_code)
     else:
-        return jsonify({"error": "Ligand not found"}), 404
+        payload = _local_get_ligand_info_payload(ligand_code)
+
+    if payload:
+        return jsonify(payload)
+    return jsonify({"error": "Ligand not found"}), 404
 
 
 
@@ -4497,17 +4984,34 @@ if not ENABLE_DRUG_GPT:
 
 @app.route('/protacability_page', methods=['GET', 'POST', 'OPTIONS'])
 def protacability_page():
+    mode = _normalized_backend_mode()
+    if mode == "randy":
+        try:
+            metadata = _remote_page_metadata()
+        except RandyBackendError as exc:
+            return render_template('protacability_assessment.html', protacability_data_available=False, backend_error=str(exc)), exc.status_code
+    elif mode == "auto" and randy_available():
+        try:
+            metadata = _remote_page_metadata()
+        except RandyBackendError:
+            logging.warning("Falling back to local page metadata for protacability_page")
+            metadata = _local_page_metadata()
+    else:
+        metadata = _local_page_metadata()
     return render_template(
         'protacability_assessment.html',
-        protacability_data_available=protacability_tables_available()
+        protacability_data_available=metadata.get("protacability_data_available", False)
     )
 
 
 @app.route('/api/protacability/filters')
 def protacability_filters():
-    conn = connect_db_row()
-    if not protacability_tables_available(conn):
-        conn.close()
+    try:
+        payload = _load_protacability_source_payload()
+    except RandyBackendError as exc:
+        return jsonify({"data_available": False, "message": str(exc)}), exc.status_code
+
+    if not payload.get("data_available"):
         return jsonify({
             "data_available": False,
             "message": "PROTACability data has not been imported yet. Run tools/import_protacability_data.py after generating the expansion outputs.",
@@ -4521,16 +5025,24 @@ def protacability_filters():
             "ligands": [],
             "ligand_context_classes": [],
         })
-    payload = _build_protacability_filter_options_payload(conn, request.args)
-    conn.close()
-    return jsonify(payload)
+    return jsonify(
+        _build_protacability_filter_options_payload_from_rows(
+            payload.get("assessment_rows", []),
+            payload.get("readiness_rows", []),
+            payload.get("warhead_rows", []),
+            request.args,
+        )
+    )
 
 
 @app.route('/api/protacability/filter_options')
 def protacability_filter_options():
-    conn = connect_db_row()
-    if not protacability_tables_available(conn):
-        conn.close()
+    try:
+        payload = _load_protacability_source_payload()
+    except RandyBackendError as exc:
+        return jsonify({"data_available": False, "message": str(exc)}), exc.status_code
+
+    if not payload.get("data_available"):
         return jsonify({
             "data_available": False,
             "message": "PROTACability data has not been imported yet. Run tools/import_protacability_data.py after generating the expansion outputs.",
@@ -4544,17 +5056,24 @@ def protacability_filter_options():
             "ligands": [],
             "ligand_context_classes": [],
         })
-
-    payload = _build_protacability_filter_options_payload(conn, request.args)
-    conn.close()
-    return jsonify(payload)
+    return jsonify(
+        _build_protacability_filter_options_payload_from_rows(
+            payload.get("assessment_rows", []),
+            payload.get("readiness_rows", []),
+            payload.get("warhead_rows", []),
+            request.args,
+        )
+    )
 
 
 @app.route('/api/protacability/search')
 def protacability_search():
-    conn = connect_db_row()
-    if not protacability_tables_available(conn):
-        conn.close()
+    try:
+        source_payload = _load_protacability_source_payload()
+    except RandyBackendError as exc:
+        return jsonify({"data_available": False, "message": str(exc), "rows": [], "summary": {}}), exc.status_code
+
+    if not source_payload.get("data_available"):
         return jsonify({
             "data_available": False,
             "message": "PROTACability data has not been imported yet. Run tools/import_protacability_data.py after generating the expansion outputs.",
@@ -4562,8 +5081,12 @@ def protacability_search():
             "summary": {}
         })
 
-    payload = _prepare_protacability_result_set(conn, request.args)
-    conn.close()
+    payload = _prepare_protacability_result_set_from_rows(
+        source_payload.get("assessment_rows", []),
+        source_payload.get("readiness_rows", []),
+        source_payload.get("warhead_rows", []),
+        request.args,
+    )
     return jsonify({
         "data_available": True,
         "view": payload["view"],
@@ -4580,19 +5103,23 @@ def protacability_search():
 
 @app.route('/api/protacability/detail/<pdb_code>/<chain_id>')
 def protacability_detail(pdb_code, chain_id):
-    conn = connect_db_row()
-    if not protacability_tables_available(conn):
-        conn.close()
+    try:
+        source_payload = _load_protacability_source_payload(pdb_code=pdb_code, include_lysine=True, include_inventory=True)
+    except RandyBackendError as exc:
+        return jsonify({"data_available": False, "message": str(exc)}), exc.status_code
+
+    if not source_payload.get("data_available"):
         return jsonify({
             "data_available": False,
             "message": "PROTACability data has not been imported yet. Run tools/import_protacability_data.py after generating the expansion outputs."
         }), 404
 
-    readiness_rows, warhead_rows = _load_protacability_enrichment_tables(conn)
-    raw_assessment_rows = conn.execute(
-        "SELECT * FROM protacability_assessment WHERE pdb_code = ? AND chain_id = ?",
-        (pdb_code, chain_id)
-    ).fetchall()
+    readiness_rows = source_payload.get("readiness_rows", [])
+    warhead_rows = source_payload.get("warhead_rows", [])
+    raw_assessment_rows = [
+        row for row in source_payload.get("assessment_rows", [])
+        if row.get("pdb_code") == pdb_code and row.get("chain_id") == chain_id
+    ]
 
     assessment_rows = _decorate_protacability_rows(
         raw_assessment_rows,
@@ -4603,65 +5130,48 @@ def protacability_detail(pdb_code, chain_id):
     assessment = max(assessment_rows, key=_row_priority_key) if assessment_rows else None
 
     if assessment is None:
-        conn.close()
         return jsonify({"error": "Assessment row not found"}), 404
 
     lysine_rows = [
-        dict(row) for row in conn.execute(
-            """
-            SELECT
-                lys_residue_id,
-                lys_observed_index,
-                lysine_sasa_a2,
-                is_surface_exposed,
-                nearest_ligand_resname,
-                nearest_ligand_distance_a,
-                linker_site_class
-            FROM protacability_lysine_proximity
-            WHERE pdb_code = ? AND chain_id = ?
-            ORDER BY lys_residue_id
-            """,
-            (pdb_code, chain_id)
-        ).fetchall()
+        {
+            "lys_residue_id": row.get("lys_residue_id"),
+            "lys_observed_index": row.get("lys_observed_index"),
+            "lysine_sasa_a2": row.get("lysine_sasa_a2"),
+            "is_surface_exposed": row.get("is_surface_exposed"),
+            "nearest_ligand_resname": row.get("nearest_ligand_resname"),
+            "nearest_ligand_distance_a": row.get("nearest_ligand_distance_a"),
+            "linker_site_class": row.get("linker_site_class"),
+        }
+        for row in source_payload.get("lysine_rows", [])
+        if row.get("pdb_code") == pdb_code and row.get("chain_id") == chain_id
     ]
 
     ligand_inventory = [
-        dict(row) for row in conn.execute(
-            """
-            SELECT
-                ligand_resname,
-                ligand_chain,
-                ligand_residue_id,
-                ligand_atom_count,
-                NULL AS ligand_heavy_atom_count,
-                centroid_x,
-                centroid_y,
-                centroid_z
-            FROM protacability_ligand_inventory
-            WHERE pdb_code = ?
-            ORDER BY ligand_resname, ligand_chain, ligand_residue_id
-            """,
-            (pdb_code,)
-        ).fetchall()
+        {
+            "ligand_resname": row.get("ligand_resname"),
+            "ligand_chain": row.get("ligand_chain"),
+            "ligand_residue_id": row.get("ligand_residue_id"),
+            "ligand_atom_count": row.get("ligand_atom_count"),
+            "ligand_heavy_atom_count": row.get("ligand_heavy_atom_count"),
+            "centroid_x": row.get("centroid_x"),
+            "centroid_y": row.get("centroid_y"),
+            "centroid_z": row.get("centroid_z"),
+        }
+        for row in source_payload.get("ligand_inventory", [])
+        if row.get("pdb_code") == pdb_code
     ]
 
     related_chains = [
-        dict(row) for row in conn.execute(
-            """
-            SELECT
-                chain_id,
-                protacability_proxy_score,
-                protacability_tier,
-                candidate_ligand_count,
-                exposed_lys_count
-            FROM protacability_assessment
-            WHERE pdb_code = ?
-            ORDER BY chain_id
-            """,
-            (pdb_code,)
-        ).fetchall()
+        {
+            "chain_id": row.get("chain_id"),
+            "protacability_proxy_score": row.get("protacability_proxy_score"),
+            "protacability_tier": row.get("protacability_tier"),
+            "candidate_ligand_count": row.get("candidate_ligand_count"),
+            "exposed_lys_count": row.get("exposed_lys_count"),
+        }
+        for row in source_payload.get("assessment_rows", [])
+        if row.get("pdb_code") == pdb_code
     ]
-    conn.close()
 
     return jsonify({
         "data_available": True,
@@ -4675,9 +5185,12 @@ def protacability_detail(pdb_code, chain_id):
 
 @app.route('/api/protacability/structure_detail/<pdb_code>')
 def protacability_structure_detail(pdb_code):
-    conn = connect_db_row()
-    if not protacability_tables_available(conn):
-        conn.close()
+    try:
+        source_payload = _load_protacability_source_payload(pdb_code=pdb_code, include_lysine=True, include_inventory=True)
+    except RandyBackendError as exc:
+        return jsonify({"data_available": False, "message": str(exc)}), exc.status_code
+
+    if not source_payload.get("data_available"):
         return jsonify({
             "data_available": False,
             "message": "PROTACability data has not been imported yet. Run tools/import_protacability_data.py after generating the expansion outputs."
@@ -4687,9 +5200,10 @@ def protacability_structure_detail(pdb_code):
     virus_name = (request.args.get("virus_name") or "").strip()
     protein_type = (request.args.get("protein_type") or "").strip()
 
-    readiness_rows, warhead_rows = _load_protacability_enrichment_tables(conn)
+    readiness_rows = source_payload.get("readiness_rows", [])
+    warhead_rows = source_payload.get("warhead_rows", [])
     decorated_rows = _decorate_protacability_rows(
-        _load_protacability_assessment_rows(conn, pdb_code=pdb_code),
+        source_payload.get("assessment_rows", []),
         collapse_labels=collapse_labels,
         readiness_rows=readiness_rows,
         warhead_rows=warhead_rows,
@@ -4700,7 +5214,6 @@ def protacability_structure_detail(pdb_code):
         decorated_rows = [row for row in decorated_rows if (row.get("display_protein_type") if collapse_labels else row.get("protein_type")) == protein_type]
 
     if not decorated_rows:
-        conn.close()
         return jsonify({"error": "Structure summary not found"}), 404
 
     summary_rows = _group_structure_rows(decorated_rows)
@@ -4710,42 +5223,32 @@ def protacability_structure_detail(pdb_code):
     representative_chain = summary_row.get("representative_chain_id")
 
     lysine_rows = [
-        dict(row) for row in conn.execute(
-            """
-            SELECT
-                lys_residue_id,
-                lys_observed_index,
-                lysine_sasa_a2,
-                is_surface_exposed,
-                nearest_ligand_resname,
-                nearest_ligand_distance_a,
-                linker_site_class
-            FROM protacability_lysine_proximity
-            WHERE pdb_code = ? AND chain_id = ?
-            ORDER BY lys_residue_id
-            """,
-            (pdb_code, representative_chain)
-        ).fetchall()
+        {
+            "lys_residue_id": row.get("lys_residue_id"),
+            "lys_observed_index": row.get("lys_observed_index"),
+            "lysine_sasa_a2": row.get("lysine_sasa_a2"),
+            "is_surface_exposed": row.get("is_surface_exposed"),
+            "nearest_ligand_resname": row.get("nearest_ligand_resname"),
+            "nearest_ligand_distance_a": row.get("nearest_ligand_distance_a"),
+            "linker_site_class": row.get("linker_site_class"),
+        }
+        for row in source_payload.get("lysine_rows", [])
+        if row.get("pdb_code") == pdb_code and row.get("chain_id") == representative_chain
     ]
 
     ligand_inventory = [
-        dict(row) for row in conn.execute(
-            """
-            SELECT
-                ligand_resname,
-                ligand_chain,
-                ligand_residue_id,
-                ligand_atom_count,
-                NULL AS ligand_heavy_atom_count,
-                centroid_x,
-                centroid_y,
-                centroid_z
-            FROM protacability_ligand_inventory
-            WHERE pdb_code = ?
-            ORDER BY ligand_resname, ligand_chain, ligand_residue_id
-            """,
-            (pdb_code,)
-        ).fetchall()
+        {
+            "ligand_resname": row.get("ligand_resname"),
+            "ligand_chain": row.get("ligand_chain"),
+            "ligand_residue_id": row.get("ligand_residue_id"),
+            "ligand_atom_count": row.get("ligand_atom_count"),
+            "ligand_heavy_atom_count": row.get("ligand_heavy_atom_count"),
+            "centroid_x": row.get("centroid_x"),
+            "centroid_y": row.get("centroid_y"),
+            "centroid_z": row.get("centroid_z"),
+        }
+        for row in source_payload.get("ligand_inventory", [])
+        if row.get("pdb_code") == pdb_code
     ]
     preferred_ligands = _split_candidate_ligands(summary_row.get("candidate_ligand_resnames_full"))
     representative_ligand = _pick_representative_ligand_record(
@@ -4754,7 +5257,6 @@ def protacability_structure_detail(pdb_code):
         allow_glycan=summary_row.get("ligand_context_class") == "glycan_only",
         preferred_chain=representative_chain
     )
-    conn.close()
     return jsonify({
         "data_available": True,
         "summary": summary_row,
@@ -4772,21 +5274,24 @@ def protacability_structure_detail(pdb_code):
 
 @app.route('/api/protacability/protein_detail')
 def protacability_protein_detail():
-    conn = connect_db_row()
-    if not protacability_tables_available(conn):
-        conn.close()
+    virus_name = (request.args.get("virus_name") or "").strip()
+    protein_type = (request.args.get("protein_type") or "").strip()
+    try:
+        source_payload = _load_protacability_source_payload(virus_name=virus_name, protein_type=protein_type)
+    except RandyBackendError as exc:
+        return jsonify({"data_available": False, "message": str(exc)}), exc.status_code
+
+    if not source_payload.get("data_available"):
         return jsonify({
             "data_available": False,
             "message": "PROTACability data has not been imported yet. Run tools/import_protacability_data.py after generating the expansion outputs."
         }), 404
 
     collapse_labels = _protacability_collapse_labels(request.args.get("collapse_labels"))
-    virus_name = (request.args.get("virus_name") or "").strip()
-    protein_type = (request.args.get("protein_type") or "").strip()
-
-    readiness_rows, warhead_rows = _load_protacability_enrichment_tables(conn)
+    readiness_rows = source_payload.get("readiness_rows", [])
+    warhead_rows = source_payload.get("warhead_rows", [])
     decorated_rows = _decorate_protacability_rows(
-        _load_protacability_assessment_rows(conn),
+        source_payload.get("assessment_rows", []),
         collapse_labels=collapse_labels,
         readiness_rows=readiness_rows,
         warhead_rows=warhead_rows,
@@ -4798,7 +5303,6 @@ def protacability_protein_detail():
     ]
 
     if not decorated_rows:
-        conn.close()
         return jsonify({"error": "Protein summary not found"}), 404
 
     protein_rows = _group_protein_rows(decorated_rows)
@@ -4806,7 +5310,6 @@ def protacability_protein_detail():
     structure_rows = _group_structure_rows(decorated_rows)
     structure_rows, _ = _sort_protacability_rows(structure_rows, "summary", "best_score_desc")
     tier_distribution = dict(Counter(row.get("best_tier") or "Unknown" for row in structure_rows))
-    conn.close()
     return jsonify({
         "data_available": True,
         "summary": protein_row,
@@ -4818,11 +5321,6 @@ def protacability_protein_detail():
 
 @app.route('/api/protacability/target_detail')
 def protacability_target_detail():
-    conn = connect_db_row()
-    if not protacability_tables_available(conn):
-        conn.close()
-        return jsonify({"data_available": False, "message": "PROTACability data is not available."}), 404
-
     collapse_labels = _protacability_collapse_labels(request.args.get("collapse_labels"))
     virus_name = (request.args.get("virus_name") or "").strip()
     protein_type = (request.args.get("protein_type") or "").strip()
@@ -4830,12 +5328,20 @@ def protacability_target_detail():
     min_score = request.args.get("min_score", type=float)
 
     if not virus_name or not protein_type:
-        conn.close()
         return jsonify({"error": "virus_name and protein_type are required"}), 400
 
-    readiness_rows, warhead_rows = _load_protacability_enrichment_tables(conn)
+    try:
+        source_payload = _load_protacability_source_payload(virus_name=virus_name, protein_type=protein_type)
+    except RandyBackendError as exc:
+        return jsonify({"data_available": False, "message": str(exc)}), exc.status_code
+
+    if not source_payload.get("data_available"):
+        return jsonify({"data_available": False, "message": "PROTACability data is not available."}), 404
+
+    readiness_rows = source_payload.get("readiness_rows", [])
+    warhead_rows = source_payload.get("warhead_rows", [])
     rows = _decorate_protacability_rows(
-        _load_protacability_assessment_rows(conn),
+        source_payload.get("assessment_rows", []),
         collapse_labels=collapse_labels,
         readiness_rows=readiness_rows,
         warhead_rows=warhead_rows,
@@ -4847,7 +5353,6 @@ def protacability_target_detail():
         rows = _apply_ligand_context_filter(rows, ligand_context_class)
 
     if not rows:
-        conn.close()
         return jsonify({"error": "Target detail not found"}), 404
 
     target_summary = _group_target_rows(rows)[0]
@@ -4918,23 +5423,21 @@ def protacability_target_detail():
     active_pdb_code = (representative_ligand or {}).get("pdb_code") or target_summary.get("best_pdb_code")
     ligand_inventory = []
     if active_pdb_code:
-        ligand_inventory = [
-            dict(row) for row in conn.execute(
-                """
-                SELECT
-                    ligand_resname,
-                    ligand_chain,
-                    ligand_residue_id,
-                    ligand_atom_count,
-                    NULL AS ligand_heavy_atom_count
-                FROM protacability_ligand_inventory
-                WHERE pdb_code = ?
-                ORDER BY ligand_resname, ligand_chain, ligand_residue_id
-                """,
-                (active_pdb_code,)
-            ).fetchall()
-        ]
-    conn.close()
+        try:
+            ligand_payload = _load_protacability_source_payload(pdb_code=active_pdb_code, include_inventory=True)
+            ligand_inventory = [
+                {
+                    "ligand_resname": row.get("ligand_resname"),
+                    "ligand_chain": row.get("ligand_chain"),
+                    "ligand_residue_id": row.get("ligand_residue_id"),
+                    "ligand_atom_count": row.get("ligand_atom_count"),
+                    "ligand_heavy_atom_count": row.get("ligand_heavy_atom_count"),
+                }
+                for row in ligand_payload.get("ligand_inventory", [])
+                if row.get("pdb_code") == active_pdb_code
+            ]
+        except RandyBackendError:
+            ligand_inventory = []
     return jsonify({
         "data_available": True,
         "target_summary": target_summary,
@@ -4948,9 +5451,12 @@ def protacability_target_detail():
 
 @app.route('/api/protacability/export')
 def protacability_export():
-    conn = connect_db_row()
-    if not protacability_tables_available(conn):
-        conn.close()
+    try:
+        source_payload = _load_protacability_source_payload()
+    except RandyBackendError as exc:
+        return jsonify({"success": False, "message": str(exc)}), exc.status_code
+
+    if not source_payload.get("data_available"):
         return jsonify({
             "success": False,
             "message": "PROTACability data has not been imported yet. Run tools/import_protacability_data.py after generating the expansion outputs."
@@ -4958,22 +5464,43 @@ def protacability_export():
 
     raw_export = (request.args.get("raw_export") or "").strip()
     if raw_export:
-        query = data_set_queries.get(raw_export)
-        if not query:
-            conn.close()
-            return jsonify({"success": False, "message": "Unknown PROTACability export selection."}), 400
-        table_name = {
-            "PROTACability Assessment": "protacability_assessment",
-            "PROTACability Lysine Proximity": "protacability_lysine_proximity",
-            "PROTACability Ligand Inventory": "protacability_ligand_inventory",
-            "PROTACability Warhead Linkability": "protacability_warhead_linkability",
-            "PROTACability Degrader Readiness": "protacability_degrader_readiness",
-        }.get(raw_export)
-        if table_name and not _table_exists(conn, table_name):
-            conn.close()
-            return jsonify({"success": False, "message": f"{raw_export} has not been imported yet."}), 404
-        df = pd.read_sql_query(f"SELECT * FROM {table_name}", conn)
-        conn.close()
+        mode = _normalized_backend_mode()
+        if mode == "randy":
+            try:
+                raw_payload = randy_get("protacability/raw-table", params={"raw_export": raw_export})
+            except RandyBackendError as exc:
+                return jsonify({"success": False, "message": str(exc)}), exc.status_code
+            table_name = raw_payload.get("table_name")
+            df = pd.DataFrame(raw_payload.get("rows", []))
+        elif mode == "auto" and randy_available():
+            try:
+                raw_payload = randy_get("protacability/raw-table", params={"raw_export": raw_export})
+                table_name = raw_payload.get("table_name")
+                df = pd.DataFrame(raw_payload.get("rows", []))
+            except RandyBackendError:
+                table_name = {
+                    "PROTACability Assessment": "protacability_assessment",
+                    "PROTACability Lysine Proximity": "protacability_lysine_proximity",
+                    "PROTACability Ligand Inventory": "protacability_ligand_inventory",
+                    "PROTACability Warhead Linkability": "protacability_warhead_linkability",
+                    "PROTACability Degrader Readiness": "protacability_degrader_readiness",
+                }.get(raw_export)
+                with connect_db_row() as conn:
+                    if table_name and not _table_exists(conn, table_name):
+                        return jsonify({"success": False, "message": f"{raw_export} has not been imported yet."}), 404
+                    df = pd.read_sql_query(f"SELECT * FROM {table_name}", conn)
+        else:
+            table_name = {
+                "PROTACability Assessment": "protacability_assessment",
+                "PROTACability Lysine Proximity": "protacability_lysine_proximity",
+                "PROTACability Ligand Inventory": "protacability_ligand_inventory",
+                "PROTACability Warhead Linkability": "protacability_warhead_linkability",
+                "PROTACability Degrader Readiness": "protacability_degrader_readiness",
+            }.get(raw_export)
+            with connect_db_row() as conn:
+                if table_name and not _table_exists(conn, table_name):
+                    return jsonify({"success": False, "message": f"{raw_export} has not been imported yet."}), 404
+                df = pd.read_sql_query(f"SELECT * FROM {table_name}", conn)
         csv_buffer = io.StringIO()
         df.to_csv(csv_buffer, index=False)
         byte_buffer = BytesIO(csv_buffer.getvalue().encode("utf-8"))
@@ -4981,8 +5508,13 @@ def protacability_export():
         download_name = f"{table_name}.csv"
         return send_file(byte_buffer, mimetype="text/csv", as_attachment=True, download_name=download_name)
 
-    payload = _prepare_protacability_result_set(conn, request.args, export_all=True)
-    conn.close()
+    payload = _prepare_protacability_result_set_from_rows(
+        source_payload.get("assessment_rows", []),
+        source_payload.get("readiness_rows", []),
+        source_payload.get("warhead_rows", []),
+        request.args,
+        export_all=True,
+    )
     df = pd.DataFrame(payload["rows"])
 
     csv_buffer = io.StringIO()
