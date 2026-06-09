@@ -1,140 +1,158 @@
 # Qodex.summary
 
 ## Task
-Test live RANDY `protac-backup` V-LiSEMOD endpoints after restart.
+Migrate V-LiSEMOD ligand image and PyMOL session database reads to RANDY.
 
 ## Original Goal
-Confirm that after copying the files to RANDY and restarting `protac-backup`, V-LiSEMOD works through `https://randy.rove-vernier.ts.net/backup/vlismod`, then decide whether it is safe to proceed to GitHub/Heroku setup.
+Fix Heroku failures where `/generate_ligand_images` and `/generate_pymol_session` still tried to query local SQLite tables that do not exist on Heroku.
 
 ## Assumptions
-- `protac-backup.service` is the live Gunicorn service for RANDY and serves `backup_receiver.app:APP`.
-- The intended production database path is `/home/jxs794/PROTAC_BUILDER/VLISEMOD/Database/viral_data.db`.
-- `VLISMOD_API_TOKEN` and `VLISMOD_DB_PATH` should be loaded from `/home/jxs794/PROTAC_BUILDER/.env`.
-- `/backup/vlismod` is the intended production route prefix.
-- The V-LiSEMOD app source itself is not present on RANDY; only the backup receiver and the database directory are present there.
+- `VLISMOD_DATA_BACKEND=randy` is the intended Heroku runtime mode for database-backed V-LiSEMOD routes.
+- The production RANDY base is `https://randy.rove-vernier.ts.net/backup/vlismod`.
+- RANDY reads the production database from `/home/jxs794/PROTAC_BUILDER/VLISEMOD/Database/viral_data.db`.
+- The Heroku dyno should still generate SVG and `.pml` files locally, but should not perform database reads locally.
+- `backup_receiver.app:APP` is the live RANDY service that must expose the new V-LiSEMOD POST endpoints.
 
 ## Files Inspected
+- `app.py`
+- `RANDY/vlismod_data_routes.py`
+- `RANDY/app.py`
 - Remote: `/home/jxs794/PROTAC_BUILDER/backup_receiver/app.py`
 - Remote: `/home/jxs794/PROTAC_BUILDER/backup_receiver/vlismod_data_routes.py`
-- Remote: `/etc/systemd/system/protac-backup.service`
-- Remote: `/home/jxs794/PROTAC_BUILDER/.env`
-- Remote: `/home/jxs794/PROTAC_BUILDER/VLISEMOD/Database/viral_data.db`
-- Local: `app.py`
-- Local: `.gitignore`
-- Local: `requirements.txt`
-- Local: `Procfile`
-- Local: `Procfile.randy`
+- Heroku logs provided in the prompt
 
 ## Files Changed
-- Remote runtime config: `/home/jxs794/PROTAC_BUILDER/.env`
-- Local summary: `Qodex.summary.md`
+- `app.py`
+- `RANDY/vlismod_data_routes.py`
+- `Qodex.summary.md`
+- Remote runtime sync for validation: `/home/jxs794/PROTAC_BUILDER/backup_receiver/vlismod_data_routes.py`
 
 ## Files Created
 - None
 
 ## Implementation Summary
-This was mostly a live verification pass with one runtime configuration fix on RANDY. The deployed `backup_receiver` code already included the new `/backup/vlismod` blueprint and the `/api/vlismod` compatibility alias. The live failure after restart was caused by the service still reading the wrong default database path.
+Two new authenticated RANDY endpoints were added under both `/api/vlismod` and `/backup/vlismod`:
+- `POST /ligand-images-data`
+- `POST /pymol-session-data`
 
-I updated the remote `.env` to set:
-- `VLISMOD_DB_PATH=/home/jxs794/PROTAC_BUILDER/VLISEMOD/Database/viral_data.db`
-- `VLISMOD_API_TOKEN=<set>`
+`/generate_ligand_images` now fetches its SMILES rows, chain/residue rows, and solvent-exposed SMILES atom indices from RANDY in strict `randy` mode, then continues generating SVG files locally.
 
-Because `sudo` restart was not available non-interactively, I sent `HUP` to the Gunicorn master process owned by `jxs794`, which successfully booted fresh workers and picked up the `.env` changes.
+`/generate_pymol_session` now fetches ligand-chain resolution, functional-group atoms, binding-pocket rows, distal atoms, solvent-exposed atoms, hydrated atoms, and Rupley SASA atoms from RANDY in strict `randy` mode, then continues writing the `.pml` file locally.
+
+Local fallback behavior was preserved for `local` and `auto` modes, but strict `randy` mode now returns clear remote-failure errors instead of silently touching local SQLite.
 
 ## Key Decisions
-- `/backup/vlismod` is now the correct production URL.
-- Live HTTPS validation was treated as the source of truth; local Flask-client checks were only secondary.
-- Heroku/GitHub setup can proceed from an integration standpoint because the live RANDY endpoint now works, but deployment still depends on the usual secret-handling and persistent-database considerations.
+- Heroku should not read local SQLite because the dyno does not have the production V-LiSEMOD database.
+- SVG generation and PyMOL script generation can remain local because they are file-generation tasks, not database-access tasks.
+- Database reads were moved to RANDY because RANDY already hosts the real production database and authenticated backup URL.
+- Strict `randy` mode now preserves meaningful remote statuses such as `404`, and returns `502` only for actual RANDY request failures.
 
 ## Commands Run
-- Remote service inspection:
-  - `ssh randy 'pwd; hostname; ...'`
-  - `ssh randy 'systemctl status protac-backup --no-pager'`
-  - `ssh randy 'systemctl cat protac-backup'`
-  - `ssh randy 'systemctl show protac-backup -p Environment --no-pager'`
-  - `ssh randy 'ps -ef | grep gunicorn | grep -v grep'`
-- Remote code inspection with `sed` and `grep`
-- Remote DB checks with `/home/jxs794/PROTAC_BUILDER/.venv/bin/python` using SQLite
-- Remote internal endpoint checks with `curl` against `http://127.0.0.1:8787/backup/vlismod`
-- Remote external endpoint checks with `curl` against `https://randy.rove-vernier.ts.net/backup/vlismod`
-- Remote `.env` update with a short Python script
-- Gunicorn worker reload with `kill -HUP <master-pid>`
-- Local strict `randy`-mode V-LiSEMOD route checks against the live RANDY URL
-- Local git safety checks
+- Code inspection with `grep`, `sed`, and `rg`
+- Local schema/value checks with `sqlite3`
+- `python -m py_compile app.py RANDY/app.py RANDY/vlismod_data_routes.py`
+- Local Flask test-client checks for RANDY blueprint routes
+- Local strict `randy`-mode app checks with mocked RANDY POST responses
+- Local strict `randy`-mode app checks against the live RANDY HTTPS endpoint
+- Remote RANDY runtime inspection with `ssh`
+- Remote file sync of `vlismod_data_routes.py` into `backup_receiver`
+- Remote Gunicorn worker reload with `kill -HUP <master-pid>`
+- Live HTTPS `curl` checks against `https://randy.rove-vernier.ts.net/backup/vlismod`
+- Git safety checks with `git status --short` and `rg`
 
 ## Validation Results
-- `protac-backup.service`: active/running
-- Gunicorn target: `backup_receiver.app:APP`
-- Gunicorn bind: `127.0.0.1:8787`
+- Root cause confirmed:
+  - `/generate_ligand_images` still queried `Functional_GROUPED`, `Ligand_Arp_Diagram`, `RUPLEY_SASA_DATA`, and `SMILES_MAP_PDB` locally.
+  - `/generate_pymol_session` still queried `ligand_atoms`, `Functional_Group_Atoms`, `receptor_binding_pocket`, `distal_atoms`, and `RUPLEY_SASA_DATA` locally.
+  - This matched the Heroku `sqlite3.OperationalError: no such table ...` failures from the prompt.
 
-- Internal localhost checks:
-  - `/backup/vlismod/health` -> `200`
-  - `/backup/vlismod/viruses` without token -> `401`
-  - `/backup/vlismod/db-health` with token -> `200`
-  - `/backup/vlismod/viruses` with token -> `200`
-  - `/backup/vlismod/ligands/list` with token -> `200`
+- Syntax:
+  - `python -m py_compile app.py RANDY/app.py RANDY/vlismod_data_routes.py` passed.
 
-- External HTTPS checks:
-  - `/backup/vlismod/health` -> `200`
-  - `/backup/vlismod/viruses` without token -> `401`
-  - `/backup/vlismod/db-health` with token -> `200`
-  - `/backup/vlismod/viruses` with token -> `200`
-  - `/backup/vlismod/ligands/list` with token -> `200`
-  - `/backup/vlismod/pdb-codes?virus_name=Human%20immunodeficiency%20virus%201` -> `200`
-  - `/backup/vlismod/ligands?pdb_code=1A8G` -> `200`
-  - `/backup/vlismod/functional-groups/check?pdb_code=1R6N` -> `200`
-  - `/backup/vlismod/pdb-mapping?ligand_code=2Z4` -> `200`
+- RANDY endpoint checks:
+  - Internal `http://127.0.0.1:8787/backup/vlismod/health` -> `200`
+  - External `https://randy.rove-vernier.ts.net/backup/vlismod/db-health` -> `200`
+  - External unauthenticated `POST /backup/vlismod/pymol-session-data` -> `401`
+  - External authenticated `POST /backup/vlismod/ligand-images-data` for `Human immunodeficiency virus 1 / 3EKY / DR7 / A` -> `200`
+  - External authenticated `POST /backup/vlismod/pymol-session-data` for `3EKY / DR7 / A` -> `200`
+  - `db-health` confirms:
+    - `db_exists=true`
+    - `db_path=/home/jxs794/PROTAC_BUILDER/VLISEMOD/Database/viral_data.db`
+  - `ligand-images-data` returned:
+    - `smiles_data` count `1`
+    - `chain_residue_data` count `1`
+    - `solvent_exposed_atom_map` key `3EKY|DR7|A`
+  - `pymol-session-data` returned:
+    - `ligand_chain=A`
+    - `functional_groups` count `16`
+    - `binding_pocket` count `121`
+    - `distal_atoms` count `6`
+    - `solvent_exposed_atoms` count `12`
+    - `hydrated_atoms` count `51`
+    - `rupley_sasa` count `12`
 
-- `db-health` now confirms:
-  - `db_exists=true`
-  - `db_path=/home/jxs794/PROTAC_BUILDER/VLISEMOD/Database/viral_data.db`
-  - `auth_configured=true` via `/health`
+- V-LiSEMOD route checks:
+  - Strict `randy` mode with mocked RANDY data:
+    - `/generate_ligand_images` -> `200`
+    - `/generate_pymol_session` -> `200`
+  - Strict `randy` mode with mocked RANDY failure:
+    - `/generate_ligand_images` -> `502`
+    - `/generate_pymol_session` -> `502`
+  - Strict `randy` mode against live RANDY HTTPS:
+    - `/generate_ligand_images` for `Human immunodeficiency virus 1 / 3EKY / DR7 / A` -> `200`
+    - `/generate_pymol_session` for `3EKY / DR7 / A` -> `200`
 
-- V-LiSEMOD strict `randy` mode against live RANDY:
-  - `/get_viruses` -> `200`
-  - `/get_ligands_list` -> `200`
-  - `/get_pdb_codes/Human immunodeficiency virus 1` -> `200`
-  - `/get_ligands/1A8G` -> `200`
-  - `/check_functional_groups/1R6N` -> `200`
-  - `/get_pdb_mapping/2Z4` -> `200`
-
-- Local fallback:
-  - Not used during strict `randy` mode verification.
+- Heroku log verification:
+  - Existing logs in the prompt correctly showed the pre-fix local SQLite failure mode.
+  - A fresh Heroku log verification for these two routes was not possible yet because this turn did not push or redeploy Heroku.
 
 ## Known Issues
-- `systemctl restart protac-backup` could not be run non-interactively through `sudo`; worker reload was done with `HUP` instead.
-- The actual V-LiSEMOD app source tree is not present on RANDY, so the strict `randy`-mode app check was performed from the local V-LiSEMOD codebase against the live RANDY URL rather than from a remote app checkout.
-- The repository still has broader pre-existing local changes unrelated to this validation flow; review before pushing.
+- Heroku itself has not been redeployed with these new code changes yet, so the live Heroku app may still show the old failures until the next deploy.
+- Many other complex V-LiSEMOD routes still query local SQLite and may fail later in strict `randy` mode until they are migrated too.
+- The live RANDY runtime file was updated directly for validation, so the local repo and remote runtime are now aligned for `vlismod_data_routes.py`, but Heroku still needs the matching repo deploy.
 
 ## Manual Verification
-From RANDY:
+After the next V-LiSEMOD deploy, verify:
 
 ```bash
-cd /home/jxs794/PROTAC_BUILDER
-grep -E "^(VLISMOD_API_TOKEN|VLISMOD_DB_PATH)=" .env | sed 's/=.*/=<set>/'
-
-TOKEN="<token from env only>"
-BASE="http://127.0.0.1:8787/backup/vlismod"
-
-curl -i "$BASE/health"
-curl -i "$BASE/viruses"
-curl -i -H "Authorization: Bearer $TOKEN" "$BASE/db-health"
-curl -i -H "Authorization: Bearer $TOKEN" "$BASE/viruses"
-curl -i -H "Authorization: Bearer $TOKEN" "$BASE/ligands/list"
+curl -i https://vlisemod-0e358c20a94d.herokuapp.com/get_viruses
+curl -i https://vlisemod-0e358c20a94d.herokuapp.com/get_ligands/3EKY
+curl -i https://vlisemod-0e358c20a94d.herokuapp.com/check_functional_groups/3EKY
 ```
 
-From any machine that can reach the Tailscale URL:
+In the browser:
+1. Open the homepage workflow.
+2. Select `Human immunodeficiency virus 1`.
+3. Select PDB `3EKY`.
+4. Select ligand `DR7`.
+5. Generate ligand images.
+6. Generate the PyMOL session.
+
+Expected:
+- ligand images page renders successfully
+- the solvent-exposed SVG is generated
+- the PyMOL `.pml` download succeeds
+- Heroku logs no longer show `no such table: Functional_GROUPED` or `no such table: ligand_atoms` for those requests
+
+Direct RANDY checks:
 
 ```bash
 TOKEN="<token from env only>"
 BASE="https://randy.rove-vernier.ts.net/backup/vlismod"
 
-curl -i "$BASE/health"
-curl -i "$BASE/viruses"
 curl -i -H "Authorization: Bearer $TOKEN" "$BASE/db-health"
-curl -i -H "Authorization: Bearer $TOKEN" "$BASE/viruses"
-curl -i -H "Authorization: Bearer $TOKEN" "$BASE/ligands/list"
+curl -i -X POST \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"virus_name":"Human immunodeficiency virus 1","pdb_code":"3EKY","ligand_name":"DR7","chain":"A"}' \
+  "$BASE/ligand-images-data"
+
+curl -i -X POST \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"pdb_code":"3EKY","ligand_name":"DR7","chain":"A","options":{"functional_groups":true,"binding_pocket":true,"distal_atoms":true,"solvent_exposed_atoms":true,"hydrated_atoms":true,"rupley_sasa":true}}' \
+  "$BASE/pymol-session-data"
 ```
 
 ## Suggested Next Prompt
-Prepare the GitHub and Heroku deployment steps for V-LiSEMOD now that the live RANDY backup endpoint is working, including a clean review of staged files, final env-var documentation, and the exact Heroku config vars needed for `VLISMOD_DATA_BACKEND=randy` with `VLISMOD_BACKUP_URL=https://randy.rove-vernier.ts.net/backup/vlismod`.
+Migrate the next batch of strict-`randy` V-LiSEMOD routes that still use local SQLite, especially chart generation, ligand interaction comparison, SASA-heavy visualizations, and PROTACability endpoints, while preserving local file generation and keeping Heroku stateless for database reads.

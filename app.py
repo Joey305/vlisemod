@@ -5,6 +5,7 @@ import glob
 import urllib.request
 import urllib.error
 import requests
+from pathlib import Path
 import pandas as pd
 from rdkit import Chem
 from rdkit.Chem import AllChem
@@ -50,7 +51,25 @@ app = Flask(__name__)
 
 
 class RandyBackendError(Exception):
-    pass
+    def __init__(self, message, status_code=502):
+        super().__init__(message)
+        self.status_code = status_code
+
+
+LOCAL_DB_PATH = Path(os.environ.get("VLISMOD_LOCAL_DB_PATH", "viral_data.db")).expanduser()
+LIGAND_IMAGE_REQUIRED_TABLES = (
+    "Functional_GROUPED",
+    "Ligand_Arp_Diagram",
+    "RUPLEY_SASA_DATA",
+    "SMILES_MAP_PDB",
+)
+PYMOL_REQUIRED_TABLES = (
+    "ligand_atoms",
+    "Functional_Group_Atoms",
+    "receptor_binding_pocket",
+    "distal_atoms",
+    "RUPLEY_SASA_DATA",
+)
 
 
 def _normalized_backend_mode():
@@ -100,7 +119,7 @@ def randy_available():
 
 def randy_get(path, params=None):
     if not randy_available():
-        raise RandyBackendError("RANDY API is not configured.")
+        raise RandyBackendError("RANDY API is not configured.", status_code=500)
 
     url = f"{_randy_base_url()}/{str(path or '').lstrip('/')}"
     headers = {"Authorization": f"Bearer {_randy_api_token()}"}
@@ -108,7 +127,7 @@ def randy_get(path, params=None):
     try:
         response = requests.get(url, params=params, headers=headers, timeout=10)
     except requests.RequestException as exc:
-        raise RandyBackendError(f"RANDY API request failed: {exc}") from exc
+        raise RandyBackendError(f"RANDY API request failed: {exc}", status_code=502) from exc
 
     try:
         payload = response.json()
@@ -117,12 +136,78 @@ def randy_get(path, params=None):
 
     if response.status_code >= 400:
         message = payload.get("error") if isinstance(payload, dict) else None
-        raise RandyBackendError(message or f"RANDY API request failed with status {response.status_code}.")
+        raise RandyBackendError(
+            message or f"RANDY API request failed with status {response.status_code}.",
+            status_code=response.status_code,
+        )
 
     if payload is None:
-        raise RandyBackendError("RANDY API returned non-JSON response.")
+        raise RandyBackendError("RANDY API returned non-JSON response.", status_code=502)
 
     return payload
+
+
+def randy_post(path, json=None):
+    if not randy_available():
+        raise RandyBackendError("RANDY API is not configured.", status_code=500)
+
+    url = f"{_randy_base_url()}/{str(path or '').lstrip('/')}"
+    headers = {"Authorization": f"Bearer {_randy_api_token()}"}
+
+    try:
+        response = requests.post(url, json=json, headers=headers, timeout=20)
+    except requests.RequestException as exc:
+        raise RandyBackendError(f"RANDY API request failed: {exc}", status_code=502) from exc
+
+    try:
+        payload = response.json()
+    except ValueError:
+        payload = None
+
+    if response.status_code >= 400:
+        message = payload.get("error") if isinstance(payload, dict) else None
+        raise RandyBackendError(
+            message or f"RANDY API request failed with status {response.status_code}.",
+            status_code=response.status_code,
+        )
+
+    if payload is None:
+        raise RandyBackendError("RANDY API returned non-JSON response.", status_code=502)
+
+    return payload
+
+
+def local_tables_available(required_tables):
+    db_path = LOCAL_DB_PATH
+    if not db_path.exists():
+        return False, f"Local V-LiSEMOD database not found at {db_path}."
+
+    with sqlite3.connect(str(db_path)) as conn:
+        rows = conn.execute(
+            "SELECT name FROM sqlite_master WHERE type = 'table' AND name IN ({})".format(
+                ",".join("?" for _ in required_tables)
+            ),
+            tuple(required_tables),
+        ).fetchall()
+
+    existing = {row[0] for row in rows}
+    missing = [table for table in required_tables if table not in existing]
+    if missing:
+        return False, f"Local V-LiSEMOD database is missing required tables: {', '.join(missing)}."
+
+    return True, None
+
+
+def _connect_local_db(required_tables=None):
+    if required_tables:
+        tables_ok, error_message = local_tables_available(required_tables)
+        if not tables_ok:
+            raise RandyBackendError(error_message)
+    return sqlite3.connect(str(LOCAL_DB_PATH))
+
+
+def _form_flag(name):
+    return request.form.get(name) is not None
 
 
 def _dispatch_supported_lookup(remote_path, *, params=None, local_loader):
@@ -135,7 +220,7 @@ def _dispatch_supported_lookup(remote_path, *, params=None, local_loader):
         try:
             payload = randy_get(remote_path, params=params)
         except RandyBackendError as exc:
-            return jsonify({"error": str(exc)}), 502
+            return jsonify({"error": str(exc)}), exc.status_code
         return jsonify(payload)
 
     if randy_available():
@@ -318,56 +403,119 @@ def citation_page():
 
 @app.route('/generate_ligand_images', methods=['POST'])
 def generate_ligand_images():
-    # Retrieval of form data 
-    virus_name = request.form.get('virus')
-    pdb_code = request.form.get('pdb_code')
-    ligand_name = request.form.get('ligand')
-    selected_chain = request.form.get('chain')
+    virus_name = str(request.form.get('virus') or '').strip()
+    pdb_code = str(request.form.get('pdb_code') or '').strip()
+    ligand_name = str(request.form.get('ligand') or '').strip()
+    selected_chain = str(request.form.get('chain') or '').strip() or None
 
-    # Database connection and query for SMILES and chain-residue data
-    conn = sqlite3.connect('viral_data.db')
-    cursor = conn.cursor()
+    if not virus_name or not pdb_code or not ligand_name:
+        return jsonify({"error": "Missing required ligand image parameters."}), 400
 
-    # Fetching SMILES data
-    cursor.execute('''
-        SELECT DISTINCT virus_name, pdb_id, ligand, smiles
-        FROM Functional_GROUPED
-        WHERE virus_name = ? AND pdb_id = ? AND ligand = ?
-    ''', (virus_name, pdb_code, ligand_name))
-    smiles_data = cursor.fetchall()
+    mode = _normalized_backend_mode()
+    remote_payload = None
 
-    # Fetching chain-residue data
-    cursor.execute('''
-        SELECT DISTINCT chain, ligand_id
-        FROM Ligand_Arp_Diagram
-        WHERE virus_name = ? AND pdb_id = ? AND ligand = ?
-    ''', (virus_name, pdb_code, ligand_name))
-    chain_residue_data = cursor.fetchall()
-
-    conn.close()
-
-    # Logging for debugging
-    print("Chain-Residue Data:", chain_residue_data)
-
-    # Generate images if SMILES data is found
-    if smiles_data:
-        images = generate_images_from_smiles(smiles_data, selected_chain, "static/ligand_images")
-        structure_url = None
-        if images:
-            primary = images[0]
-            structure_url = url_for(
-                "serve_coordinate_for_viewer",
-                pdb_code=str(primary.get("pdb_id") or "").strip().upper(),
-                ligand_code=str(primary.get("ligand_code") or "").strip().upper()
+    if mode == "randy":
+        try:
+            remote_payload = randy_post(
+                "ligand-images-data",
+                json={
+                    "virus_name": virus_name,
+                    "pdb_code": pdb_code,
+                    "ligand_name": ligand_name,
+                    "chain": selected_chain,
+                },
             )
-        return render_template(
-            'display_images.html',
-            images=images,
-            chain_residues=chain_residue_data,
-            structure_url=structure_url
-        )
+        except RandyBackendError as exc:
+            return jsonify({"error": str(exc)}), exc.status_code
+    elif mode == "auto" and randy_available():
+        try:
+            remote_payload = randy_post(
+                "ligand-images-data",
+                json={
+                    "virus_name": virus_name,
+                    "pdb_code": pdb_code,
+                    "ligand_name": ligand_name,
+                    "chain": selected_chain,
+                },
+            )
+        except RandyBackendError:
+            logging.warning(
+                "Falling back to local V-LiSEMOD database for ligand image generation: %s / %s / %s",
+                virus_name,
+                pdb_code,
+                ligand_name,
+            )
+
+    if remote_payload is not None:
+        smiles_data = [
+            (
+                row.get("virus_name"),
+                row.get("pdb_id"),
+                row.get("ligand"),
+                row.get("smiles"),
+            )
+            for row in remote_payload.get("smiles_data", [])
+        ]
+        chain_residue_data = [
+            (row.get("chain"), row.get("ligand_id"))
+            for row in remote_payload.get("chain_residue_data", [])
+        ]
+        solvent_exposed_atom_map = remote_payload.get("solvent_exposed_atom_map") or {}
     else:
-        return "No SMILES data found for the selected virus, PDB code, and ligand."
+        try:
+            with _connect_local_db(LIGAND_IMAGE_REQUIRED_TABLES) as conn:
+                cursor = conn.cursor()
+                cursor.execute(
+                    '''
+                    SELECT DISTINCT virus_name, pdb_id, ligand, smiles
+                    FROM Functional_GROUPED
+                    WHERE virus_name = ? AND pdb_id = ? AND ligand = ?
+                    ''',
+                    (virus_name, pdb_code, ligand_name),
+                )
+                smiles_data = cursor.fetchall()
+                cursor.execute(
+                    '''
+                    SELECT DISTINCT chain, ligand_id
+                    FROM Ligand_Arp_Diagram
+                    WHERE virus_name = ? AND pdb_id = ? AND ligand = ?
+                    ''',
+                    (virus_name, pdb_code, ligand_name),
+                )
+                chain_residue_data = cursor.fetchall()
+        except RandyBackendError as exc:
+            status_code = 500 if mode == "local" else exc.status_code
+            return jsonify({"error": str(exc)}), status_code
+        solvent_exposed_atom_map = None
+
+    if not smiles_data:
+        return "No SMILES data found for the selected virus, PDB code, and ligand.", 404
+
+    effective_chain = selected_chain or next(
+        (str(chain).strip() for chain, _ligand_id in chain_residue_data if chain),
+        None,
+    )
+
+    images = generate_images_from_smiles(
+        smiles_data,
+        effective_chain,
+        "static/ligand_images",
+        solvent_exposed_atom_map=solvent_exposed_atom_map,
+    )
+    structure_url = None
+    if images:
+        primary = images[0]
+        structure_url = url_for(
+            "serve_coordinate_for_viewer",
+            pdb_code=str(primary.get("pdb_id") or "").strip().upper(),
+            ligand_code=str(primary.get("ligand_code") or "").strip().upper()
+        )
+    return render_template(
+        'display_images.html',
+        images=images,
+        chain_residues=chain_residue_data,
+        structure_url=structure_url
+    )
 
 
 
@@ -378,7 +526,7 @@ from rdkit.Chem.Draw import rdMolDraw2D
 import os
 
 
-def generate_images_from_smiles(smiles_data, selected_chain, output_folder):
+def generate_images_from_smiles(smiles_data, selected_chain, output_folder, solvent_exposed_atom_map=None):
     images = []
     os.makedirs(output_folder, exist_ok=True)
 
@@ -424,14 +572,22 @@ def generate_images_from_smiles(smiles_data, selected_chain, output_folder):
         # SOLVENT-EXPOSED SVG
         # -------------------------
         solvent_svg_path = f"{output_folder}/{pdb_id}_{ligand_code}_solvent_exposed.svg"
-        highlight_solvent_exposed_atoms(
-            mol,
-            virus_name,
-            pdb_id,
-            ligand_code,
-            selected_chain,
-            solvent_svg_path
-        )
+        if solvent_exposed_atom_map is not None:
+            solvent_key = f"{pdb_id}|{ligand_code}|{selected_chain}"
+            highlight_solvent_exposed_atoms_from_indices(
+                mol,
+                solvent_exposed_atom_map.get(solvent_key, []),
+                solvent_svg_path,
+            )
+        else:
+            highlight_solvent_exposed_atoms(
+                mol,
+                virus_name,
+                pdb_id,
+                ligand_code,
+                selected_chain,
+                solvent_svg_path
+            )
 
         images.append({
             "path": svg_path,
@@ -552,96 +708,204 @@ def download_SASA_image(filename):
 
 @app.route('/generate_pymol_session', methods=['POST'])
 def generate_pymol_session():
-    pdb_code = request.form.get('pdb_code')
-    ligand_name = request.form.get('ligand')
+    pdb_code = str(request.form.get('pdb_code') or '').strip()
+    ligand_name = str(request.form.get('ligand') or '').strip()
+    requested_chain = str(request.form.get('chain') or '').strip() or None
 
-    options = {}
+    if not pdb_code or not ligand_name:
+        return jsonify({"error": "Missing required PyMOL session parameters."}), 400
 
-    conn = sqlite3.connect('viral_data.db')
-    cursor = conn.cursor()
+    option_flags = {
+        'functional_groups': _form_flag('functional_groups'),
+        'binding_pocket': _form_flag('binding_pocket'),
+        'distal_atoms': _form_flag('distal_atoms'),
+        'solvent_exposed_atoms': _form_flag('solvent_exposed_atoms'),
+        'hydrated_atoms': _form_flag('hydrated_atoms'),
+        'rupley_sasa': _form_flag('rupley_sasa'),
+    }
 
-    # Fetch the chain from the database
-    cursor.execute('''
-        SELECT DISTINCT chain
-        FROM ligand_atoms
-        WHERE pdb_id = ? AND ligand = ?
-    ''', (pdb_code, ligand_name))
-    ligand_chain = cursor.fetchone()[0]
+    mode = _normalized_backend_mode()
+    remote_payload = None
 
-    # Handle cases where the chain is not explicitly provided
-    if not ligand_chain:
-        # If no chain is specified, determine if there's only one chain and use it
-        cursor.execute('''
-            SELECT DISTINCT chain
-            FROM ligand_atoms
-            WHERE pdb_id = ? AND ligand = ?
-        ''', (pdb_code, ligand_name))
-        chains = cursor.fetchall()
+    if mode == "randy":
+        try:
+            remote_payload = randy_post(
+                "pymol-session-data",
+                json={
+                    "pdb_code": pdb_code,
+                    "ligand_name": ligand_name,
+                    "chain": requested_chain,
+                    "options": option_flags,
+                },
+            )
+        except RandyBackendError as exc:
+            return jsonify({"error": str(exc)}), exc.status_code
+    elif mode == "auto" and randy_available():
+        try:
+            remote_payload = randy_post(
+                "pymol-session-data",
+                json={
+                    "pdb_code": pdb_code,
+                    "ligand_name": ligand_name,
+                    "chain": requested_chain,
+                    "options": option_flags,
+                },
+            )
+        except RandyBackendError:
+            logging.warning(
+                "Falling back to local V-LiSEMOD database for PyMOL session generation: %s / %s",
+                pdb_code,
+                ligand_name,
+            )
 
-        if len(chains) == 1:
-            ligand_chain = chains[0][0]  # Set the single available chain
-        else:
-            return "Multiple chains found; please specify the chain."
+    if remote_payload is not None:
+        ligand_chain = remote_payload.get("ligand_chain")
+        if not ligand_chain:
+            return jsonify({"error": "RANDY response did not include a ligand chain."}), 502
 
-    ligand_chain = ligand_chain[0] if ligand_chain else None  # Use the chain that was found
+        options = {}
+        if option_flags['functional_groups']:
+            options['functional_groups'] = {
+                group_name: [
+                    (atom.get("atom_id"), atom.get("exact_atom"), atom.get("atom_type"))
+                    for atom in atoms
+                ]
+                for group_name, atoms in (remote_payload.get("functional_groups") or {}).items()
+            }
+        if option_flags['binding_pocket']:
+            options['binding_pocket'] = [
+                (row.get("residue_chain"), row.get("residue_number"))
+                for row in remote_payload.get("binding_pocket", [])
+            ]
+        if option_flags['distal_atoms']:
+            options['distal_atoms'] = [
+                (row.get("chain"), row.get("atom_id"))
+                for row in remote_payload.get("distal_atoms", [])
+            ]
+        if option_flags['solvent_exposed_atoms']:
+            options['solvent_exposed_atoms'] = [
+                (row.get("atom_id"), row.get("chain"))
+                for row in remote_payload.get("solvent_exposed_atoms", [])
+            ]
+        if option_flags['hydrated_atoms']:
+            options['hydrated_atoms'] = [
+                (row.get("chain"), row.get("atom_id"))
+                for row in remote_payload.get("hydrated_atoms", [])
+            ]
+        if option_flags['rupley_sasa']:
+            options['rupley_sasa'] = [
+                (row.get("atom_id"), row.get("chain"))
+                for row in remote_payload.get("rupley_sasa", [])
+            ]
+    else:
+        try:
+            with _connect_local_db(PYMOL_REQUIRED_TABLES) as conn:
+                cursor = conn.cursor()
+                cursor.execute(
+                    '''
+                    SELECT DISTINCT chain
+                    FROM ligand_atoms
+                    WHERE pdb_id = ? AND ligand = ?
+                    ORDER BY chain
+                    ''',
+                    (pdb_code, ligand_name),
+                )
+                chains = [row[0] for row in cursor.fetchall() if row[0]]
 
-    # Functional groups
-    if request.form.get('functional_groups'):
-        cursor.execute('''
-            SELECT functional_group, atom_id, exact_atom, atom_type, chain
-            FROM Functional_Group_Atoms
-            WHERE virus_name = (SELECT virus_name FROM ligand_atoms WHERE pdb_id = ? LIMIT 1)
-              AND pdb_id = ?
-              AND ligand = ?
-              AND chain = ?
-        ''', (pdb_code, pdb_code, ligand_name, ligand_chain))
-        rows = cursor.fetchall()
-        functional_groups = {}
-        for fg_name, atom_id, exact_atom, atom_type, chain in rows:
-            functional_groups.setdefault(fg_name, []).append((atom_id, exact_atom, atom_type))
-        options['functional_groups'] = functional_groups
+                if requested_chain:
+                    if requested_chain not in chains:
+                        return jsonify({"error": "Specified ligand chain was not found."}), 404
+                    ligand_chain = requested_chain
+                else:
+                    if not chains:
+                        return jsonify({"error": "No ligand chain found for the selected PDB and ligand."}), 404
+                    if len(chains) > 1:
+                        return jsonify({"error": "Multiple chains found; please specify the chain."}), 400
+                    ligand_chain = chains[0]
 
-    # Binding pocket
-    if request.form.get('binding_pocket'):
-        cursor.execute('''
-            SELECT residue_chain, residue_number
-            FROM receptor_binding_pocket
-            WHERE pdb_id = ?
-        ''', (pdb_code,))
-        options['binding_pocket'] = cursor.fetchall()
+                options = {}
+                if option_flags['functional_groups']:
+                    cursor.execute(
+                        '''
+                        SELECT functional_group, atom_id, exact_atom, atom_type, chain
+                        FROM Functional_Group_Atoms
+                        WHERE virus_name = (
+                              SELECT virus_name
+                              FROM ligand_atoms
+                              WHERE pdb_id = ? AND ligand = ? AND chain = ?
+                              LIMIT 1
+                          )
+                          AND pdb_id = ?
+                          AND ligand = ?
+                          AND chain = ?
+                        ''',
+                        (pdb_code, ligand_name, ligand_chain, pdb_code, ligand_name, ligand_chain),
+                    )
+                    rows = cursor.fetchall()
+                    functional_groups = {}
+                    for fg_name, atom_id, exact_atom, atom_type, _chain in rows:
+                        functional_groups.setdefault(fg_name, []).append((atom_id, exact_atom, atom_type))
+                    options['functional_groups'] = functional_groups
 
-    # Distal atoms
-    if request.form.get('distal_atoms'):
-        cursor.execute('''
-            SELECT chain, atom_id
-            FROM distal_atoms
-            WHERE pdb_id = ?
-        ''', (pdb_code,))
-        options['distal_atoms'] = cursor.fetchall()
+                if option_flags['binding_pocket']:
+                    cursor.execute(
+                        '''
+                        SELECT residue_chain, residue_number
+                        FROM receptor_binding_pocket
+                        WHERE pdb_id = ?
+                        ''',
+                        (pdb_code,),
+                    )
+                    options['binding_pocket'] = cursor.fetchall()
 
-    # Solvent exposed atoms (RUPLEY_SASA)
-    if request.form.get('solvent_exposed_atoms'):
-        cursor.execute('''
-            SELECT atom_id, chain
-            FROM RUPLEY_SASA_DATA
-            WHERE pdb_id = ? AND ligand = ? AND (chain = ? OR ? IS NULL)
-        ''', (pdb_code, ligand_name, ligand_chain, ligand_chain))
-        options['solvent_exposed_atoms'] = cursor.fetchall()
+                if option_flags['distal_atoms']:
+                    cursor.execute(
+                        '''
+                        SELECT chain, atom_id
+                        FROM distal_atoms
+                        WHERE pdb_id = ? AND ligand = ?
+                        ''',
+                        (pdb_code, ligand_name),
+                    )
+                    options['distal_atoms'] = cursor.fetchall()
 
-    # Hydrated atoms
-    if request.form.get('hydrated_atoms'):
-        cursor.execute('''
-            SELECT chain, atom_id
-            FROM ligand_atoms
-            WHERE pdb_id = ? AND ligand = ?
-        ''', (pdb_code, ligand_name))
-        options['hydrated_atoms'] = cursor.fetchall()
+                if option_flags['solvent_exposed_atoms']:
+                    cursor.execute(
+                        '''
+                        SELECT atom_id, chain
+                        FROM RUPLEY_SASA_DATA
+                        WHERE pdb_id = ? AND ligand = ? AND (chain = ? OR ? IS NULL)
+                        ''',
+                        (pdb_code, ligand_name, ligand_chain, ligand_chain),
+                    )
+                    options['solvent_exposed_atoms'] = cursor.fetchall()
 
-    # Generate PyMOL script
+                if option_flags['hydrated_atoms']:
+                    cursor.execute(
+                        '''
+                        SELECT chain, atom_id
+                        FROM ligand_atoms
+                        WHERE pdb_id = ? AND ligand = ? AND (chain = ? OR ? IS NULL)
+                        ''',
+                        (pdb_code, ligand_name, ligand_chain, ligand_chain),
+                    )
+                    options['hydrated_atoms'] = cursor.fetchall()
+
+                if option_flags['rupley_sasa']:
+                    cursor.execute(
+                        '''
+                        SELECT atom_id, chain
+                        FROM RUPLEY_SASA_DATA
+                        WHERE pdb_id = ? AND ligand = ? AND (chain = ? OR ? IS NULL)
+                        ''',
+                        (pdb_code, ligand_name, ligand_chain, ligand_chain),
+                    )
+                    options['rupley_sasa'] = cursor.fetchall()
+        except RandyBackendError as exc:
+            status_code = 500 if mode == "local" else exc.status_code
+            return jsonify({"error": str(exc)}), status_code
+
     pymol_script_path = write_pymol_script(pdb_code, ligand_name, ligand_chain, options)
-
-    conn.close()
-
     return send_file(pymol_script_path, as_attachment=True)
 
 
@@ -1185,40 +1449,42 @@ def highlight_solvent_exposed_atoms(
     chain,
     output_svg
 ):
-    import sqlite3
-    from rdkit.Chem import AllChem
-    from rdkit.Chem.Draw import rdMolDraw2D
+    with _connect_local_db(LIGAND_IMAGE_REQUIRED_TABLES) as conn:
+        cur = conn.cursor()
+        cur.execute(
+            """
+            SELECT atom_id, exact_atom
+            FROM RUPLEY_SASA_DATA
+            WHERE virus_name = ? AND pdb_id = ? AND ligand = ? AND chain = ?
+            """,
+            (virus_name, pdb_id, ligand_id, chain),
+        )
+        sasa_atoms = cur.fetchall()
 
-    conn = sqlite3.connect("viral_data.db")
-    cur = conn.cursor()
+        sasa_smiles_indices = []
+        for atom_id, exact_atom in sasa_atoms:
+            cur.execute(
+                """
+                SELECT smiles_atom_index
+                FROM SMILES_MAP_PDB
+                WHERE virus_name = ?
+                  AND pdb_id = ?
+                  AND ligand = ?
+                  AND chain = ?
+                  AND atom_id = ?
+                  AND exact_atom = ?
+                """,
+                (virus_name, pdb_id, ligand_id, chain, atom_id, exact_atom),
+            )
 
-    cur.execute("""
-        SELECT atom_id, exact_atom
-        FROM RUPLEY_SASA_DATA
-        WHERE virus_name = ? AND pdb_id = ? AND ligand = ? AND chain = ?
-    """, (virus_name, pdb_id, ligand_id, chain))
+            row = cur.fetchone()
+            if row and row[0] is not None:
+                sasa_smiles_indices.append(int(row[0]))
 
-    sasa_atoms = cur.fetchall()
+    highlight_solvent_exposed_atoms_from_indices(molecule, sasa_smiles_indices, output_svg)
 
-    sasa_smiles_indices = []
-    for atom_id, exact_atom in sasa_atoms:
-        cur.execute("""
-            SELECT smiles_atom_index
-            FROM SMILES_MAP_PDB
-            WHERE virus_name = ?
-              AND pdb_id = ?
-              AND ligand = ?
-              AND chain = ?
-              AND atom_id = ?
-              AND exact_atom = ?
-        """, (virus_name, pdb_id, ligand_id, chain, atom_id, exact_atom))
 
-        row = cur.fetchone()
-        if row and row[0] is not None:
-            sasa_smiles_indices.append(int(row[0]))
-
-    conn.close()
-
+def highlight_solvent_exposed_atoms_from_indices(molecule, smiles_indices, output_svg):
     AllChem.Compute2DCoords(molecule)
 
     drawer = rdMolDraw2D.MolDraw2DSVG(600, 600)
@@ -1227,8 +1493,8 @@ def highlight_solvent_exposed_atoms(
 
     drawer.DrawMolecule(
         molecule,
-        highlightAtoms=sasa_smiles_indices,
-        highlightAtomColors={i: (1.0, 0.0, 0.0) for i in sasa_smiles_indices}
+        highlightAtoms=smiles_indices,
+        highlightAtomColors={i: (1.0, 0.0, 0.0) for i in smiles_indices}
     )
 
     drawer.FinishDrawing()

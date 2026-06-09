@@ -79,6 +79,17 @@ def _required_arg(name: str) -> str:
     return value
 
 
+def _required_json_arg(payload: dict[str, Any], name: str) -> str:
+    value = str(payload.get(name, "")).strip()
+    if not value:
+        raise ValueError(f"Missing required JSON field: {name}")
+    return value
+
+
+def _json_flag(payload: dict[str, Any], name: str) -> bool:
+    return bool(payload.get(name))
+
+
 def _fetch_scalar_list(query: str, params: tuple[Any, ...]) -> list[Any]:
     with _connect() as conn:
         rows = conn.execute(query, params).fetchall()
@@ -311,6 +322,259 @@ def create_vlismod_blueprint(blueprint_name: str, url_prefix: str) -> Blueprint:
         )
         sasa_chains = [[row["atom_id"], row["chain"]] for row in rows]
         return jsonify(sasa_chains)
+
+    @bp.post("/ligand-images-data")
+    @require_token
+    def get_ligand_images_data():
+        payload = request.get_json(silent=True) or {}
+        virus_name = _required_json_arg(payload, "virus_name")
+        pdb_code = _required_json_arg(payload, "pdb_code")
+        ligand_name = _required_json_arg(payload, "ligand_name")
+        requested_chain = str(payload.get("chain", "")).strip() or None
+
+        with _connect() as conn:
+            smiles_rows = conn.execute(
+                """
+                SELECT DISTINCT virus_name, pdb_id, ligand, smiles
+                FROM Functional_GROUPED
+                WHERE virus_name = ? AND pdb_id = ? AND ligand = ?
+                """,
+                (virus_name, pdb_code, ligand_name),
+            ).fetchall()
+
+            chain_rows = conn.execute(
+                """
+                SELECT DISTINCT chain, ligand_id
+                FROM Ligand_Arp_Diagram
+                WHERE virus_name = ? AND pdb_id = ? AND ligand = ?
+                ORDER BY chain, ligand_id
+                """,
+                (virus_name, pdb_code, ligand_name),
+            ).fetchall()
+
+            if not smiles_rows:
+                return _json_error("No ligand image data found for the selected virus, PDB code, and ligand.", 404)
+
+            chains_to_map = [requested_chain] if requested_chain else [
+                row["chain"] for row in chain_rows if row["chain"]
+            ]
+            solvent_exposed_atom_map: dict[str, list[int]] = {}
+
+            for chain in chains_to_map:
+                sasa_rows = conn.execute(
+                    """
+                    SELECT atom_id, exact_atom
+                    FROM RUPLEY_SASA_DATA
+                    WHERE virus_name = ? AND pdb_id = ? AND ligand = ? AND chain = ?
+                    """,
+                    (virus_name, pdb_code, ligand_name, chain),
+                ).fetchall()
+
+                smiles_indices: list[int] = []
+                for sasa_row in sasa_rows:
+                    mapped_row = conn.execute(
+                        """
+                        SELECT smiles_atom_index
+                        FROM SMILES_MAP_PDB
+                        WHERE virus_name = ?
+                          AND pdb_id = ?
+                          AND ligand = ?
+                          AND chain = ?
+                          AND atom_id = ?
+                          AND exact_atom = ?
+                        """,
+                        (
+                            virus_name,
+                            pdb_code,
+                            ligand_name,
+                            chain,
+                            sasa_row["atom_id"],
+                            sasa_row["exact_atom"],
+                        ),
+                    ).fetchone()
+
+                    if mapped_row and mapped_row["smiles_atom_index"] is not None:
+                        smiles_indices.append(int(mapped_row["smiles_atom_index"]))
+
+                solvent_exposed_atom_map[f"{pdb_code}|{ligand_name}|{chain}"] = sorted(set(smiles_indices))
+
+        return jsonify(
+            {
+                "ok": True,
+                "smiles_data": [
+                    {
+                        "virus_name": row["virus_name"],
+                        "pdb_id": row["pdb_id"],
+                        "ligand": row["ligand"],
+                        "smiles": row["smiles"],
+                    }
+                    for row in smiles_rows
+                ],
+                "chain_residue_data": [
+                    {"chain": row["chain"], "ligand_id": row["ligand_id"]}
+                    for row in chain_rows
+                ],
+                "solvent_exposed_atom_map": solvent_exposed_atom_map,
+            }
+        )
+
+    @bp.post("/pymol-session-data")
+    @require_token
+    def get_pymol_session_data():
+        payload = request.get_json(silent=True) or {}
+        pdb_code = _required_json_arg(payload, "pdb_code")
+        ligand_name = _required_json_arg(payload, "ligand_name")
+        requested_chain = str(payload.get("chain", "")).strip() or None
+        options = payload.get("options") or {}
+
+        with _connect() as conn:
+            chain_rows = conn.execute(
+                """
+                SELECT DISTINCT chain
+                FROM ligand_atoms
+                WHERE pdb_id = ? AND ligand = ?
+                ORDER BY chain
+                """,
+                (pdb_code, ligand_name),
+            ).fetchall()
+            chains = [row["chain"] for row in chain_rows if row["chain"]]
+
+            if requested_chain:
+                if requested_chain not in chains:
+                    return _json_error("Specified ligand chain was not found.", 404)
+                ligand_chain = requested_chain
+            else:
+                if not chains:
+                    return _json_error("No ligand chain found for the selected PDB and ligand.", 404)
+                if len(chains) > 1:
+                    return _json_error("Multiple chains found; please specify the chain.", 400)
+                ligand_chain = chains[0]
+
+            virus_row = conn.execute(
+                """
+                SELECT virus_name
+                FROM ligand_atoms
+                WHERE pdb_id = ? AND ligand = ? AND chain = ?
+                LIMIT 1
+                """,
+                (pdb_code, ligand_name, ligand_chain),
+            ).fetchone()
+            virus_name = virus_row["virus_name"] if virus_row else None
+
+            response_payload: dict[str, Any] = {
+                "ok": True,
+                "ligand_chain": ligand_chain,
+                "functional_groups": {},
+                "binding_pocket": [],
+                "distal_atoms": [],
+                "solvent_exposed_atoms": [],
+                "hydrated_atoms": [],
+                "rupley_sasa": [],
+            }
+
+            if _json_flag(options, "functional_groups") and virus_name:
+                fg_rows = conn.execute(
+                    """
+                    SELECT functional_group, atom_id, exact_atom, atom_type
+                    FROM Functional_Group_Atoms
+                    WHERE virus_name = ?
+                      AND pdb_id = ?
+                      AND ligand = ?
+                      AND chain = ?
+                    ORDER BY functional_group, atom_id
+                    """,
+                    (virus_name, pdb_code, ligand_name, ligand_chain),
+                ).fetchall()
+                functional_groups: dict[str, list[dict[str, Any]]] = {}
+                for row in fg_rows:
+                    functional_groups.setdefault(row["functional_group"], []).append(
+                        {
+                            "atom_id": row["atom_id"],
+                            "exact_atom": row["exact_atom"],
+                            "atom_type": row["atom_type"],
+                        }
+                    )
+                response_payload["functional_groups"] = functional_groups
+
+            if _json_flag(options, "binding_pocket"):
+                binding_rows = conn.execute(
+                    """
+                    SELECT residue_chain, residue_number
+                    FROM receptor_binding_pocket
+                    WHERE pdb_id = ?
+                    ORDER BY residue_chain, residue_number
+                    """,
+                    (pdb_code,),
+                ).fetchall()
+                response_payload["binding_pocket"] = [
+                    {
+                        "residue_chain": row["residue_chain"],
+                        "residue_number": row["residue_number"],
+                    }
+                    for row in binding_rows
+                ]
+
+            if _json_flag(options, "distal_atoms"):
+                distal_rows = conn.execute(
+                    """
+                    SELECT chain, atom_id
+                    FROM distal_atoms
+                    WHERE pdb_id = ? AND ligand = ?
+                    ORDER BY chain, atom_id
+                    """,
+                    (pdb_code, ligand_name),
+                ).fetchall()
+                response_payload["distal_atoms"] = [
+                    {"chain": row["chain"], "atom_id": row["atom_id"]}
+                    for row in distal_rows
+                ]
+
+            if _json_flag(options, "solvent_exposed_atoms"):
+                solvent_rows = conn.execute(
+                    """
+                    SELECT atom_id, chain
+                    FROM RUPLEY_SASA_DATA
+                    WHERE pdb_id = ? AND ligand = ? AND chain = ?
+                    ORDER BY chain, atom_id
+                    """,
+                    (pdb_code, ligand_name, ligand_chain),
+                ).fetchall()
+                response_payload["solvent_exposed_atoms"] = [
+                    {"atom_id": row["atom_id"], "chain": row["chain"]}
+                    for row in solvent_rows
+                ]
+
+            if _json_flag(options, "hydrated_atoms"):
+                hydrated_rows = conn.execute(
+                    """
+                    SELECT chain, atom_id
+                    FROM ligand_atoms
+                    WHERE pdb_id = ? AND ligand = ? AND chain = ?
+                    ORDER BY chain, atom_id
+                    """,
+                    (pdb_code, ligand_name, ligand_chain),
+                ).fetchall()
+                response_payload["hydrated_atoms"] = [
+                    {"chain": row["chain"], "atom_id": row["atom_id"]}
+                    for row in hydrated_rows
+                ]
+
+            if _json_flag(options, "rupley_sasa"):
+                rupley_rows = conn.execute(
+                    """
+                    SELECT atom_id, chain
+                    FROM RUPLEY_SASA_DATA
+                    WHERE pdb_id = ? AND ligand = ? AND chain = ?
+                    ORDER BY chain, atom_id
+                    """,
+                    (pdb_code, ligand_name, ligand_chain),
+                ).fetchall()
+                response_payload["rupley_sasa"] = [
+                    {"atom_id": row["atom_id"], "chain": row["chain"]}
+                    for row in rupley_rows
+                ]
+
+        return jsonify(response_payload)
 
     return bp
 
