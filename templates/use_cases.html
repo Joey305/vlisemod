@@ -2,93 +2,180 @@
 
 {% block title %}Use Cases for V-LiSEMOD | Viral Structure-Guided Discovery{% endblock %}
 
-{% block meta_description %}Explore practical V-LiSEMOD use cases for antiviral target review, ligand comparison, solvent-exposed atom discovery, PROTACability screening, and PyMOL-based structure communication.{% endblock %}
+{% block meta_description %}Explore practical V-LiSEMOD use cases for antiviral target exploration, ligand structure review, solvent-exposed atom discovery, ligand comparison, PyMOL session generation, and PROTACability screening in viral structure-guided discovery.{% endblock %}
 
-{% block body_class %}app-shell resource-page{% endblock %}
+{% block body_class %}app-shell resource-page use-cases-resource{% endblock %}
 
 {% block content %}
-<section class="resource-hero page-section">
-    <div>
+<section class="resource-hero page-section usecases-hero" id="top">
+    <div class="usecases-hero-copy">
         <span class="page-kicker">Use Cases</span>
         <h1>How researchers can use V-LiSEMOD</h1>
         <p class="resource-lede">
             V-LiSEMOD supports several entry points into viral structure-guided discovery, from target-centric browsing
-            to ligand-first review and degrader-oriented structural triage.
+            to ligand-first review and degrader-oriented structural triage. Researchers can use the platform to move from
+            a viral target, ligand, or structural question toward clearer evidence, interpretable design logic, and review-ready outputs.
         </p>
+        <div class="action-row resource-hero-actions">
+            <a class="button-primary" href="{{ url_for('index') }}">Open Structure Explorer</a>
+            <a class="button-secondary" href="#workflow-starts">Choose a workflow</a>
+            <a class="button-ghost" href="#research-workflows">See use cases</a>
+        </div>
     </div>
-    <aside class="resource-callout">
+    <aside class="resource-callout usecases-callout">
         <span class="resource-callout-label">Who this helps</span>
         <p>Researchers in antiviral discovery, computational biology, medicinal chemistry, structural bioinformatics, and teaching environments can use the platform to organize structure-backed design questions.</p>
     </aside>
 </section>
 
-<section class="page-card resource-section">
+<figure class="resource-visual-frame page-section usecases-visual-frame">
+    <img src="{{ url_for('static', filename='images/VLiSEMOD_Use_Cases_Hub.png') }}"
+         width="1672" height="941"
+         alt="Infographic showing how researchers can use V-LiSEMOD across antiviral target exploration, ligand review, solvent-exposed atom discovery, ligand comparison, PROTACability screening, PyMOL sessions, and teaching workflows."
+         fetchpriority="high" decoding="async">
+    <figcaption class="resource-caption">
+        V-LiSEMOD supports multiple research entry points, from target browsing to ligand comparison, PROTACability triage, PyMOL exports, and teaching-ready visual workflows.
+    </figcaption>
+</figure>
+
+<section class="page-card resource-section usecases-section" id="research-workflows">
     <div class="section-heading">
         <span class="page-kicker">Research workflows</span>
         <h2 class="page-title">Common ways to work with the platform</h2>
+        <p class="page-subtitle">These use cases help turn structural data into clearer design discussions, comparison exercises, and review-ready outputs.</p>
     </div>
-    <div class="resource-grid">
-        <article class="resource-card">
+    <div class="resource-grid usecases-grid">
+        <article class="resource-card usecase-card">
             <h3>Antiviral target exploration</h3>
             <p>Browse viral protein targets and inspect which co-crystal ligands are already available for structure-guided follow-up.</p>
         </article>
-        <article class="resource-card">
+        <article class="resource-card usecase-card">
             <h3>Viral ligand structure review</h3>
             <p>Examine binding context, ligand identity, residue environment, and structure-specific evidence before drawing design conclusions.</p>
         </article>
-        <article class="resource-card">
+        <article class="resource-card usecase-card">
             <h3>Warhead and linkability triage</h3>
             <p>Review whether a known viral ligand presents chemically interpretable, solvent-facing positions that may merit linker-attachment discussion.</p>
         </article>
-        <article class="resource-card">
+        <article class="resource-card usecase-card">
             <h3>Solvent-exposed atom discovery</h3>
             <p>Use solvent accessibility and atom-level annotation to separate buried binding atoms from more permissive attachment-vector candidates.</p>
         </article>
-        <article class="resource-card">
+        <article class="resource-card usecase-card">
             <h3>PROTACability screening</h3>
             <p>Use the structural evidence layers as a hypothesis-generating triage system rather than a validated degradation predictor.</p>
         </article>
-        <article class="resource-card">
+        <article class="resource-card usecase-card">
             <h3>Ligand comparison across PDB structures</h3>
             <p>Compare how related ligands behave in different binding contexts and inspect interaction burden across structures.</p>
         </article>
-        <article class="resource-card">
+        <article class="resource-card usecase-card">
             <h3>PyMOL session generation</h3>
             <p>Create visual review packages for team discussion, figure preparation, or medicinal chemistry handoff.</p>
         </article>
-        <article class="resource-card">
+        <article class="resource-card usecase-card">
             <h3>Teaching and demo workflows</h3>
             <p>Show students or collaborators how structural data informs ligand optimization, solvent exposure reasoning, and careful degrader design triage.</p>
         </article>
     </div>
 </section>
 
-<section class="page-card resource-section">
+<figure class="resource-visual-frame page-section usecases-visual-frame">
+    <img src="{{ url_for('static', filename='images/VLiSEMOD_Research_Workflow.png') }}"
+         width="1672" height="941"
+         alt="Practical V-LiSEMOD research workflow showing browsing targets, inspecting ligands, mapping exposure, comparing evidence, running PROTACability triage, and generating outputs."
+         loading="lazy" decoding="async">
+    <figcaption class="resource-caption">
+        A practical research path can move from target browsing and ligand inspection to solvent-exposure mapping, comparison, PROTACability triage, and discussion-ready exports.
+    </figcaption>
+</figure>
+
+<section class="page-card resource-section usecases-section" id="workflow-starts">
     <div class="section-heading">
         <span class="page-kicker">Start points</span>
         <h2 class="page-title">Choose the workflow that matches your question</h2>
+        <p class="page-subtitle">V-LiSEMOD is flexible. Start with the tool that matches the question you are trying to answer.</p>
     </div>
-    <div class="resource-grid">
-        <a class="resource-card resource-card-link" href="{{ url_for('index') }}">
+    <div class="resource-grid usecases-start-grid">
+        <a class="resource-card resource-card-link usecases-link-card" href="{{ url_for('index') }}">
             <h3>Start with Structure Explorer</h3>
             <p>Open the main workspace and build a PyMOL-ready structure review session.</p>
             <span class="resource-card-cta">Open Structure Explorer →</span>
         </a>
-        <a class="resource-card resource-card-link" href="{{ url_for('query_protein_virus_page') }}">
+        <a class="resource-card resource-card-link usecases-link-card" href="{{ url_for('query_protein_virus_page') }}">
             <h3>Browse by Protein Target</h3>
             <p>Search viral proteins, inspect structure coverage, and export target-focused results.</p>
             <span class="resource-card-cta">Open Protein Query →</span>
         </a>
-        <a class="resource-card resource-card-link" href="{{ url_for('compare_ligands') }}">
+        <a class="resource-card resource-card-link usecases-link-card" href="{{ url_for('compare_ligands') }}">
             <h3>Compare Ligands</h3>
             <p>Review interaction signatures and cross-structure behavior for viral ligands.</p>
             <span class="resource-card-cta">Open Ligand Comparison →</span>
         </a>
-        <a class="resource-card resource-card-link" href="{{ url_for('protacability_page') }}">
+        <a class="resource-card resource-card-link usecases-link-card" href="{{ url_for('protacability_page') }}">
             <h3>Review PROTACability</h3>
             <p>Inspect structural triage evidence for linkerability, lysine context, and follow-up prioritization.</p>
             <span class="resource-card-cta">Open PROTACability →</span>
         </a>
+    </div>
+</section>
+
+<figure class="resource-visual-frame page-section usecases-visual-frame">
+    <img src="{{ url_for('static', filename='images/VLiSEMOD_Workflow_Chooser.png') }}"
+         width="1672" height="941"
+         alt="Workflow chooser infographic showing four main V-LiSEMOD starting points: Structure Explorer, Protein Query, Ligand Comparison, and PROTACability."
+         loading="lazy" decoding="async">
+    <figcaption class="resource-caption">
+        Use the workflow chooser to decide whether to start with broad exploration, target review, ligand comparison, or degrader-oriented structural triage.
+    </figcaption>
+</figure>
+
+<section class="page-card resource-section usecases-section" id="outcomes">
+    <div class="section-heading">
+        <span class="page-kicker">Outputs</span>
+        <h2 class="page-title">What researchers can produce with V-LiSEMOD</h2>
+    </div>
+    <div class="resource-grid usecases-outcomes-grid">
+        <article class="resource-card usecase-outcome-card">
+            <h3>Curated structure review</h3>
+            <p>Organize target, ligand, and residue evidence into a more structured review process.</p>
+        </article>
+        <article class="resource-card usecase-outcome-card">
+            <h3>Ligand comparison summaries</h3>
+            <p>Contrast interaction patterns, context dependence, and structure-specific behavior across related ligands.</p>
+        </article>
+        <article class="resource-card usecase-outcome-card">
+            <h3>PyMOL-ready exports</h3>
+            <p>Generate visual review assets that can be shared with collaborators, students, or medicinal chemistry teams.</p>
+        </article>
+        <article class="resource-card usecase-outcome-card">
+            <h3>Design discussion support</h3>
+            <p>Use structure-backed cues to frame follow-up questions around exposure, linkerability, and target-side context.</p>
+        </article>
+        <article class="resource-card usecase-outcome-card">
+            <h3>Teaching-ready visuals</h3>
+            <p>Support demos and learning workflows that show how structural evidence guides chemical reasoning.</p>
+        </article>
+        <article class="resource-card usecase-outcome-card">
+            <h3>Better research navigation</h3>
+            <p>Help users choose the right entry point before they spend time on a deeper structural or design workflow.</p>
+        </article>
+    </div>
+</section>
+
+<section class="page-card resource-section usecases-section usecases-cta">
+    <div class="section-heading">
+        <span class="page-kicker">Next step</span>
+        <h2 class="page-title">Start with the workflow that best fits your question</h2>
+    </div>
+    <p>
+        V-LiSEMOD works best as an interpretable, structure-guided workspace. Start with the entry point that best matches
+        your current question, then use the outputs to support follow-up discussion, comparison, and design thinking.
+    </p>
+    <div class="action-row">
+        <a class="button-primary" href="{{ url_for('index') }}">Open Structure Explorer</a>
+        <a class="button-secondary" href="{{ url_for('compare_ligands') }}">Compare Ligands</a>
+        <a class="button-secondary" href="{{ url_for('protacability_page') }}">Review PROTACability</a>
     </div>
 </section>
 {% endblock %}

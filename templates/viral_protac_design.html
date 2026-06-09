@@ -2,102 +2,433 @@
 
 {% block title %}Viral PROTAC Design and Antiviral Degrader Design | V-LiSEMOD{% endblock %}
 
-{% block meta_description %}Learn how V-LiSEMOD supports early viral PROTAC design and antiviral degrader design triage using ligand pose review, solvent-exposed atom analysis, exit-vector logic, and target-side structural evidence.{% endblock %}
+{% block meta_description %}Explore viral PROTAC design, antiviral degrader design, viral warhead triage, solvent-exposed atom review, exit-vector logic, linker planning, E3 recruiter selection, and PROTACability analysis in V-LiSEMOD.{% endblock %}
 
-{% block body_class %}app-shell resource-page{% endblock %}
+{% block body_class %}app-shell resource-page viral-protac-resource{% endblock %}
 
 {% block content %}
-<section class="resource-hero page-section">
-    <div>
+<section class="resource-hero page-section vpr-hero" id="top">
+    <div class="vpr-hero-copy">
         <span class="page-kicker">Viral PROTAC Design</span>
         <h1>Viral PROTAC design and antiviral degrader design</h1>
         <p class="resource-lede">
-            Viral PROTAC design refers to the careful attempt to adapt a viral target binder into one part of a bifunctional
-            degrader concept. That step is challenging because a useful antiviral inhibitor is not automatically a useful degrader warhead.
+            Viral PROTAC design is the process of asking whether a viral protein binder can become the target-binding arm of a bifunctional degrader.
+            V-LiSEMOD supports that early decision by helping users review ligand pose, solvent-exposed atoms, exit-vector logic, target-side structural cues,
+            and PROTACability evidence before deeper modeling or experimental work.
         </p>
-        <div class="action-row resource-hero-actions">
+        <p class="vpr-hero-note">
+            The goal of this page is not to claim that a degrader will work. It is to make the first design conversation more structured:
+            <strong>which viral binders look chemically modifiable, structurally plausible, and worth follow-up?</strong>
+        </p>
+        <div class="action-row resource-hero-actions vpr-actions">
             <a class="button-primary" href="{{ url_for('protacability_page') }}">Review PROTACability</a>
             <a class="button-secondary" href="{{ url_for('about_page') }}">About V-LiSEMOD</a>
-            <a class="button-primary external-link" href="https://protacbuilder.com/builder" target="_blank" rel="noopener noreferrer">Open PROTAC Builder ↗</a>
+            <a class="button-secondary external-link" href="https://protacbuilder.com/builder" target="_blank" rel="noopener noreferrer">Open PROTAC Builder ↗</a>
         </div>
     </div>
-    <aside class="resource-callout resource-callout-warning">
+
+    <aside class="resource-callout resource-callout-warning vpr-limit-card">
         <span class="resource-callout-label">Important limitation</span>
-        <p>V-LiSEMOD does not validate degradation; it prioritizes structures and ligand contexts for follow-up review.</p>
+        <p>V-LiSEMOD does not validate degradation. It prioritizes structures, ligands, and design contexts that may deserve follow-up review.</p>
     </aside>
 </section>
 
-<section class="page-card resource-section">
+<figure class="resource-visual-frame page-section vpr-visual-frame">
+    <img src="{{ url_for('static', filename='images/Viral_Protac_Design.png') }}"
+         width="1600"
+         height="900"
+         alt="Viral PROTAC design infographic showing the progression from viral target binder to linkable exit vector, linker and E3 recruiter, and ternary complex hypothesis."
+         fetchpriority="high"
+         decoding="async">
+    <figcaption class="resource-caption vpr-caption">
+        Viral PROTAC design starts with a target binder, but the practical question is whether that binder has a modifiable, outward-facing region that can support linker growth while preserving target engagement.
+    </figcaption>
+</figure>
+
+<section class="page-card resource-section vpr-section" id="page-overview">
+    <div class="section-heading">
+        <span class="page-kicker">Overview</span>
+        <h2 class="page-title">A structural resource for viral degrader design questions</h2>
+    </div>
+    <p>
+        Antiviral degrader design is not simply a search for strong binders. A useful viral inhibitor must be evaluated as a possible warhead:
+        it should bind the viral target, preserve important protein-ligand contacts after modification, and expose a chemical handle or moiety that could support a linker.
+        V-LiSEMOD turns viral protein-ligand structural data into a review workflow for asking those questions in a consistent, evidence-driven way.
+    </p>
+    <p>
+        This page explains the design logic behind the viral PROTAC workflow, the types of evidence users should inspect, and how V-LiSEMOD can help prioritize structures
+        for medicinal chemistry discussion, linker exploration, ternary complex modeling, or downstream experimental planning.
+    </p>
+
+    <nav class="vpr-toc" aria-label="Viral PROTAC design page sections">
+        <a href="#why-hard">
+            Why viral PROTAC design is hard
+            <span>Target constraints, compact pockets, and uncertainty after binding.</span>
+        </a>
+        <a href="#warhead-logic">
+            What makes a binder a possible warhead
+            <span>Pose fidelity, solvent exposure, and modifiable atoms.</span>
+        </a>
+        <a href="#triage-workflow">
+            Triage workflow
+            <span>A practical sequence for reviewing viral degrader hypotheses.</span>
+        </a>
+        <a href="#vlisemod-role">
+            How V-LiSEMOD helps
+            <span>Transparent structure review before deeper modeling.</span>
+        </a>
+        <a href="#limitations">
+            Limitations
+            <span>What structure can and cannot prove about degradation.</span>
+        </a>
+        <a href="#faq">
+            FAQ
+            <span>Common questions about viral PROTACability and antiviral degraders.</span>
+        </a>
+    </nav>
+</section>
+
+<section class="page-card resource-section vpr-section" id="why-hard">
     <div class="section-heading">
         <span class="page-kicker">Why this is hard</span>
         <h2 class="page-title">Viral targets create special design constraints</h2>
     </div>
-    <div class="resource-split">
-        <div>
-            <p>Viral proteins can offer compact binding pockets, transient interfaces, conformational variability, and uncertain cellular accessibility in degrader-relevant settings. Even when a ligand binds well in a co-crystal structure, that does not mean it can tolerate linker growth or recruit an E3 ligase productively.</p>
-            <p>A degrader concept has to preserve enough binding affinity and pose fidelity to keep the viral target engaged while also opening a path toward ternary complex formation, ubiquitination, and cellular degradation. Each of those later steps remains uncertain from structure alone.</p>
+    <div class="resource-split vpr-split">
+        <div class="vpr-copy-stack">
+            <p>
+                Viral proteins can have compact binding pockets, flexible loops, transient interfaces, conserved active sites, and context-dependent conformations.
+                A ligand that works well as an inhibitor may still be a poor degrader warhead if the ligand is deeply buried, lacks a practical attachment point,
+                or loses key interactions after chemical modification.
+            </p>
+            <p>
+                A degrader concept also has to do more than preserve viral target binding. It must support linker attachment, maintain a productive spatial relationship
+                with an E3 ligase recruiter, and eventually create a cellular context in which target ubiquitination and degradation are possible.
+                Those later steps cannot be confirmed from a co-crystal structure alone, but structural triage can identify which ideas are more reasonable to examine next.
+            </p>
         </div>
-        <div class="resource-list-card">
+        <div class="resource-list-card vpr-question-card">
             <h3>Key design questions</h3>
             <ul>
                 <li>Does the ligand binding pose expose a plausible attachment point?</li>
                 <li>Are any ligand atoms solvent-exposed enough to support exit-vector logic?</li>
-                <li>Could linker attachment preserve essential interaction context?</li>
-                <li>Is target lysine accessibility worth follow-up review?</li>
+                <li>Could linker attachment preserve essential interactions with the viral protein?</li>
+                <li>Is the viral target surface compatible with follow-up ternary complex modeling?</li>
+                <li>Are target-side lysines or degrader-relevant surface features worth deeper review?</li>
             </ul>
         </div>
     </div>
 </section>
 
-<section class="page-card resource-section">
+<section class="page-card resource-section vpr-section" id="warhead-logic">
     <div class="section-heading">
-        <span class="page-kicker">Evidence layers</span>
-        <h2 class="page-title">What a viral degrader concept needs beyond simple binding</h2>
+        <span class="page-kicker">Warhead logic</span>
+        <h2 class="page-title">A viral inhibitor is not automatically a PROTAC warhead</h2>
     </div>
-    <div class="resource-grid">
-        <article class="resource-card">
-            <h3>Ligand binding pose</h3>
-            <p>The observed pose helps define which atoms are buried, which interactions appear critical, and which regions may tolerate limited chemical growth.</p>
+    <p>
+        In a PROTAC-style design concept, the viral ligand is often treated as the target-binding warhead. That label should be earned rather than assumed.
+        A possible warhead should have an attachment strategy that is chemically reasonable and structurally aligned with the observed binding pose.
+    </p>
+
+    <div class="vpr-card-grid vpr-definition-grid">
+        <article class="vpr-info-card">
+            <span class="vpr-card-kicker">Binding</span>
+            <h3>Binding evidence</h3>
+            <p>The ligand should have a credible target engagement context, ideally supported by a structural pose and interpretable interaction pattern.</p>
         </article>
-        <article class="resource-card">
-            <h3>Solvent-exposed ligand atoms</h3>
-            <p>Exposure mapping can highlight atoms or moieties that remain outward-facing after binding and therefore may be more compatible with modification.</p>
+        <article class="vpr-info-card">
+            <span class="vpr-card-kicker">Exposure</span>
+            <h3>Solvent-exposed moiety</h3>
+            <p>An outward-facing atom or region can suggest where linker growth may be less disruptive to binding.</p>
         </article>
-        <article class="resource-card">
-            <h3>Exit-vector logic</h3>
-            <p>Attachment is not just about exposure. The direction of growth matters for sterics, pocket escape, and downstream linker routing.</p>
+        <article class="vpr-info-card">
+            <span class="vpr-card-kicker">Direction</span>
+            <h3>Exit-vector direction</h3>
+            <p>The attachment point should point away from crowded pocket regions and toward space where a linker could plausibly extend.</p>
         </article>
-        <article class="resource-card">
-            <h3>Linker attachment</h3>
-            <p>Chemical tractability, synthetic feasibility, and preservation of target engagement all matter when moving from binder to candidate warhead.</p>
-        </article>
-        <article class="resource-card">
-            <h3>Target lysine accessibility</h3>
-            <p>Accessible lysine context may support follow-up review, but it does not prove productive ubiquitination will occur.</p>
-        </article>
-        <article class="resource-card">
-            <h3>E3 recruiter selection</h3>
-            <p>Recruiter choice can shape geometry, permeability, selectivity, and feasibility, making downstream partner selection a major source of uncertainty.</p>
-        </article>
-        <article class="resource-card">
-            <h3>Ternary complex uncertainty</h3>
-            <p>Even promising structural cues cannot guarantee that a productive ternary complex will form or persist in cells.</p>
+        <article class="vpr-info-card">
+            <span class="vpr-card-kicker">Pose</span>
+            <h3>Interaction preservation</h3>
+            <p>Modification should avoid destroying interactions that appear central to binding, such as key hydrogen bonds, ionic contacts, or shape complementarity.</p>
         </article>
     </div>
 </section>
 
-<section class="page-card resource-section">
+<figure class="resource-visual-frame page-section vpr-visual-frame">
+    <img src="{{ url_for('static', filename='images/Viral_Protac_Exit_Vector.png') }}"
+         width="1600"
+         height="900"
+         alt="Infographic showing a viral protein pocket, a ligand, a solvent-exposed attachment path, and a review checklist for exit-vector logic."
+         loading="lazy"
+         decoding="async">
+    <figcaption class="resource-caption vpr-caption">
+        Solvent exposure is useful only when it aligns with interaction preservation and a plausible direction for linker growth. A visible atom is not automatically a good attachment point.
+    </figcaption>
+</figure>
+
+<section class="page-card resource-section vpr-section" id="triage-workflow">
+    <div class="section-heading">
+        <span class="page-kicker">Triage workflow</span>
+        <h2 class="page-title">A practical sequence for reviewing viral degrader hypotheses</h2>
+    </div>
+    <p>
+        The most useful early workflow is not a single score. It is a sequence of questions that moves from target context to ligand pose,
+        modification logic, linker planning, and follow-up evidence. V-LiSEMOD is designed to help users move through those questions without overstating what the structural data can prove.
+    </p>
+
+    <div class="vpr-workflow-grid">
+        <article class="vpr-workflow-step">
+            <span class="vpr-step-label">Step 01</span>
+            <h3>Define the viral target context</h3>
+            <p>Start with the protein, domain, pocket, chain, and viral system. A conserved catalytic pocket and a protein-protein interface can raise very different degrader design questions.</p>
+        </article>
+        <article class="vpr-workflow-step">
+            <span class="vpr-step-label">Step 02</span>
+            <h3>Inspect the observed ligand pose</h3>
+            <p>Review how the ligand sits in the binding site, which atoms are buried, and which interactions appear important for recognition.</p>
+        </article>
+        <article class="vpr-workflow-step">
+            <span class="vpr-step-label">Step 03</span>
+            <h3>Identify solvent-exposed atoms</h3>
+            <p>Look for ligand atoms or moieties that face outward. These may become starting points for linkable-site discussion.</p>
+        </article>
+        <article class="vpr-workflow-step">
+            <span class="vpr-step-label">Step 04</span>
+            <h3>Evaluate exit-vector logic</h3>
+            <p>Ask whether the proposed attachment direction escapes the pocket and avoids obvious steric conflict with the viral target surface.</p>
+        </article>
+        <article class="vpr-workflow-step">
+            <span class="vpr-step-label">Step 05</span>
+            <h3>Consider linker and recruiter geometry</h3>
+            <p>Use structural cues to decide which linker lengths, flexibility profiles, and E3 recruiters may be worth modeling.</p>
+        </article>
+        <article class="vpr-workflow-step">
+            <span class="vpr-step-label">Step 06</span>
+            <h3>Plan follow-up validation</h3>
+            <p>Prioritized hypotheses still need medicinal chemistry, ternary modeling, cellular target engagement, degradation assays, and antiviral activity testing.</p>
+        </article>
+    </div>
+</section>
+
+<figure class="resource-visual-frame page-section vpr-visual-frame">
+    <img src="{{ url_for('static', filename='images/Viral_Protac_Workflow.png') }}"
+         width="1600"
+         height="900"
+         alt="Early viral degrader triage workflow infographic showing target context, co-crystal pose, solvent exposure, exit-vector fit, linker and recruiter review, and follow-up evidence."
+         loading="lazy"
+         decoding="async">
+    <figcaption class="resource-caption vpr-caption">
+        A useful antiviral degrader workflow moves from structural evidence to design prioritization, then to modeling and experimental validation.
+    </figcaption>
+</figure>
+
+<section class="page-card resource-section vpr-section" id="evidence-layers">
+    <div class="section-heading">
+        <span class="page-kicker">Evidence layers</span>
+        <h2 class="page-title">What a viral degrader concept needs beyond simple binding</h2>
+    </div>
+    <div class="resource-grid vpr-evidence-grid">
+        <article class="resource-card vpr-resource-card">
+            <h3>Ligand binding pose</h3>
+            <p>The observed pose helps define which atoms are buried, which interactions appear critical, and which regions may tolerate limited chemical growth.</p>
+        </article>
+        <article class="resource-card vpr-resource-card">
+            <h3>Solvent-exposed ligand atoms</h3>
+            <p>Exposure mapping can highlight atoms or moieties that remain outward-facing after binding and therefore may be more compatible with modification.</p>
+        </article>
+        <article class="resource-card vpr-resource-card">
+            <h3>Exit-vector logic</h3>
+            <p>Attachment is not just about exposure. The direction of growth matters for sterics, pocket escape, and downstream linker routing.</p>
+        </article>
+        <article class="resource-card vpr-resource-card">
+            <h3>Linker attachment</h3>
+            <p>Chemical tractability, synthetic feasibility, and preservation of target engagement all matter when moving from binder to candidate warhead.</p>
+        </article>
+        <article class="resource-card vpr-resource-card">
+            <h3>Target lysine accessibility</h3>
+            <p>Accessible lysine context may support follow-up review, but it does not prove productive ubiquitination will occur.</p>
+        </article>
+        <article class="resource-card vpr-resource-card">
+            <h3>E3 recruiter selection</h3>
+            <p>Recruiter choice can shape geometry, permeability, selectivity, and feasibility, making downstream partner selection a major source of uncertainty.</p>
+        </article>
+        <article class="resource-card vpr-resource-card">
+            <h3>Ternary complex uncertainty</h3>
+            <p>Even promising structural cues cannot guarantee that a productive ternary complex will form or persist in cells.</p>
+        </article>
+        <article class="resource-card vpr-resource-card">
+            <h3>Cellular context</h3>
+            <p>Expression, localization, viral life-cycle stage, and host-cell biology can all influence whether a degrader concept has a realistic path forward.</p>
+        </article>
+    </div>
+</section>
+
+<figure class="resource-visual-frame page-section vpr-visual-frame">
+    <img src="{{ url_for('static', filename='images/Viral_Protac_Evidence_Map.png') }}"
+         width="1600"
+         height="900"
+         alt="Evidence layer map for antiviral degrader design showing pose fidelity, solvent exposure, exit vector, lysine context, and recruiter choice around a candidate viral warhead."
+         loading="lazy"
+         decoding="async">
+    <figcaption class="resource-caption vpr-caption">
+        V-LiSEMOD frames antiviral degrader design as an evidence-layer problem rather than a single yes-or-no prediction.
+    </figcaption>
+</figure>
+
+<section class="page-card resource-section vpr-section" id="vlisemod-role">
     <div class="section-heading">
         <span class="page-kicker">How V-LiSEMOD helps</span>
         <h2 class="page-title">Early triage before deeper modeling or experimental work</h2>
     </div>
-    <div class="resource-link-panel">
-        <p>V-LiSEMOD helps prioritize viral structures for follow-up by combining ligand context, interaction evidence, solvent exposure, and target-side cues into a transparent review workflow. It is best used to narrow candidate structures and frame design conversations before medicinal chemistry, ternary modeling, or biological testing.</p>
-        <div class="action-row">
+    <div class="resource-link-panel vpr-link-panel">
+        <p>
+            V-LiSEMOD helps prioritize viral structures for follow-up by combining ligand context, interaction evidence, solvent exposure,
+            and target-side cues into a transparent review workflow. It is best used to narrow candidate structures and frame design
+            conversations before medicinal chemistry, ternary modeling, or biological testing.
+        </p>
+        <div class="action-row vpr-actions">
             <a class="button-secondary" href="{{ url_for('protacability_page') }}">Open PROTACability</a>
             <a class="button-secondary" href="{{ url_for('compare_ligands') }}">Compare ligands</a>
             <a class="button-secondary external-link" href="https://e3ligandalyzer.com" target="_blank" rel="noopener noreferrer">Open E3 Ligandalyzer ↗</a>
         </div>
+    </div>
+</section>
+
+<section class="page-card resource-section vpr-section" id="research-use-cases">
+    <div class="section-heading">
+        <span class="page-kicker">Use cases</span>
+        <h2 class="page-title">How researchers can use this page and the PROTACability workflow</h2>
+    </div>
+    <div class="vpr-card-grid">
+        <article class="vpr-info-card">
+            <h3>Prioritize viral co-crystals</h3>
+            <p>Compare structures to identify ligand poses with outward-facing atoms and interpretable protein-ligand interactions.</p>
+        </article>
+        <article class="vpr-info-card">
+            <h3>Shortlist candidate warheads</h3>
+            <p>Separate ligands that may tolerate modification from binders that appear too buried or interaction-dependent.</p>
+        </article>
+        <article class="vpr-info-card">
+            <h3>Guide linker discussion</h3>
+            <p>Use exit-vector direction and pocket escape logic to decide which linker concepts are worth modeling first.</p>
+        </article>
+        <article class="vpr-info-card">
+            <h3>Prepare modeling inputs</h3>
+            <p>Use structural triage to support later PROTAC builder workflows, ternary complex modeling, or molecular visualization.</p>
+        </article>
+    </div>
+</section>
+
+<section class="page-card resource-section vpr-section" id="decision-table">
+    <div class="section-heading">
+        <span class="page-kicker">Interpretation</span>
+        <h2 class="page-title">How to interpret common structural signals</h2>
+    </div>
+    <div class="vpr-table-wrap">
+        <table class="vpr-table">
+            <thead>
+                <tr>
+                    <th>Structural signal</th>
+                    <th>Why it matters</th>
+                    <th>How to use it</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Outward-facing ligand atom</td>
+                    <td>May indicate a possible linker attachment region.</td>
+                    <td>Review whether modification would preserve the ligand pose and avoid major clashes.</td>
+                </tr>
+                <tr>
+                    <td>Deeply buried ligand scaffold</td>
+                    <td>May make linker attachment difficult without disrupting binding.</td>
+                    <td>Treat as a caution signal unless a peripheral substituent remains exposed.</td>
+                </tr>
+                <tr>
+                    <td>Critical polar interaction near proposed attachment site</td>
+                    <td>Modification could remove or weaken an important recognition feature.</td>
+                    <td>Prioritize alternative atoms, analogs, or attachment positions.</td>
+                </tr>
+                <tr>
+                    <td>Accessible target surface near ligand exit path</td>
+                    <td>Can support follow-up review of ternary complex geometry.</td>
+                    <td>Use as a modeling prompt, not as proof of degradation.</td>
+                </tr>
+                <tr>
+                    <td>Candidate target lysines</td>
+                    <td>Lysine context can matter for ubiquitination hypotheses.</td>
+                    <td>Review residue accessibility, orientation, and cellular context before overinterpreting.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="page-card resource-section vpr-section" id="limitations">
+    <div class="section-heading">
+        <span class="page-kicker">Limitations</span>
+        <h2 class="page-title">What structural triage can and cannot prove</h2>
+    </div>
+    <div class="vpr-highlight vpr-warning-note">
+        <p>
+            V-LiSEMOD is a prioritization and review aid. It does not claim that a ligand will become a successful antiviral PROTAC,
+            that an E3 recruiter will form a productive ternary complex, or that the viral target will be degraded in cells.
+        </p>
+    </div>
+    <ul class="vpr-checklist">
+        <li>Structural evidence can suggest plausible attachment points, but it cannot confirm synthetic feasibility.</li>
+        <li>Solvent exposure can support exit-vector reasoning, but it does not guarantee that a linker will preserve binding affinity.</li>
+        <li>Target lysine accessibility can motivate follow-up review, but it does not prove productive ubiquitination.</li>
+        <li>Recruiter selection depends on cellular expression, geometry, permeability, selectivity, and many other variables outside a single co-crystal structure.</li>
+        <li>Experimental validation remains necessary for target engagement, degradation, antiviral activity, and safety interpretation.</li>
+    </ul>
+</section>
+
+<section class="page-card resource-section vpr-section" id="faq">
+    <div class="section-heading">
+        <span class="page-kicker">FAQ</span>
+        <h2 class="page-title">Common questions about viral PROTAC design</h2>
+    </div>
+    <div class="vpr-card-grid vpr-faq-grid">
+        <article class="vpr-info-card">
+            <h3>What is viral PROTAC design?</h3>
+            <p>It is the effort to adapt a viral protein binder into a degrader concept by connecting the target-binding ligand to an E3 ligase recruiter through a linker.</p>
+        </article>
+        <article class="vpr-info-card">
+            <h3>What is PROTACability?</h3>
+            <p>In this context, PROTACability means the structural plausibility that a viral target-ligand system may support degrader design review. It is not the same as proven degradation.</p>
+        </article>
+        <article class="vpr-info-card">
+            <h3>Why do solvent-exposed atoms matter?</h3>
+            <p>They can reveal ligand regions that face outward from the binding site, which may be more compatible with linker attachment than buried atoms.</p>
+        </article>
+        <article class="vpr-info-card">
+            <h3>Does a good inhibitor make a good degrader?</h3>
+            <p>Not necessarily. A strong inhibitor can still be unsuitable if it lacks a modifiable exit vector, loses binding after attachment, or fails to form productive degrader geometry.</p>
+        </article>
+        <article class="vpr-info-card">
+            <h3>Can V-LiSEMOD predict degradation?</h3>
+            <p>No. V-LiSEMOD helps users prioritize structures and hypotheses for follow-up. Degradation must be tested with appropriate experimental assays.</p>
+        </article>
+        <article class="vpr-info-card">
+            <h3>How should I use the PROTAC Builder link?</h3>
+            <p>Use V-LiSEMOD first to reason about candidate viral warheads and attachment points, then use builder workflows to explore linker and recruiter combinations for downstream modeling.</p>
+        </article>
+    </div>
+</section>
+
+<section class="page-card resource-section vpr-section vpr-cta-section">
+    <div class="section-heading">
+        <span class="page-kicker">Next step</span>
+        <h2 class="page-title">Start with a transparent PROTACability review</h2>
+    </div>
+    <p>
+        Use the PROTACability workflow when you want to inspect viral protein-ligand structures, compare candidate binders,
+        and decide which antiviral degrader hypotheses deserve deeper attention.
+    </p>
+    <div class="action-row vpr-actions">
+        <a class="button-primary" href="{{ url_for('protacability_page') }}">Review PROTACability</a>
+        <a class="button-secondary" href="{{ url_for('compare_ligands') }}">Compare ligands</a>
+        <a class="button-secondary external-link" href="https://protacbuilder.com/builder" target="_blank" rel="noopener noreferrer">Open PROTAC Builder ↗</a>
     </div>
 </section>
 {% endblock %}

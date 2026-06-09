@@ -4,6 +4,7 @@ import re
 import glob
 import urllib.request
 import urllib.error
+import requests
 import pandas as pd
 from rdkit import Chem
 from rdkit.Chem import AllChem
@@ -46,6 +47,80 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %
 
 # Initialize the Flask app
 app = Flask(__name__)
+
+
+class RandyBackendError(Exception):
+    pass
+
+
+def _normalized_backend_mode():
+    mode = os.environ.get("VLISMOD_DATA_BACKEND", "local").strip().lower()
+    if mode not in {"local", "randy", "auto"}:
+        return "local"
+    return mode
+
+
+def _randy_base_url():
+    return os.environ.get("RANDY_API_BASE_URL", "").strip().rstrip("/")
+
+
+def _randy_api_token():
+    return os.environ.get("RANDY_API_TOKEN", "").strip()
+
+
+def use_randy_backend():
+    return _normalized_backend_mode() == "randy"
+
+
+def randy_available():
+    return bool(_randy_base_url() and _randy_api_token())
+
+
+def randy_get(path, params=None):
+    if not randy_available():
+        raise RandyBackendError("RANDY API is not configured.")
+
+    url = f"{_randy_base_url()}{path}"
+    headers = {"Authorization": f"Bearer {_randy_api_token()}"}
+
+    try:
+        response = requests.get(url, params=params, headers=headers, timeout=10)
+    except requests.RequestException as exc:
+        raise RandyBackendError(f"RANDY API request failed: {exc}") from exc
+
+    try:
+        payload = response.json()
+    except ValueError as exc:
+        raise RandyBackendError("RANDY API returned non-JSON response.") from exc
+
+    if response.status_code >= 400:
+        message = payload.get("error") if isinstance(payload, dict) else None
+        raise RandyBackendError(message or f"RANDY API request failed with status {response.status_code}.")
+
+    return payload
+
+
+def _dispatch_supported_lookup(remote_path, *, params=None, local_loader):
+    mode = _normalized_backend_mode()
+
+    if mode == "local":
+        return local_loader()
+
+    if mode == "randy":
+        try:
+            payload = randy_get(remote_path, params=params)
+        except RandyBackendError as exc:
+            return jsonify({"error": str(exc)}), 502
+        return jsonify(payload)
+
+    if randy_available():
+        try:
+            payload = randy_get(remote_path, params=params)
+            return jsonify(payload)
+        except RandyBackendError:
+            logging.warning("Falling back to local V-LiSEMOD database for %s", remote_path)
+
+    return local_loader()
 
 
 def _env_flag(name, default=False):
@@ -544,42 +619,37 @@ def generate_pymol_session():
 
     return send_file(pymol_script_path, as_attachment=True)
 
-@app.route('/get_viruses')
-def get_viruses():
+
+def _local_get_viruses_payload():
     conn = sqlite3.connect('viral_data.db')
     cursor = conn.cursor()
-
     cursor.execute('SELECT DISTINCT virus_name FROM ligand_atoms')
     viruses = [row[0] for row in cursor.fetchall()]
-
     conn.close()
+    return {'viruses': viruses}
 
-    return jsonify(viruses=viruses)
 
-@app.route('/get_pdb_codes/<virus_name>')
-def get_pdb_codes(virus_name):
+def _local_get_pdb_codes_payload(virus_name):
     conn = sqlite3.connect('viral_data.db')
     cursor = conn.cursor()
-
-    cursor.execute('''
+    cursor.execute(
+        '''
         SELECT DISTINCT pdb_id
         FROM ligand_Atoms_Smiles
         WHERE virus_name = ?
-    ''', (virus_name,))
-    
+        ''',
+        (virus_name,),
+    )
     pdb_codes = [row[0] for row in cursor.fetchall()]
     conn.close()
-    
-    return jsonify(pdb_codes=pdb_codes)
+    return {'pdb_codes': pdb_codes}
 
 
-
-@app.route('/get_ligands/<pdb_code>')
-def get_ligands(pdb_code):
+def _local_get_ligands_payload(pdb_code):
     conn = sqlite3.connect('viral_data.db')
     cursor = conn.cursor()
-
-    cursor.execute('''
+    cursor.execute(
+        '''
         SELECT ligand, MIN(chain) AS chain,
                MAX(
                    CASE
@@ -597,31 +667,147 @@ def get_ligands(pdb_code):
         WHERE pdb_id = ?
         GROUP BY ligand
         ORDER BY ligand
-    ''', (pdb_code,))
-
+        ''',
+        (pdb_code,),
+    )
     ligands = [{'ligand': row[0], 'chain': row[1], 'has_smiles': row[2]} for row in cursor.fetchall()]
     conn.close()
+    return {'ligands': ligands}
 
-    return jsonify(ligands=ligands)
+
+def _local_check_functional_groups_payload(pdb_code):
+    conn = sqlite3.connect('viral_data.db')
+    cursor = conn.cursor()
+    cursor.execute(
+        '''
+        SELECT COUNT(*)
+        FROM Functional_Group_Atoms
+        WHERE pdb_id = ?
+        ''',
+        (pdb_code,),
+    )
+    count = cursor.fetchone()[0]
+    conn.close()
+    return {'has_functional_groups': count > 0}
+
+
+def _local_get_ligands_list_payload():
+    conn = sqlite3.connect('viral_data.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT DISTINCT ligand FROM Ligand_Atoms_Smiles')
+    ligands = [row[0] for row in cursor.fetchall()]
+    conn.close()
+    return {'ligands': ligands}
+
+
+def _local_get_viruses_by_ligand_payload(ligand_code):
+    conn = sqlite3.connect('viral_data.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT DISTINCT Virus_Name FROM Arpeggio_Contacts_Data WHERE Ligand = ?', (ligand_code,))
+    viruses = [row[0] for row in cursor.fetchall()]
+    conn.close()
+    return {'viruses': viruses}
+
+
+def _local_get_pdb_residue_by_ligand_payload(ligand_code):
+    conn = sqlite3.connect('viral_data.db')
+    cursor = conn.cursor()
+    cursor.execute(
+        '''
+        SELECT DISTINCT pdb_id, chain, ligand_id
+        FROM Ligand_Arp_Diagram
+        WHERE ligand = ?
+        ''',
+        (ligand_code,),
+    )
+    pairs = [{'pdb_id': row[0], 'chain': row[1], 'ligand_id': row[2]} for row in cursor.fetchall()]
+    conn.close()
+    return {'pairs': pairs}
+
+
+def _local_get_sasa_chains_payload(pdb_code, ligand_name):
+    conn = sqlite3.connect('viral_data.db')
+    cursor = conn.cursor()
+    cursor.execute(
+        '''
+        SELECT atom_id, chain
+        FROM RUPLEY_SASA_DATA
+        WHERE pdb_id = ? AND ligand = ?
+        ''',
+        (pdb_code, ligand_name),
+    )
+    sasa_chains = cursor.fetchall()
+    conn.close()
+    return sasa_chains
+
+
+def _local_get_pdb_mapping_payload(ligand_code):
+    conn = sqlite3.connect('viral_data.db')
+    cursor = conn.cursor()
+    cursor.execute(
+        '''
+        SELECT DISTINCT pdb_id, chain, ligand_id, virus_name, ligand
+        FROM Ligand_Atoms_Smiles
+        WHERE ligand = ?
+        ''',
+        (ligand_code,),
+    )
+
+    pdb_mapping = {}
+    for row in cursor.fetchall():
+        pdb_id = row[0]
+        chain = row[1]
+        ligand_id = row[2]
+        virus_name = row[3]
+        ligand = row[4]
+        unique_key = f"{pdb_id}-{ligand_id}-{chain}"
+        if unique_key not in pdb_mapping:
+            pdb_mapping[unique_key] = {
+                'pdb_id': pdb_id,
+                'ligand_id': ligand_id,
+                'chain': chain,
+                'virus_name': virus_name,
+                'ligand': ligand
+            }
+
+    conn.close()
+    return {'pdb_mapping': pdb_mapping}
+
+@app.route('/get_viruses')
+def get_viruses():
+    return _dispatch_supported_lookup(
+        '/api/vlismod/viruses',
+        local_loader=lambda: jsonify(_local_get_viruses_payload()),
+    )
+
+@app.route('/get_pdb_codes/<virus_name>')
+def get_pdb_codes(virus_name):
+    return _dispatch_supported_lookup(
+        '/api/vlismod/pdb-codes',
+        params={'virus_name': virus_name},
+        local_loader=lambda: jsonify(_local_get_pdb_codes_payload(virus_name)),
+    )
+
+
+
+@app.route('/get_ligands/<pdb_code>')
+def get_ligands(pdb_code):
+    return _dispatch_supported_lookup(
+        '/api/vlismod/ligands',
+        params={'pdb_code': pdb_code},
+        local_loader=lambda: jsonify(_local_get_ligands_payload(pdb_code)),
+    )
 
 
 
 
 @app.route('/check_functional_groups/<pdb_code>')
 def check_functional_groups(pdb_code):
-    conn = sqlite3.connect('viral_data.db')
-    cursor = conn.cursor()
-
-    cursor.execute('''
-        SELECT COUNT(*)
-        FROM Functional_Group_Atoms
-        WHERE pdb_id = ?
-    ''', (pdb_code,))
-    
-    count = cursor.fetchone()[0]
-    conn.close()
-    
-    return jsonify({'has_functional_groups': count > 0})
+    return _dispatch_supported_lookup(
+        '/api/vlismod/functional-groups/check',
+        params={'pdb_code': pdb_code},
+        local_loader=lambda: jsonify(_local_check_functional_groups_payload(pdb_code)),
+    )
 
 
 @app.route('/coming-soon')
@@ -648,26 +834,20 @@ def view_ligand_3d(ligand_code, pdb_id):
 
 @app.route('/get_ligands_list', methods=['GET'])
 def get_ligands_list():
-    conn = sqlite3.connect('viral_data.db')
-    cursor = conn.cursor()
-    cursor.execute('SELECT DISTINCT ligand FROM Ligand_Atoms_Smiles')
-    ligands = [row[0] for row in cursor.fetchall()]
-    conn.close()
-    return jsonify(ligands=ligands)
+    return _dispatch_supported_lookup(
+        '/api/vlismod/ligands/list',
+        local_loader=lambda: jsonify(_local_get_ligands_list_payload()),
+    )
 
 
 
 @app.route('/get_viruses_by_ligand/<ligand_code>')
 def get_viruses_by_ligand(ligand_code):
-    conn = sqlite3.connect('viral_data.db')
-    cursor = conn.cursor()
-
-    cursor.execute('SELECT DISTINCT Virus_Name FROM Arpeggio_Contacts_Data WHERE Ligand = ?', (ligand_code,))
-    viruses = [row[0] for row in cursor.fetchall()]
-
-    conn.close()
-
-    return jsonify(viruses=viruses)
+    return _dispatch_supported_lookup(
+        '/api/vlismod/viruses/by-ligand',
+        params={'ligand_code': ligand_code},
+        local_loader=lambda: jsonify(_local_get_viruses_by_ligand_payload(ligand_code)),
+    )
 
 
 
@@ -717,21 +897,11 @@ def ligand_indexer():
 
 @app.route('/get_pdb_residue_by_ligand/<ligand_code>')
 def get_pdb_residue_by_ligand(ligand_code):
-    conn = sqlite3.connect('viral_data.db')
-    cursor = conn.cursor()
-
-    # Adjust your query to fetch the appropriate data
-    cursor.execute('''
-        SELECT DISTINCT pdb_id, chain, ligand_id
-        FROM Ligand_Arp_Diagram
-        WHERE ligand = ?
-    ''', (ligand_code,))
-    
-    pdb_residue_pairs = [{'pdb_id': row[0], 'chain': row[1], 'ligand_id': row[2]} for row in cursor.fetchall()]
-    
-    conn.close()
-
-    return jsonify(pairs=pdb_residue_pairs)
+    return _dispatch_supported_lookup(
+        '/api/vlismod/pdb-residues/by-ligand',
+        params={'ligand_code': ligand_code},
+        local_loader=lambda: jsonify(_local_get_pdb_residue_by_ligand_payload(ligand_code)),
+    )
 
 
 # Function to generate the DataFrame from the SQLite database
@@ -976,19 +1146,11 @@ def generate_charts():
 
 @app.route('/get_sasa_chains/<pdb_code>/<ligand_name>', methods=['GET'])
 def get_sasa_chains(pdb_code, ligand_name):
-    conn = sqlite3.connect('viral_data.db')
-    cursor = conn.cursor()
-    
-    cursor.execute('''
-        SELECT atom_id, chain 
-        FROM RUPLEY_SASA_DATA 
-        WHERE pdb_id = ? AND ligand = ? 
-    ''', (pdb_code, ligand_name))
-
-    sasa_chains = cursor.fetchall()
-    conn.close()
-
-    return jsonify(sasa_chains)
+    return _dispatch_supported_lookup(
+        '/api/vlismod/sasa-chains',
+        params={'pdb_code': pdb_code, 'ligand_name': ligand_name},
+        local_loader=lambda: jsonify(_local_get_sasa_chains_payload(pdb_code, ligand_name)),
+    )
 
 def highlight_solvent_exposed_atoms(
     molecule,
@@ -1201,40 +1363,11 @@ def plot_atom_interactions_comparison(df_list, output_file, pdb_ids, ligand_code
 
 @app.route('/get_pdb_mapping/<ligand_code>')
 def get_pdb_mapping(ligand_code):
-    conn = sqlite3.connect('viral_data.db')
-    cursor = conn.cursor()
-
-    # Adjust your query to fetch all necessary information (PDB ID, Residue, Chain, Virus_Name)
-    cursor.execute('''
-        SELECT DISTINCT pdb_id, chain, ligand_id, virus_name, ligand
-        FROM Ligand_Atoms_Smiles
-        WHERE ligand = ?
-    ''', (ligand_code,))
-    
-    # Create a dictionary to store the unique keys and related information
-    pdb_mapping = {}
-    
-    for row in cursor.fetchall():
-        pdb_id = row[0]
-        chain = row[1]
-        ligand_id = row[2]
-        virus_name = row[3]
-        ligand = row[4]
-
-        # Create a unique key for the mapping
-        unique_key = f"{pdb_id}-{ligand_id}-{chain}"
-        if unique_key not in pdb_mapping:
-            pdb_mapping[unique_key] = {
-                'pdb_id': pdb_id,
-                'ligand_id': ligand_id,
-                'chain': chain,
-                'virus_name': virus_name,
-                'ligand': ligand
-            }
-
-    conn.close()
-
-    return jsonify(pdb_mapping=pdb_mapping)
+    return _dispatch_supported_lookup(
+        '/api/vlismod/pdb-mapping',
+        params={'ligand_code': ligand_code},
+        local_loader=lambda: jsonify(_local_get_pdb_mapping_payload(ligand_code)),
+    )
 
 @app.route('/rdkittest')
 def rdkit_test():

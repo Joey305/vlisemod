@@ -133,6 +133,13 @@ At a high level:
 2. Provide the required local data files and environment variables.
 3. Run the app with `python app.py` for the current local default (`127.0.0.1:5003`) or use your chosen production entrypoint.
 
+Remote data note:
+
+- The simple V-LiSEMOD lookup routes can run against a separate RANDY API by setting `VLISMOD_DATA_BACKEND=randy` or `auto`.
+- RANDY should be configured with `VLISMOD_API_TOKEN` and `VLISMOD_DB_PATH`.
+- V-LiSEMOD should be configured with `RANDY_API_BASE_URL`, `RANDY_API_TOKEN`, and `VLISMOD_DATA_BACKEND`.
+- If no RANDY configuration is provided, V-LiSEMOD continues to use local `viral_data.db` behavior.
+
 ## Project Status
 
 V-LiSEMOD is an active research-oriented web platform and documentation cleanup is ongoing. The repository currently reflects a mix of production-facing Flask routes, data-enrichment scripts, optional local-LLM hooks, and manuscript-oriented scientific framing.

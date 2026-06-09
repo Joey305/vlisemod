@@ -2,82 +2,387 @@
 
 {% block title %}Contact and Collaboration | V-LiSEMOD{% endblock %}
 
-{% block meta_description %}Contact V-LiSEMOD for collaboration in viral drug discovery, structural bioinformatics, targeted protein degradation, antiviral degrader concepts, and scientific software development.{% endblock %}
+{% block meta_description %}Contact and collaborate with V-LiSEMOD on viral drug discovery, structural bioinformatics, targeted protein degradation, PROTAC design, dataset curation, ligand analysis, and structure-guided antiviral discovery workflows.{% endblock %}
 
-{% block body_class %}app-shell resource-page{% endblock %}
+{% block body_class %}app-shell resource-page collaboration-resource{% endblock %}
 
 {% block content %}
-<section class="resource-hero page-section">
-    <div>
-        <span class="page-kicker">Contact</span>
-        <h1>Contact and collaboration</h1>
+<section class="resource-hero page-section collab-hero" id="top">
+    <div class="collab-hero-copy">
+        <span class="page-kicker">Contact &amp; Collaboration</span>
+        <h1>Collaborate with V-LiSEMOD on structure-guided viral ligand analysis</h1>
         <p class="resource-lede">
-            V-LiSEMOD is a research and software project for structure-guided viral ligand analysis,
-            solvent-exposed atom review, warhead/linkability assessment, PyMOL session generation,
-            and PROTACability-style hypothesis generation.
+            V-LiSEMOD is a research and software project focused on <strong>viral protein-ligand analysis</strong>,
+            <strong>solvent-exposed atom review</strong>, <strong>warhead and linkability assessment</strong>,
+            <strong>PyMOL session generation</strong>, and <strong>PROTACability-style structural triage</strong>.
+            This page is designed for researchers, software collaborators, and scientific partners who want to explore
+            joint work at the intersection of <strong>structural biology</strong>, <strong>medicinal chemistry</strong>,
+            <strong>cheminformatics</strong>, and <strong>degrader-oriented antiviral design</strong>.
         </p>
-        <div class="action-row resource-hero-actions">
-            <a class="button-primary" href="mailto:jxs794@miami.edu">Email Joseph-Michael Schulz</a>
-            <a class="button-secondary" href="{{ url_for('about_page') }}">About V-LiSEMOD</a>
-            <a class="button-ghost" href="{{ url_for('citation_page') }}">Citation guidance</a>
+        <p class="collab-hero-note">
+            If you are exploring viral drug discovery, structure-guided design, dataset curation, or antiviral degrader concepts,
+            V-LiSEMOD can serve as a practical hub for early structural review, collaboration planning, and hypothesis generation.
+        </p>
+        <div class="action-row resource-hero-actions collab-actions">
+            <a class="button-primary" href="mailto:jxs794@miami.edu?subject=V-LiSEMOD%20collaboration">Contact about V-LiSEMOD</a>
+            <a class="button-secondary" href="{{ url_for('about_page') }}">About the project</a>
+            <a class="button-secondary" href="#project-ideas">View project ideas</a>
         </div>
     </div>
-    <aside class="resource-callout">
-        <span class="resource-callout-label">Collaboration areas</span>
-        <p>V-LiSEMOD is especially relevant for teams working at the interface of structural biology, medicinal chemistry, cheminformatics, and degrader-oriented antiviral design.</p>
+
+    <aside class="resource-callout resource-callout-warning collab-callout">
+        <span class="resource-callout-label">Best fit</span>
+        <p>
+            V-LiSEMOD is especially useful for teams who want a transparent, structure-guided workflow for reviewing viral binders,
+            identifying modifiable ligand regions, comparing candidate ligands, or framing antiviral degrader hypotheses before deeper modeling or experiments.
+        </p>
     </aside>
 </section>
 
-<section class="page-card resource-section">
+<figure class="resource-visual-frame page-section collab-visual-frame">
+    <img src="{{ url_for('static', filename='images/VLiSEMOD_Collaboration_Hub.png') }}"
+         width="1672"
+         height="941"
+         alt="V-LiSEMOD collaboration hub infographic showing viral drug discovery, structural bioinformatics, targeted protein degradation, PROTAC design, antiviral degrader concepts, and dataset expansion."
+         fetchpriority="high"
+         decoding="async">
+    <figcaption class="resource-caption collab-caption">
+        V-LiSEMOD supports collaboration across structural virology, dataset curation, ligand analysis, and degrader-oriented design workflows.
+    </figcaption>
+</figure>
+
+<section class="page-card resource-section collab-section" id="overview">
     <div class="section-heading">
-        <span class="page-kicker">Ways to collaborate</span>
-        <h2 class="page-title">Topics that fit this project well</h2>
-        <p class="page-subtitle">The project emphasizes careful, structure-guided scientific use, transparent interpretation, and collaboration around antiviral discovery workflows.</p>
+        <span class="page-kicker">About collaboration</span>
+        <h2 class="page-title">Why collaborate with V-LiSEMOD?</h2>
     </div>
-    <div class="resource-grid">
-        <article class="resource-card">
-            <h3>Viral drug discovery</h3>
-            <p>Structure-guided review of viral co-crystal complexes, ligand series, and tractable target classes for follow-up analysis.</p>
+    <p>
+        V-LiSEMOD is built around a simple idea: high-value structural resources become more useful when they are interpretable,
+        reproducible, and easy to connect to real research decisions. Rather than acting as a black-box prediction layer,
+        the platform is designed to help users inspect <strong>ligand binding context</strong>, <strong>solvent-exposed atoms</strong>,
+        <strong>exit-vector logic</strong>, <strong>ligand series relationships</strong>, and <strong>protein-side structural cues</strong>
+        in a way that can directly support scientific discussion.
+    </p>
+    <p>
+        That makes V-LiSEMOD a strong fit for academic collaborations, pilot studies, benchmarking projects, translational discussions,
+        tool-building partnerships, and manuscript-oriented research efforts. It is also a useful framework for researchers who need to move
+        from a single co-crystal structure toward a broader, more systematic antiviral design conversation.
+    </p>
+
+    <div class="collab-value-grid">
+        <article class="collab-value-card">
+            <h3>Structure-guided interpretation</h3>
+            <p>Translate co-crystal structures and ligand poses into practical design questions rather than isolated snapshots.</p>
         </article>
-        <article class="resource-card">
-            <h3>Structural bioinformatics</h3>
-            <p>Dataset curation, structure mining, annotation workflows, and methods development around viral protein-ligand complexes.</p>
+        <article class="collab-value-card">
+            <h3>Transparent workflow logic</h3>
+            <p>Keep decision-making interpretable by connecting each design idea back to visible structural evidence.</p>
         </article>
-        <article class="resource-card">
-            <h3>Targeted protein degradation</h3>
-            <p>Hypothesis-generating degrader-readiness triage for viral targets, including warhead context and lysine accessibility review.</p>
+        <article class="collab-value-card">
+            <h3>Cross-disciplinary relevance</h3>
+            <p>Support collaborations spanning structural biology, medicinal chemistry, virology, cheminformatics, and software development.</p>
         </article>
-        <article class="resource-card">
-            <h3>PROTAC design</h3>
-            <p>Early-stage exit-vector reasoning, linker attachment questions, and handoff into downstream design tools.</p>
-        </article>
-        <article class="resource-card">
-            <h3>Antiviral degrader concepts</h3>
-            <p>Exploratory design discussions for induced-proximity strategies against viral proteins and viral-host interfaces.</p>
-        </article>
-        <article class="resource-card">
-            <h3>Dataset expansion</h3>
-            <p>New viral target classes, additional curated structures, annotation coverage, and benchmarking-ready public data layers.</p>
-        </article>
-        <article class="resource-card">
-            <h3>Manuscript and software collaboration</h3>
-            <p>Joint work on scientific communication, reproducible methods, web tools, and companion platform integration.</p>
+        <article class="collab-value-card">
+            <h3>Reusable scientific outputs</h3>
+            <p>Generate figures, annotations, prototype workflows, dataset layers, and manuscript-ready analyses from the same foundation.</p>
         </article>
     </div>
 </section>
 
-<section class="page-card resource-section">
+<section class="page-card resource-section collab-section" id="collaboration-areas">
+    <div class="section-heading">
+        <span class="page-kicker">Collaboration areas</span>
+        <h2 class="page-title">Scientific topics that fit this project especially well</h2>
+    </div>
+    <p>
+        The project emphasizes careful scientific interpretation, realistic structure-guided reasoning, and useful handoff into downstream analysis.
+        These are some of the most natural collaboration areas for V-LiSEMOD.
+    </p>
+
+    <div class="collab-area-grid">
+        <article class="collab-area-card">
+            <h3>Viral drug discovery</h3>
+            <p>Structure-guided review of viral co-crystal complexes, ligand series, and tractable target classes for follow-up analysis.</p>
+        </article>
+        <article class="collab-area-card">
+            <h3>Structural bioinformatics</h3>
+            <p>Dataset curation, structure mining, annotation workflows, and methods development around viral protein-ligand complexes.</p>
+        </article>
+        <article class="collab-area-card">
+            <h3>Targeted protein degradation</h3>
+            <p>Hypothesis-generating degrader-readiness triage for viral targets, including warhead context and lysine accessibility review.</p>
+        </article>
+        <article class="collab-area-card">
+            <h3>PROTAC design</h3>
+            <p>Early-stage exit-vector reasoning, linker attachment questions, and handoff into downstream degrader design workflows.</p>
+        </article>
+        <article class="collab-area-card">
+            <h3>Antiviral degrader concepts</h3>
+            <p>Exploratory design discussions for induced-proximity strategies against viral proteins and viral-host interfaces.</p>
+        </article>
+        <article class="collab-area-card">
+            <h3>Dataset expansion</h3>
+            <p>New viral target classes, additional curated structures, annotation coverage, and benchmarking-ready public data layers.</p>
+        </article>
+        <article class="collab-area-card">
+            <h3>Manuscript and software collaboration</h3>
+            <p>Joint work on scientific communication, reproducible methods, companion tools, and web platform integration.</p>
+        </article>
+        <article class="collab-area-card">
+            <h3>Companion tool workflows</h3>
+            <p>Bridge V-LiSEMOD outputs into related resources such as warhead discovery, E3 recruiter review, and downstream builder tools.</p>
+        </article>
+    </div>
+</section>
+
+<figure class="resource-visual-frame page-section collab-visual-frame" id="project-ideas-image">
+    <img src="{{ url_for('static', filename='images/VLiSEMOD_Project_Ideas.png') }}"
+         width="1672"
+         height="941"
+         alt="Infographic showing five collaboration project ideas for V-LiSEMOD, including a viral degrader target atlas, linkability benchmark set, lysine accessibility mapping, warhead series review, and companion tool integration."
+         loading="lazy"
+         decoding="async">
+    <figcaption class="resource-caption collab-caption">
+        Project concepts can range from structural benchmark creation to software integration and manuscript-focused scientific outputs.
+    </figcaption>
+</figure>
+
+<section class="page-card resource-section collab-section" id="project-ideas">
+    <div class="section-heading">
+        <span class="page-kicker">Project ideas</span>
+        <h2 class="page-title">Five collaboration projects V-LiSEMOD can pursue with partners</h2>
+    </div>
+    <p>
+        To make collaboration more concrete, here are five example project directions that are well aligned with the current platform.
+        Each one creates value for science, improves the visibility and usefulness of the resource, and can generate high-quality figures,
+        datasets, and method narratives for broader dissemination.
+    </p>
+
+    <div class="collab-project-grid">
+        <article class="collab-project-card">
+            <span class="collab-project-number">01</span>
+            <h3>Viral degrader target atlas</h3>
+            <p>
+                Build a structured atlas of viral proteins, ligand contexts, and degrader-readiness cues across priority virus families.
+                This could help partners compare which viral targets look most promising for future induced-proximity strategies.
+            </p>
+            <ul class="collab-mini-list">
+                <li><strong>Use case:</strong> portfolio prioritization for antiviral degrader exploration</li>
+                <li><strong>Potential outputs:</strong> target panels, triage summaries, review figures, public resource pages</li>
+            </ul>
+        </article>
+        <article class="collab-project-card">
+            <span class="collab-project-number">02</span>
+            <h3>Linkability benchmark set</h3>
+            <p>
+                Assemble a benchmark dataset of solvent-exposed atoms, exit-vector hypotheses, and attachment ideas drawn from viral co-crystal structures.
+                This would create a useful reference layer for comparison across targets, ligands, and methods.
+            </p>
+            <ul class="collab-mini-list">
+                <li><strong>Use case:</strong> method evaluation for attachment-site reasoning</li>
+                <li><strong>Potential outputs:</strong> benchmark dataset, annotation schema, scoring rubric, comparative study</li>
+            </ul>
+        </article>
+        <article class="collab-project-card">
+            <span class="collab-project-number">03</span>
+            <h3>Target-side lysine accessibility map</h3>
+            <p>
+                Review viral target surfaces for lysine context, local topology, and structural features that may be relevant when discussing targeted protein degradation.
+                The goal would be to create a careful evidence layer rather than overclaiming degradability.
+            </p>
+            <ul class="collab-mini-list">
+                <li><strong>Use case:</strong> target-side follow-up triage for degrader concepts</li>
+                <li><strong>Potential outputs:</strong> residue maps, annotations, PyMOL sessions, structural notes</li>
+            </ul>
+        </article>
+        <article class="collab-project-card">
+            <span class="collab-project-number">04</span>
+            <h3>Warhead series review</h3>
+            <p>
+                Compare ligand series or analog families to identify which compounds appear most compatible with chemical modification, linker growth,
+                and preservation of target engagement. This is especially useful when there are multiple related binders for the same target.
+            </p>
+            <ul class="collab-mini-list">
+                <li><strong>Use case:</strong> medicinal chemistry prioritization</li>
+                <li><strong>Potential outputs:</strong> series comparison pages, prioritized warheads, commentary for follow-up synthesis</li>
+            </ul>
+        </article>
+        <article class="collab-project-card">
+            <span class="collab-project-number">05</span>
+            <h3>Companion tool integration</h3>
+            <p>
+                Connect V-LiSEMOD outputs to adjacent tools such as Warhead Hunter, E3 Ligandalyzer, or PROTAC Builder,
+                creating a more continuous workflow from structural triage into broader degrader design analysis.
+            </p>
+            <ul class="collab-mini-list">
+                <li><strong>Use case:</strong> prototype software and workflow integration</li>
+                <li><strong>Potential outputs:</strong> linked workflows, demo modules, figures, software notes, manuscript support</li>
+            </ul>
+        </article>
+    </div>
+</section>
+
+<figure class="resource-visual-frame page-section collab-visual-frame" id="workflow-image">
+    <img src="{{ url_for('static', filename='images/VLiSEMOD_Collaboration_Workflow.png') }}"
+         width="1672"
+         height="941"
+         alt="Workflow infographic showing how collaboration with V-LiSEMOD can progress from defining a question and sharing data to structural triage, output generation, benchmarking, and publication or deployment."
+         loading="lazy"
+         decoding="async">
+    <figcaption class="resource-caption collab-caption">
+        A lightweight collaboration can start with a focused question, a small structure set, and a clear desired output.
+    </figcaption>
+</figure>
+
+<section class="page-card resource-section collab-section" id="workflow">
+    <div class="section-heading">
+        <span class="page-kicker">Workflow</span>
+        <h2 class="page-title">How collaboration can work in practice</h2>
+    </div>
+    <p>
+        Not every collaboration needs to begin as a large formal project. Many useful collaborations begin with a specific question,
+        a defined structure set, and a targeted deliverable such as a figure panel, a curated dataset, or a prototype workflow.
+    </p>
+
+    <div class="collab-workflow-grid">
+        <article class="collab-workflow-step">
+            <span class="collab-step-label">Step 1</span>
+            <h3>Define the question</h3>
+            <p>Clarify the biological, structural, or design objective you want to address.</p>
+        </article>
+        <article class="collab-workflow-step">
+            <span class="collab-step-label">Step 2</span>
+            <h3>Share structures or datasets</h3>
+            <p>Provide co-crystals, ligand series, annotations, benchmark ideas, or draft hypotheses.</p>
+        </article>
+        <article class="collab-workflow-step">
+            <span class="collab-step-label">Step 3</span>
+            <h3>Run structural triage</h3>
+            <p>Review binding pose, solvent exposure, exit-vector logic, and target-side context.</p>
+        </article>
+        <article class="collab-workflow-step">
+            <span class="collab-step-label">Step 4</span>
+            <h3>Generate useful outputs</h3>
+            <p>Create figures, PyMOL sessions, comparative summaries, and prototype analysis layers.</p>
+        </article>
+        <article class="collab-workflow-step">
+            <span class="collab-step-label">Step 5</span>
+            <h3>Validate and benchmark</h3>
+            <p>Refine the approach, compare alternatives, and evaluate robustness where possible.</p>
+        </article>
+        <article class="collab-workflow-step">
+            <span class="collab-step-label">Step 6</span>
+            <h3>Publish or deploy</h3>
+            <p>Support manuscripts, public data layers, companion tools, or broader scientific release.</p>
+        </article>
+    </div>
+</section>
+
+<section class="page-card resource-section collab-section" id="starting-note">
+    <div class="section-heading">
+        <span class="page-kicker">Get started</span>
+        <h2 class="page-title">What to include in a first collaboration note</h2>
+    </div>
+    <p>
+        If you want to begin a conversation, the most helpful first message is a concise project note. A short message can go a long way if it describes
+        the target question clearly and explains what kind of collaboration or output would be most useful.
+    </p>
+
+    <div class="collab-note-grid">
+        <article class="collab-note-card">
+            <h3>Helpful details to include</h3>
+            <ul>
+                <li>The viral target, virus family, or ligand series you are interested in</li>
+                <li>Whether the focus is structural review, dataset work, design logic, or manuscript support</li>
+                <li>The structures, PDB IDs, annotations, or datasets already available</li>
+                <li>The desired output, such as figures, curated notes, a workflow demo, or a benchmark concept</li>
+                <li>Any timeline, grant, manuscript, or pilot-study context that shapes the collaboration</li>
+            </ul>
+        </article>
+        <article class="collab-note-card">
+            <h3>Common collaboration formats</h3>
+            <ul>
+                <li>Short consults around a focused structure set</li>
+                <li>Pilot analyses for new viral target classes or ligand families</li>
+                <li>Dataset curation and benchmarking partnerships</li>
+                <li>Figure and methods development for manuscripts</li>
+                <li>Companion software or workflow integration discussions</li>
+            </ul>
+        </article>
+    </div>
+</section>
+
+<section class="page-card resource-section collab-section" id="citation-and-support">
+    <div class="section-heading">
+        <span class="page-kicker">Support</span>
+        <h2 class="page-title">Citation guidance, companion tools, and collaboration support</h2>
+    </div>
+    <div class="collab-support-grid">
+        <article class="collab-support-card">
+            <h3>Citation guidance</h3>
+            <p>
+                If you are using V-LiSEMOD in a manuscript, methods document, poster, or presentation, it is helpful to describe the platform as a
+                structure-guided viral ligand analysis resource with solvent-exposed atom review, ligand comparison, PyMOL session generation,
+                and PROTACability-style structural triage features.
+            </p>
+        </article>
+        <article class="collab-support-card">
+            <h3>Companion tools</h3>
+            <p>
+                V-LiSEMOD can naturally sit beside companion resources such as <strong>Warhead Hunter</strong>, <strong>E3 Ligandalyzer</strong>, and <strong>PROTAC Builder</strong>,
+                allowing collaborators to move from structural observation into more targeted degrader design conversations.
+            </p>
+        </article>
+        <article class="collab-support-card">
+            <h3>Project-oriented outputs</h3>
+            <p>
+                Depending on the collaboration, outputs may include curated tables, annotated structure sets, custom figure panels,
+                prototype analysis pages, reproducible workflows, and manuscript-ready summaries.
+            </p>
+        </article>
+    </div>
+</section>
+
+<section class="page-card resource-section collab-section" id="faq">
+    <div class="section-heading">
+        <span class="page-kicker">FAQ</span>
+        <h2 class="page-title">Frequently asked questions about V-LiSEMOD collaboration</h2>
+    </div>
+
+    <div class="collab-faq-grid">
+        <article class="collab-faq-card">
+            <h3>Do collaborators need a full degrader project to reach out?</h3>
+            <p>No. A collaboration can start with a small structure review, a dataset question, or a single ligand series that needs interpretation.</p>
+        </article>
+        <article class="collab-faq-card">
+            <h3>Is V-LiSEMOD only for PROTAC design?</h3>
+            <p>No. The platform is broader than degrader design and is also relevant for viral drug discovery, structural annotation, ligand comparison, and visualization workflows.</p>
+        </article>
+        <article class="collab-faq-card">
+            <h3>Can this support manuscript development?</h3>
+            <p>Yes. The workflow is well suited to figure generation, structured methods descriptions, curated datasets, and analysis-oriented manuscript collaboration.</p>
+        </article>
+        <article class="collab-faq-card">
+            <h3>Can software and data projects fit here too?</h3>
+            <p>Absolutely. V-LiSEMOD is a good fit for dataset expansion, benchmark creation, prototype tools, and companion web workflow development.</p>
+        </article>
+    </div>
+</section>
+
+<section class="page-card resource-section collab-section collab-cta" id="get-in-touch">
     <div class="section-heading">
         <span class="page-kicker">Get in touch</span>
         <h2 class="page-title">Start with a concise project note</h2>
     </div>
-    <div class="resource-link-panel">
-        <p>For collaboration, citation questions, platform feedback, or research discussions related to V-LiSEMOD, send a brief note describing the project, dataset, collaboration idea, or question.</p>
-        <div class="action-row">
-            <a class="button-primary" href="mailto:jxs794@miami.edu?subject=V-LiSEMOD%20collaboration">Contact about V-LiSEMOD</a>
-            <a class="button-secondary" href="{{ url_for('methods_page') }}">Methods overview</a>
-            <a class="button-secondary" href="{{ url_for('citation_page') }}">Citation page</a>
-        </div>
+    <p>
+        For collaboration questions, citation support, platform feedback, or research discussions related to V-LiSEMOD,
+        start with a short message describing the project, target, dataset, or scientific question you want to explore.
+        A clear starting note makes it much easier to identify the best collaboration path.
+    </p>
+    <div class="action-row collab-actions">
+        <a class="button-primary" href="mailto:jxs794@miami.edu">Email the team</a>
+        <a class="button-secondary" href="#citation-and-support">Citation guidance</a>
+        <a class="button-secondary" href="#workflow">Methods overview</a>
     </div>
 </section>
 {% endblock %}

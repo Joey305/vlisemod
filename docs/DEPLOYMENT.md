@@ -9,6 +9,9 @@ V-LiSEMOD is a public Flask application backed by `viral_data.db` and a set of l
 Confirmed from the current codebase:
 
 - `FLASK_SECRET_KEY`: session secret; should be overridden outside local testing
+- `VLISMOD_DATA_BACKEND`: data source mode for the simple lookup routes; `local`, `randy`, or `auto`
+- `RANDY_API_BASE_URL`: base URL for the RANDY service, for example `http://127.0.0.1:5001`
+- `RANDY_API_TOKEN`: bearer token used by V-LiSEMOD when calling RANDY
 - `SHOW_DRUG_GPT_NAV`: show or hide the Drug GPT navigation entry
 - `ENABLE_DRUG_GPT`: enable or disable the `/drugapp/` blueprint
 - `ENABLE_LOCAL_LLM`: allow local model loading for the optional assistant module
@@ -20,6 +23,11 @@ Optional Drug GPT-related variables in `DRUGapp.py` also include:
 - `HF_TOKEN`, `HUGGINGFACE_HUB_TOKEN`, or `HUGGING_FACE_HUB_TOKEN`
 - `GEN_MAX_CONCURRENT`
 - `GEN_ACQUIRE_TIMEOUT`
+
+Additional variables used by the RANDY backend:
+
+- `VLISMOD_API_TOKEN`: bearer token expected by RANDY for `/api/vlismod/*`
+- `VLISMOD_DB_PATH`: filesystem path to the SQLite database RANDY should query
 
 ## Running With `python app.py`
 
@@ -74,6 +82,40 @@ There is no Heroku-specific config file in the inspected root, but the app can s
 5. writable directories exist for generated outputs if the platform filesystem allows them.
 
 Do not commit Heroku tokens, CLI auth artifacts, or platform-specific secrets.
+
+### RANDY as a Separate Service
+
+If RANDY is deployed separately from V-LiSEMOD, treat them as two Flask services with coordinated environment variables.
+
+RANDY service:
+
+- set `VLISMOD_API_TOKEN`
+- set `VLISMOD_DB_PATH`
+- confirm `GET /api/vlismod/health` and authenticated `GET /api/vlismod/db-health`
+
+V-LiSEMOD service:
+
+- set `VLISMOD_DATA_BACKEND=randy` for strict remote mode or `VLISMOD_DATA_BACKEND=auto` for fallback mode
+- set `RANDY_API_BASE_URL`
+- set `RANDY_API_TOKEN`
+- keep `viral_data.db` available only if you want local fallback when using `auto`
+
+Suggested local verification flow:
+
+```bash
+export VLISMOD_API_TOKEN="dev-token"
+export VLISMOD_DB_PATH="../viral_data.db"
+python RANDY/app.py
+```
+
+Then in a second shell:
+
+```bash
+export VLISMOD_DATA_BACKEND=auto
+export RANDY_API_BASE_URL="http://127.0.0.1:5001"
+export RANDY_API_TOKEN="dev-token"
+python app.py
+```
 
 ## Azure Notes
 

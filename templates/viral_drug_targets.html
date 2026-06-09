@@ -1,96 +1,696 @@
 {% extends "base.html" %}
 
-{% block title %}Viral Protein Drug Targets | V-LiSEMOD{% endblock %}
+{% block title %}Viral Drug Targets for Structure-Guided Antiviral Discovery | V-LiSEMOD{% endblock %}
 
-{% block meta_description %}Explore viral protein drug targets in structure-guided antiviral discovery, including proteases, polymerases, reverse transcriptase, integrase, fusion proteins, helicases, and other structurally supported target classes.{% endblock %}
+{% block meta_description %}Explore viral drug targets with V-LiSEMOD: proteases, polymerases, reverse transcriptase, integrase, fusion proteins, helicases, co-crystal ligand structures, binding pockets, warhead-readiness, and PROTACability-style triage.{% endblock %}
 
-{% block body_class %}app-shell resource-page{% endblock %}
+{% block body_class %}app-shell resource-page viral-targets-page{% endblock %}
 
 {% block content %}
-<section class="resource-hero page-section">
-    <div>
-        <span class="page-kicker">Viral Targets</span>
-        <h1>Viral protein drug targets in structure-guided antiviral discovery</h1>
+<section class="resource-hero page-section viral-targets-hero" aria-labelledby="viral-targets-title">
+    <div class="resource-hero-copy">
+        <span class="page-kicker">Viral Drug Targets</span>
+        <h1 id="viral-targets-title">Viral drug targets for structure-guided antiviral discovery</h1>
         <p class="resource-lede">
-            Viral drug targets are often evaluated through co-crystal ligand structures that reveal how inhibitors engage
-            catalytic motifs, nucleic-acid handling regions, or allosteric pockets. Those structures can guide both classical inhibitor optimization and degrader-oriented follow-up.
+            V-LiSEMOD helps researchers explore viral protein drug targets through experimentally derived protein-ligand structure context. The platform organizes curated viral co-crystal structures so users can evaluate ligand binding poses, residue-level contacts, solvent-exposed atoms, pocket geometry, and follow-up design opportunities for antiviral inhibitor optimization or degrader-oriented triage.
         </p>
+        <div class="hero-keyword-row" aria-label="Common viral drug target topics">
+            <span>viral proteases</span>
+            <span>viral polymerases</span>
+            <span>reverse transcriptase</span>
+            <span>integrase</span>
+            <span>fusion proteins</span>
+            <span>helicases</span>
+        </div>
+        <div class="action-row">
+            <a class="button-primary" href="{{ url_for('query_protein_virus_page') }}">Browse viral protein targets</a>
+            <a class="button-secondary" href="{{ url_for('index') }}">Open Structure Explorer</a>
+        </div>
     </div>
-    <aside class="resource-callout">
-        <span class="resource-callout-label">Use V-LiSEMOD for</span>
-        <p>Target-first exploration, ligand context review, binding pocket inspection, and cautious warhead-readiness triage across curated viral structures.</p>
+
+    <aside class="resource-callout viral-targets-callout" aria-labelledby="vlisemod-use-title">
+        <span class="resource-callout-label" id="vlisemod-use-title">Use V-LiSEMOD for</span>
+        <ul class="check-list compact-list">
+            <li>Target-first exploration across curated viral structures</li>
+            <li>Ligand context review for co-crystal inhibitor complexes</li>
+            <li>Binding pocket and residue interaction inspection</li>
+            <li>Solvent-exposed atom review for exit-vector hypotheses</li>
+            <li>Cautious warhead-readiness and PROTACability-style triage</li>
+        </ul>
     </aside>
 </section>
 
-<section class="page-card resource-section">
-    <div class="section-heading">
-        <span class="page-kicker">Target classes</span>
-        <h2 class="page-title">Examples of structurally important viral proteins</h2>
+<section class="page-card resource-section seo-intent-panel" aria-labelledby="seo-intent-title">
+    <div class="section-heading split-heading">
+        <div>
+            <span class="page-kicker">Why this page exists</span>
+            <h2 class="page-title" id="seo-intent-title">A practical guide to viral protein drug targets</h2>
+        </div>
+        <p class="section-support-text">
+            Researchers searching for viral drug targets usually need more than a protein name. They need to know what the target does in the viral life cycle, why it can be inhibited, what structural evidence exists, and whether a bound ligand contains regions that may tolerate chemical modification.
+        </p>
     </div>
-    <div class="resource-grid">
-        <article class="resource-card">
-            <h3>Proteases</h3>
-            <p>Viral proteases remain central small-molecule targets because active-site and covalent or noncovalent inhibitor complexes often provide interpretable structural design cues.</p>
+
+    <div class="seo-feature-grid">
+        <article class="seo-feature-card">
+            <span class="feature-number">01</span>
+            <h3>Connect target biology to structure</h3>
+            <p>Map viral proteins to replication, entry, genome processing, polyprotein maturation, or host-interaction roles before evaluating their co-crystal ligand evidence.</p>
         </article>
-        <article class="resource-card">
-            <h3>Polymerases</h3>
-            <p>RNA and DNA polymerase structures can support review of nucleotide analogs, non-nucleoside binders, and pocket-specific optimization strategies.</p>
+
+        <article class="seo-feature-card">
+            <span class="feature-number">02</span>
+            <h3>Interpret ligand-bound evidence</h3>
+            <p>Review how inhibitors occupy catalytic motifs, metal-binding sites, nucleotide channels, allosteric pockets, or surface grooves that may affect viral fitness.</p>
         </article>
-        <article class="resource-card">
-            <h3>Reverse transcriptase</h3>
-            <p>Reverse transcriptase complexes remain important for understanding antiviral ligand positioning, resistance-sensitive regions, and comparative binding behavior.</p>
-        </article>
-        <article class="resource-card">
-            <h3>Integrase</h3>
-            <p>Integrase structures and inhibitor complexes can reveal metal coordination, conserved binding patterns, and structural liabilities relevant to follow-up chemistry.</p>
-        </article>
-        <article class="resource-card">
-            <h3>Spike, envelope, and fusion proteins</h3>
-            <p>Where structurally supported, entry-associated proteins can provide ligand or interface context relevant to inhibitor design and mechanistic interpretation.</p>
-        </article>
-        <article class="resource-card">
-            <h3>Helicases and accessory proteins</h3>
-            <p>Additional viral proteins may become tractable when structural coverage, bound ligands, and interpretable pockets are available.</p>
+
+        <article class="seo-feature-card">
+            <span class="feature-number">03</span>
+            <h3>Prioritize follow-up questions</h3>
+            <p>Use structure-backed evidence to ask whether a ligand series is suited for optimization, analog comparison, exit-vector analysis, or degrader-oriented exploration.</p>
         </article>
     </div>
 </section>
 
-<section class="page-card resource-section">
-    <div class="section-heading">
-        <span class="page-kicker">Why co-crystal structures matter</span>
-        <h2 class="page-title">What structure-backed ligand data can support</h2>
+<section class="page-card resource-section" id="target-classes" aria-labelledby="target-classes-title">
+    <div class="section-heading split-heading">
+        <div>
+            <span class="page-kicker">Target classes</span>
+            <h2 class="page-title" id="target-classes-title">Structurally important viral proteins for antiviral drug discovery</h2>
+        </div>
+        <p class="section-support-text">
+            The best viral protein drug targets tend to combine biological necessity, a ligandable structural feature, and enough experimental context to compare inhibitors across related structures.
+        </p>
     </div>
-    <div class="resource-grid">
-        <article class="resource-card">
-            <h3>Inhibitor optimization</h3>
-            <p>Binding pose and interaction evidence help identify which ligand regions are likely to be protected versus more modifiable.</p>
-        </article>
-        <article class="resource-card">
-            <h3>Ligand comparison</h3>
-            <p>Cross-structure analysis helps reveal conserved contacts, context-dependent liabilities, and target-specific series behavior.</p>
-        </article>
-        <article class="resource-card">
-            <h3>Binding pocket analysis</h3>
-            <p>Researchers can inspect residue context, pocket openness, and local geometry before proposing structural changes.</p>
-        </article>
-        <article class="resource-card">
-            <h3>Warhead selection</h3>
-            <p>Some structures may better support warhead-oriented follow-up when solvent-facing atoms and attachment logic remain interpretable.</p>
-        </article>
-        <article class="resource-card">
-            <h3>Degrader-readiness triage</h3>
-            <p>Target structures can be prioritized for hypothesis-generating PROTACability review without overstating what structural data alone can prove.</p>
-        </article>
+
+    <div class="target-card-grid">
+        <details class="target-detail-card">
+            <summary>
+                <span class="target-icon" aria-hidden="true">✂</span>
+                <span class="target-summary-copy">
+                    <span class="target-type">Proteases</span>
+                    <span class="target-short">Polyprotein processing, viral maturation, active-site inhibition</span>
+                </span>
+            </summary>
+            <div class="target-card-body">
+                <p>
+                    Viral proteases cleave viral polyproteins into functional proteins required for replication, assembly, and maturation. Because protease active sites often contain conserved catalytic residues and well-defined substrate-recognition pockets, they remain among the most interpretable viral drug targets for structure-guided inhibitor design.
+                </p>
+                <div class="target-microgrid">
+                    <div>
+                        <h4>Functional importance</h4>
+                        <p>Blocking protease activity can prevent production of mature viral enzymes and structural proteins, disrupting the viral life cycle after translation.</p>
+                    </div>
+                    <div>
+                        <h4>Structural design cues</h4>
+                        <p>Co-crystal structures can expose catalytic dyads or triads, covalent-warhead geometry, noncovalent pocket occupancy, flap movement, and conserved hydrogen-bond networks.</p>
+                    </div>
+                    <div>
+                        <h4>V-LiSEMOD questions</h4>
+                        <p>Which ligand atoms are buried? Which atoms face solvent? Are key pocket contacts conserved across related viral protease structures?</p>
+                    </div>
+                </div>
+            </div>
+        </details>
+
+        <details class="target-detail-card">
+            <summary>
+                <span class="target-icon" aria-hidden="true">⛓</span>
+                <span class="target-summary-copy">
+                    <span class="target-type">Polymerases</span>
+                    <span class="target-short">Genome replication, nucleotide analogs, allosteric pockets</span>
+                </span>
+            </summary>
+            <div class="target-card-body">
+                <p>
+                    Viral RNA-dependent RNA polymerases, DNA polymerases, and polymerase complexes copy viral genetic material. They are attractive because viral replication depends on accurate and efficient genome synthesis, while ligand-bound structures can reveal nucleotide-binding channels, metal coordination, template-primer positioning, and non-nucleoside pockets.
+                </p>
+                <div class="target-microgrid">
+                    <div>
+                        <h4>Functional importance</h4>
+                        <p>Polymerase inhibition can suppress viral genome replication, reduce production of infectious particles, or interfere with replication complex assembly.</p>
+                    </div>
+                    <div>
+                        <h4>Structural design cues</h4>
+                        <p>Structures may show catalytic aspartates, nucleotide analog placement, palm/fingers/thumb domains, RNA-template channels, and resistance-sensitive residue positions.</p>
+                    </div>
+                    <div>
+                        <h4>V-LiSEMOD questions</h4>
+                        <p>Does the ligand mimic a nucleotide, occupy an allosteric pocket, or expose a modifiable region away from conserved catalytic machinery?</p>
+                    </div>
+                </div>
+            </div>
+        </details>
+
+        <details class="target-detail-card">
+            <summary>
+                <span class="target-icon" aria-hidden="true">↺</span>
+                <span class="target-summary-copy">
+                    <span class="target-type">Reverse transcriptase</span>
+                    <span class="target-short">RNA-to-DNA conversion, NRTI/NNRTI design, resistance context</span>
+                </span>
+            </summary>
+            <div class="target-card-body">
+                <p>
+                    Reverse transcriptase converts viral RNA into DNA and is central to retroviral replication. Ligand-bound structures can support comparison of nucleoside reverse transcriptase inhibitors, non-nucleoside allosteric inhibitors, RNase H-directed ligands, and resistance-associated binding changes.
+                </p>
+                <div class="target-microgrid">
+                    <div>
+                        <h4>Functional importance</h4>
+                        <p>Disrupting reverse transcription prevents formation or processing of viral DNA, limiting the ability of retroviruses to establish productive infection.</p>
+                    </div>
+                    <div>
+                        <h4>Structural design cues</h4>
+                        <p>Co-crystals can show polymerase-site occupancy, allosteric pocket shape, domain movement, ligand-induced conformations, and mutation-sensitive interactions.</p>
+                    </div>
+                    <div>
+                        <h4>V-LiSEMOD questions</h4>
+                        <p>How does a ligand sit relative to conserved polymerase residues, RNase H motifs, or known resistance regions?</p>
+                    </div>
+                </div>
+            </div>
+        </details>
+
+        <details class="target-detail-card">
+            <summary>
+                <span class="target-icon" aria-hidden="true">⌬</span>
+                <span class="target-summary-copy">
+                    <span class="target-type">Integrase</span>
+                    <span class="target-short">Viral DNA insertion, strand transfer, metal-binding pharmacophores</span>
+                </span>
+            </summary>
+            <div class="target-card-body">
+                <p>
+                    Viral integrase inserts viral DNA into the host genome. Integrase structures are useful for understanding strand-transfer inhibition, metal-chelating pharmacophores, viral DNA positioning, and interactions that distinguish catalytic-site inhibitors from allosteric or interface-directed ligands.
+                </p>
+                <div class="target-microgrid">
+                    <div>
+                        <h4>Functional importance</h4>
+                        <p>Inhibiting integration blocks a required step in retroviral replication and can prevent stable insertion of viral genetic material.</p>
+                    </div>
+                    <div>
+                        <h4>Structural design cues</h4>
+                        <p>Important features include divalent metal coordination, active-site geometry, DNA-contacting residues, oligomeric state, and ligand orientation within the intasome context.</p>
+                    </div>
+                    <div>
+                        <h4>V-LiSEMOD questions</h4>
+                        <p>Which inhibitor atoms coordinate metals or occupy conserved pockets, and which regions remain exposed for analog growth?</p>
+                    </div>
+                </div>
+            </div>
+        </details>
+
+        <details class="target-detail-card">
+            <summary>
+                <span class="target-icon" aria-hidden="true">⇄</span>
+                <span class="target-summary-copy">
+                    <span class="target-type">Spike, envelope, and fusion proteins</span>
+                    <span class="target-short">Attachment, membrane fusion, entry inhibition, interface pockets</span>
+                </span>
+            </summary>
+            <div class="target-card-body">
+                <p>
+                    Viral entry proteins mediate receptor engagement, membrane fusion, or envelope remodeling. They can be challenging small-molecule targets because many functional surfaces are large and dynamic, but structurally supported pockets, grooves, fusion intermediates, and ligand-bound conformations can still guide inhibitor discovery.
+                </p>
+                <div class="target-microgrid">
+                    <div>
+                        <h4>Functional importance</h4>
+                        <p>Blocking entry can prevent the earliest stage of infection by interfering with receptor binding, conformational triggering, or fusion machinery.</p>
+                    </div>
+                    <div>
+                        <h4>Structural design cues</h4>
+                        <p>Useful structures may show pocket opening, glycoprotein conformational states, fusion peptide context, receptor-interface contacts, or stabilizing allosteric ligands.</p>
+                    </div>
+                    <div>
+                        <h4>V-LiSEMOD questions</h4>
+                        <p>Is the ligand bound to a discrete pocket, a protein-protein interface, a transient groove, or a conformation-specific site?</p>
+                    </div>
+                </div>
+            </div>
+        </details>
+
+        <details class="target-detail-card">
+            <summary>
+                <span class="target-icon" aria-hidden="true">⚙</span>
+                <span class="target-summary-copy">
+                    <span class="target-type">Helicases and accessory proteins</span>
+                    <span class="target-short">Genome handling, immune modulation, emerging pockets</span>
+                </span>
+            </summary>
+            <div class="target-card-body">
+                <p>
+                    Viral helicases, methyltransferases, capsid-associated proteins, and accessory proteins can become tractable when structures reveal nucleotide-binding sites, RNA-binding grooves, enzyme active sites, or protein-interaction surfaces. These targets often require careful structural triage because ligandability can vary widely by protein family and conformational state.
+                </p>
+                <div class="target-microgrid">
+                    <div>
+                        <h4>Functional importance</h4>
+                        <p>These proteins can support replication complex activity, genome unwinding, RNA processing, immune evasion, assembly, or host-pathway manipulation.</p>
+                    </div>
+                    <div>
+                        <h4>Structural design cues</h4>
+                        <p>Design-relevant features may include ATP-binding clefts, RNA channels, methyltransferase pockets, capsid interfaces, and conserved accessory-protein interaction hotspots.</p>
+                    </div>
+                    <div>
+                        <h4>V-LiSEMOD questions</h4>
+                        <p>Does the available structure show a ligandable pocket with a bound ligand, or only a broad surface that needs more evidence before medicinal chemistry follow-up?</p>
+                    </div>
+                </div>
+            </div>
+        </details>
     </div>
 </section>
 
-<section class="page-card resource-section">
-    <div class="resource-link-panel">
-        <p>To explore viral targets directly, start with the target-centric query interface or move from the main structure explorer into ligand-specific follow-up.</p>
+<section class="page-card resource-section visual-placeholder-section" aria-labelledby="visuals-title">
+    <div class="section-heading split-heading">
+        <div>
+            <span class="page-kicker">Planned visuals</span>
+            <h2 class="page-title" id="visuals-title">Infographic slots for viral drug target graphics</h2>
+        </div>
+        <p class="section-support-text">
+            Click any graphic to open a full-size readable view. These visuals support the page’s structure-guided target discovery workflow.
+        </p>
+    </div>
+
+    <div class="planned-visual-grid visual-placeholder-grid">
+        <figure class="seo-image-placeholder">
+            <button
+                class="expandable-graphic-card"
+                type="button"
+                data-expandable-graphic
+                data-full-image="{{ url_for('static', filename='images/viral-life-cyle.png') }}"
+                data-full-title="Viral life cycle target map"
+                data-full-caption="Entry, replication, integration, processing, assembly, and release mapped to major antiviral target classes."
+                aria-label="Open full-size viral life cycle target map graphic"
+            >
+                <img
+                    src="{{ url_for('static', filename='images/viral-life-cyle.png') }}"
+                    alt="Viral life cycle target map infographic showing entry, reverse transcription, replication, integration, proteolytic processing, assembly, and release mapped to antiviral target classes."
+                    loading="lazy"
+                >
+                <span class="graphic-expand-overlay">
+                    <span>View full size</span>
+                    <small>Open readable expanded graphic</small>
+                </span>
+            </button>
+            <figcaption>
+                Entry, replication, integration, processing, assembly, and release mapped to major antiviral target classes.
+            </figcaption>
+        </figure>
+
+        <figure class="seo-image-placeholder">
+            <button
+                class="expandable-graphic-card"
+                type="button"
+                data-expandable-graphic
+                data-full-image="{{ url_for('static', filename='images/co-crystal-interpretation.png') }}"
+                data-full-title="Co-crystal ligand interpretation"
+                data-full-caption="Bound ligand, protected pharmacophore, solvent-exposed atom, residue contacts, and modifiable exit vector."
+                aria-label="Open full-size co-crystal ligand interpretation graphic"
+            >
+                <img
+                    src="{{ url_for('static', filename='images/co-crystal-interpretation.png') }}"
+                    alt="Co-crystal ligand interpretation infographic showing a bound ligand, protected pharmacophore, solvent-exposed atom, residue contacts, and modifiable exit vector."
+                    loading="lazy"
+                >
+                <span class="graphic-expand-overlay">
+                    <span>View full size</span>
+                    <small>Open readable expanded graphic</small>
+                </span>
+            </button>
+            <figcaption>
+                Bound ligand, protected pharmacophore, solvent-exposed atom, residue contacts, and modifiable exit vector.
+            </figcaption>
+        </figure>
+
+        <figure class="seo-image-placeholder">
+            <button
+                class="expandable-graphic-card"
+                type="button"
+                data-expandable-graphic
+                data-full-image="{{ url_for('static', filename='images/structure-guided-triage.png') }}"
+                data-full-title="Structure-guided triage workflow"
+                data-full-caption="Target search, ligand review, pocket analysis, ligand comparison, and PROTACability-style hypothesis generation."
+                aria-label="Open full-size structure-guided triage workflow graphic"
+            >
+                <img
+                    src="{{ url_for('static', filename='images/structure-guided-triage.png') }}"
+                    alt="Structure-guided triage workflow infographic showing target search, ligand review, pocket analysis, ligand comparison, and PROTACability-style hypothesis generation."
+                    loading="lazy"
+                >
+                <span class="graphic-expand-overlay">
+                    <span>View full size</span>
+                    <small>Open readable expanded graphic</small>
+                </span>
+            </button>
+            <figcaption>
+                Target search → ligand review → pocket analysis → ligand comparison → PROTACability-style hypothesis.
+            </figcaption>
+        </figure>
+    </div>
+</section>
+
+<section class="page-card resource-section" id="structure-backed-ligand-data" aria-labelledby="structure-data-title">
+    <div class="section-heading split-heading">
+        <div>
+            <span class="page-kicker">Why co-crystal structures matter</span>
+            <h2 class="page-title" id="structure-data-title">What structure-backed ligand data can support</h2>
+        </div>
+        <p class="section-support-text">
+            V-LiSEMOD is designed around the idea that a ligand is not just a molecule name. Its value depends on how it sits in a viral protein, which residues it contacts, and which atoms remain accessible for chemistry.
+        </p>
+    </div>
+
+    <div class="flip-resource-grid">
+        <details class="flip-resource-card">
+            <summary>
+                <span class="flip-label">Inhibitor optimization</span>
+                <span class="flip-prompt">Open design details</span>
+            </summary>
+            <div class="flip-card-content">
+                <p>Binding pose and interaction evidence help distinguish ligand regions that are likely essential for activity from regions that may tolerate analog growth. For viral drug targets, this is especially important when conserved catalytic motifs or resistance-sensitive residues constrain medicinal chemistry options.</p>
+                <ul>
+                    <li>Identify protected pharmacophores and buried atoms.</li>
+                    <li>Inspect hydrogen bonds, hydrophobic contacts, ionic interactions, and metal coordination.</li>
+                    <li>Compare whether analogs preserve key target-class interactions.</li>
+                </ul>
+            </div>
+        </details>
+
+        <details class="flip-resource-card">
+            <summary>
+                <span class="flip-label">Ligand comparison</span>
+                <span class="flip-prompt">Open comparison details</span>
+            </summary>
+            <div class="flip-card-content">
+                <p>Cross-structure comparison can reveal whether different ligands exploit the same pocket, avoid the same liabilities, or interact with distinct viral protein subpockets. This can help researchers interpret target-specific series behavior instead of treating all inhibitors as equivalent.</p>
+                <ul>
+                    <li>Compare ligand contacts across PDB structures.</li>
+                    <li>Separate conserved interactions from structure-specific artifacts.</li>
+                    <li>Review how related ligands use catalytic, allosteric, or interface-adjacent sites.</li>
+                </ul>
+            </div>
+        </details>
+
+        <details class="flip-resource-card">
+            <summary>
+                <span class="flip-label">Binding pocket analysis</span>
+                <span class="flip-prompt">Open pocket details</span>
+            </summary>
+            <div class="flip-card-content">
+                <p>Pocket-level review helps researchers evaluate whether a viral target has a discrete ligandable site, a dynamic cleft, a shallow surface groove, or a structure that may require additional validation before chemistry investment.</p>
+                <ul>
+                    <li>Inspect local residue context around bound ligands.</li>
+                    <li>Evaluate pocket openness, shape, and possible clash points.</li>
+                    <li>Use PyMOL-ready exports for deeper structural review.</li>
+                </ul>
+            </div>
+        </details>
+
+        <details class="flip-resource-card">
+            <summary>
+                <span class="flip-label">Warhead selection</span>
+                <span class="flip-prompt">Open warhead details</span>
+            </summary>
+            <div class="flip-card-content">
+                <p>For covalent or warhead-oriented follow-up, structure-backed review helps determine whether a reactive group is positioned near a plausible nucleophile and whether nearby ligand atoms remain available for modification without disrupting core binding.</p>
+                <ul>
+                    <li>Review catalytic residues and nearby nucleophilic side chains.</li>
+                    <li>Distinguish binding-critical atoms from exposed attachment points.</li>
+                    <li>Use solvent-exposed atom context to form exit-vector hypotheses.</li>
+                </ul>
+            </div>
+        </details>
+
+        <details class="flip-resource-card">
+            <summary>
+                <span class="flip-label">Degrader-readiness triage</span>
+                <span class="flip-prompt">Open triage details</span>
+            </summary>
+            <div class="flip-card-content">
+                <p>PROTACability-style review should be framed as hypothesis generation, not proof of degradation feasibility. V-LiSEMOD can help identify viral target-ligand structures where the ligand appears to expose a chemically accessible region that might support linker exploration.</p>
+                <ul>
+                    <li>Prioritize ligand-bound structures with interpretable exit vectors.</li>
+                    <li>Flag targets where pocket burial may make linker attachment unrealistic.</li>
+                    <li>Move promising hypotheses into downstream degrader design workflows.</li>
+                </ul>
+            </div>
+        </details>
+    </div>
+</section>
+
+<section class="page-card resource-section workflow-section" aria-labelledby="workflow-title">
+    <div class="section-heading split-heading">
+        <div>
+            <span class="page-kicker">Workflow</span>
+            <h2 class="page-title" id="workflow-title">How to evaluate a viral drug target in V-LiSEMOD</h2>
+        </div>
+        <p class="section-support-text">
+            The page should lead visitors from search intent into action: identify a viral target, inspect available structures, compare ligands, and decide whether follow-up chemistry is reasonable.
+        </p>
+    </div>
+
+    <ol class="workflow-timeline">
+        <li>
+            <span class="workflow-step">1</span>
+            <div>
+                <h3>Search by viral protein or virus</h3>
+                <p>Start with a target such as HIV protease, HIV reverse transcriptase, viral integrase, SARS-CoV-2 main protease, a polymerase complex, or an entry-associated glycoprotein.</p>
+            </div>
+        </li>
+
+        <li>
+            <span class="workflow-step">2</span>
+            <div>
+                <h3>Review ligand-bound structures</h3>
+                <p>Inspect available co-crystal structures and determine whether the ligand binding mode supports interpretable inhibitor, analog, or exit-vector analysis.</p>
+            </div>
+        </li>
+
+        <li>
+            <span class="workflow-step">3</span>
+            <div>
+                <h3>Compare contacts and exposed atoms</h3>
+                <p>Use residue interactions, pocket context, and solvent-exposed atom information to distinguish conserved binding features from modifiable ligand regions.</p>
+            </div>
+        </li>
+
+        <li>
+            <span class="workflow-step">4</span>
+            <div>
+                <h3>Export or continue downstream</h3>
+                <p>Move from target exploration into PyMOL review, ligand comparison, warhead-readiness evaluation, or degrader-oriented design workflows when the structural evidence supports it.</p>
+            </div>
+        </li>
+    </ol>
+</section>
+
+<section class="page-card resource-section faq-section" aria-labelledby="viral-target-faq-title">
+    <div class="section-heading">
+        <span class="page-kicker">FAQ</span>
+        <h2 class="page-title" id="viral-target-faq-title">Viral drug targets and structure-guided antiviral discovery</h2>
+    </div>
+
+    <div class="faq-list">
+        <details class="faq-item">
+            <summary>What are viral drug targets?</summary>
+            <p>Viral drug targets are viral proteins, enzymes, or functional assemblies that can be inhibited to disrupt infection, replication, maturation, immune evasion, or spread. Common examples include proteases, polymerases, reverse transcriptase, integrase, entry proteins, helicases, and selected accessory proteins.</p>
+        </details>
+
+        <details class="faq-item">
+            <summary>Why are co-crystal ligand structures useful for antiviral drug discovery?</summary>
+            <p>Co-crystal structures show how a ligand binds a viral protein target. They can reveal important pocket contacts, catalytic-site engagement, ligand orientation, buried pharmacophores, solvent-exposed atoms, and structural liabilities that are difficult to infer from a molecule name alone.</p>
+        </details>
+
+        <details class="faq-item">
+            <summary>Which viral proteins are common antiviral drug targets?</summary>
+            <p>Well-studied viral drug target classes include viral proteases, RNA and DNA polymerases, reverse transcriptase, integrase, entry or fusion proteins, helicases, methyltransferases, capsid proteins, and accessory proteins with structurally defined binding pockets.</p>
+        </details>
+
+        <details class="faq-item">
+            <summary>Can V-LiSEMOD prove that a viral protein is degradable with a PROTAC?</summary>
+            <p>No. V-LiSEMOD supports PROTACability-style structural triage by highlighting ligand-bound viral targets, solvent-exposed atoms, and possible attachment logic. That information can generate hypotheses, but experimental degradation feasibility depends on cellular localization, target turnover, ternary complex formation, linker behavior, E3 ligase compatibility, and biology beyond the co-crystal structure.</p>
+        </details>
+
+        <details class="faq-item">
+            <summary>How does V-LiSEMOD help with viral drug target prioritization?</summary>
+            <p>V-LiSEMOD helps users move from a viral protein target to structure-backed ligand evidence. Researchers can inspect binding context, compare ligands, review residue interactions, export visualization-ready files, and decide which targets or ligand series deserve deeper follow-up.</p>
+        </details>
+    </div>
+</section>
+
+<section class="page-card resource-section cta-section">
+    <div class="resource-link-panel enhanced-link-panel">
+        <div>
+            <span class="page-kicker">Start exploring</span>
+            <h2 class="page-title">Find viral protein-ligand structures and evaluate target context</h2>
+            <p>Use the target-centric query interface for viral protein drug target exploration, or open the main structure explorer to inspect ligand-bound viral structures directly.</p>
+        </div>
+
         <div class="action-row">
             <a class="button-primary" href="{{ url_for('query_protein_virus_page') }}">Browse by protein target</a>
             <a class="button-secondary" href="{{ url_for('index') }}">Open Structure Explorer</a>
         </div>
     </div>
 </section>
+
+<div id="imageLightboxModal" class="modal image-lightbox-modal" aria-hidden="true">
+    <div class="modal-content image-lightbox-content" role="dialog" aria-modal="true" aria-labelledby="image-lightbox-title">
+        <button class="close modal-close-button image-lightbox-close" type="button" aria-label="Close expanded graphic" data-lightbox-close>
+            &times;
+        </button>
+
+        <div class="image-lightbox-head">
+            <span class="page-kicker">Expanded Graphic</span>
+            <h2 id="image-lightbox-title" data-lightbox-title>Graphic preview</h2>
+            <p data-lightbox-caption></p>
+        </div>
+
+        <div class="image-lightbox-frame">
+            <img src="" alt="" data-lightbox-image>
+        </div>
+
+        <div class="image-lightbox-actions">
+            <button class="button-secondary" type="button" data-lightbox-close>Close graphic</button>
+        </div>
+    </div>
+</div>
+
+<script>
+function initializeImageLightbox() {
+    const lightboxModal = document.getElementById("imageLightboxModal");
+    if (!lightboxModal) return;
+
+    const lightboxImage = lightboxModal.querySelector("[data-lightbox-image]");
+    const lightboxTitle = lightboxModal.querySelector("[data-lightbox-title]");
+    const lightboxCaption = lightboxModal.querySelector("[data-lightbox-caption]");
+    const closeButtons = lightboxModal.querySelectorAll("[data-lightbox-close]");
+    const triggers = document.querySelectorAll("[data-expandable-graphic]");
+
+    let lastFocusedElement = null;
+
+    function openLightbox(trigger) {
+        const nestedImage = trigger.querySelector("img");
+
+        const fullImage = trigger.dataset.fullImage || (nestedImage ? nestedImage.src : "");
+        const fullTitle = trigger.dataset.fullTitle || (nestedImage ? nestedImage.alt : "Expanded graphic");
+        const fullCaption = trigger.dataset.fullCaption || "";
+        const fullAlt = nestedImage ? nestedImage.alt : fullTitle;
+
+        if (!fullImage || !lightboxImage) return;
+
+        lastFocusedElement = document.activeElement;
+
+        lightboxImage.src = fullImage;
+        lightboxImage.alt = fullAlt;
+
+        if (lightboxTitle) {
+            lightboxTitle.textContent = fullTitle;
+        }
+
+        if (lightboxCaption) {
+            lightboxCaption.textContent = fullCaption;
+            lightboxCaption.style.display = fullCaption ? "block" : "none";
+        }
+
+        lightboxModal.style.display = "block";
+        lightboxModal.setAttribute("aria-hidden", "false");
+        document.body.classList.add("image-lightbox-open");
+
+        const closeButton = lightboxModal.querySelector("[data-lightbox-close]");
+        if (closeButton) {
+            window.setTimeout(function () {
+                closeButton.focus({ preventScroll: true });
+            }, 80);
+        }
+    }
+
+    function closeLightbox() {
+        lightboxModal.style.display = "none";
+        lightboxModal.setAttribute("aria-hidden", "true");
+        document.body.classList.remove("image-lightbox-open");
+
+        if (lightboxImage) {
+            lightboxImage.src = "";
+            lightboxImage.alt = "";
+        }
+
+        if (lastFocusedElement && typeof lastFocusedElement.focus === "function") {
+            lastFocusedElement.focus({ preventScroll: true });
+        }
+    }
+
+    triggers.forEach(function (trigger) {
+        trigger.addEventListener("click", function () {
+            openLightbox(trigger);
+        });
+    });
+
+    closeButtons.forEach(function (button) {
+        button.addEventListener("click", closeLightbox);
+    });
+
+    lightboxModal.addEventListener("click", function (event) {
+        if (event.target === lightboxModal) {
+            closeLightbox();
+        }
+    });
+
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape" && lightboxModal.style.display === "block") {
+            closeLightbox();
+        }
+    });
+}
+
+document.addEventListener("DOMContentLoaded", initializeImageLightbox);
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What are viral drug targets?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Viral drug targets are viral proteins, enzymes, or functional assemblies that can be inhibited to disrupt infection, replication, maturation, immune evasion, or spread. Common examples include proteases, polymerases, reverse transcriptase, integrase, entry proteins, helicases, and selected accessory proteins."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why are co-crystal ligand structures useful for antiviral drug discovery?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Co-crystal structures show how a ligand binds a viral protein target. They can reveal pocket contacts, catalytic-site engagement, ligand orientation, buried pharmacophores, solvent-exposed atoms, and structural liabilities that are difficult to infer from a molecule name alone."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Which viral proteins are common antiviral drug targets?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Well-studied viral drug target classes include viral proteases, RNA and DNA polymerases, reverse transcriptase, integrase, entry or fusion proteins, helicases, methyltransferases, capsid proteins, and accessory proteins with structurally defined binding pockets."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can V-LiSEMOD prove that a viral protein is degradable with a PROTAC?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. V-LiSEMOD supports PROTACability-style structural triage by highlighting ligand-bound viral targets, solvent-exposed atoms, and possible attachment logic. Experimental degradation feasibility depends on cellular localization, target turnover, ternary complex formation, linker behavior, E3 ligase compatibility, and biology beyond the co-crystal structure."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How does V-LiSEMOD help with viral drug target prioritization?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "V-LiSEMOD helps users move from a viral protein target to structure-backed ligand evidence. Researchers can inspect binding context, compare ligands, review residue interactions, export visualization-ready files, and decide which targets or ligand series deserve deeper follow-up."
+      }
+    }
+  ]
+}
+</script>
 {% endblock %}

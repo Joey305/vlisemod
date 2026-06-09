@@ -24,7 +24,13 @@
     <header class="site-header">
         <div class="site-header-inner">
             <a class="brand-lockup" href="{{ url_for('index') }}">
-                <span class="brand-mark">V-LiSEMOD</span>
+                <span class="brand-mark">
+                    <svg viewBox="0 0 24 24" aria-hidden="true" class="brand-mark-icon">
+                        <path d="M5 7.5 12 3l7 4.5v9L12 21l-7-4.5Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                        <path d="M8.5 10.5 11 13l4.5-4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span>V-LiSEMOD</span>
+                </span>
                 <span class="brand-subtitle">Viral Ligand Solvent-Exposed Moiety Database</span>
             </a>
             <nav class="site-nav" aria-label="Primary">
@@ -55,28 +61,97 @@
     <footer class="site-footer">
         <div class="site-footer-inner">
             <div class="footer-topline">
-                <p>Part of a connected toolkit for viral ligand analysis, warhead discovery, E3 ligase exploration, and PROTAC design.</p>
+                <div class="footer-brand-block">
+                    <h2>V-LiSEMOD</h2>
+                    <p>Structure-guided viral protein-ligand analysis, solvent-exposed atom review, PyMOL exports, ligand comparison, and PROTACability-style structural triage in one workspace.</p>
+                </div>
+                <div class="footer-action-row">
+                    <a class="footer-button footer-button-primary" href="{{ url_for('index') }}">Open Structure Explorer</a>
+                    <a class="footer-button footer-button-secondary" href="{{ url_for('about_page') }}">About the Project</a>
+                    <a class="footer-button footer-button-secondary" href="{{ url_for('contact_page') }}">Contact</a>
+                </div>
             </div>
-            <div class="footer-link-row">
-                <a href="{{ url_for('about_page') }}">About V-LiSEMOD</a>
+            <div class="footer-grid">
+                <section class="footer-panel">
+                    <h3 class="footer-panel-title">
+                        <svg viewBox="0 0 24 24" aria-hidden="true" class="footer-panel-icon">
+                            <path d="M12 3.5 14.7 9.3 21 12l-6.3 2.7L12 20.5l-2.7-5.8L3 12l6.3-2.7Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+                        </svg>
+                        <span>Explore V-LiSEMOD</span>
+                    </h3>
+                    <div class="footer-link-list">
+                        <a href="{{ url_for('index') }}">Structure Explorer</a>
+                        <a href="{{ url_for('query_protein_virus_page') }}">Protein Query</a>
+                        <a href="{{ url_for('ligand_indexer') }}">Ligand Indexer</a>
+                        <a href="{{ url_for('compare_ligands') }}">Ligand Comparison</a>
+                        <a href="{{ url_for('protacability_page') }}">PROTACability</a>
+                    </div>
+                </section>
+
+                <section class="footer-panel">
+                    <h3 class="footer-panel-title">
+                        <svg viewBox="0 0 24 24" aria-hidden="true" class="footer-panel-icon">
+                            <path d="M7 4.5h7l3 3v12H7z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+                            <path d="M14 4.5v4h4M10 12h4M10 16h4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                        </svg>
+                        <span>Project Pages</span>
+                    </h3>
+                    <div class="footer-link-list">
+                        <a href="{{ url_for('about_page') }}">About</a>
+                        <a href="{{ url_for('use_cases_page') }}">Use Cases</a>
+                        <a href="{{ url_for('viral_protac_design_page') }}">Viral PROTAC Design</a>
+                        <a href="{{ url_for('viral_drug_targets_page') }}">Viral Drug Targets</a>
+                        <a href="{{ url_for('in_silico_virology_tools_page') }}">In Silico Virology Tools</a>
+                    </div>
+                </section>
+
+                <section class="footer-panel">
+                    <h3 class="footer-panel-title">
+                        <svg viewBox="0 0 24 24" aria-hidden="true" class="footer-panel-icon">
+                            <path d="M12 4.5a7.5 7.5 0 1 0 0 15 7.5 7.5 0 0 0 0-15Z" fill="none" stroke="currentColor" stroke-width="1.7"/>
+                            <path d="M12 10v5M12 7.8h.01" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                        </svg>
+                        <span>Methods and Support</span>
+                    </h3>
+                    <div class="footer-link-list">
+                        <a href="{{ url_for('methods_page') }}">Methods Overview</a>
+                        <a href="{{ url_for('faq_page') }}">FAQ</a>
+                        <a href="{{ url_for('citation_page') }}">Citation</a>
+                        <a href="{{ url_for('contact_page') }}">Contact and Collaboration</a>
+                    </div>
+                </section>
+
+                <section class="footer-panel footer-panel-accent">
+                    <h3 class="footer-panel-title">
+                        <svg viewBox="0 0 24 24" aria-hidden="true" class="footer-panel-icon">
+                            <path d="M6 7.5h4v4H6zM14 12.5h4v4h-4zM14 4.5h4v4h-4zM10 9.5h4M12 9.5v3M12 12.5h2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <span>Companion Tools</span>
+                    </h3>
+                    <div class="footer-tool-stack">
+                        <a class="footer-tool-link" href="https://warheadhunter.com" target="_blank" rel="noopener noreferrer">
+                            <strong>Warhead Hunter ↗</strong>
+                            <span>Warhead discovery and structure-aware exit-vector review.</span>
+                        </a>
+                        <a class="footer-tool-link" href="https://e3ligandalyzer.com" target="_blank" rel="noopener noreferrer">
+                            <strong>E3 Ligandalyzer ↗</strong>
+                            <span>E3 recruiter structure context and recruiter-side design analysis.</span>
+                        </a>
+                        <a class="footer-tool-link footer-tool-link-highlight" href="https://protacbuilder.com" target="_blank" rel="noopener noreferrer">
+                            <strong>PROTAC Builder ↗</strong>
+                            <span>Continue from structural triage into downstream degrader design workflows.</span>
+                        </a>
+                    </div>
+                </section>
             </div>
-            <div class="footer-tool-grid">
-                <article class="footer-tool-card">
-                    <h3>V-LiSEMOD</h3>
-                    <p>Curated viral ligand solvent-exposed moiety analysis, PyMOL exports, and structure-guided query workflows.</p>
-                </article>
-                <article class="footer-tool-card">
-                    <h3><a href="https://warheadhunter.com" target="_blank" rel="noopener noreferrer">Warhead Hunter</a></h3>
-                    <p>Identify and evaluate warhead-like ligands and fragmentable chemotypes for follow-on molecular design.</p>
-                </article>
-                <article class="footer-tool-card">
-                    <h3><a href="https://e3ligandalyzer.com" target="_blank" rel="noopener noreferrer">E3 Ligandalyzer</a></h3>
-                    <p>Explore E3 ligase recruiter structures, ligandability, scaffold context, and attachment-vector opportunities.</p>
-                </article>
-                <article class="footer-tool-card footer-tool-card-accent">
-                    <h3><a href="https://protacbuilder.com" target="_blank" rel="noopener noreferrer">PROTAC Builder</a></h3>
-                    <p>Move from ligand and warhead analysis into degrader design through the standalone builder.</p>
-                </article>
+
+            <div class="footer-meta-row">
+                <p>Part of a connected toolkit for viral ligand analysis, warhead discovery, E3 ligase exploration, and degrader-oriented design workflows.</p>
+                <div class="footer-meta-links">
+                    <a href="{{ url_for('about_page') }}">Project overview</a>
+                    <a href="{{ url_for('citation_page') }}">How to cite</a>
+                    <a href="mailto:jxs794@miami.edu">Email collaboration inquiries</a>
+                </div>
             </div>
         </div>
     </footer>
