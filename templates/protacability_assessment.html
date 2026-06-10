@@ -273,7 +273,7 @@
         <div class="protac-loading-card" role="status">
             <div class="protac-spinner" aria-hidden="true"></div>
             <div id="protac-loading-message" class="protac-loading-message">Preparing target summaries…</div>
-            <div class="protac-loading-subtext">V-LiSEMOD is querying RANDY and assembling the current PROTACability view.</div>
+            <div class="protac-loading-subtext">V-LiSEMOD is querying the server and assembling the current PROTACability view.</div>
         </div>
     </div>
 
@@ -1372,7 +1372,7 @@
                     updatePagination(data.total_rows || 0, data.offset || 0, data.limit || protacState.limit, Boolean(data.has_more));
                 }).fail(function(xhr) {
                     console.error('[protacability] search failed', { params: params.toString(), status: xhr.status, responseText: xhr.responseText });
-                    showEmptyState('Unable to load PROTACability results from RANDY right now. Please try again or reduce your filters.');
+                    showEmptyState('Unable to load PROTACability results from server right now. Please try again or reduce your filters.');
                 });
             };
             if (options.skipLoader) {
