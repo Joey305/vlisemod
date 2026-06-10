@@ -6524,3 +6524,129 @@ body.dark-mode .ligand-structure-viewer {
         transform: translateY(0);
     }
 }
+
+
+/* ==========================================================
+   Ligand comparison chart footer controls
+   Moves chart title/meta below the graph beside navigation
+   ========================================================== */
+
+.comparison-page .chart-stage-panel {
+    display: grid;
+    gap: 0.9rem;
+}
+
+.comparison-page .chart-frame {
+    width: 100%;
+    min-width: 0;
+    min-height: clamp(560px, 68vh, 760px);
+    border-radius: 22px;
+    background: #ffffff;
+    overflow: hidden;
+}
+
+.comparison-page .chart-bottom-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.95rem 0.25rem 0;
+    border-top: 1px solid rgba(180, 230, 205, 0.16);
+    flex-wrap: wrap;
+}
+
+.comparison-page .chart-bottom-bar .chart-panel-heading {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.85rem;
+    flex: 1 1 480px;
+    min-width: 0;
+    padding: 0;
+}
+
+.comparison-page .chart-bottom-bar .chart-panel-heading > div {
+    min-width: 0;
+}
+
+.comparison-page .chart-bottom-bar .chart-panel-heading h3 {
+    margin: 0;
+    color: var(--heading-color);
+    font-size: 1rem;
+    line-height: 1.2;
+}
+
+.comparison-page .chart-bottom-bar .chart-panel-heading p {
+    margin: 0.2rem 0 0;
+    color: var(--text-muted);
+    font-size: 0.86rem;
+    line-height: 1.35;
+}
+
+.comparison-page .chart-bottom-bar .active-chart-pill {
+    flex: 0 0 auto;
+    min-height: 34px;
+    padding: 0.4rem 0.7rem;
+    border-radius: 999px;
+    background: rgba(11, 83, 53, 0.08);
+    color: var(--heading-color);
+    font-weight: 850;
+    white-space: nowrap;
+}
+
+.comparison-page .chart-bottom-bar .chart-carousel-controls {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 0.65rem;
+    flex: 0 0 auto;
+    padding: 0;
+    margin: 0;
+}
+
+.comparison-page .chart-bottom-bar .chart-carousel-controls button {
+    width: auto;
+    min-width: 145px;
+}
+
+/* Keep ligand readable but reduce vertical dominance slightly */
+.comparison-page .ligand-structure-viewer {
+    min-height: clamp(320px, 36vh, 460px);
+}
+
+.comparison-page .ligand-structure-viewer svg,
+.comparison-page .ligand-structure-viewer img,
+.comparison-page #molecule_container svg,
+.comparison-page #molecule_container img {
+    max-height: 420px !important;
+}
+
+/* Dark mode support */
+html[data-theme="dark"] .comparison-page .chart-bottom-bar {
+    border-top-color: rgba(180, 230, 205, 0.14);
+}
+
+html[data-theme="dark"] .comparison-page .chart-bottom-bar .active-chart-pill {
+    background: rgba(56, 211, 139, 0.12);
+    color: var(--heading-color);
+}
+
+@media (max-width: 760px) {
+    .comparison-page .chart-bottom-bar {
+        align-items: stretch;
+    }
+
+    .comparison-page .chart-bottom-bar .chart-panel-heading,
+    .comparison-page .chart-bottom-bar .chart-carousel-controls {
+        width: 100%;
+        flex: 1 1 100%;
+    }
+
+    .comparison-page .chart-bottom-bar .chart-carousel-controls {
+        justify-content: stretch;
+    }
+
+    .comparison-page .chart-bottom-bar .chart-carousel-controls button {
+        flex: 1 1 160px;
+    }
+}

@@ -90,14 +90,6 @@
         </div>
 
         <div class="carousel-container chart-stage-panel">
-            <div class="chart-panel-heading">
-                <div>
-                    <h3 id="active-chart-title">Comparison chart</h3>
-                    <p id="active-chart-meta">Use Previous/Next to switch chart views.</p>
-                </div>
-                <span id="active-chart-pill" class="active-chart-pill">1 / 4</span>
-            </div>
-
             <div class="chart-frame">
                 <div id="donutChart" class="carousel-graph"></div>
                 <div id="scatterPlot" class="carousel-graph"></div>
@@ -105,9 +97,19 @@
                 <div id="atomBarChart" class="carousel-graph"></div>
             </div>
 
-            <div class="chart-carousel-controls">
-                <button id="prevChartBottom" type="button">Previous chart</button>
-                <button id="nextChartBottom" type="button">Next chart</button>
+            <div class="chart-bottom-bar">
+                <div class="chart-panel-heading chart-panel-heading-bottom">
+                    <div>
+                        <h3 id="active-chart-title">Comparison chart</h3>
+                        <p id="active-chart-meta">Use Previous/Next to switch chart views.</p>
+                    </div>
+                    <span id="active-chart-pill" class="active-chart-pill">1 / 4</span>
+                </div>
+
+                <div class="chart-carousel-controls">
+                    <button id="prevChartBottom" type="button">Previous chart</button>
+                    <button id="nextChartBottom" type="button">Next chart</button>
+                </div>
             </div>
         </div>
     </section>
@@ -493,16 +495,22 @@
     
             function displayCarousel(index) {
                 $('.carousel-graph').removeClass('active');
+
                 const chartId = charts[index];
+
                 $('#' + chartId).addClass('active');
                 $('#active-chart-title').text(chartTitles[chartId] || 'Comparison chart');
                 $('#active-chart-meta').text(chartMeta[chartId] || 'Use Previous/Next to switch chart views.');
+                $('#active-chart-pill').text(`${index + 1} / ${charts.length}`);
+
+                $('#atom-hover-copy').toggleClass('is-visible', chartId === 'atomBarChart');
+
                 requestAnimationFrame(() => {
                     resizeActivePlot();
                     setTimeout(resizeActivePlot, 120);
+                    setTimeout(resizeActivePlot, 300);
                 });
             }
-
             function getPlotConfig() {
                 return {
                     responsive: true,
