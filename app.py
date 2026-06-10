@@ -1,5 +1,6 @@
 import os 
 import io
+import json
 import re
 import glob
 import urllib.request
@@ -3138,6 +3139,16 @@ def _protacability_enrichment_snapshot(row):
     return {field: row.get(field) for field in fields}
 
 
+def _row_has_mapped_exposed_warhead_evidence(row):
+    explicit_flag = row.get("has_mapped_exposed_warhead_evidence")
+    if explicit_flag not in (None, ""):
+        return _has_positive_value(explicit_flag)
+    return (
+        _has_positive_value(row.get("solvent_exposed_mapped_atom_count"))
+        and _has_positive_value(row.get("pdb_to_smiles_mapped_atom_count"))
+    )
+
+
 def _group_structure_rows(rows):
     chain_rows = _dedupe_display_chain_rows(rows)
     grouped = defaultdict(list)
@@ -3183,6 +3194,10 @@ def _group_structure_rows(rows):
             "grouped_notes": f"Grouped structure summary across {len(group_rows)} chain-level rows.",
             "raw_chain_rows_count": len(group_rows),
             "distinct_ligand_count": len(ligands),
+            "mapped_exposed_chain_count": sum(1 for row in group_rows if _row_has_mapped_exposed_warhead_evidence(row)),
+            "has_mapped_exposed_warhead_evidence": int(
+                any(_row_has_mapped_exposed_warhead_evidence(row) for row in group_rows)
+            ),
             **context,
             **_protacability_enrichment_snapshot(representative),
         })
@@ -3234,6 +3249,12 @@ def _group_protein_rows(rows):
             "candidate_ligand_count": len(ligands),
             "best_annotation": representative.get("best_annotation") or "—",
             "best_tier": representative.get("best_tier"),
+            "mapped_exposed_structure_count": sum(
+                1 for row in group_rows if _row_has_mapped_exposed_warhead_evidence(row)
+            ),
+            "has_mapped_exposed_warhead_evidence": int(
+                any(_row_has_mapped_exposed_warhead_evidence(row) for row in group_rows)
+            ),
             **context,
             "structure_group_count": len(group_rows),
             **_protacability_enrichment_snapshot(representative),
@@ -3314,6 +3335,12 @@ def _group_target_rows(rows):
             "ligand_context_class": representative.get("ligand_context_class"),
             "ligand_context_label": representative.get("ligand_context_label"),
             "ligand_priority": _numeric_value(representative.get("ligand_priority")),
+            "mapped_exposed_structure_count": sum(
+                1 for row in target_structures if _row_has_mapped_exposed_warhead_evidence(row)
+            ),
+            "has_mapped_exposed_warhead_evidence": int(
+                any(_row_has_mapped_exposed_warhead_evidence(row) for row in target_structures)
+            ),
             **_protacability_enrichment_snapshot(representative),
         }
         interpretation_label, interpretation_note = _target_interpretation(row)
@@ -3396,8 +3423,7 @@ def _build_summary_cards(view, rows):
         return {
             "targets_assessed": len(rows),
             "candidate_warheads_with_exposed_mapped_atoms": sum(
-                1 for row in rows
-                if _has_positive_value(row.get("solvent_exposed_mapped_atom_count")) and _has_positive_value(row.get("pdb_to_smiles_mapped_atom_count"))
+                1 for row in rows if _row_has_mapped_exposed_warhead_evidence(row)
             ),
             "high_warhead_linkability_ligands": sum(1 for row in rows if _numeric_value(row.get("warhead_linkability_score")) >= 70),
             "high_degrader_readiness_targets": sum(1 for row in rows if _numeric_value(row.get("degrader_design_readiness_score")) >= 70),
@@ -3409,8 +3435,7 @@ def _build_summary_cards(view, rows):
         return {
             "targets_assessed": len(rows),
             "candidate_warheads_with_exposed_mapped_atoms": sum(
-                1 for row in rows
-                if _has_positive_value(row.get("solvent_exposed_mapped_atom_count")) and _has_positive_value(row.get("pdb_to_smiles_mapped_atom_count"))
+                1 for row in rows if _row_has_mapped_exposed_warhead_evidence(row)
             ),
             "high_warhead_linkability_ligands": sum(1 for row in rows if _numeric_value(row.get("warhead_linkability_score")) >= 70),
             "high_degrader_readiness_targets": sum(1 for row in rows if _numeric_value(row.get("degrader_design_readiness_score")) >= 70),
@@ -3422,8 +3447,7 @@ def _build_summary_cards(view, rows):
         return {
             "targets_assessed": len(rows),
             "candidate_warheads_with_exposed_mapped_atoms": sum(
-                1 for row in rows
-                if _has_positive_value(row.get("solvent_exposed_mapped_atom_count")) and _has_positive_value(row.get("pdb_to_smiles_mapped_atom_count"))
+                1 for row in rows if _row_has_mapped_exposed_warhead_evidence(row)
             ),
             "high_warhead_linkability_ligands": sum(1 for row in rows if _numeric_value(row.get("warhead_linkability_score")) >= 70),
             "high_degrader_readiness_targets": sum(1 for row in rows if _numeric_value(row.get("degrader_design_readiness_score")) >= 70),
@@ -3434,8 +3458,7 @@ def _build_summary_cards(view, rows):
     return {
         "targets_assessed": len(rows),
         "candidate_warheads_with_exposed_mapped_atoms": sum(
-            1 for row in rows
-            if _has_positive_value(row.get("solvent_exposed_mapped_atom_count")) and _has_positive_value(row.get("pdb_to_smiles_mapped_atom_count"))
+            1 for row in rows if _row_has_mapped_exposed_warhead_evidence(row)
         ),
         "high_warhead_linkability_ligands": sum(1 for row in rows if _numeric_value(row.get("warhead_linkability_score")) >= 70),
         "high_degrader_readiness_targets": sum(1 for row in rows if _numeric_value(row.get("degrader_design_readiness_score")) >= 70),
@@ -5089,14 +5112,33 @@ def protacability_filters():
 @app.route('/api/protacability/filter_options')
 def protacability_filter_options():
     mode = _normalized_backend_mode()
+    started_at = time.perf_counter()
     if mode == "randy":
         try:
-            return jsonify(_remote_protacability_get("protacability/filter-options", params=request.args, max_bytes=2 * 1024 * 1024))
+            payload = _remote_protacability_get("protacability/filter-options", params=request.args, max_bytes=2 * 1024 * 1024)
+            logging.info(
+                "PROTAC filter_options backend=randy elapsed_ms=%.1f payload_bytes=%s ligand_count=%s protein_count=%s virus_count=%s",
+                (time.perf_counter() - started_at) * 1000,
+                len(json.dumps(payload)),
+                len(payload.get("ligands") or []),
+                len(payload.get("protein_types") or []),
+                len(payload.get("virus_names") or []),
+            )
+            return jsonify(payload)
         except RandyBackendError as exc:
             return jsonify({"data_available": False, "message": str(exc)}), exc.status_code
     if mode == "auto" and randy_available():
         try:
-            return jsonify(_remote_protacability_get("protacability/filter-options", params=request.args, max_bytes=2 * 1024 * 1024))
+            payload = _remote_protacability_get("protacability/filter-options", params=request.args, max_bytes=2 * 1024 * 1024)
+            logging.info(
+                "PROTAC filter_options backend=auto-randy elapsed_ms=%.1f payload_bytes=%s ligand_count=%s protein_count=%s virus_count=%s",
+                (time.perf_counter() - started_at) * 1000,
+                len(json.dumps(payload)),
+                len(payload.get("ligands") or []),
+                len(payload.get("protein_types") or []),
+                len(payload.get("virus_names") or []),
+            )
+            return jsonify(payload)
         except RandyBackendError:
             logging.warning("Falling back to local PROTACability filter_options payload")
     try:
@@ -5118,27 +5160,57 @@ def protacability_filter_options():
             "ligands": [],
             "ligand_context_classes": [],
         })
-    return jsonify(
-        _build_protacability_filter_options_payload_from_rows(
-            payload.get("assessment_rows", []),
-            payload.get("readiness_rows", []),
-            payload.get("warhead_rows", []),
-            request.args,
-        )
+    response_payload = _build_protacability_filter_options_payload_from_rows(
+        payload.get("assessment_rows", []),
+        payload.get("readiness_rows", []),
+        payload.get("warhead_rows", []),
+        request.args,
     )
+    logging.info(
+        "PROTAC filter_options backend=local elapsed_ms=%.1f payload_bytes=%s ligand_count=%s protein_count=%s virus_count=%s",
+        (time.perf_counter() - started_at) * 1000,
+        len(json.dumps(response_payload)),
+        len(response_payload.get("ligands") or []),
+        len(response_payload.get("protein_types") or []),
+        len(response_payload.get("virus_names") or []),
+    )
+    return jsonify(response_payload)
 
 
 @app.route('/api/protacability/search')
 def protacability_search():
     mode = _normalized_backend_mode()
+    started_at = time.perf_counter()
     if mode == "randy":
         try:
-            return jsonify(_remote_protacability_get("protacability/search", params=request.args))
+            payload = _remote_protacability_get("protacability/search", params=request.args)
+            logging.info(
+                "PROTAC search backend=randy view=%s offset=%s limit=%s total_rows=%s mapped_exposed=%s elapsed_ms=%.1f payload_bytes=%s",
+                payload.get("view"),
+                payload.get("offset"),
+                payload.get("limit"),
+                payload.get("total_rows"),
+                (payload.get("summary") or {}).get("candidate_warheads_with_exposed_mapped_atoms"),
+                (time.perf_counter() - started_at) * 1000,
+                len(json.dumps(payload)),
+            )
+            return jsonify(payload)
         except RandyBackendError as exc:
             return jsonify({"data_available": False, "message": str(exc), "rows": [], "summary": {}}), exc.status_code
     if mode == "auto" and randy_available():
         try:
-            return jsonify(_remote_protacability_get("protacability/search", params=request.args))
+            payload = _remote_protacability_get("protacability/search", params=request.args)
+            logging.info(
+                "PROTAC search backend=auto-randy view=%s offset=%s limit=%s total_rows=%s mapped_exposed=%s elapsed_ms=%.1f payload_bytes=%s",
+                payload.get("view"),
+                payload.get("offset"),
+                payload.get("limit"),
+                payload.get("total_rows"),
+                (payload.get("summary") or {}).get("candidate_warheads_with_exposed_mapped_atoms"),
+                (time.perf_counter() - started_at) * 1000,
+                len(json.dumps(payload)),
+            )
+            return jsonify(payload)
         except RandyBackendError:
             logging.warning("Falling back to local PROTACability search payload")
     try:
@@ -5160,7 +5232,7 @@ def protacability_search():
         source_payload.get("warhead_rows", []),
         request.args,
     )
-    return jsonify({
+    response_payload = {
         "data_available": True,
         "view": payload["view"],
         "collapse_labels": payload["collapse_labels"],
@@ -5171,7 +5243,18 @@ def protacability_search():
         "total_rows": payload["total_rows"],
         "has_more": payload["has_more"],
         "sort": payload["sort"],
-    })
+    }
+    logging.info(
+        "PROTAC search backend=local view=%s offset=%s limit=%s total_rows=%s mapped_exposed=%s elapsed_ms=%.1f payload_bytes=%s",
+        response_payload.get("view"),
+        response_payload.get("offset"),
+        response_payload.get("limit"),
+        response_payload.get("total_rows"),
+        (response_payload.get("summary") or {}).get("candidate_warheads_with_exposed_mapped_atoms"),
+        (time.perf_counter() - started_at) * 1000,
+        len(json.dumps(response_payload)),
+    )
+    return jsonify(response_payload)
 
 
 @app.route('/api/protacability/detail/<pdb_code>/<chain_id>')
@@ -5500,17 +5583,8 @@ def protacability_target_detail():
         if not matches:
             return None
         best = max(matches, key=lambda r: _numeric_value(r.get("best_score")))
-        ligand_rows = [
-            dict(row) for row in conn.execute(
-                """
-                SELECT ligand_resname, ligand_chain, ligand_residue_id, ligand_atom_count
-                FROM protacability_ligand_inventory
-                WHERE pdb_code = ?
-                ORDER BY ligand_atom_count DESC, ligand_chain, ligand_residue_id
-                """,
-                (best.get("pdb_code"),)
-            ).fetchall()
-        ]
+        ligand_payload = _load_protacability_source_payload(pdb_code=best.get("pdb_code"), include_inventory=True)
+        ligand_rows = ligand_payload.get("ligand_inventory", []) if ligand_payload.get("data_available") else []
         preferred = _split_candidate_ligands(best.get("candidate_ligand_resnames_full"))
         ligand_record = _pick_representative_ligand_record(
             ligand_rows,

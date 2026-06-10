@@ -269,6 +269,14 @@
         </div>
     </section>
 
+    <div id="protac-loading-overlay" class="protac-loading-overlay" aria-live="polite" aria-hidden="true">
+        <div class="protac-loading-card" role="status">
+            <div class="protac-spinner" aria-hidden="true"></div>
+            <div id="protac-loading-message" class="protac-loading-message">Preparing target summaries…</div>
+            <div class="protac-loading-subtext">V-LiSEMOD is querying RANDY and assembling the current PROTACability view.</div>
+        </div>
+    </div>
+
     <div id="protacability-detail-modal" class="modal" style="display:none;">
         <div class="modal-content data-panel protacability-detail-modal">
             <button id="close-protac-detail" class="modal-close-button" type="button" aria-label="Close detail panel">&times;</button>
@@ -286,7 +294,19 @@
         let latestProtacViewerPayload = null;
         let latestProtacLoadedSourceUrl = null;
         let refreshingFilterOptions = false;
+        let protacLoadingDepth = 0;
+        let protacLoadingDelayTimer = null;
+        let protacLoadingHideTimer = null;
+        let protacLoadingMessageTimer = null;
+        let protacLoadingVisibleSince = 0;
         const useDirectRcsbPdb = (new URLSearchParams(window.location.search).get('useDirectRcsbPdb') === 'true');
+        const protacLoadingMessages = [
+            'Preparing target summaries…',
+            'Parsing your search…',
+            'Scoring structural priorities…',
+            'Mapping degrader-readiness evidence…',
+            'Rendering results…'
+        ];
 
         function renderLigandDebugPanel() {
             if (!ligandDebugEnabled()) return '';
@@ -341,28 +361,28 @@
         const metricConfigs = {
             targets: [
                 ['Targets assessed', 'Virus/protein target groups in the current filtered result set.'],
-                ['Mapped/exposed warheads', 'Rows with mapped ligand atoms and solvent-exposed mapped atoms.'],
+                ['Mapped/exposed target groups', 'Target groups in the current filtered result set with at least one mapped ligand context that also contains solvent-exposed mapped atoms.'],
                 ['High warhead linkability', 'Rows with strong ligand-centered warhead-linkability evidence.'],
                 ['High degrader readiness', 'Targets with strong overall degrader-design readiness.'],
                 ['Average readiness', 'Average degrader-design readiness across the filtered targets.']
             ],
             summary: [
                 ['Structures summarized', 'Structure-level groups in the current filtered result set.'],
-                ['Mapped/exposed warheads', 'Rows with mapped ligand atoms and solvent-exposed mapped atoms.'],
+                ['Mapped/exposed structures', 'Structure groups in the current filtered result set with mapped ligand atoms and solvent-exposed mapped atoms.'],
                 ['High warhead linkability', 'Rows with strong ligand-centered warhead-linkability evidence.'],
                 ['High degrader readiness', 'Structures with strong overall degrader-design readiness.'],
                 ['Average readiness', 'Average degrader-design readiness across grouped structures.']
             ],
             protein: [
                 ['Protein groups', 'Distinct virus/protein summaries after collapsing repeated structure contexts.'],
-                ['Mapped/exposed warheads', 'Rows with mapped ligand atoms and solvent-exposed mapped atoms.'],
+                ['Mapped/exposed protein groups', 'Protein groups in the current filtered result set with at least one mapped ligand context that also contains solvent-exposed mapped atoms.'],
                 ['High warhead linkability', 'Protein groups with strong ligand-centered warhead evidence.'],
                 ['High degrader readiness', 'Protein groups with strong overall degrader-design readiness.'],
                 ['Average readiness', 'Average degrader-design readiness across grouped proteins.']
             ],
             chains: [
                 ['Chain rows', 'Raw chain-level assessment rows in the filtered result set.'],
-                ['Mapped/exposed warheads', 'Rows with mapped ligand atoms and solvent-exposed mapped atoms.'],
+                ['Mapped/exposed chain rows', 'Chain-level rows with mapped ligand atoms and solvent-exposed mapped atoms.'],
                 ['High warhead linkability', 'Chain rows with strong ligand-centered warhead evidence.'],
                 ['High degrader readiness', 'Chain rows with strong overall degrader-design readiness.'],
                 ['Average readiness', 'Average degrader-design readiness across chain rows.']
@@ -376,6 +396,116 @@
                 .replace(/>/g, '&gt;')
                 .replace(/"/g, '&quot;')
                 .replace(/'/g, '&#39;');
+        }
+
+        function setProtacResultsBusy(isBusy) {
+            $('.protac-results-section').attr('aria-busy', isBusy ? 'true' : 'false');
+        }
+
+        function setProtacLoadingMessage(message, immediate = false) {
+            const $message = $('#protac-loading-message');
+            if (!$message.length) return;
+            const nextMessage = message || protacLoadingMessages[0];
+            if (immediate) {
+                $message.removeClass('is-fading').text(nextMessage);
+                return;
+            }
+            $message.addClass('is-fading');
+            window.setTimeout(function() {
+                $message.text(nextMessage).removeClass('is-fading');
+            }, 180);
+        }
+
+        function startProtacLoadingMessages() {
+            if (protacLoadingMessageTimer) return;
+            let messageIndex = 0;
+            protacLoadingMessageTimer = window.setInterval(function() {
+                messageIndex = (messageIndex + 1) % protacLoadingMessages.length;
+                setProtacLoadingMessage(protacLoadingMessages[messageIndex]);
+            }, 4000);
+        }
+
+        function stopProtacLoadingMessages() {
+            if (protacLoadingMessageTimer) {
+                window.clearInterval(protacLoadingMessageTimer);
+                protacLoadingMessageTimer = null;
+            }
+        }
+
+        function showProtacLoading(message, options = {}) {
+            const $overlay = $('#protac-loading-overlay');
+            if (!$overlay.length) return;
+            const immediate = options.immediate === true;
+            const reveal = function() {
+                protacLoadingVisibleSince = Date.now();
+                $overlay.addClass('is-visible').attr('aria-hidden', 'false');
+                setProtacResultsBusy(true);
+                startProtacLoadingMessages();
+            };
+
+            window.clearTimeout(protacLoadingHideTimer);
+            setProtacLoadingMessage(message, true);
+
+            if ($overlay.hasClass('is-visible')) {
+                $overlay.attr('aria-hidden', 'false');
+                setProtacResultsBusy(true);
+                return;
+            }
+
+            window.clearTimeout(protacLoadingDelayTimer);
+            if (immediate) {
+                reveal();
+                return;
+            }
+            protacLoadingDelayTimer = window.setTimeout(reveal, 120);
+        }
+
+        function hideProtacLoading(force = false) {
+            const $overlay = $('#protac-loading-overlay');
+            window.clearTimeout(protacLoadingDelayTimer);
+            if (!$overlay.length) return;
+
+            if (!$overlay.hasClass('is-visible')) {
+                $overlay.attr('aria-hidden', 'true');
+                setProtacResultsBusy(false);
+                stopProtacLoadingMessages();
+                return;
+            }
+
+            const elapsed = Date.now() - protacLoadingVisibleSince;
+            const waitMs = force ? 0 : Math.max(0, 280 - elapsed);
+            window.clearTimeout(protacLoadingHideTimer);
+            protacLoadingHideTimer = window.setTimeout(function() {
+                if (protacLoadingDepth > 0 && !force) return;
+                $overlay.removeClass('is-visible').attr('aria-hidden', 'true');
+                setProtacResultsBusy(false);
+                stopProtacLoadingMessages();
+            }, waitMs);
+        }
+
+        function withProtacLoading(requestOrFactory, message, options = {}) {
+            protacLoadingDepth += 1;
+            showProtacLoading(message, options);
+            let request;
+            try {
+                request = typeof requestOrFactory === 'function' ? requestOrFactory() : requestOrFactory;
+            } catch (error) {
+                protacLoadingDepth = Math.max(0, protacLoadingDepth - 1);
+                if (!protacLoadingDepth) hideProtacLoading(true);
+                throw error;
+            }
+            return $.when(request).always(function() {
+                protacLoadingDepth = Math.max(0, protacLoadingDepth - 1);
+                if (!protacLoadingDepth) hideProtacLoading();
+            });
+        }
+
+        function runProtacRefreshAndSearch(message) {
+            return withProtacLoading(function() {
+                return refreshDynamicFilterOptions({ skipLoader: true }).then(function() {
+                    return searchProtacability({ skipLoader: true });
+                });
+            }, message || 'Rendering results…', { immediate: true });
         }
 
         function getCurrentProtacParams() {
@@ -556,6 +686,8 @@
 
         function showEmptyState(message) {
             setTableHead(['Status']);
+            $('.protac-results-section .table-wrap').first().show();
+            $('#protac-target-browser').hide().empty();
             $('#protacability-table-body').html(`<tr><td>${escapeHtml(message)}</td></tr>`);
             updateMetricCards(protacState.view, {});
             $('#protac-page-summary, #protac-page-summary-bottom').text('No results to display.');
@@ -1136,22 +1268,30 @@
             const view = button.data('view');
             $('#protac-detail-content').html('<h2 class="page-title">Loading detail...</h2>');
             $('#protacability-detail-modal').show();
+            const fetchWithLoader = function(url, onSuccess, errorMessage) {
+                return withProtacLoading(function() {
+                    return $.getJSON(url, onSuccess).fail(function(xhr) {
+                        console.error('[protacability] detail load failed', { url, status: xhr.status, responseText: xhr.responseText });
+                        $('#protac-detail-content').html(`<h2 class="page-title">${escapeHtml(errorMessage)}</h2>`);
+                    });
+                }, 'Mapping degrader-readiness evidence…');
+            };
             if (view === 'targets') {
                 const params = new URLSearchParams({ virus_name: button.data('virus'), protein_type: button.data('protein'), collapse_labels: $('#toggle-collapse-labels').is(':checked') ? '1' : '0' });
-                $.getJSON(`/api/protacability/target_detail?${params.toString()}`, renderTargetDetail).fail(() => $('#protac-detail-content').html('<h2 class="page-title">Unable to load target detail.</h2>'));
+                fetchWithLoader(`/api/protacability/target_detail?${params.toString()}`, renderTargetDetail, 'Unable to load target detail.');
                 return;
             }
             if (view === 'protein') {
                 const params = new URLSearchParams({ virus_name: button.data('virus'), protein_type: button.data('protein'), collapse_labels: $('#toggle-collapse-labels').is(':checked') ? '1' : '0' });
-                $.getJSON(`/api/protacability/protein_detail?${params.toString()}`, renderProteinDetail).fail(() => $('#protac-detail-content').html('<h2 class="page-title">Unable to load protein summary detail.</h2>'));
+                fetchWithLoader(`/api/protacability/protein_detail?${params.toString()}`, renderProteinDetail, 'Unable to load protein summary detail.');
                 return;
             }
             if (view === 'summary') {
                 const params = new URLSearchParams({ virus_name: button.data('virus'), protein_type: button.data('protein'), collapse_labels: $('#toggle-collapse-labels').is(':checked') ? '1' : '0' });
-                $.getJSON(`/api/protacability/structure_detail/${encodeURIComponent(button.data('pdb'))}?${params.toString()}`, renderStructureDetail).fail(() => $('#protac-detail-content').html('<h2 class="page-title">Unable to load structure summary detail.</h2>'));
+                fetchWithLoader(`/api/protacability/structure_detail/${encodeURIComponent(button.data('pdb'))}?${params.toString()}`, renderStructureDetail, 'Unable to load structure summary detail.');
                 return;
             }
-            $.getJSON(`/api/protacability/detail/${encodeURIComponent(button.data('pdb'))}/${encodeURIComponent(button.data('chain'))}`, renderChainDetail).fail(() => $('#protac-detail-content').html('<h2 class="page-title">Unable to load chain detail.</h2>'));
+            fetchWithLoader(`/api/protacability/detail/${encodeURIComponent(button.data('pdb'))}/${encodeURIComponent(button.data('chain'))}`, renderChainDetail, 'Unable to load chain detail.');
         }
 
         function syncSortOptions() {
@@ -1210,28 +1350,35 @@
             syncSortOptions();
         }
 
-        function searchProtacability() {
+        function searchProtacability(options = {}) {
             if (!initialProtacabilityDataAvailable) {
                 showEmptyState('PROTACability data has not been imported yet. Run tools/import_protacability_data.py after generating the expansion outputs.');
-                return;
+                return $.Deferred().resolve().promise();
             }
             const params = getCurrentProtacParams();
-            $.getJSON(`/api/protacability/search?${params.toString()}`, function(data) {
-                if (!data.data_available) {
-                    showEmptyState(data.message);
-                    return;
-                }
-                protacState.view = data.view;
-                protacState.limit = Number(data.limit || protacState.limit);
-                protacState.offset = Number(data.offset || 0);
-                protacState.currentSort = data.sort || protacState.currentSort;
-                updateMetricCards(data.view, data.summary || {});
-                updateResultsNote(data.view);
-                renderRows(data.view, data.rows || []);
-                updatePagination(data.total_rows || 0, data.offset || 0, data.limit || protacState.limit, Boolean(data.has_more));
-            }).fail(function() {
-                showEmptyState('Unable to load PROTACability assessment data right now.');
-            });
+            const execute = function() {
+                return $.getJSON(`/api/protacability/search?${params.toString()}`, function(data) {
+                    if (!data.data_available) {
+                        showEmptyState(data.message);
+                        return;
+                    }
+                    protacState.view = data.view;
+                    protacState.limit = Number(data.limit || protacState.limit);
+                    protacState.offset = Number(data.offset || 0);
+                    protacState.currentSort = data.sort || protacState.currentSort;
+                    updateMetricCards(data.view, data.summary || {});
+                    updateResultsNote(data.view);
+                    renderRows(data.view, data.rows || []);
+                    updatePagination(data.total_rows || 0, data.offset || 0, data.limit || protacState.limit, Boolean(data.has_more));
+                }).fail(function(xhr) {
+                    console.error('[protacability] search failed', { params: params.toString(), status: xhr.status, responseText: xhr.responseText });
+                    showEmptyState('Unable to load PROTACability results from RANDY right now. Please try again or reduce your filters.');
+                });
+            };
+            if (options.skipLoader) {
+                return execute();
+            }
+            return withProtacLoading(execute, options.loadingMessage || 'Rendering results…');
         }
 
         function setFilterFeedback(message) {
@@ -1323,7 +1470,7 @@
             return `Removed unavailable selections after filter narrowing: ${messages.join(' | ')}`;
         }
 
-        function refreshDynamicFilterOptions() {
+        function refreshDynamicFilterOptions(options = {}) {
             if (!initialProtacabilityDataAvailable) {
                 return $.Deferred().resolve().promise();
             }
@@ -1337,32 +1484,40 @@
             params.delete('limit');
             params.delete('sort');
 
-            refreshingFilterOptions = true;
-            return $.getJSON(`/api/protacability/filter_options?${params.toString()}`, function(data) {
-                if (!data.data_available) {
-                    setFilterFeedback(data.message || 'Unable to refresh filter options.');
-                    return;
-                }
+            const execute = function() {
+                refreshingFilterOptions = true;
+                return $.getJSON(`/api/protacability/filter_options?${params.toString()}`, function(data) {
+                    if (!data.data_available) {
+                        setFilterFeedback(data.message || 'Unable to refresh filter options.');
+                        return;
+                    }
 
-                const removedByField = {
-                    viruses: updateDynamicSelectOptions($('#protac-virus-name'), data.virus_names || [], 'All viruses'),
-                    proteins: updateDynamicSelectOptions($('#protac-protein-type'), data.protein_types || [], 'All protein types'),
-                    tiers: updateDynamicSelectOptions($('#protac-tier'), data.tiers || [], 'All tiers'),
-                    readiness: updateDynamicSelectOptions($('#protac-readiness-tier'), data.readiness_tiers || [], 'All readiness tiers'),
-                    warhead: updateDynamicSelectOptions($('#protac-warhead-tier'), data.warhead_tiers || [], 'All warhead tiers'),
-                    evidence: updateDynamicSelectOptions($('#protac-evidence-level'), data.evidence_levels || [], 'All evidence levels'),
-                    smiles: updateDynamicSelectOptions($('#protac-smiles-source'), data.smiles_sources || [], 'All SMILES sources'),
-                    ligands: updateLigandOptions(data.ligands || []),
-                    contexts: updateLigandContextOptions(data.ligand_context_classes || []),
-                };
-                const feedback = formatRemovedFilterMessage(removedByField);
-                setFilterFeedback(feedback);
-                if (feedback) console.info('[protacability] dynamic filters narrowed selections', removedByField);
-            }).fail(function() {
-                setFilterFeedback('Unable to refresh filter options.');
-            }).always(function() {
-                refreshingFilterOptions = false;
-            });
+                    const removedByField = {
+                        viruses: updateDynamicSelectOptions($('#protac-virus-name'), data.virus_names || [], 'All viruses'),
+                        proteins: updateDynamicSelectOptions($('#protac-protein-type'), data.protein_types || [], 'All protein types'),
+                        tiers: updateDynamicSelectOptions($('#protac-tier'), data.tiers || [], 'All tiers'),
+                        readiness: updateDynamicSelectOptions($('#protac-readiness-tier'), data.readiness_tiers || [], 'All readiness tiers'),
+                        warhead: updateDynamicSelectOptions($('#protac-warhead-tier'), data.warhead_tiers || [], 'All warhead tiers'),
+                        evidence: updateDynamicSelectOptions($('#protac-evidence-level'), data.evidence_levels || [], 'All evidence levels'),
+                        smiles: updateDynamicSelectOptions($('#protac-smiles-source'), data.smiles_sources || [], 'All SMILES sources'),
+                        ligands: updateLigandOptions(data.ligands || []),
+                        contexts: updateLigandContextOptions(data.ligand_context_classes || []),
+                    };
+                    const feedback = formatRemovedFilterMessage(removedByField);
+                    setFilterFeedback(feedback);
+                    if (feedback) console.info('[protacability] dynamic filters narrowed selections', removedByField);
+                }).fail(function(xhr) {
+                    console.error('[protacability] filter option refresh failed', { status: xhr.status, responseText: xhr.responseText });
+                    setFilterFeedback('Unable to refresh filter options.');
+                }).always(function() {
+                    refreshingFilterOptions = false;
+                });
+            };
+
+            if (options.skipLoader) {
+                return execute();
+            }
+            return withProtacLoading(execute, options.loadingMessage || 'Parsing your search…');
         }
 
         function applyUrlFilters() {
@@ -1405,49 +1560,54 @@
             protacState.limit = Number($('#protac-page-size').val());
             syncSortOptions();
 
-            $.getJSON('/api/protacability/filter_options', function(data) {
-                if (!data.data_available) {
-                    showEmptyState(data.message);
-                    return;
-                }
-                updateDynamicSelectOptions($('#protac-virus-name'), data.virus_names || [], 'All viruses');
-                updateDynamicSelectOptions($('#protac-protein-type'), data.protein_types || [], 'All protein types');
-                updateDynamicSelectOptions($('#protac-tier'), data.tiers || [], 'All tiers');
-                updateDynamicSelectOptions($('#protac-readiness-tier'), data.readiness_tiers || [], 'All readiness tiers');
-                updateDynamicSelectOptions($('#protac-warhead-tier'), data.warhead_tiers || [], 'All warhead tiers');
-                updateDynamicSelectOptions($('#protac-evidence-level'), data.evidence_levels || [], 'All evidence levels');
-                updateDynamicSelectOptions($('#protac-smiles-source'), data.smiles_sources || [], 'All SMILES sources');
-                updateLigandOptions(data.ligands || []);
-                updateStaticSelectOptions($('#protac-ligand-presence'), 'Any ligand status');
-                updateLigandContextOptions(data.ligand_context_classes || []);
-                applyUrlFilters();
-                refreshDynamicFilterOptions().always(function() {
-                    searchProtacability();
+            withProtacLoading(function() {
+                return $.getJSON('/api/protacability/filter_options').done(function(data) {
+                    if (!data.data_available) {
+                        showEmptyState(data.message);
+                        return;
+                    }
+                    updateDynamicSelectOptions($('#protac-virus-name'), data.virus_names || [], 'All viruses');
+                    updateDynamicSelectOptions($('#protac-protein-type'), data.protein_types || [], 'All protein types');
+                    updateDynamicSelectOptions($('#protac-tier'), data.tiers || [], 'All tiers');
+                    updateDynamicSelectOptions($('#protac-readiness-tier'), data.readiness_tiers || [], 'All readiness tiers');
+                    updateDynamicSelectOptions($('#protac-warhead-tier'), data.warhead_tiers || [], 'All warhead tiers');
+                    updateDynamicSelectOptions($('#protac-evidence-level'), data.evidence_levels || [], 'All evidence levels');
+                    updateDynamicSelectOptions($('#protac-smiles-source'), data.smiles_sources || [], 'All SMILES sources');
+                    updateLigandOptions(data.ligands || []);
+                    updateStaticSelectOptions($('#protac-ligand-presence'), 'Any ligand status');
+                    updateLigandContextOptions(data.ligand_context_classes || []);
+                    applyUrlFilters();
+                }).then(function(data) {
+                    if (!data || !data.data_available) {
+                        return $.Deferred().resolve().promise();
+                    }
+                    return refreshDynamicFilterOptions({ skipLoader: true }).then(function() {
+                        return searchProtacability({ skipLoader: true });
+                    });
+                }).fail(function(xhr) {
+                    console.error('[protacability] initial bootstrap failed', { status: xhr.status, responseText: xhr.responseText });
+                    showEmptyState('Unable to load PROTACability filter metadata.');
                 });
-            }).fail(function() {
-                showEmptyState('Unable to load PROTACability filter metadata.');
-            });
+            }, 'Preparing target summaries…', { immediate: true });
 
             $('#protac-virus-name, #protac-protein-type, #protac-tier, #protac-readiness-tier, #protac-warhead-tier, #protac-evidence-level, #protac-smiles-source, #protac-ligand-filter, #protac-ligand-context-class, #protac-ligand-presence').on('change', function() {
                 if (refreshingFilterOptions) return;
                 protacState.offset = 0;
-                refreshDynamicFilterOptions();
+                refreshDynamicFilterOptions({ loadingMessage: 'Parsing your search…' });
             });
             $('#toggle-collapse-labels, #toggle-has-exposed-lysine, #toggle-has-ligand-proximal-exposed-lysine, #toggle-has-candidate-linker-atoms, #toggle-has-solvent-exposed-ligand-atoms, #toggle-has-mapped-atoms, #toggle-has-valid-rdkit-smiles, #toggle-has-exposed-target-lysines').on('change', function() {
                 if (refreshingFilterOptions) return;
                 protacState.offset = 0;
-                refreshDynamicFilterOptions();
+                refreshDynamicFilterOptions({ loadingMessage: 'Parsing your search…' });
             });
 
             $('.protac-view-button').on('click', function() {
                 selectView($(this).data('view'));
-                searchProtacability();
+                searchProtacability({ loadingMessage: 'Rendering results…' });
             });
             $('#apply-protac-filters').on('click', function() {
                 protacState.offset = 0;
-                refreshDynamicFilterOptions().always(function() {
-                    searchProtacability();
-                });
+                runProtacRefreshAndSearch('Parsing your search…');
             });
             $('#reset-protac-filters').on('click', function() {
                 $('#protacability-filter-form')[0].reset();
@@ -1468,20 +1628,20 @@
                 protacState.limit = 50;
                 selectView('targets');
                 protacState.offset = 0;
-                refreshDynamicFilterOptions().always(function() {
-                    searchProtacability();
-                });
+                runProtacRefreshAndSearch('Preparing target summaries…');
             });
-            $('#protac-sort').on('change', function() { protacState.currentSort = $(this).val(); protacState.offset = 0; searchProtacability(); });
-            $('#protac-page-size').on('change', function() { protacState.limit = Number($(this).val()); protacState.offset = 0; searchProtacability(); });
-            $('#protac-prev-page, #protac-prev-page-bottom').on('click', function() { protacState.offset = Math.max(0, protacState.offset - protacState.limit); searchProtacability(); });
-            $('#protac-next-page, #protac-next-page-bottom').on('click', function() { if (protacState.hasMore) { protacState.offset += protacState.limit; searchProtacability(); } });
+            $('#protac-sort').on('change', function() { protacState.currentSort = $(this).val(); protacState.offset = 0; searchProtacability({ loadingMessage: 'Rendering results…' }); });
+            $('#protac-page-size').on('change', function() { protacState.limit = Number($(this).val()); protacState.offset = 0; searchProtacability({ loadingMessage: 'Rendering results…' }); });
+            $('#protac-prev-page, #protac-prev-page-bottom').on('click', function() { protacState.offset = Math.max(0, protacState.offset - protacState.limit); searchProtacability({ loadingMessage: 'Preparing target summaries…' }); });
+            $('#protac-next-page, #protac-next-page-bottom').on('click', function() { if (protacState.hasMore) { protacState.offset += protacState.limit; searchProtacability({ loadingMessage: 'Preparing target summaries…' }); } });
             $('#export-protac-csv').on('click', function() {
+                showProtacLoading('Preparing target summaries…', { immediate: true });
                 const params = getCurrentProtacParams();
                 params.delete('offset');
                 const rawExport = ($('#protac-export-type').val() || '').trim();
                 if (rawExport) params.set('raw_export', rawExport);
                 window.location.href = `/api/protacability/export?${params.toString()}`;
+                window.setTimeout(function() { protacLoadingDepth = 0; hideProtacLoading(true); }, 1200);
             });
             $(document).on('click', '.protac-detail-button', function() { fetchDetail($(this)); });
             $(document).on('click', '.protac-target-action', function() {
@@ -1493,7 +1653,12 @@
                     $('#protac-detail-content').html('<h2 class="page-title">Loading detail...</h2>');
                     $('#protacability-detail-modal').show();
                     const params = new URLSearchParams({ virus_name: virus, protein_type: protein, collapse_labels: $('#toggle-collapse-labels').is(':checked') ? '1' : '0' });
-                    $.getJSON(`/api/protacability/target_detail?${params.toString()}`, renderTargetDetail).fail(() => $('#protac-detail-content').html('<h2 class="page-title">Unable to load target detail.</h2>'));
+                    withProtacLoading(function() {
+                        return $.getJSON(`/api/protacability/target_detail?${params.toString()}`, renderTargetDetail).fail(function(xhr) {
+                            console.error('[protacability] target action detail failed', { status: xhr.status, responseText: xhr.responseText });
+                            $('#protac-detail-content').html('<h2 class="page-title">Unable to load target detail.</h2>');
+                        });
+                    }, 'Mapping degrader-readiness evidence…');
                     return;
                 }
                 if (action === 'structures') {
@@ -1505,9 +1670,7 @@
                 setSelectValuesSilently($('#protac-virus-name'), [virus]);
                 setSelectValuesSilently($('#protac-protein-type'), [protein]);
                 protacState.offset = 0;
-                refreshDynamicFilterOptions().always(function() {
-                    searchProtacability();
-                });
+                runProtacRefreshAndSearch('Preparing target summaries…');
             });
             $(document).on('click', '.show-raw-chains-button', function() {
                 const button = $(this);
@@ -1517,9 +1680,7 @@
                 setSelectValuesSilently($('#protac-virus-name'), [button.data('virus')]);
                 setSelectValuesSilently($('#protac-protein-type'), [button.data('protein')]);
                 protacState.offset = 0;
-                refreshDynamicFilterOptions().always(function() {
-                    searchProtacability();
-                });
+                runProtacRefreshAndSearch('Scoring structural priorities…');
             });
             $('#close-protac-detail').on('click', function() { VLNGLViewer.disposeViewer('protac-ngl-viewer'); $('#protacability-detail-modal').hide(); });
             $('#protacability-detail-modal').on('click', function(event) { if (event.target.id === 'protacability-detail-modal') { VLNGLViewer.disposeViewer('protac-ngl-viewer'); $('#protacability-detail-modal').hide(); } });

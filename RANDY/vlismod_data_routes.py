@@ -1322,6 +1322,16 @@ def _protacability_enrichment_snapshot(row):
     return {field: row.get(field) for field in fields}
 
 
+def _row_has_mapped_exposed_warhead_evidence(row):
+    explicit_flag = row.get("has_mapped_exposed_warhead_evidence")
+    if explicit_flag not in (None, ""):
+        return _has_positive_value(explicit_flag)
+    return (
+        _has_positive_value(row.get("solvent_exposed_mapped_atom_count"))
+        and _has_positive_value(row.get("pdb_to_smiles_mapped_atom_count"))
+    )
+
+
 def _group_structure_rows(rows):
     chain_rows = _dedupe_display_chain_rows(rows)
     grouped = defaultdict(list)
@@ -1367,6 +1377,10 @@ def _group_structure_rows(rows):
             "grouped_notes": f"Grouped structure summary across {len(group_rows)} chain-level rows.",
             "raw_chain_rows_count": len(group_rows),
             "distinct_ligand_count": len(ligands),
+            "mapped_exposed_chain_count": sum(1 for row in group_rows if _row_has_mapped_exposed_warhead_evidence(row)),
+            "has_mapped_exposed_warhead_evidence": int(
+                any(_row_has_mapped_exposed_warhead_evidence(row) for row in group_rows)
+            ),
             **context,
             **_protacability_enrichment_snapshot(representative),
         })
@@ -1418,6 +1432,12 @@ def _group_protein_rows(rows):
             "candidate_ligand_count": len(ligands),
             "best_annotation": representative.get("best_annotation") or "—",
             "best_tier": representative.get("best_tier"),
+            "mapped_exposed_structure_count": sum(
+                1 for row in group_rows if _row_has_mapped_exposed_warhead_evidence(row)
+            ),
+            "has_mapped_exposed_warhead_evidence": int(
+                any(_row_has_mapped_exposed_warhead_evidence(row) for row in group_rows)
+            ),
             **context,
             "structure_group_count": len(group_rows),
             **_protacability_enrichment_snapshot(representative),
@@ -1498,6 +1518,12 @@ def _group_target_rows(rows):
             "ligand_context_class": representative.get("ligand_context_class"),
             "ligand_context_label": representative.get("ligand_context_label"),
             "ligand_priority": _numeric_value(representative.get("ligand_priority")),
+            "mapped_exposed_structure_count": sum(
+                1 for row in target_structures if _row_has_mapped_exposed_warhead_evidence(row)
+            ),
+            "has_mapped_exposed_warhead_evidence": int(
+                any(_row_has_mapped_exposed_warhead_evidence(row) for row in target_structures)
+            ),
             **_protacability_enrichment_snapshot(representative),
         }
         interpretation_label, interpretation_note = _target_interpretation(row)
@@ -1580,8 +1606,7 @@ def _build_summary_cards(view, rows):
         return {
             "targets_assessed": len(rows),
             "candidate_warheads_with_exposed_mapped_atoms": sum(
-                1 for row in rows
-                if _has_positive_value(row.get("solvent_exposed_mapped_atom_count")) and _has_positive_value(row.get("pdb_to_smiles_mapped_atom_count"))
+                1 for row in rows if _row_has_mapped_exposed_warhead_evidence(row)
             ),
             "high_warhead_linkability_ligands": sum(1 for row in rows if _numeric_value(row.get("warhead_linkability_score")) >= 70),
             "high_degrader_readiness_targets": sum(1 for row in rows if _numeric_value(row.get("degrader_design_readiness_score")) >= 70),
@@ -1593,8 +1618,7 @@ def _build_summary_cards(view, rows):
         return {
             "targets_assessed": len(rows),
             "candidate_warheads_with_exposed_mapped_atoms": sum(
-                1 for row in rows
-                if _has_positive_value(row.get("solvent_exposed_mapped_atom_count")) and _has_positive_value(row.get("pdb_to_smiles_mapped_atom_count"))
+                1 for row in rows if _row_has_mapped_exposed_warhead_evidence(row)
             ),
             "high_warhead_linkability_ligands": sum(1 for row in rows if _numeric_value(row.get("warhead_linkability_score")) >= 70),
             "high_degrader_readiness_targets": sum(1 for row in rows if _numeric_value(row.get("degrader_design_readiness_score")) >= 70),
@@ -1606,8 +1630,7 @@ def _build_summary_cards(view, rows):
         return {
             "targets_assessed": len(rows),
             "candidate_warheads_with_exposed_mapped_atoms": sum(
-                1 for row in rows
-                if _has_positive_value(row.get("solvent_exposed_mapped_atom_count")) and _has_positive_value(row.get("pdb_to_smiles_mapped_atom_count"))
+                1 for row in rows if _row_has_mapped_exposed_warhead_evidence(row)
             ),
             "high_warhead_linkability_ligands": sum(1 for row in rows if _numeric_value(row.get("warhead_linkability_score")) >= 70),
             "high_degrader_readiness_targets": sum(1 for row in rows if _numeric_value(row.get("degrader_design_readiness_score")) >= 70),
@@ -1618,8 +1641,7 @@ def _build_summary_cards(view, rows):
     return {
         "targets_assessed": len(rows),
         "candidate_warheads_with_exposed_mapped_atoms": sum(
-            1 for row in rows
-            if _has_positive_value(row.get("solvent_exposed_mapped_atom_count")) and _has_positive_value(row.get("pdb_to_smiles_mapped_atom_count"))
+            1 for row in rows if _row_has_mapped_exposed_warhead_evidence(row)
         ),
         "high_warhead_linkability_ligands": sum(1 for row in rows if _numeric_value(row.get("warhead_linkability_score")) >= 70),
         "high_degrader_readiness_targets": sum(1 for row in rows if _numeric_value(row.get("degrader_design_readiness_score")) >= 70),
