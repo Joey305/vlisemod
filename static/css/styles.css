@@ -6225,3 +6225,302 @@ body.image-lightbox-open {
         transform: none;
     }
 }
+
+
+/* ==========================================================
+   Ligand comparison stacked results layout
+   Makes ligand readable without compressing Plotly charts
+   ========================================================== */
+
+.comparison-results-stacked {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: clamp(1.25rem, 2vw, 2rem);
+    max-width: min(1240px, calc(100vw - 48px));
+    margin-inline: auto;
+    padding: clamp(1.25rem, 2vw, 2rem);
+    overflow: visible;
+}
+
+.results-summary-bar,
+.ligand-stage-panel,
+.chart-stage-panel {
+    width: 100%;
+    min-width: 0;
+    border: 1px solid rgba(8, 58, 37, 0.12);
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: 0 18px 45px rgba(7, 43, 29, 0.08);
+}
+
+.results-summary-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.25rem;
+    padding: clamp(1rem, 2vw, 1.5rem);
+}
+
+.results-kicker {
+    display: block;
+    margin-bottom: 0.35rem;
+    color: #ff7a2f;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.results-summary-bar h2 {
+    margin: 0;
+    color: #073b27;
+    font-size: clamp(1.35rem, 2vw, 2rem);
+}
+
+.results-summary-bar p {
+    margin: 0.35rem 0 0;
+    color: #526a5f;
+}
+
+.results-summary-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.selected-ligand-pill,
+.active-chart-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 38px;
+    padding: 0.45rem 0.85rem;
+    border-radius: 999px;
+    background: rgba(8, 58, 37, 0.08);
+    color: #073b27;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.results-summary-actions button,
+.chart-carousel-controls button {
+    border: none;
+    border-radius: 14px;
+    padding: 0.75rem 1.15rem;
+    background: linear-gradient(135deg, #ff7a2f, #ff965c);
+    color: #ffffff;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 10px 24px rgba(255, 122, 47, 0.22);
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.results-summary-actions button:hover,
+.chart-carousel-controls button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 14px 28px rgba(255, 122, 47, 0.28);
+}
+
+.ligand-stage-panel {
+    padding: clamp(1rem, 2vw, 1.5rem);
+}
+
+.ligand-stage-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.ligand-stage-header h3,
+.chart-panel-heading h3 {
+    margin: 0;
+    color: #073b27;
+    font-size: clamp(1.1rem, 1.6vw, 1.45rem);
+}
+
+.ligand-stage-header p,
+.chart-panel-heading p {
+    margin: 0.35rem 0 0;
+    color: #526a5f;
+}
+
+.atom-hover-copy {
+    display: none;
+    max-width: 320px;
+    padding: 0.65rem 0.85rem;
+    border-radius: 14px;
+    background: rgba(255, 122, 47, 0.1);
+    color: #8a3d0d;
+    font-size: 0.9rem;
+    font-weight: 700;
+}
+
+.atom-hover-copy.is-visible {
+    display: block;
+}
+
+.ligand-structure-viewer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: clamp(420px, 48vh, 620px);
+    padding: clamp(1rem, 2vw, 2rem);
+    border-radius: 22px;
+    background:
+        radial-gradient(circle at 50% 42%, rgba(255, 255, 255, 1), rgba(244, 250, 246, 0.88) 58%, rgba(237, 247, 241, 0.8));
+    overflow: hidden;
+}
+
+/* Force RDKit SVG/highlighted SVG to use the available space */
+.ligand-structure-viewer svg,
+.ligand-structure-viewer img,
+#molecule_container svg,
+#molecule_container img {
+    width: min(900px, 96%) !important;
+    height: auto !important;
+    max-height: 580px !important;
+    display: block;
+}
+
+.chart-stage-panel {
+    padding: clamp(1rem, 2vw, 1.5rem);
+}
+
+.chart-panel-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.chart-frame {
+    width: 100%;
+    min-width: 0;
+    min-height: 660px;
+    border-radius: 22px;
+    background: #ffffff;
+    overflow: hidden;
+}
+
+.carousel-graph {
+    display: none;
+    width: 100% !important;
+    min-height: 660px;
+}
+
+.carousel-graph.active {
+    display: block;
+}
+
+.chart-carousel-controls {
+    display: flex;
+    justify-content: center;
+    gap: 0.85rem;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+}
+
+/* Hide old left-column styling if older CSS still targets it */
+#left-column {
+    width: 100%;
+    min-width: 0;
+}
+
+/* Dark mode compatibility */
+[data-theme="dark"] .results-summary-bar,
+[data-theme="dark"] .ligand-stage-panel,
+[data-theme="dark"] .chart-stage-panel,
+body.dark-mode .results-summary-bar,
+body.dark-mode .ligand-stage-panel,
+body.dark-mode .chart-stage-panel {
+    background: rgba(14, 24, 20, 0.94);
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.28);
+}
+
+[data-theme="dark"] .results-summary-bar h2,
+[data-theme="dark"] .ligand-stage-header h3,
+[data-theme="dark"] .chart-panel-heading h3,
+[data-theme="dark"] .selected-ligand-pill,
+[data-theme="dark"] .active-chart-pill,
+body.dark-mode .results-summary-bar h2,
+body.dark-mode .ligand-stage-header h3,
+body.dark-mode .chart-panel-heading h3,
+body.dark-mode .selected-ligand-pill,
+body.dark-mode .active-chart-pill {
+    color: #ecfff5;
+}
+
+[data-theme="dark"] .results-summary-bar p,
+[data-theme="dark"] .ligand-stage-header p,
+[data-theme="dark"] .chart-panel-heading p,
+body.dark-mode .results-summary-bar p,
+body.dark-mode .ligand-stage-header p,
+body.dark-mode .chart-panel-heading p {
+    color: #b8d0c4;
+}
+
+[data-theme="dark"] .ligand-structure-viewer,
+body.dark-mode .ligand-structure-viewer {
+    background:
+        radial-gradient(circle at 50% 42%, rgba(255, 255, 255, 0.96), rgba(244, 250, 246, 0.88) 58%, rgba(223, 238, 230, 0.8));
+}
+
+@media (max-width: 760px) {
+    .comparison-results-stacked {
+        max-width: calc(100vw - 24px);
+        padding: 1rem;
+    }
+
+    .results-summary-bar,
+    .ligand-stage-header,
+    .chart-panel-heading {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .results-summary-actions {
+        justify-content: flex-start;
+    }
+
+    .ligand-structure-viewer {
+        min-height: 360px;
+        padding: 1rem;
+    }
+
+    .chart-frame,
+    .carousel-graph {
+        min-height: 560px;
+    }
+}
+
+/* Force comparison results to stay hidden until JS reveals them */
+#results-container.hidden,
+#results-container.comparison-results-stacked.hidden {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+/* Nice reveal animation after charts are generated */
+#results-container.is-revealed {
+    animation: revealComparisonResults 0.45s ease both;
+}
+
+@keyframes revealComparisonResults {
+    from {
+        opacity: 0;
+        transform: translateY(18px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

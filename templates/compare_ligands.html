@@ -56,27 +56,55 @@
     </div>
     
 
-    <!-- Results container to hold both molecule and carousel -->
-    <section id="results-container" class="hidden page-card page-section">
-        <!-- Left Column -->
-        <div id="left-column">
-            <div id="molecule_container"></div>
-            <div class="carousel-controls">
-                <button id="prevChart">Previous</button>
-                <button id="nextChart">Next</button>
+    <!-- Results container to hold enlarged ligand preview above chart carousel -->
+    <section id="results-container" class="hidden page-card page-section comparison-results-stacked">
+
+        <div class="results-summary-bar">
+            <div>
+                <span class="results-kicker">Ligand comparison results</span>
+                <h2 id="ligand-stage-title">Selected ligand structure</h2>
+                <p id="results-selected-count">Hover atom-level bars to highlight mapped ligand atoms.</p>
+            </div>
+
+            <div class="results-summary-actions">
+                <span id="selected-ligand-pill" class="selected-ligand-pill">Ligand</span>
+                <button id="prevChart" type="button">Previous</button>
+                <button id="nextChart" type="button">Next</button>
             </div>
         </div>
 
-        <!-- Right Column -->
-        <div class="carousel-container">
-            <div class="chart-panel-heading">
-                <h3 id="active-chart-title">Comparison chart</h3>
-                <p id="active-chart-meta">Use Previous/Next to switch chart views.</p>
+        <div class="ligand-stage-panel">
+            <div class="ligand-stage-header">
+                <div>
+                    <h3>Ligand atom map</h3>
+                    <p>
+                        The structure below updates when atom-level interaction bars are hovered.
+                    </p>
+                </div>
+                <p id="atom-hover-copy" class="atom-hover-copy">
+                    Hover a SMILES atom index bar to highlight the corresponding atom.
+                </p>
             </div>
-            <div id="donutChart" class="carousel-graph"></div>
-            <div id="scatterPlot" class="carousel-graph"></div>
-            <div id="barChart" class="carousel-graph"></div>
-            <div id="atomBarChart" class="carousel-graph"></div>
+
+            <div id="molecule_container" class="ligand-structure-viewer"></div>
+        </div>
+
+        <div class="carousel-container chart-stage-panel">
+            <div class="chart-panel-heading">
+                <div>
+                    <h3 id="active-chart-title">Comparison chart</h3>
+                    <p id="active-chart-meta">Use Previous/Next to switch chart views.</p>
+                </div>
+                <span id="active-chart-pill" class="active-chart-pill">1 / 4</span>
+            </div>
+
+            <div class="chart-frame">
+                <div id="donutChart" class="carousel-graph"></div>
+                <div id="scatterPlot" class="carousel-graph"></div>
+                <div id="barChart" class="carousel-graph"></div>
+                <div id="atomBarChart" class="carousel-graph"></div>
+            </div>
+
             <div class="chart-carousel-controls">
                 <button id="prevChartBottom" type="button">Previous chart</button>
                 <button id="nextChartBottom" type="button">Next chart</button>
@@ -417,9 +445,17 @@
 
                     currentChartIndex = 0;
                     displayCarousel(0);
+
                     $('.carousel-controls').addClass('visible');
-                    $('#results-container').removeClass('hidden');
-                    $('html, body').animate({ scrollTop: $('#results-container').offset().top }, 1000);
+
+                    $('#results-container')
+                        .removeClass('hidden')
+                        .addClass('is-revealed');
+
+                    $('html, body').animate(
+                        { scrollTop: $('#results-container').offset().top - 24 },
+                        800
+                    );
                     requestAnimationFrame(() => {
                         resizeActivePlot();
                         setTimeout(resizeActivePlot, 200);
@@ -432,8 +468,12 @@
             function hideCarousel() {
                 $('.carousel-graph').removeClass('active');
                 $('.carousel-controls').removeClass('visible');
-                $('#results-container').addClass('hidden');
-                $('#results-container').removeClass('many-selected');
+
+                $('#results-container')
+                    .addClass('hidden')
+                    .removeClass('many-selected is-revealed');
+
+                $('#atom-hover-copy').removeClass('is-visible');
             }
             // Generate carousel navigation
             let currentChartIndex = 0;
