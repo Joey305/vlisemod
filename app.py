@@ -160,7 +160,24 @@ def randy_available():
     return bool(_randy_base_url() and _randy_api_token())
 
 
-def randy_get(path, params=None):
+def _enforce_randy_json_size(response, *, max_bytes):
+    if max_bytes is None:
+        return
+    raw_length = response.headers.get("Content-Length", "").strip()
+    if not raw_length:
+        return
+    try:
+        content_length = int(raw_length)
+    except ValueError:
+        return
+    if content_length > max_bytes:
+        raise RandyBackendError(
+            f"RANDY API payload too large for UI route ({content_length} bytes). Use a paginated or targeted endpoint instead.",
+            status_code=502,
+        )
+
+
+def randy_get(path, params=None, *, max_bytes=10 * 1024 * 1024):
     if not randy_available():
         raise RandyBackendError("RANDY API is not configured.", status_code=500)
 
@@ -176,6 +193,8 @@ def randy_get(path, params=None):
         )
     except requests.RequestException as exc:
         raise RandyBackendError(f"RANDY API request failed: {exc}", status_code=502) from exc
+
+    _enforce_randy_json_size(response, max_bytes=max_bytes)
 
     try:
         payload = response.json()
@@ -195,7 +214,7 @@ def randy_get(path, params=None):
     return payload
 
 
-def randy_post(path, json=None):
+def randy_post(path, json=None, *, max_bytes=10 * 1024 * 1024):
     if not randy_available():
         raise RandyBackendError("RANDY API is not configured.", status_code=500)
 
@@ -211,6 +230,8 @@ def randy_post(path, json=None):
         )
     except requests.RequestException as exc:
         raise RandyBackendError(f"RANDY API request failed: {exc}", status_code=502) from exc
+
+    _enforce_randy_json_size(response, max_bytes=max_bytes)
 
     try:
         payload = response.json()
@@ -3442,8 +3463,13 @@ def _load_protacability_enrichment_tables(conn):
 def _prepare_protacability_result_set(conn, args, export_all=False):
     view = _protacability_view_mode(args.get("view"))
     collapse_labels = _protacability_collapse_labels(args.get("collapse_labels"))
-    limit = min(max(args.get("limit", type=int) or 50, 1), 100)
-    offset = max(args.get("offset", type=int) or 0, 0)
+    requested_limit = args.get("page_size", type=int) or args.get("limit", type=int) or 50
+    limit = min(max(requested_limit, 1), 100)
+    page = args.get("page", type=int)
+    if page and page > 0 and args.get("offset", type=int) is None:
+        offset = (page - 1) * limit
+    else:
+        offset = max(args.get("offset", type=int) or 0, 0)
     filters = _build_protacability_filters(args)
 
     readiness_rows, warhead_rows = _load_protacability_enrichment_tables(conn)
@@ -3541,8 +3567,13 @@ def _build_protacability_filter_options_payload_from_rows(assessment_rows, readi
 def _prepare_protacability_result_set_from_rows(assessment_rows, readiness_rows, warhead_rows, args, export_all=False):
     view = _protacability_view_mode(args.get("view"))
     collapse_labels = _protacability_collapse_labels(args.get("collapse_labels"))
-    limit = min(max(args.get("limit", type=int) or 50, 1), 100)
-    offset = max(args.get("offset", type=int) or 0, 0)
+    requested_limit = args.get("page_size", type=int) or args.get("limit", type=int) or 50
+    limit = min(max(requested_limit, 1), 100)
+    page = args.get("page", type=int)
+    if page and page > 0 and args.get("offset", type=int) is None:
+        offset = (page - 1) * limit
+    else:
+        offset = max(args.get("offset", type=int) or 0, 0)
     filters = _build_protacability_filters(args)
 
     rows = _decorate_protacability_rows(
@@ -3675,6 +3706,15 @@ def _load_protacability_source_payload(*, pdb_code=None, virus_name=None, protei
         include_lysine=include_lysine,
         include_inventory=include_inventory,
     )
+
+
+def _remote_protacability_get(path, *, params=None, max_bytes=10 * 1024 * 1024):
+    mode = _normalized_backend_mode()
+    if mode == "randy":
+        return randy_get(path, params=params, max_bytes=max_bytes)
+    if mode == "auto" and randy_available():
+        return randy_get(path, params=params, max_bytes=max_bytes)
+    raise RandyBackendError("RANDY API is not configured.", status_code=500)
 
 
 def _pick_representative_ligand_record(ligand_inventory, preferred_ligands=None, allow_glycan=False, preferred_chain=None):
@@ -5006,6 +5046,17 @@ def protacability_page():
 
 @app.route('/api/protacability/filters')
 def protacability_filters():
+    mode = _normalized_backend_mode()
+    if mode == "randy":
+        try:
+            return jsonify(_remote_protacability_get("protacability/filter-options", params=request.args, max_bytes=2 * 1024 * 1024))
+        except RandyBackendError as exc:
+            return jsonify({"data_available": False, "message": str(exc)}), exc.status_code
+    if mode == "auto" and randy_available():
+        try:
+            return jsonify(_remote_protacability_get("protacability/filter-options", params=request.args, max_bytes=2 * 1024 * 1024))
+        except RandyBackendError:
+            logging.warning("Falling back to local PROTACability filters payload")
     try:
         payload = _load_protacability_source_payload()
     except RandyBackendError as exc:
@@ -5037,6 +5088,17 @@ def protacability_filters():
 
 @app.route('/api/protacability/filter_options')
 def protacability_filter_options():
+    mode = _normalized_backend_mode()
+    if mode == "randy":
+        try:
+            return jsonify(_remote_protacability_get("protacability/filter-options", params=request.args, max_bytes=2 * 1024 * 1024))
+        except RandyBackendError as exc:
+            return jsonify({"data_available": False, "message": str(exc)}), exc.status_code
+    if mode == "auto" and randy_available():
+        try:
+            return jsonify(_remote_protacability_get("protacability/filter-options", params=request.args, max_bytes=2 * 1024 * 1024))
+        except RandyBackendError:
+            logging.warning("Falling back to local PROTACability filter_options payload")
     try:
         payload = _load_protacability_source_payload()
     except RandyBackendError as exc:
@@ -5068,6 +5130,17 @@ def protacability_filter_options():
 
 @app.route('/api/protacability/search')
 def protacability_search():
+    mode = _normalized_backend_mode()
+    if mode == "randy":
+        try:
+            return jsonify(_remote_protacability_get("protacability/search", params=request.args))
+        except RandyBackendError as exc:
+            return jsonify({"data_available": False, "message": str(exc), "rows": [], "summary": {}}), exc.status_code
+    if mode == "auto" and randy_available():
+        try:
+            return jsonify(_remote_protacability_get("protacability/search", params=request.args))
+        except RandyBackendError:
+            logging.warning("Falling back to local PROTACability search payload")
     try:
         source_payload = _load_protacability_source_payload()
     except RandyBackendError as exc:
@@ -5103,6 +5176,17 @@ def protacability_search():
 
 @app.route('/api/protacability/detail/<pdb_code>/<chain_id>')
 def protacability_detail(pdb_code, chain_id):
+    mode = _normalized_backend_mode()
+    if mode == "randy":
+        try:
+            return jsonify(_remote_protacability_get(f"protacability/detail/{pdb_code}/{chain_id}", max_bytes=2 * 1024 * 1024))
+        except RandyBackendError as exc:
+            return jsonify({"data_available": False, "message": str(exc)}), exc.status_code
+    if mode == "auto" and randy_available():
+        try:
+            return jsonify(_remote_protacability_get(f"protacability/detail/{pdb_code}/{chain_id}", max_bytes=2 * 1024 * 1024))
+        except RandyBackendError:
+            logging.warning("Falling back to local PROTACability detail payload for %s/%s", pdb_code, chain_id)
     try:
         source_payload = _load_protacability_source_payload(pdb_code=pdb_code, include_lysine=True, include_inventory=True)
     except RandyBackendError as exc:
@@ -5185,6 +5269,17 @@ def protacability_detail(pdb_code, chain_id):
 
 @app.route('/api/protacability/structure_detail/<pdb_code>')
 def protacability_structure_detail(pdb_code):
+    mode = _normalized_backend_mode()
+    if mode == "randy":
+        try:
+            return jsonify(_remote_protacability_get(f"protacability/structure-detail/{pdb_code}", params=request.args, max_bytes=2 * 1024 * 1024))
+        except RandyBackendError as exc:
+            return jsonify({"data_available": False, "message": str(exc)}), exc.status_code
+    if mode == "auto" and randy_available():
+        try:
+            return jsonify(_remote_protacability_get(f"protacability/structure-detail/{pdb_code}", params=request.args, max_bytes=2 * 1024 * 1024))
+        except RandyBackendError:
+            logging.warning("Falling back to local PROTACability structure detail payload for %s", pdb_code)
     try:
         source_payload = _load_protacability_source_payload(pdb_code=pdb_code, include_lysine=True, include_inventory=True)
     except RandyBackendError as exc:
@@ -5276,6 +5371,17 @@ def protacability_structure_detail(pdb_code):
 def protacability_protein_detail():
     virus_name = (request.args.get("virus_name") or "").strip()
     protein_type = (request.args.get("protein_type") or "").strip()
+    mode = _normalized_backend_mode()
+    if mode == "randy":
+        try:
+            return jsonify(_remote_protacability_get("protacability/protein-detail", params=request.args, max_bytes=2 * 1024 * 1024))
+        except RandyBackendError as exc:
+            return jsonify({"data_available": False, "message": str(exc)}), exc.status_code
+    if mode == "auto" and randy_available():
+        try:
+            return jsonify(_remote_protacability_get("protacability/protein-detail", params=request.args, max_bytes=2 * 1024 * 1024))
+        except RandyBackendError:
+            logging.warning("Falling back to local PROTACability protein detail payload for %s / %s", virus_name, protein_type)
     try:
         source_payload = _load_protacability_source_payload(virus_name=virus_name, protein_type=protein_type)
     except RandyBackendError as exc:
@@ -5329,6 +5435,18 @@ def protacability_target_detail():
 
     if not virus_name or not protein_type:
         return jsonify({"error": "virus_name and protein_type are required"}), 400
+
+    mode = _normalized_backend_mode()
+    if mode == "randy":
+        try:
+            return jsonify(_remote_protacability_get("protacability/target-detail", params=request.args, max_bytes=2 * 1024 * 1024))
+        except RandyBackendError as exc:
+            return jsonify({"data_available": False, "message": str(exc)}), exc.status_code
+    if mode == "auto" and randy_available():
+        try:
+            return jsonify(_remote_protacability_get("protacability/target-detail", params=request.args, max_bytes=2 * 1024 * 1024))
+        except RandyBackendError:
+            logging.warning("Falling back to local PROTACability target detail payload for %s / %s", virus_name, protein_type)
 
     try:
         source_payload = _load_protacability_source_payload(virus_name=virus_name, protein_type=protein_type)
@@ -5451,30 +5569,19 @@ def protacability_target_detail():
 
 @app.route('/api/protacability/export')
 def protacability_export():
-    try:
-        source_payload = _load_protacability_source_payload()
-    except RandyBackendError as exc:
-        return jsonify({"success": False, "message": str(exc)}), exc.status_code
-
-    if not source_payload.get("data_available"):
-        return jsonify({
-            "success": False,
-            "message": "PROTACability data has not been imported yet. Run tools/import_protacability_data.py after generating the expansion outputs."
-        }), 404
-
     raw_export = (request.args.get("raw_export") or "").strip()
     if raw_export:
         mode = _normalized_backend_mode()
         if mode == "randy":
             try:
-                raw_payload = randy_get("protacability/raw-table", params={"raw_export": raw_export})
+                raw_payload = randy_get("protacability/raw-table", params={"raw_export": raw_export}, max_bytes=None)
             except RandyBackendError as exc:
                 return jsonify({"success": False, "message": str(exc)}), exc.status_code
             table_name = raw_payload.get("table_name")
             df = pd.DataFrame(raw_payload.get("rows", []))
         elif mode == "auto" and randy_available():
             try:
-                raw_payload = randy_get("protacability/raw-table", params={"raw_export": raw_export})
+                raw_payload = randy_get("protacability/raw-table", params={"raw_export": raw_export}, max_bytes=None)
                 table_name = raw_payload.get("table_name")
                 df = pd.DataFrame(raw_payload.get("rows", []))
             except RandyBackendError:
@@ -5508,13 +5615,41 @@ def protacability_export():
         download_name = f"{table_name}.csv"
         return send_file(byte_buffer, mimetype="text/csv", as_attachment=True, download_name=download_name)
 
-    payload = _prepare_protacability_result_set_from_rows(
-        source_payload.get("assessment_rows", []),
-        source_payload.get("readiness_rows", []),
-        source_payload.get("warhead_rows", []),
-        request.args,
-        export_all=True,
-    )
+    mode = _normalized_backend_mode()
+    if mode == "randy":
+        try:
+            payload = _remote_protacability_get("protacability/export-filtered", params=request.args, max_bytes=None)
+        except RandyBackendError as exc:
+            return jsonify({"success": False, "message": str(exc)}), exc.status_code
+    elif mode == "auto" and randy_available():
+        try:
+            payload = _remote_protacability_get("protacability/export-filtered", params=request.args, max_bytes=None)
+        except RandyBackendError:
+            logging.warning("Falling back to local PROTACability filtered export payload")
+            payload = None
+    else:
+        payload = None
+
+    if payload is None:
+        try:
+            source_payload = _load_protacability_source_payload()
+        except RandyBackendError as exc:
+            return jsonify({"success": False, "message": str(exc)}), exc.status_code
+
+        if not source_payload.get("data_available"):
+            return jsonify({
+                "success": False,
+                "message": "PROTACability data has not been imported yet. Run tools/import_protacability_data.py after generating the expansion outputs."
+            }), 404
+
+        payload = _prepare_protacability_result_set_from_rows(
+            source_payload.get("assessment_rows", []),
+            source_payload.get("readiness_rows", []),
+            source_payload.get("warhead_rows", []),
+            request.args,
+            export_all=True,
+        )
+
     df = pd.DataFrame(payload["rows"])
 
     csv_buffer = io.StringIO()

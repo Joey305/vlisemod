@@ -107,6 +107,8 @@ V-LiSEMOD service:
 - set `RANDY_API_TOKEN`
 - set `RANDY_API_TIMEOUT_SECONDS=45` or higher if large comparison or PROTACability payloads need more than the default client timeout
 - optionally keep `RANDY_API_BASE_URL` only for local/dev compatibility
+- For PROTACability on Heroku, normal UI calls must use the compact RANDY endpoints (`/protacability/filter-options`, `/protacability/search`, and targeted detail routes). Do not point filter loading or initial result rendering at `/protacability/source`.
+- Treat `/protacability/source` as a debug or bounded export helper, not as a page-load API. Pulling the full source payload through Heroku can trigger H12 timeouts and R14/R15 memory failures.
 - keep `viral_data.db` available only if you want local fallback when using `auto`
 
 Route groups now migrated for strict `randy` mode:

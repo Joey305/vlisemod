@@ -141,6 +141,8 @@ Remote data note:
 - V-LiSEMOD should be configured with `VLISMOD_BACKUP_URL`, `RANDY_API_TOKEN`, and `VLISMOD_DATA_BACKEND`.
 - `RANDY_API_TIMEOUT_SECONDS=45` is a safer production default for heavier Compare Ligands and PROTACability payloads.
 - Strict `VLISMOD_DATA_BACKEND=randy` now covers homepage lookups, Compare Ligands data routes, ligand image generation, PyMOL session data, Protein Query routes, and PROTACability API routes without requiring a Heroku-local `viral_data.db`.
+- PROTACability UI traffic should use the compact RANDY endpoints (`/protacability/filter-options`, `/protacability/search`, and the targeted detail routes) instead of the bulk `/protacability/source` payload.
+- The bulk `/protacability/source` route is now for debugging or controlled export workflows, not for page-load filter metadata or normal paginated search.
 - `RANDY_API_BASE_URL` is still supported for local/dev compatibility and will default to `/api/vlismod` if you provide only a host URL.
 - If no RANDY configuration is provided, V-LiSEMOD continues to use local `viral_data.db` behavior.
 

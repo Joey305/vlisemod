@@ -82,7 +82,8 @@ def main() -> int:
         ("pdb-residues-by-ligand", f"{backup_url}/pdb-residues/by-ligand?ligand_code={DEFAULT_LIGAND}", 200),
         ("virus-names", f"{backup_url}/virus-proteins/virus-names", 200),
         ("protein-types", f"{backup_url}/virus-proteins/protein-types", 200),
-        ("protacability-source", f"{backup_url}/protacability/source", 200),
+        ("protacability-filter-options", f"{backup_url}/protacability/filter-options", 200),
+        ("protacability-search", f"{backup_url}/protacability/search?page=1&page_size=25", 200),
     ]
     for name, url, expected in direct_gets:
         checks.append(check_response(name, call_json(session, "GET", url, token=token), expected))
@@ -155,6 +156,7 @@ def main() -> int:
             ("app-get-ligands", f"{app_base}/get_ligands/{DEFAULT_PDB}", 200),
             ("app-check-functional-groups", f"{app_base}/check_functional_groups/{DEFAULT_PDB}", 200),
             ("app-protacability-filters", f"{app_base}/api/protacability/filter_options", 200),
+            ("app-protacability-search", f"{app_base}/api/protacability/search?page=1&page_size=25", 200),
         ]
         for name, url, expected in app_gets:
             checks.append(check_response(name, call_json(session, "GET", url), expected))
