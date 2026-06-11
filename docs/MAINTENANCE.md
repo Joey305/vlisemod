@@ -7,6 +7,7 @@ During normal use or enrichment workflows, the following generated folders may a
 - `output_csvs/`
 - `pml_sessions/`
 - `temp/`
+- `tmp/`
 - `users_info/`
 - `static/charts/`
 - `static/coordinate_cache/`
@@ -14,51 +15,43 @@ During normal use or enrichment workflows, the following generated folders may a
 - `static/ligand_images/`
 - `PDB_FILES/`
 
-Treat these as runtime or pipeline artifacts unless a deliberately curated sample is being prepared.
+Treat these as runtime or pipeline artifacts unless a deliberately curated public sample is being prepared.
 
-## Cache Cleanup
+## Public GitHub Hygiene
 
-Safe maintenance targets usually include:
+Before making the repository public or sharing a branch:
+
+1. confirm local databases, caches, exports, logs, and archives are not staged,
+2. confirm `.env` and secret-bearing local config remain ignored,
+3. confirm model weights and checkpoints remain outside version control,
+4. confirm documentation does not expose private infrastructure details.
+
+If risky files are already tracked, remove them from Git history or at least untrack them in a follow-up cleanup step before public release.
+
+## Cache and Output Cleanup
+
+Safe cleanup targets usually include:
 
 - `static/charts/`
 - `static/coordinate_cache/`
 - `static/ligand_sdf_cache/`
-- temporary export folders such as `output_csvs/` and `temp/`
+- temporary export folders such as `output_csvs/`, `temp/`, and `tmp/`
 
-Before cleanup, confirm nothing still depends on the generated files for an active demo or local run.
-
-## Export / Output Folders
-
-- `output_csvs/` is used for dataset export assembly.
-- `pml_sessions/` stores generated PyMOL-related outputs.
-- temporary download/export bundles may be created and removed during request workflows.
-
-If exports start failing, check for path existence, permissions, and leftover partial files.
-
-## Static Generated Assets
-
-Likely generated static assets include:
-
-- chart images
-- ligand images
-- cached coordinates for viewers
-- cached ligand SDF files
-
-These should usually remain ignored by Git and can often be regenerated.
+Before cleanup, confirm no active demo or local run still depends on the generated files.
 
 ## Local Database Handling
 
-- `viral_data.db` is the main app database and should be handled as a provisioned local/runtime asset.
-- `users.db` is deprecated and no longer used by the application.
-- before replacing or regenerating a local database, make a separate backup outside routine Git operations.
+- `viral_data.db` is a provisioned runtime asset, not source code.
+- `users.db` is deprecated and should not be part of the public workflow.
+- before replacing or regenerating a local database, keep a separate backup outside normal Git operations.
 
-## Files / Folders That Should Stay Gitignored
+## Files and Folders That Should Stay Ignored
 
-Confirmed ignore targets already cover the main risk areas:
+High-priority ignore targets include:
 
 - `.env`
-- `users.db`
 - `viral_data.db`
+- `users.db`
 - `PDB_FILES/`
 - `output_csvs/`
 - `pml_sessions/`
@@ -66,51 +59,43 @@ Confirmed ignore targets already cover the main risk areas:
 - `static/ligand_sdf_cache/`
 - `static/charts/`
 - `static/ligand_images/`
-- model/checkpoint folders
+- `models/`
+- `checkpoints/`
 - `__pycache__/`
 - `.DS_Store`
+- `*.log`
+- large archives such as `*.zip`, `*.tar`, and `*.tar.gz`
 
-Keep these ignored unless a very small redacted sample is intentionally prepared.
+## Updating Docs After App Changes
 
-## Updating Documentation After Route / Page Changes
+Whenever public routes, page labels, feature flags, or backend behavior change:
 
-Whenever public routes, page labels, or navigation behavior changes:
-
-1. update `README.md` only if the public-facing product story changes,
-2. update `docs/APP_GUIDE.md` for page/module changes,
-3. update `docs/DEVELOPER_NOTES.md` for route or feature-flag changes,
-4. update `docs/DEPLOYMENT.md` if env vars or runtime behavior changes.
-
-## Recommended Pre-Push Checklist
-
-1. Confirm no local databases, caches, exports, or model weights are staged.
-2. Confirm `.env` and any secret-bearing files remain ignored.
-3. Confirm README and docs links work with relative GitHub paths.
-4. Confirm public wording does not overclaim PROTACability results.
-5. Confirm any route references still exist in the app.
-6. Confirm optional-module notes still match the current feature flags.
+1. update `README.md` if the public-facing story changed,
+2. update `docs/APP_GUIDE.md` for module and workflow changes,
+3. update `docs/DEPLOYMENT.md` for env vars or runtime changes,
+4. update `docs/MANUSCRIPT_OUTLINE.md` and the manuscript folder if the scientific framing needs to change.
 
 ## Troubleshooting Common App Issues
 
 ### App does not start
 
-- verify dependencies from `requirements.txt` are installed
-- watch for missing packages such as `seaborn`, `rdkit`, or `biopython`
+- verify dependencies from `requirements.txt` or `environment.yml`
+- watch for missing packages such as `rdkit`, `matplotlib`, `seaborn`, or `biopython`
 
 ### Query pages load but data is empty
 
 - verify `viral_data.db` exists and contains the expected tables
-- verify the selected filters actually map to current database contents
+- verify filters map to current database contents
 
 ### PROTACability page shows unavailable data
 
-- import the CSV-backed PROTACability tables using `TOOLS/import_protacability_data.py`
-- verify the required CSV files exist in `PDB_FILES/`
+- import the PROTACability tables using `TOOLS/import_protacability_data.py`
+- verify the required CSV inputs exist in `PDB_FILES/`
 
-### Drug GPT behaves inconsistently
+### Optional assistant behaves unexpectedly
 
 - verify `SHOW_DRUG_GPT_NAV`, `ENABLE_DRUG_GPT`, and `ENABLE_LOCAL_LLM`
-- remember that `/drugapp/` intentionally returns a disabled-state response when the feature is off
+- remember that `/drugapp/` can intentionally return a disabled-state response when the feature is off
 
 ### Generated outputs fail
 

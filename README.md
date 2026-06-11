@@ -1,167 +1,122 @@
 # V-LiSEMOD
 
-## Viral Ligand Solvent-Exposed Moiety Database
+V-LiSEMOD is a Flask-based structural bioinformatics platform for exploring curated viral protein-ligand co-crystal contexts, reviewing ligand-centered interaction evidence, and triaging solvent-exposed modification opportunities with transparent PROTACability-style heuristics.
 
-Structure-guided viral protein-ligand analysis for solvent exposure review, interaction interpretation, ligand comparison, and transparent PROTACability-style triage.
-
-[![Overview](https://img.shields.io/badge/Overview-Platform%20Summary-16a34a?style=for-the-badge)](#overview)
-[![Capabilities](https://img.shields.io/badge/Capabilities-Core%20Modules-0891b2?style=for-the-badge)](#core-platform-capabilities)
-[![Documentation](https://img.shields.io/badge/Documentation-docs%2F-ea580c?style=for-the-badge&logo=readthedocs)](#documentation)
-[![PROTACability](https://img.shields.io/badge/PROTACability-Interpretation-7c3aed?style=for-the-badge)](#protacability-interpretation-note)
-[![Deployment](https://img.shields.io/badge/Deployment-Quick%20Start-2563eb?style=for-the-badge)](#quick-start)
-[![Companion Tools](https://img.shields.io/badge/Companion%20Tools-Ecosystem-0f766e?style=for-the-badge)](#companion-tool-ecosystem)
-
-## Overview
-
-V-LiSEMOD is a Flask-based structural bioinformatics platform for exploring curated viral protein-ligand co-crystal structures and the ligand-centered evidence that matters for follow-on design. It brings together viral protein metadata, ligand identity layers, atom-level interaction context, solvent-exposed atom analysis, functional-group annotations, and degrader-readiness heuristics in a single web workflow.
-
-The public repository is now no-login by default. The web app does not require `users.db`, user accounts, or Flask-Login to access the scientific workflows.
-
-The platform is intended for manuscript-ready structural interpretation, ligand prioritization, and hypothesis generation rather than black-box prediction.
+The repository is intended to support reviewers, collaborators, manuscript preparation, and future development. It describes a research-oriented web application, not a validated degradation-prediction engine.
 
 ## Scientific Motivation
 
-Viral protein-ligand structures are rich sources of medicinal chemistry insight, but the design-relevant details are usually split across structure files, annotations, interaction outputs, solvent accessibility calculations, and custom downstream scripts. V-LiSEMOD was built to make those layers easier to inspect together so researchers can ask practical questions such as:
+Viral protein-ligand structures contain practical design signals, but those signals are often split across structure files, atom-level contact tables, solvent accessibility workflows, and downstream scripts. V-LiSEMOD brings those evidence layers into one interface so users can ask:
 
-- Which viral targets have structure-resolved ligand contexts worth revisiting?
-- Which ligand atoms appear solvent-exposed and potentially modifiable?
-- Which contacts look important enough to preserve during linker growth?
-- Which structures look more promising for degrader-oriented follow-up?
+- which viral targets have useful ligand-bound structural context,
+- which ligand atoms appear solvent-exposed and potentially modifiable,
+- which contacts may need to be preserved during optimization, and
+- which structure contexts may merit degrader-oriented follow-up.
 
-## Core Platform Capabilities
+## Core Capabilities
 
-| Module | What it supports |
+| Module | Current role |
 |---|---|
-| Structure Explorer | Virus → PDB → ligand selection, ligand imagery, and PyMOL-oriented structure review |
-| Protein Query | Target-centric filtering and export-ready dataset assembly |
-| Ligand Indexer | Ligand-first lookup across mapped structural contexts |
-| Ligand Comparison | Multi-structure interaction and atom-burden comparison |
-| Solvent Exposure Analysis | Surface-exposed ligand atom review using SASA-derived data |
-| Interaction Visualization | Contact summaries and ligand interaction chart generation |
-| PROTACability Assessment | Transparent structural-priority and design-readiness triage |
-| PROTAC Builder Handoff | External continuation into degrader design workflows |
+| Structure Explorer | Virus -> PDB -> ligand exploration, ligand imagery, and PyMOL-oriented structural review |
+| Protein Query | Target-centric filtering, structure selection, and export-oriented dataset assembly |
+| Ligand Indexer | Ligand-first lookup across mapped viral structure contexts |
+| Ligand Comparison | Cross-structure comparison of ligand interaction behavior and mapped context |
+| Solvent Exposure Review | SASA-derived exposed-atom interpretation and functional-group context |
+| PROTACability Assessment | Transparent structural-priority and degrader-readiness triage |
+| Companion-tool handoff | External continuation into PROTAC Builder and related tools |
+| Optional Drug GPT module | Deployment-dependent assistant workflow when feature flags and local model runtime are enabled |
 
 ## Conceptual Workflow
 
 1. Start from a viral protein-ligand co-crystal structure.
 2. Inspect target, ligand, chain, and residue context.
-3. Review interactions, ligand atom exposure, and functional-group annotations.
-4. Identify atoms that may tolerate modification while preserving key contacts.
-5. Interpret PROTACability-style evidence as a prioritization aid.
-6. Hand promising warhead contexts into downstream design tools when appropriate.
+3. Review interaction evidence, solvent-exposed atoms, and functional-group annotations.
+4. Identify ligand-centered modification opportunities while preserving important contacts.
+5. Interpret PROTACability outputs as triage cues for follow-up design review.
+6. Hand promising contexts into downstream companion tools when appropriate.
 
 ## Application Map
 
-| Area | Role |
+| Area | What it supports |
 |---|---|
-| Home / Structure Explorer | Main entry point for structure-specific exploration and PyMOL session generation |
-| About | Scientific framing and project context |
-| Protein Query | Virus/protein/ligand filtering and export workflows |
-| Ligand Indexer | Ligand-first mapped-context lookup |
-| Ligand Comparison | Cross-structure comparison of interaction behavior |
-| PROTACability Assessment | Target, protein, structure, and chain-level triage views |
-| Drug GPT / BioGPT | Optional local assistant module when enabled |
+| Home / Structure Explorer | Structure-specific exploration and export-oriented review |
+| About | Project framing, workflow explanation, and ecosystem positioning |
+| Protein Query | Virus/protein/ligand filtering and data-export assembly |
+| Ligand Indexer | Ligand-centered mapped-context lookup |
+| Ligand Comparison | Multi-structure interaction and context comparison |
+| PROTACability Assessment | Target, protein, structure, and chain-level heuristic triage |
+| Drug GPT / BioGPT | Optional assistant surface when explicitly enabled |
 
 ## PROTACability Interpretation Note
 
-In V-LiSEMOD, PROTACability refers to transparent structural-priority and degrader-readiness heuristics assembled from ligand-centered and target-centered evidence layers. It does not mean experimentally validated degradation, productive ternary complex formation, or guaranteed medicinal chemistry tractability.
+In V-LiSEMOD, PROTACability refers to transparent structural-priority and design-readiness heuristics assembled from ligand-centered and target-centered evidence layers. It is intended for hypothesis generation and triage rather than experimental degradation prediction.
 
-Preferred interpretation:
+Safe present-tense interpretation:
 
-- Warhead linkability asks whether a bound ligand appears to expose plausible linker-attachment atoms.
-- Target lysine accessibility asks whether exposed lysines exist as target-side cues.
-- Structural priority and readiness layers support triage and hypothesis generation.
+- warhead linkability highlights plausible ligand-centered attachment opportunity,
+- lysine accessibility provides target-side structural cues,
+- structural priority supports follow-up review ordering, and
+- combined readiness layers summarize heuristic degrader-oriented context.
+
+It should not be described as guaranteed PROTAC design success, productive ternary-complex prediction, or experimentally validated degradability.
 
 ## Companion Tool Ecosystem
 
-V-LiSEMOD is positioned as part of a broader induced-proximity and design workflow:
+V-LiSEMOD is framed as part of a broader structure-guided induced-proximity workflow:
 
-- [Warhead Hunter](https://warheadhunter.com): solvent-exposed atom and warhead-focused follow-up
-- [PROTAC Builder](https://protacbuilder.com): downstream linker/recruiter/warhead assembly workflows
-- [E3 Ligandalyzer](https://e3ligandalyzer.com): E3 ligase recruiter and ligase-context exploration
+- Warhead Hunter for warhead-focused follow-up and solvent-exposed atom context
+- PROTAC Builder for downstream linker and recruiter design workflows
+- E3 Ligandalyzer for E3 ligase and recruiter-context exploration
 
-## Documentation
-
-[![App Guide](https://img.shields.io/badge/docs-App%20Guide-2563eb?style=flat-square)](docs/APP_GUIDE.md)
-[![Database](https://img.shields.io/badge/docs-Database-0f766e?style=flat-square)](docs/DATABASE.md)
-[![PROTACability](https://img.shields.io/badge/docs-PROTACability-7c3aed?style=flat-square)](docs/PROTACABILITY.md)
-[![Deployment](https://img.shields.io/badge/docs-Deployment-ea580c?style=flat-square)](docs/DEPLOYMENT.md)
-[![Maintenance](https://img.shields.io/badge/docs-Maintenance-475569?style=flat-square)](docs/MAINTENANCE.md)
-[![Developer Notes](https://img.shields.io/badge/docs-Developer%20Notes-1d4ed8?style=flat-square)](docs/DEVELOPER_NOTES.md)
-[![Manuscript Outline](https://img.shields.io/badge/docs-Manuscript%20Outline-166534?style=flat-square)](docs/MANUSCRIPT_OUTLINE.md)
-
-| Topic | Link |
-|---|---|
-| Documentation index | [docs/README.md](docs/README.md) |
-| Application guide | [docs/APP_GUIDE.md](docs/APP_GUIDE.md) |
-| Database layers | [docs/DATABASE.md](docs/DATABASE.md) |
-| PROTACability interpretation | [docs/PROTACABILITY.md](docs/PROTACABILITY.md) |
-| Deployment | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) |
-| Maintenance | [docs/MAINTENANCE.md](docs/MAINTENANCE.md) |
-| Developer notes | [docs/DEVELOPER_NOTES.md](docs/DEVELOPER_NOTES.md) |
-| Manuscript framing | [docs/MANUSCRIPT_OUTLINE.md](docs/MANUSCRIPT_OUTLINE.md) |
+These companion tools are conceptually connected workflows. They are not fully implemented inside this repository.
 
 ## Repository Scope
 
-Included in this repository:
+Included here:
 
-- Flask application code and templates
-- public documentation
-- helper/import scripts
-- lightweight project configuration and environment files
+- Flask application code
+- templates and static assets
+- documentation and manuscript-planning materials
+- helper scripts for enrichment, import, and maintenance
 
 Not intended for public GitHub inclusion:
 
-- local databases and user records
-- private credentials or tokens
-- large regenerated structure bundles and caches
-- local-only model weights and checkpoints
-- generated exports and other ephemeral outputs
-
-Authentication note:
-
-- `users.db` is no longer used by the application and should not be created, provisioned, or committed.
-- `FLASK_SECRET_KEY` is still recommended because Flask may use anonymous browser sessions for temporary UI state.
+- local databases such as `viral_data.db`
+- generated caches, exports, and PyMOL sessions
+- local credentials or tokens
+- model weights or checkpoints
+- large regenerated archives and runtime downloads
 
 ## Quick Start
 
-For practical setup, environment variables, and deployment notes, use [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+1. Install dependencies from `requirements.txt` or `environment.yml`.
+2. Provide a local `viral_data.db` or configure RANDY-backed data access.
+3. Set the environment variables needed for your deployment mode.
+4. Start the app with `python app.py` for local development.
+5. Validate `/healthz` and the main public pages.
 
-At a high level:
+The app supports both a local SQLite-backed mode and a RANDY-backed mode for selected route groups. The optional Drug GPT module remains deployment-dependent and is disabled by default unless enabled explicitly.
 
-1. Install the Python dependencies listed in `requirements.txt` or the Conda environment in `environment.yml`.
-2. Provide the required local data files and environment variables.
-3. Run the app with `python app.py` for the current local default (`127.0.0.1:5003`) or use your chosen production entrypoint.
+## Documentation
 
-Remote data note:
-
-- The simple V-LiSEMOD lookup routes can run against a separate RANDY API by setting `VLISMOD_DATA_BACKEND=randy` or `auto`.
-- For production-style RANDY routing, prefer `VLISMOD_BACKUP_URL=https://randy.rove-vernier.ts.net/backup/vlismod`.
-- RANDY should be configured with `VLISMOD_DB_PATH` and either `VLISMOD_API_TOKEN` or a shared RANDY backup token env var.
-- V-LiSEMOD should be configured with `VLISMOD_BACKUP_URL`, `RANDY_API_TOKEN`, and `VLISMOD_DATA_BACKEND`.
-- `RANDY_API_TIMEOUT_SECONDS=45` is a safer production default for heavier Compare Ligands and PROTACability payloads.
-- Strict `VLISMOD_DATA_BACKEND=randy` now covers homepage lookups, Compare Ligands data routes, ligand image generation, PyMOL session data, Protein Query routes, and PROTACability API routes without requiring a Heroku-local `viral_data.db`.
-- PROTACability UI traffic should use the compact RANDY endpoints (`/protacability/filter-options`, `/protacability/search`, and the targeted detail routes) instead of the bulk `/protacability/source` payload.
-- The bulk `/protacability/source` route is now for debugging or controlled export workflows, not for page-load filter metadata or normal paginated search.
-- `RANDY_API_BASE_URL` is still supported for local/dev compatibility and will default to `/api/vlismod` if you provide only a host URL.
-- If no RANDY configuration is provided, V-LiSEMOD continues to use local `viral_data.db` behavior.
+- [Documentation index](docs/README.md)
+- [Application guide](docs/APP_GUIDE.md)
+- [Database guide](docs/DATABASE.md)
+- [PROTACability guide](docs/PROTACABILITY.md)
+- [Deployment guide](docs/DEPLOYMENT.md)
+- [Developer notes](docs/DEVELOPER_NOTES.md)
+- [Maintenance guide](docs/MAINTENANCE.md)
+- [Manuscript outline](docs/MANUSCRIPT_OUTLINE.md)
+- [Detailed manuscript planning](docs/manuscript/MANUSCRIPT_PLAN.md)
 
 ## Project Status
 
-V-LiSEMOD is an active research-oriented web platform and documentation cleanup is ongoing. The repository currently reflects a mix of production-facing Flask routes, data-enrichment scripts, optional local-LLM hooks, and manuscript-oriented scientific framing.
+V-LiSEMOD is an active research-oriented web platform. The repository currently combines a live Flask application, local or provisioned data dependencies, optional companion-tool integrations, and manuscript-planning material intended to keep public claims aligned with the actual implementation.
 
 ## Citation
 
-Citation details to be added after manuscript or software record finalization.
-
-## Contact
-
-Please use the repository issue tracker or the project/lab contact route that accompanies the manuscript or deployment.
-
-## Repository Description
-
-V-LiSEMOD is a structural bioinformatics web platform for curated viral protein-ligand exploration, solvent-exposed moiety analysis, interaction review, and transparent degrader-readiness triage.
+Citation details can be added once a manuscript, preprint, or software record is finalized.
 
 ## Practical Takeaway
 
-V-LiSEMOD helps researchers move from viral co-crystal structures to interpretable ligand-modification hypotheses without collapsing solvent exposure, contact preservation, and degrader-readiness questions into a single overclaimed prediction.
+V-LiSEMOD helps users move from curated viral co-crystal structures to interpretable ligand-modification and degrader-follow-up hypotheses without collapsing those decisions into an overclaimed black-box predictor.

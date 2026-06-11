@@ -1,94 +1,122 @@
-# OS / editor noise
-.DS_Store
-.AppleDouble
-.LSOverride
-.vscode/
-.idea/
+# Public GitHub hygiene for V-LiSEMOD
+# Keep source, templates, docs, and small curated examples under version control.
 
-# Python
+# Secrets and local config
+.env
+.env.*
+!.env.example
+*.secret
+*.secrets
+secrets/
+*.key
+*.pem
+*.crt
+*.p12
+*.pfx
+*.token
+*.credentials
+*.creds
+*.cfg.local
+*.ini.local
+
+# Python / runtime artifacts
 __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
 .Python
-.venv/
-venv/
-env/
-.env
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
 .coverage
 .coverage.*
 htmlcov/
+.venv/
+venv/
+env/
+.ipynb_checkpoints/
 
-# Flask / local instance state
-instance/
-users.db
+# Local databases and backups
 viral_data.db
-*.db
+users.db
 *.sqlite
 *.sqlite3
+*.db
+*.db-*
+instance/
+*.bak
+*.backup
+*.dump
 
-# Generated app outputs and user/session artifacts
+# Generated V-LiSEMOD outputs and caches
+PDB_FILES/
 output_csvs/
-users_info/
+pml_sessions/
 temp/
 tmp/
 scratch/
-pml_sessions/
+users_info/
 exports/
 downloads/
 reports/
+generated_exports/
+generated_zip_bundles/
 static/charts/
 static/coordinate_cache/
 static/ligand_sdf_cache/
 static/ligand_images/
 
-# Generated PROTACability and analysis outputs
-PROTACability_*.csv
-Lysine_ISO*.csv
-failed_downloads.csv
-download_manifest.csv
-failed_protac_candidates.csv
-
-# Logs and run artifacts
+# Logs and process artifacts
 *.log
+logs/
+server.out
+nohup.out
+*.pid
 
-# Large structural datasets and regenerated structure files
-PDB_FILES/
+# Local model / checkpoint artifacts
+models/
+checkpoints/
+model_cache/
+hf_cache/
+.cache/huggingface/
+runs/
+wandb/
+*.safetensors
+*.bin
+*.pt
+*.pth
+*.onnx
+*.gguf
+*.joblib
+*.pkl
+
+# Scientific runtime downloads and temporary structures
+*.smi
 *.pdb
 *.cif
 *.mmcif
 *.sdf
 *.mol2
 
-# Optional external reference dataset; provision separately
-*.smi
-Components-smiles-stereo-oe.smi
-Components-*.smi
-
-# Archives / packaged exports
+# Large generated archives unless intentionally curated elsewhere
 *.zip
+*.tar
 *.tar.gz
-*.gz
+*.tgz
+*.7z
 
-# ML / local model artifacts
-models/
-checkpoints/
-runs/
-wandb/
-*.pt
-*.pth
-*.bin
-*.safetensors
-*.gguf
-*.onnx
-*.pkl
-*.joblib
+# OS / editor files
+.DS_Store
+._*
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
 
-# Backups
+# Optional local backups
 backups/
 
-# Jupyter
-.ipynb_checkpoints/
+# Project-specific generated or local reference files
+failed_protac_candidates.csv

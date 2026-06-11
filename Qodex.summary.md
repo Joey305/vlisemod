@@ -1,162 +1,139 @@
 # Qodex.summary
 
 ## Task
-Fix PROTACability metric clarity, tab behavior, and loading UX.
+Prepare V-LiSEMOD for manuscript-readiness and public GitHub repository hygiene.
 
 ## Original Goal
-The user wants PROTACability filters/results to feel responsive and trustworthy, wants to verify whether “Mapped/exposed warheads = 6” is correct, and wants a themed loading wheel with rotating messages during slow page/data loads.
+The user wants to review the live V-LiSEMOD application, align the documentation and manuscript planning with the real app capabilities and companion-tool integrations, and update `.gitignore` so the repository is ready to become public on GitHub.
 
 ## Assumptions
-- Heroku V-LiSEMOD runs with `VLISMOD_DATA_BACKEND=randy`.
-- Heroku points to `VLISMOD_BACKUP_URL=https://randy.rove-vernier.ts.net/backup/vlismod`.
-- The RANDY token is supplied only through environment variables and was never printed or committed.
-- The production database lives on RANDY at `/home/jxs794/PROTAC_BUILDER/VLISEMOD/Database/viral_data.db`.
-- PROTACability grouped views (`targets`, `protein`, `summary`) are intended to summarize current filtered result groups rather than raw warhead-table totals.
-- The PROTACability page should stay compact-RANDY-backed and must not reintroduce the huge `/protacability/source` payload into normal UI flows.
+
+- The current Flask routes and templates are the authoritative source for present-tense capability claims.
+- `viral_data.db` is a local or provisioned runtime asset rather than a public repository deliverable.
+- The optional Drug GPT module should be described as deployment-dependent unless explicitly enabled and provisioned.
+- RANDY-backed operation is real and worth documenting, but should be framed as an optional backend mode rather than a universal deployment default.
+- Existing tracked local data and generated artifacts should be documented as release risks, not deleted.
 
 ## Files Inspected
-- `/Users/jxs794/Documents/VLISEMOD/app.py`
-- `/Users/jxs794/Documents/VLISEMOD/RANDY/vlismod_data_routes.py`
-- `/Users/jxs794/Documents/VLISEMOD/templates/protacability_assessment.html`
-- `/Users/jxs794/Documents/VLISEMOD/static/css/styles.css`
-- `/Users/jxs794/Documents/VLISEMOD/Qodex.summary.md`
-- Remote runtime file: `/home/jxs794/PROTAC_BUILDER/backup_receiver/vlismod_data_routes.py`
+
+- `.gitignore`: checked current ignore coverage and release risks.
+- `README.md`: reviewed the public landing page language and scope.
+- `docs/README.md`: reviewed documentation index structure.
+- `docs/APP_GUIDE.md`: checked workflow descriptions against current routes.
+- `docs/DATABASE.md`: checked current data-layer framing against the local schema.
+- `docs/DEPLOYMENT.md`: reviewed deployment wording, environment variables, and backend claims.
+- `docs/DEVELOPER_NOTES.md`: reviewed route and feature-flag notes.
+- `docs/MAINTENANCE.md`: reviewed repo hygiene guidance.
+- `docs/MANUSCRIPT_OUTLINE.md`: reviewed manuscript framing and claim language.
+- `app.py`: inspected routes, feature flags, backend helpers, and PROTACability behavior.
+- `DRUGapp.py`: inspected optional assistant behavior and environment-variable dependencies.
+- `requirements.txt`: checked runtime dependency list.
+- `environment.yml`: checked alternate environment definition.
+- `Procfile`: checked main production entrypoint.
+- `templates/base.html`, `templates/index.html`, `templates/query_protein_virus.html`, `templates/ligand_query.html`, `templates/compare_ligands.html`, `templates/protacability_assessment.html`, `templates/about.html`: confirmed public pages, navigation, and companion-tool positioning.
+- `RANDY/app.py` and `RANDY/vlismod_data_routes.py`: confirmed optional RANDY-backed deployment mode and PROTACability route support.
+- `viral_data.db`: inspected current table inventory.
 
 ## Files Changed
-- `/Users/jxs794/Documents/VLISEMOD/app.py`
-- `/Users/jxs794/Documents/VLISEMOD/RANDY/vlismod_data_routes.py`
-- `/Users/jxs794/Documents/VLISEMOD/templates/protacability_assessment.html`
-- `/Users/jxs794/Documents/VLISEMOD/static/css/styles.css`
-- `/Users/jxs794/Documents/VLISEMOD/Qodex.summary.md`
+
+- `.gitignore`: replaced with a more conservative public-release-safe ignore policy covering secrets, local DBs, caches, outputs, logs, model artifacts, and archives.
+- `README.md`: rewrote the public landing page to focus on verified capabilities, cautious PROTACability language, and public-facing repository scope.
+- `docs/README.md`: added the manuscript-planning folder and tightened the doc map.
+- `docs/APP_GUIDE.md`: aligned module descriptions with current app behavior and deployment-dependent assistant behavior.
+- `docs/DATABASE.md`: clarified confirmed data layers, local-vs-RANDY framing, and public/private data boundaries.
+- `docs/DEPLOYMENT.md`: simplified deployment guidance, removed private infrastructure specifics, and kept claims cautious.
+- `docs/DEVELOPER_NOTES.md`: aligned developer guidance with the current no-login workflow, feature flags, and local/RANDY modes.
+- `docs/MAINTENANCE.md`: strengthened public GitHub hygiene guidance and tracked-artifact cautions.
+- `docs/MANUSCRIPT_OUTLINE.md`: expanded the outline with manuscript-safe language and language-to-avoid sections.
+- `Qodex.summary.md`: replaced the previous task-specific summary with this release-prep summary.
 
 ## Files Created
-- None
+
+- `docs/manuscript/MANUSCRIPT_PLAN.md`: title options, positioning, audience, contributions, and safe claims.
+- `docs/manuscript/CLAIMS_AND_LIMITATIONS_MATRIX.md`: explicit claim-language matrix tied to repository evidence.
+- `docs/manuscript/FIGURE_AND_TABLE_PLAN.md`: manuscript figure and table planning scaffold.
+- `docs/manuscript/VALIDATION_AND_REPRODUCIBILITY_PLAN.md`: pre-manuscript evidence and reproducibility checklist.
 
 ## Implementation Summary
-- Audited the `candidate_warheads_with_exposed_mapped_atoms` summary card and confirmed the old `6` value came from counting only grouped representative rows in `targets` and `protein` views.
-- Added explicit grouped evidence flags in both `app.py` and `RANDY/vlismod_data_routes.py` so grouped `targets` and `protein` summaries now count any grouped structure context with mapped + solvent-exposed mapped atoms.
-- Left `summary` and `chains` semantics intact, because structure-group and raw chain-row counts already matched the intended evidence scope.
-- Reworded the second summary-card label per view so users can tell whether they are looking at target groups, protein groups, structures, or chain rows.
-- Added a reusable full-page PROTACability loading overlay with rotating messages, reduced-motion handling, light/dark theme support, and error-safe hide behavior.
-- Wrapped initial bootstrap, filter refresh, view switching, search, pagination, reset/apply flows, and detail fetches in loading helpers.
-- Added lightweight backend diagnostics for filter/search payload size, elapsed time, totals, and mapped/exposed summary counts.
-- Fixed a local fallback bug in `/api/protacability/target_detail` where the code referenced `conn` outside a DB context.
-- Synced the updated RANDY route file into `/home/jxs794/PROTAC_BUILDER/backup_receiver/vlismod_data_routes.py` and reloaded Gunicorn.
 
-## Metric Audit Summary
-- Original displayed metric:
-  - `Mapped/exposed warheads = 6`
-- Direct SQL comparison on RANDY `protacability_warhead_linkability`:
-  - total warhead rows: `92482`
-  - mapped rows: `3468`
-  - mapped + solvent-exposed rows: `2659`
-  - distinct structures with mapped + solvent-exposed evidence: `2513`
-  - distinct target groups with mapped + solvent-exposed evidence: `61`
-- Local grouped-result audit:
-  - old grouped target/protein summary logic: `6`
-  - grouped target/protein rows with any qualifying grouped evidence: `20`
-  - grouped structure summary count: `2509`
-  - raw chain-row count: `8935`
-- Final metric definition:
-  - `targets`: grouped target rows in the current filtered result set with at least one mapped + solvent-exposed warhead-supporting structure context
-  - `protein`: grouped protein rows in the current filtered result set with at least one mapped + solvent-exposed warhead-supporting structure context
-  - `summary`: grouped structure rows with mapped + solvent-exposed mapped atoms
-  - `chains`: raw chain rows with mapped + solvent-exposed mapped atoms
-- Final label and helper text:
-  - `targets`: `Mapped/exposed target groups`
-  - `protein`: `Mapped/exposed protein groups`
-  - `summary`: `Mapped/exposed structures`
-  - `chains`: `Mapped/exposed chain rows`
+The documentation now distinguishes what the current V-LiSEMOD application demonstrably does from what remains heuristic, optional, data-dependent, or future work. The public README was reshaped into a reviewer-friendly landing page, while detailed manuscript planning moved into a dedicated `docs/manuscript/` folder. `.gitignore` was expanded so future public Git activity is less likely to include local databases, generated structural outputs, caches, logs, archives, credentials, or model artifacts.
 
 ## Key Decisions
-- `6` was not a trustworthy “total mapped/exposed warheads” number. It undercounted grouped target/protein evidence because it depended on whichever representative row won the grouping priority sort.
-- The backend summary needed a real fix for grouped `targets` and `protein` views, not just a wording tweak.
-- The final labels were still narrowed to per-view language so users do not mistake grouped evidence counts for raw database warhead totals.
-- The loading overlay is page-level because initial bootstrap, grouped search, and tab switches all replace the main evidence view and can otherwise look stalled.
-- Theme compatibility was handled with existing site variables (`--page-bg`, `--card-bg`, `--accent-green`, `--accent-orange`, `--text-muted`) so the loader fits both light and dark mode without a separate palette.
+
+- `.gitignore` strategy:
+  Focus on conservative exclusion of local databases, generated outputs, runtime caches, logs, archives, credentials, and model artifacts while leaving source code, templates, documentation, and `.env.example` trackable.
+- Capabilities vs limitations:
+  Present-tense claims were tied to inspected routes, templates, environment flags, and confirmed database tables, while anything heuristic, deployment-dependent, or not validated was moved into limitations or future-work language.
+- PROTACability wording:
+  All manuscript-facing wording keeps PROTACability framed as transparent structural-priority and design-readiness triage rather than degradation prediction or biological proof.
+- Companion-tool framing:
+  Warhead Hunter, PROTAC Builder, and E3 Ligandalyzer were described as companion tools or ecosystem connections rather than in-repo modules.
 
 ## Commands Run
-- `pwd`
+
 - `git status --short`
-- `python -m py_compile app.py RANDY/app.py RANDY/vlismod_data_routes.py`
-- `grep` audits over PROTACability metrics, search, and view handlers in `app.py`, `RANDY/vlismod_data_routes.py`, `templates/protacability_assessment.html`, and `static/css/styles.css`
-- Local Python checks against `_prepare_protacability_result_set_from_rows(...)`
-- Local Flask test-client checks for PROTACability routes
-- `node --check /tmp/protacability_assessment.js`
-- Remote RANDY SQL checks over `protacability_warhead_linkability`
-- `scp RANDY/vlismod_data_routes.py randy:/home/jxs794/PROTAC_BUILDER/backup_receiver/vlismod_data_routes.py`
-- `ssh randy 'kill -HUP 4020670'`
-- Remote Python validation inside `/home/jxs794/PROTAC_BUILDER/backup_receiver`
+  - showed an existing deletion of `Procfile.randy` in the worktree.
+- `cat .gitignore`
+  - reviewed the existing ignore policy before replacement.
+- `find . -maxdepth 2 -type f | sort`
+  - inventoried repo files and surfaced local artifacts such as `.env`, `viral_data.db`, logs, caches, and archives.
+- `find docs -maxdepth 3 -type f | sort`
+  - inventoried documentation files.
+- `sed -n ...` over `README.md`, docs files, `app.py`, `DRUGapp.py`, and `Procfile`
+  - reviewed current public docs, runtime behavior, and entrypoints.
+- `rg -n ...`
+  - inspected environment variables, backend toggles, generated-path references, PROTACability routes, and companion-tool links.
+- `git ls-files ...`
+  - checked for tracked private or generated artifacts.
+- SQLite table query against `viral_data.db`
+  - confirmed the current local database contains 20 relevant tables including the PROTACability layers.
+- `python -m py_compile app.py`
+  - passed.
+- `python -m flask --app app routes`
+  - passed and confirmed the current route inventory.
+- `git diff --check`
+  - passed with no whitespace or patch-format issues.
 
 ## Validation Results
-- Syntax:
-  - `python -m py_compile app.py RANDY/app.py RANDY/vlismod_data_routes.py` passed.
-- Template JS syntax:
-  - extracted the inline script to `/tmp/protacability_assessment.js`
-  - `node --check /tmp/protacability_assessment.js` passed.
-- Metric validation:
-  - grouped target/protein summary count now returns `20` instead of `6`
-  - grouped structure summary remains `2509`
-  - chain-row summary remains `8935`
-- Local route validation:
-  - `GET /api/protacability/filter_options` -> `200`
-  - `GET /api/protacability/search?view=targets&page=1&page_size=50` -> `200`
-  - `GET /api/protacability/search?view=protein&page=1&page_size=50` -> `200`
-  - `GET /api/protacability/search?view=summary&page=1&page_size=50` -> `200`
-  - `GET /api/protacability/search?view=chains&page=1&page_size=50` -> `200`
-  - `GET /api/protacability/detail/6VX2/A` -> `200`
-  - `GET /api/protacability/protein_detail?...` -> `200`
-  - `GET /api/protacability/target_detail?...` -> `200`
-- View behavior validation:
-  - all four views still send and return distinct `view` values (`targets`, `protein`, `summary`, `chains`)
-  - each view now returns distinct summary values and row sets
-  - sort-reset and offset-reset behavior still occurs through `selectView(...)` + search
-- Loading overlay behavior:
-  - overlay is now wired to initial bootstrap, filter refresh, apply/reset, view switching, pagination, search, and detail fetches
-  - rotating messages are configured at `4s`
-  - reduced-motion CSS disables spinner animation and transitions
-- Live RANDY runtime validation:
-  - remote grouped summary calculation inside `/home/jxs794/PROTAC_BUILDER/backup_receiver` returns:
-    - `targets 20`
-    - `protein 20`
-    - `summary 2509`
-    - `chains 8935`
+
+- `.gitignore` validation:
+  - the new file explicitly ignores local databases, caches, outputs, logs, archives, model artifacts, and secrets while preserving `.env.example`.
+- Manuscript-claim review:
+  - overclaiming search hits were limited to cautionary language and explicit “do not say this” sections rather than unsupported positive claims.
+- Markdown and doc-structure review:
+  - the main documentation links were kept consistent and the new manuscript docs were added under `docs/manuscript/`.
+- Runtime/syntax validation:
+  - `git diff --check` passed.
+  - `python -m py_compile app.py` passed.
+  - `python -m flask --app app routes` passed and confirmed the public page and PROTACability route surface.
+  - secret-like scan found environment-variable references in source plus one benign chemical identifier false positive in `Components-smiles-stereo-oe.smi`; no secret values were copied into the summary.
 
 ## Known Issues
-- I did not redeploy Heroku from this workspace in this turn, so the final browser-side loading overlay and updated metric labels still need one production smoke test after deploy.
-- I validated the template JavaScript syntactically, but I did not run an in-app browser visual pass from this environment.
-- One example structure-detail request I tried with a guessed virus/protein combination returned `404`; that looked like a test-input mismatch rather than a routing failure, and the main structure-detail route itself was not changed in this task.
+
+- The repo tree currently contains release-risk local artifacts on disk, including `.env`, `viral_data.db`, `PDB_FILES/`, `pml_sessions/`, cache noise such as `.DS_Store` and `__pycache__`, log files, and `RANDY.zip`.
+- Sampled `git ls-files` checks did not show those items as currently tracked in Git; the sampled tracked match was only `.env.example`.
+- `.gitignore` now helps prevent future accidental adds, but any separately tracked risky files elsewhere in history should still be reviewed before public release.
+- Existing local worktree state includes a deleted `Procfile.randy`; I did not restore or modify that unrelated change.
+- `git status --short` still shows local untracked data files such as `Components-smiles-stereo-oe.smi` and `failed_protac_candidates.csv`; `.gitignore` was updated to catch those patterns going forward.
+- Public reproducibility still depends on separately provisioned scientific data and writable runtime folders.
+
+Recommended cleanup commands if any risky files are found tracked in a broader pre-release audit:
+
+```bash
+git rm --cached .env viral_data.db RANDY.zip
+git rm --cached -r PDB_FILES pml_sessions __pycache__
+git rm --cached .DS_Store templates/.DS_Store static/.DS_Store
+git rm --cached *.log
+```
 
 ## Manual Verification
-1. Deploy the updated V-LiSEMOD app to Heroku.
-2. Open `/protacability_page`.
-3. Confirm the loading overlay appears immediately on page load and disappears after filters + first results finish loading.
-4. Check the second summary card label in each view:
-   - `Target Browser` -> `Mapped/exposed target groups`
-   - `Protein Summary` -> `Mapped/exposed protein groups`
-   - `Structure Summary` -> `Mapped/exposed structures`
-   - `Chain Details` -> `Mapped/exposed chain rows`
-5. Click the four view buttons and confirm:
-   - the active button changes
-   - the results layout changes
-   - the summary cards update
-   - pagination resets to page 1
-   - the overlay appears while loading
-6. Click `Apply Filters`, `Reset`, `Previous`, `Next`, and change page size; confirm the overlay appears and then clears.
-7. Open a detail panel and confirm:
-   - modal shows loading feedback
-   - content loads
-   - overlay does not get stuck on failure
-8. Optional route checks:
-   - `curl -sS "https://vlisemod-0e358c20a94d.herokuapp.com/api/protacability/filter_options" -o /tmp/heroku_filter_options.json`
-   - `curl -sS "https://vlisemod-0e358c20a94d.herokuapp.com/api/protacability/search?view=targets&page=1&page_size=50" -o /tmp/heroku_targets.json`
-   - `curl -sS "https://vlisemod-0e358c20a94d.herokuapp.com/api/protacability/search?view=chains&page=1&page_size=50" -o /tmp/heroku_chains.json`
-9. Watch Heroku logs and confirm there are no new:
-   - `H12 Request timeout`
-   - `sqlite3.OperationalError`
-   - stuck `/protacability/source` requests for normal UI loads
+
+1. Review `README.md` as a first-time public GitHub visitor.
+2. Review `docs/MANUSCRIPT_OUTLINE.md` and `docs/manuscript/CLAIMS_AND_LIMITATIONS_MATRIX.md` for manuscript-safe wording.
+3. Review `.gitignore` before the repo becomes public.
+4. Run `git status --short` and confirm no private or generated files are staged unexpectedly.
+5. Start the app locally and check the main workflows if data dependencies are available.
 
 ## Suggested Next Prompt
-If the production smoke test still feels slow after deploy, use:
 
-“Optimize the PROTACability detail and export flows so modal/detail loads and CSV exports keep response times predictable under broad filters, while preserving the current grouped summary semantics.”
+Create a small redacted demo dataset and fixture-driven smoke-test plan so the public repository can support reproducible screenshots and route validation without shipping the full local database.

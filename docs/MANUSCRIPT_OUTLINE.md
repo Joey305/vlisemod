@@ -2,89 +2,110 @@
 
 ## Working Title
 
-V-LiSEMOD: a structure-guided viral ligand solvent-exposed moiety database for ligand modification analysis and degrader-readiness triage
+V-LiSEMOD: a structure-guided viral protein-ligand exploration platform for solvent-exposed moiety analysis and transparent degrader-readiness triage
 
 ## Abstract Scaffold
 
-Viral protein-ligand co-crystal structures contain valuable information for inhibitor optimization, exit-vector analysis, and early degrader-oriented hypothesis generation, but the relevant evidence layers are often fragmented across structural files, interaction outputs, atom annotations, and custom downstream scripts. V-LiSEMOD was developed as a web-based structural bioinformatics platform that integrates curated viral protein metadata, ligand identifiers, atom-level interaction context, solvent-exposed ligand atom analysis, functional-group annotations, and transparent PROTACability-style heuristics into a single exploration environment. The platform supports target-centric query, ligand-first indexing, cross-structure ligand comparison, PyMOL-oriented export, and degrader-readiness triage without overstating predictive certainty. V-LiSEMOD is intended as a hypothesis-generation and prioritization resource for antiviral structural biology and induced-proximity-inspired design workflows.
+Viral protein-ligand co-crystal structures contain useful medicinal chemistry and chemical biology signals, but those signals are often fragmented across structural files, ligand annotations, interaction outputs, solvent accessibility calculations, and downstream scripts. V-LiSEMOD is a Flask-based structural bioinformatics platform that brings curated viral protein metadata, ligand identity layers, atom-level interaction context, solvent-exposed atom analysis, functional-group annotations, ligand comparison workflows, and transparent PROTACability-style heuristics into a single interface. The platform supports target-centric query, ligand-first indexing, cross-structure comparison, PyMOL-oriented export, and degrader-readiness triage while keeping heuristic evidence separate from experimental degradation claims. V-LiSEMOD is best positioned as a hypothesis-generation and design-review resource for antiviral structural biology, medicinal chemistry, and induced-proximity-inspired workflows.
 
 ## Introduction Rationale
 
-- viral structural datasets are growing, but design-relevant ligand interpretation remains fragmented
-- medicinal chemistry decisions often require structure, contact, and solvent-exposure context simultaneously
-- degrader-oriented thinking introduces additional target-side questions such as exposed lysine context and linker-attachment feasibility
-- a transparent evidence platform is preferable to overclaimed black-box scoring for early-stage prioritization
+- viral structural datasets continue to expand, but design-relevant interpretation remains fragmented
+- ligand optimization requires structure, contact, and solvent-exposure context in the same workflow
+- degrader-oriented thinking adds target-side questions such as lysine accessibility and linker-attachment opportunity
+- transparent evidence presentation is more defensible than overclaimed black-box prediction in early-stage triage
 
-## Methods Sections
+## Methods
 
-### Data Assembly
+### Software Implementation
 
-- collection and curation of viral protein-ligand structural records
-- harmonization of virus, protein, ligand, and PDB-linked metadata
+- Flask-based web application
+- route-heavy application architecture in `app.py`
+- optional assistant blueprint in `DRUGapp.py`
+- local SQLite mode and optional RANDY-backed route groups
 
-### Ligand Annotation Layers
+### Database and Data Layers
 
-- ligand synonym mapping
-- atom-level ligand coordinate extraction
-- SMILES association and atom-mapping workflows
-- functional-group annotation
+- curated viral protein metadata
+- ligand synonym and identifier mapping
+- atom-level ligand coordinates
+- contact layers and interaction summaries
+- SASA-derived solvent-exposed atom data
+- functional-group annotations
+- PROTACability-linked tables imported from generated CSV layers
 
-### Interaction and Surface Analysis
+### App Modules
 
-- protein-ligand contact derivation
-- solvent-exposed atom assignment using SASA-derived workflows
-- optional water or pocket-context layers where available
-
-### Web Platform Implementation
-
-- Flask-based application architecture
-- SQLite-backed structural annotation store
-- interactive query, comparison, and export surfaces
+- Structure Explorer
+- Protein Query
+- Ligand Indexer
+- Ligand Comparison
+- PROTACability Assessment
+- optional Drug GPT assistant surface
 
 ### PROTACability Heuristic Layer
 
 - ligand-centered warhead linkability
-- target lysine accessibility
+- target-side lysine accessibility cues
 - structural-priority aggregation
-- geometry-informed degrader-readiness cues
+- combined degrader-readiness heuristic outputs
 
-## Results / Feature Demonstration Sections
+## Results or Feature Demonstration Structure
 
 - target-centric retrieval of viral protein-ligand structures
-- ligand-first cross-structure mapping and interaction review
+- ligand-first mapped-context lookup and interaction review
 - solvent-exposed atom and functional-group interpretation
-- multi-structure ligand comparison
-- transparent PROTACability triage case studies
-- downstream handoff into companion design tools
-
-## Suggested Figures
-
-1. Platform overview schematic showing structure-to-design workflow
-2. Application map with major modules and evidence layers
-3. Example ligand interaction and solvent-exposure view
-4. Ligand comparison panel across multiple viral structures
-5. PROTACability evidence-layer diagram with interpretation guardrails
-6. Companion ecosystem figure linking V-LiSEMOD, Warhead Hunter, PROTAC Builder, and E3 Ligandalyzer
+- cross-structure ligand comparison
+- transparent PROTACability triage example workflows
+- companion-tool handoff into downstream design environments
 
 ## Limitations
 
 - dependent on available co-crystal structures and annotation quality
-- heuristic PROTACability layers are not experimental degradation validation
-- ligand mapping and solvent-exposure interpretation are limited by upstream data quality
-- viral target coverage is constrained by source structure availability
+- dependent on local or provisioned data availability
+- PROTACability is heuristic and not experimental degradation validation
+- geometry and lysine-context cues do not guarantee productive ternary-complex formation
+- optional assistant behavior is deployment-dependent
+- generated outputs depend on writable local runtime storage
 
 ## Future Work
 
-- expanded viral target coverage
-- additional structure-quality and confidence metadata
-- stronger provenance tracking for generated annotations
-- benchmarked case studies for warhead/linker hypothesis generation
-- optional API formalization and lightweight test fixtures
+- broader viral target coverage
+- stronger provenance tracking and fixture data for reproducibility
+- benchmarking and structured case studies
+- more formal API and test coverage
+- expanded companion-tool interoperability
 
-## Suggested Keywords
+## Figure Ideas
 
-viral structural bioinformatics, protein-ligand interactions, solvent-accessible surface area, warhead design, induced proximity, PROTACability, degrader readiness, antiviral discovery
+1. Platform overview schematic linking structure input, evidence layers, and design handoff
+2. Application map covering the main user workflows
+3. Ligand-centered evidence view with interactions, SASA, and functional groups
+4. Cross-structure ligand comparison view
+5. PROTACability interpretation figure with explicit heuristic guardrails
+6. Companion-tool ecosystem figure linking V-LiSEMOD, Warhead Hunter, PROTAC Builder, and E3 Ligandalyzer
+
+## Keywords
+
+viral structural bioinformatics, protein-ligand interactions, solvent-accessible surface area, ligand modification, induced proximity, PROTACability, degrader readiness, antiviral discovery
+
+## Manuscript-Safe Language
+
+- “V-LiSEMOD is a Flask-based structural bioinformatics platform for exploring curated viral protein-ligand co-crystal contexts.”
+- “The platform integrates ligand identity, atom-level interaction context, solvent exposure evidence, functional-group annotations, and transparent degrader-readiness heuristics.”
+- “PROTACability outputs are intended for hypothesis generation and design triage rather than experimental degradation prediction.”
+- “Companion-tool links support continuity with downstream design workflows, including PROTAC Builder and related structural-analysis tools.”
+
+## Language To Avoid Unless Later Validated
+
+- “validated degrader prediction”
+- “guaranteed PROTACability”
+- “automated PROTAC design”
+- “complete medicinal chemistry decision engine”
+- “exhaustive viral ligand database”
+- “production-hardened public API”
+- “experimentally confirmed degradation”
 
 ## Citation Placeholder
 
-Citation details to be added once manuscript, preprint, or software note metadata is finalized.
+Add manuscript, preprint, or software-record citation details after submission or release.

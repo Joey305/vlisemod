@@ -1,215 +1,132 @@
 # Deployment Guide
 
-## Local Development Overview
+## Overview
 
-V-LiSEMOD is a public Flask application backed by `viral_data.db` and a set of locally available structure-derived assets. A minimal deployment requires the Python dependencies, the expected scientific data files, and any environment variables needed for optional features.
+V-LiSEMOD is a Flask application that depends on provisioned scientific data, writable output locations, and optional environment flags for deployment-specific behavior. Public source availability does not mean the application is self-contained without data provisioning.
 
-## Environment Variables
+## Confirmed Environment Variables
 
-Confirmed from the current codebase:
+From the current codebase:
 
-- `FLASK_SECRET_KEY`: session secret; should be overridden outside local testing
-- `VLISMOD_DATA_BACKEND`: data source mode for the simple lookup routes; `local`, `randy`, or `auto`
-- `VLISMOD_BACKUP_URL`: preferred production-style RANDY V-LiSEMOD base URL, for example `https://randy.rove-vernier.ts.net/backup/vlismod`
-- `RANDY_API_BASE_URL`: base URL for the RANDY service, for example `http://127.0.0.1:5001`
-- `RANDY_API_TOKEN`: bearer token used by V-LiSEMOD when calling RANDY
-- `RANDY_API_TIMEOUT_SECONDS`: optional override for heavier RANDY-backed routes; defaults to longer production-safe request timeouts
-- `SHOW_DRUG_GPT_NAV`: show or hide the Drug GPT navigation entry
-- `ENABLE_DRUG_GPT`: enable or disable the `/drugapp/` blueprint
-- `ENABLE_LOCAL_LLM`: allow local model loading for the optional assistant module
-- `MODEL_ID` or `LLM_MODEL_ID`: local assistant model identifier
-- `PROTAC_BUILDER_EXTERNAL_URL`: override default external handoff URL
+- `FLASK_SECRET_KEY`
+- `VLISMOD_LOCAL_DB_PATH`
+- `VLISMOD_DATA_BACKEND`
+- `VLISMOD_BACKUP_URL`
+- `RANDY_API_BASE_URL`
+- `RANDY_API_TOKEN`
+- `RANDY_API_TIMEOUT_SECONDS`
+- `SHOW_DRUG_GPT_NAV`
+- `ENABLE_DRUG_GPT`
+- `ENABLE_LOCAL_LLM`
+- `MODEL_ID`
+- `LLM_MODEL_ID`
+- `PROTAC_BUILDER_EXTERNAL_URL`
 
-Optional Drug GPT-related variables in `DRUGapp.py` also include:
+Optional Drug GPT-related variables imported in `DRUGapp.py`:
 
-- `HF_TOKEN`, `HUGGINGFACE_HUB_TOKEN`, or `HUGGING_FACE_HUB_TOKEN`
+- `HF_TOKEN`
+- `HUGGINGFACE_HUB_TOKEN`
+- `HUGGING_FACE_HUB_TOKEN`
 - `GEN_MAX_CONCURRENT`
 - `GEN_ACQUIRE_TIMEOUT`
 
-Additional variables used by the RANDY backend:
+Additional variables used by the RANDY service:
 
-- `VLISMOD_API_TOKEN`: bearer token expected by RANDY for `/api/vlismod/*`
-- `VLISMOD_DB_PATH`: filesystem path to the SQLite database RANDY should query
-- `RANDY_BACKUP_TOKEN` or `PROTAC_BACKUP_TOKEN`: accepted as fallback token env vars for `/backup/vlismod/*` if you want V-LiSEMOD to follow the same backup-token convention as the other RANDY services
+- `VLISMOD_API_TOKEN`
+- `VLISMOD_DB_PATH`
+- `RANDY_BACKUP_TOKEN`
+- `PROTAC_BACKUP_TOKEN`
 
-## Running With `python app.py`
+## Local Development Run
 
-If the codebase exposes the usual Flask `app` object and the runtime dependencies are installed, a basic local start path is:
+A minimal local run path is:
 
 ```bash
 python app.py
 ```
 
-Because the repository uses direct imports such as `matplotlib`, `seaborn`, `rdkit`, `pandas`, and optional `biopython`, missing packages will prevent startup.
+The current source uses the Flask app object in `app.py` and the checked-in dev server configuration binds to `127.0.0.1:5003` when run directly.
 
-Current source note:
+## Alternative Entrypoints
 
-- the checked-in `if __name__ == "__main__"` block runs the dev server on `127.0.0.1:5003`
-
-## Running With Waitress or Gunicorn
-
-The top of `app.py` includes a note showing a Waitress-style entrypoint:
+The source also contains a Waitress-style example near the top of `app.py`:
 
 ```bash
 waitress-serve --listen=127.0.0.1:5002 app:app
 ```
 
-This means the documented Waitress example and the current `python app.py` dev port are not identical; choose one intentionally for your environment.
+The repository root includes a `Procfile` using `gunicorn app:app --timeout 900`. Treat production entrypoints as deployment choices that still need environment-specific validation.
 
-No `Procfile` is currently present in the repository root, and `gunicorn` is not listed in `requirements.txt`. If you want Gunicorn in production, add and test it explicitly rather than assuming it is already configured.
+## Local SQLite Mode
 
-## Procfile Notes
+Local mode uses `viral_data.db` directly. At minimum, confirm:
 
-- The repository root now includes `Procfile` for the main V-LiSEMOD Flask app using `gunicorn app:app`.
-- A separate `Procfile.randy` is also available for RANDY-only deployment and uses `gunicorn app:APP --chdir RANDY ...`.
-- Heroku only consumes a root `Procfile`, so separate Heroku apps still need an explicit deployment workflow:
-  - deploy V-LiSEMOD with the root `Procfile`
-  - deploy RANDY from a repo layout, branch, or build step that makes the `Procfile.randy` command the active web process
+1. the database file exists,
+2. the expected tables are present,
+3. generated output folders are writable, and
+4. optional modules remain disabled unless intentionally provisioned.
 
-## GitHub-First Deployment Workflow
+## RANDY-Backed Mode
 
-Recommended public-repo workflow:
+Selected route groups can run against a separate RANDY service using `VLISMOD_DATA_BACKEND=randy` or `auto`.
 
-1. Keep source, templates, and docs in GitHub.
-2. Keep `viral_data.db`, generated caches, model weights, and large structure assets out of the repository.
-3. Provision the runtime environment first.
-4. Upload or mount required data artifacts separately.
-5. Set environment variables in the hosting platform.
-6. Validate `/healthz` and major public pages after deploy.
+Operationally:
 
-## Heroku Dashboard Deployment From GitHub
+- `VLISMOD_BACKUP_URL` is preferred when available,
+- `RANDY_API_BASE_URL` remains useful for local development compatibility,
+- `RANDY_API_TOKEN` or compatible fallback tokens must be supplied,
+- normal PROTACability UI flows should use the compact filter, search, and detail endpoints rather than a bulk source payload.
 
-There is no Heroku-specific config file in the inspected root, but the app can still be deployed from GitHub through the Heroku dashboard if:
+Keep the documentation phrased as deployment options, not as a claim that every public deployment includes the same backend topology.
 
-1. the Python buildpack is configured,
-2. a correct start command is provided,
-3. required large data assets are provisioned outside Git,
-4. environment variables are configured in the dashboard, and
-5. writable directories exist for generated outputs if the platform filesystem allows them.
-
-Do not commit Heroku tokens, CLI auth artifacts, or platform-specific secrets.
-
-### RANDY as a Separate Service
-
-If RANDY is deployed separately from V-LiSEMOD, treat them as two Flask services with coordinated environment variables.
-
-RANDY service:
-
-- set `VLISMOD_API_TOKEN`
-- set `VLISMOD_DB_PATH`
-- confirm `GET /backup/vlismod/health` and authenticated `GET /backup/vlismod/db-health`
-- preserve `/api/vlismod/*` only as a compatibility alias if useful
-
-V-LiSEMOD service:
-
-- set `VLISMOD_DATA_BACKEND=randy` for strict remote mode or `VLISMOD_DATA_BACKEND=auto` for fallback mode
-- set `VLISMOD_BACKUP_URL=https://randy.rove-vernier.ts.net/backup/vlismod`
-- set `RANDY_API_TOKEN`
-- set `RANDY_API_TIMEOUT_SECONDS=45` or higher if large comparison or PROTACability payloads need more than the default client timeout
-- optionally keep `RANDY_API_BASE_URL` only for local/dev compatibility
-- For PROTACability on Heroku, normal UI calls must use the compact RANDY endpoints (`/protacability/filter-options`, `/protacability/search`, and targeted detail routes). Do not point filter loading or initial result rendering at `/protacability/source`.
-- Treat `/protacability/source` as a debug or bounded export helper, not as a page-load API. Pulling the full source payload through Heroku can trigger H12 timeouts and R14/R15 memory failures.
-- keep `viral_data.db` available only if you want local fallback when using `auto`
-
-Route groups now migrated for strict `randy` mode:
-
-- homepage lookup routes and ligand/PDB lookup helpers
-- Compare Ligands AJAX routes, including ligand synonyms, ligand info, ligand options, chart/interactions payloads, and SMILES lookup helpers
-- ligand image generation and PyMOL session data loading
-- Protein Query filter/export routes
-- PROTACability filter, search, detail, and export routes
-
-Still intentionally local or deferred:
-
-- debug-only routes under `/api/debug/*`
-- local coordinate-file and cached SDF file generation
-- any route that depends on local coordinate assets rather than SQLite
-
-Suggested local verification flow:
-
-```bash
-export VLISMOD_API_TOKEN="dev-token"
-export VLISMOD_DB_PATH="../viral_data.db"
-python RANDY/app.py
-```
-
-Then in a second shell:
-
-```bash
-export VLISMOD_DATA_BACKEND=auto
-export VLISMOD_BACKUP_URL="http://127.0.0.1:8787/backup/vlismod"
-export RANDY_API_TOKEN="dev-token"
-python app.py
-```
-
-Base-URL precedence in the app:
-
-1. `VLISMOD_BACKUP_URL`
-2. `RANDY_API_BASE_URL`
-3. local-only behavior when RANDY mode is not configured
-
-If you set `VLISMOD_BACKUP_URL`, the client appends route names like `viruses` or `pdb-codes` directly under that base, which avoids `/api/vlismod` double-prefix bugs.
-
-### Storage Caveat For Heroku
-
-RANDY currently reads a SQLite file from `VLISMOD_DB_PATH`. That is workable for local testing and for a persistent non-Heroku host, but it is not a durable Heroku storage strategy by itself.
-
-Key implications:
-
-- Heroku dyno filesystems are ephemeral, so a database copied onto a dyno will not be durable across restarts or deploys.
-- Bundling a large SQLite file into the slug risks slug-size and startup-time issues, and the file remains effectively immutable at runtime.
-- If the durable database stays on another machine, Heroku will need a reachable API layer or another transport path to access that data safely.
-- If long-term hosted durability is required, plan a persistent database or object-storage-backed strategy before production rollout.
-
-## Azure Notes
-
-No Azure-specific deployment configuration was identified during inspection. If Azure App Service or a container-based deployment is used later, keep in mind:
-
-- the app depends on local writable/cache directories unless adapted,
-- SQLite and large structure assets may not be ideal for highly ephemeral instances,
-- optional local-model serving is likely too heavy for default lightweight deployments.
-
-## Health Check Route
+## Health and Smoke Checks
 
 Confirmed route:
 
 - `/healthz`
 
-Use this as a basic deployment smoke check after startup.
+Recommended smoke checks after startup:
 
-## Large File / Data Handling
+1. `/healthz`
+2. `/`
+3. `/query_protein_virus_page`
+4. `/ligand_indexer`
+5. `/compare_ligands`
+6. `/protacability_page`
+7. `/drugapp/` only if the optional module is intentionally enabled
 
-The repository expects significant local data outside the public source footprint:
+## Data Provisioning Expectations
+
+The application expects significant local or provisioned data outside the public source tree, including:
 
 - `viral_data.db`
 - `PDB_FILES/`
-- generated caches and exports in `static/` and output folders
+- generated caches and export directories
 
-Treat these as provisioned runtime assets. Public GitHub should carry code and docs, not bulk regenerated datasets.
+Treat these as runtime assets. Public GitHub should carry source and documentation, not local databases or bulk regenerated outputs.
 
 ## Common Deployment Pitfalls
 
 ### Missing database
 
-- Symptom: query pages load poorly or endpoints fail when `viral_data.db` is absent or incomplete.
-- Fix: provide a valid local database before starting the app.
+- Symptom: query pages or API routes return empty or degraded results.
+- Fix: provide a valid local database or a working RANDY-backed data source.
 
-### Missing environment variables
+### Missing generated-folder permissions
 
-- Symptom: weak anonymous session security, incorrect external handoff URL, or optional modules not behaving as intended.
-- Fix: set `FLASK_SECRET_KEY` and any feature flags explicitly in the deployment environment.
+- Symptom: chart generation, ligand imagery, cached coordinates, or PyMOL-oriented exports fail.
+- Fix: ensure writable directories exist for runtime-generated artifacts.
 
-### Optional model loading
+### Optional assistant accidentally enabled
 
-- Symptom: `/drugapp/` fails or local startup becomes heavy.
+- Symptom: startup becomes heavy or `/drugapp/` fails due to missing model/runtime dependencies.
 - Fix: keep `ENABLE_DRUG_GPT=0` and `ENABLE_LOCAL_LLM=0` for lightweight public deployments unless the model runtime is intentionally provisioned.
 
-### Drug GPT disabled/enabled routes
+### RANDY mode misconfiguration
 
-- Symptom: UI surfaces check `/drugapp/` and may show an unavailable assistant state.
-- Fix: this is expected when the module is disabled. If enabling it, verify both the nav flags and runtime dependencies.
+- Symptom: lookup and PROTACability routes fail or time out.
+- Fix: verify base URL, token configuration, timeout, and route compatibility between V-LiSEMOD and RANDY.
 
-### Generated folders not writable
+## Production-Readiness Caveat
 
-- Symptom: chart generation, cached coordinates, ligand SDF generation, or session exports fail.
-- Fix: ensure runtime write access for generated output directories or refactor paths for your hosting platform.
+This repository supports research-oriented deployment, but public documentation should not imply production-hardened infrastructure, durable hosted storage, formal API guarantees, or enterprise security controls unless those have been implemented and separately validated.
