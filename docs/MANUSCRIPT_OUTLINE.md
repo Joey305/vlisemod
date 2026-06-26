@@ -78,12 +78,13 @@ Viral protein-ligand co-crystal structures contain useful medicinal chemistry an
 
 ## Figure Ideas
 
-1. Platform overview schematic linking structure input, evidence layers, and design handoff
-2. Application map covering the main user workflows
-3. Ligand-centered evidence view with interactions, SASA, and functional groups
-4. Cross-structure ligand comparison view
-5. PROTACability interpretation figure with explicit heuristic guardrails
-6. Companion-tool ecosystem figure linking V-LiSEMOD, Warhead Hunter, PROTAC Builder, and E3 Ligandalyzer
+1. Connected ecosystem overview including V-LiSEMOD, Warhead Hunter, PROTAC Builder, E3 Ligandalyzer, and PyMACS
+2. Application map covering the main V-LiSEMOD user workflows
+3. Warhead Hunter workflow and results-library figure
+4. V-LiSEMOD workflow composite with Structure Explorer, Protein Query, Ligand Indexer, Ligand Comparison, and PROTACability
+5. PROTAC Builder downstream continuation figure
+6. E3 Ligandalyzer and PyMACS companion-context figure
+7. Public API or reproducibility evidence figure using lightweight public endpoint checks
 
 ## Keywords
 

@@ -80,6 +80,33 @@
 - PROTACability table and detail-view examples
 - companion-tool handoff screenshots or URLs
 - route and feature inventory for software description
+- live URL checks for companion tools
+- lightweight public API evidence where safe
+
+## 4A. Current Screenshot and URL Evidence Status
+
+- Warhead Hunter public pages were checked and captured for home, hunter, browse, examples, and API docs.
+- V-LiSEMOD public pages were checked and captured for home, about, Protein Query, Ligand Indexer, Ligand Comparison, and PROTACability.
+- V-LiSEMOD `/healthz` was captured as text evidence.
+- V-LiSEMOD `/drugapp/` returned `503` during this capture session and was documented as optional-disabled behavior.
+- PROTAC Builder public home and builder pages were captured.
+- E3 Ligandalyzer public home and explorer pages were captured.
+- PyMACS was captured as a GitHub repository landing page rather than a live app.
+- AutoDock-Vina PrepServer screenshots remain pending because the current workspace did not contain that application.
+
+## 4B. API Evidence Gathered
+
+- `docs/manuscript/figures/api_evidence/warhead_api_health.json`
+- `docs/manuscript/figures/api_evidence/warhead_api_manifest.json`
+- `docs/manuscript/figures/api_evidence/warhead_api_examples.json`
+- `docs/manuscript/figures/api_evidence/vlisemod_healthz.txt`
+
+## 4C. Next Validation Steps Before Drafting
+
+- review all raw screenshots for readability and public-only content
+- decide which crops should become final manuscript panels
+- recapture any pages where sticky or modal overlays reduce clarity
+- regenerate the AutoDock-Vina PrepServer figure slot once the correct local app is available
 
 ## 5. Reproducibility Checklist
 

@@ -2,6 +2,15 @@
 
 ## Figures
 
+## Figure-package status update
+
+- Public screenshot evidence now exists for Warhead Hunter, V-LiSEMOD, PROTAC Builder, E3 Ligandalyzer, PyMACS, and Warhead Hunter API docs.
+- A rough ecosystem composite exists at `docs/manuscript/figures/annotated/fig01_ecosystem_overview_draft.png`.
+- Cropped manuscript-oriented panels now exist for Warhead Hunter, V-LiSEMOD, PROTAC Builder, E3 Ligandalyzer, and PyMACS.
+- The AutoDock-Vina PrepServer figure slot remains pending because the current workspace is V-LiSEMOD rather than the local AutoDock application named in the prompt.
+- Several long raw screenshots need crop-based use because sticky or dynamic layouts repeated sections during full-page capture.
+- E3 Ligandalyzer and PROTAC Builder captures are usable for draft figures but may merit recapture for cleaner no-overlay or post-modal panels.
+
 ### Figure 1. Platform overview schematic
 
 - Purpose: show the end-to-end logic from viral protein-ligand structure input to evidence review and companion-tool handoff.
@@ -55,6 +64,15 @@
 - Screenshot or data needed: simple ecosystem diagram.
 - Draft caption: “Positioning of V-LiSEMOD alongside companion tools supporting downstream warhead, PROTAC, and E3-ligand exploration workflows.”
 - Overclaiming risk: medium if the figure implies deeper technical integration than currently documented.
+
+### Figure 7. Public API and reproducibility evidence figure
+
+- Purpose: document that selected public documentation and lightweight endpoint surfaces are reachable.
+- Source material needed: Warhead Hunter API docs, small public endpoint captures, and V-LiSEMOD `/healthz`.
+- Evidence already exists: yes.
+- Screenshot or data needed: one API-doc screenshot plus small endpoint evidence files.
+- Draft caption: “Public documentation and lightweight endpoint checks supporting software-availability and reproducibility-oriented manuscript evidence.”
+- Overclaiming risk: medium if framed as production-scale API validation rather than lightweight public evidence.
 
 ## Tables
 
