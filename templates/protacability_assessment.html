@@ -1385,6 +1385,11 @@
             $('#protac-filter-feedback').text(message || '');
         }
 
+        function markProtacFiltersPending() {
+            protacState.offset = 0;
+            setFilterFeedback('Filter changes pending. Click Apply Filters to update results.');
+        }
+
         function ensureSelect2($el, placeholder) {
             const config = { placeholder: placeholder, width: '100%' };
             if (!$el.prop('multiple')) config.allowClear = true;
@@ -1590,15 +1595,18 @@
                 });
             }, 'Preparing target summaries…', { immediate: true });
 
+            $('#protacability-filter-form').on('submit', function(event) {
+                event.preventDefault();
+                protacState.offset = 0;
+                runProtacRefreshAndSearch('Parsing your search…');
+            });
             $('#protac-virus-name, #protac-protein-type, #protac-tier, #protac-readiness-tier, #protac-warhead-tier, #protac-evidence-level, #protac-smiles-source, #protac-ligand-filter, #protac-ligand-context-class, #protac-ligand-presence').on('change', function() {
                 if (refreshingFilterOptions) return;
-                protacState.offset = 0;
-                refreshDynamicFilterOptions({ loadingMessage: 'Parsing your search…' });
+                markProtacFiltersPending();
             });
             $('#toggle-collapse-labels, #toggle-has-exposed-lysine, #toggle-has-ligand-proximal-exposed-lysine, #toggle-has-candidate-linker-atoms, #toggle-has-solvent-exposed-ligand-atoms, #toggle-has-mapped-atoms, #toggle-has-valid-rdkit-smiles, #toggle-has-exposed-target-lysines').on('change', function() {
                 if (refreshingFilterOptions) return;
-                protacState.offset = 0;
-                refreshDynamicFilterOptions({ loadingMessage: 'Parsing your search…' });
+                markProtacFiltersPending();
             });
 
             $('.protac-view-button').on('click', function() {
