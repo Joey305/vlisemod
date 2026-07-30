@@ -96,6 +96,53 @@ def get_best_attachment_atoms(conn: sqlite3.Connection, analysis_id: int, limit:
     ]
 
 
+def get_attachment_summary(
+    conn: sqlite3.Connection,
+    *,
+    pdb_code: str,
+    ligand_resname: str,
+    ligand_chain: str,
+    ligand_residue_id: int,
+    model_id: int = 0,
+    ligand_insertion_code: str = "",
+    method_version: str = "attachment_v1_1",
+) -> dict[str, Any] | None:
+    rows = _rows(
+        conn,
+        """
+        SELECT
+            analysis_id,
+            pdb_code,
+            model_id,
+            ligand_chain,
+            ligand_residue_id,
+            ligand_insertion_code,
+            ligand_resname,
+            has_attachment_site_evidence,
+            attachment_region_count,
+            candidate_atom_count AS attachment_candidate_atom_count,
+            best_attachment_score,
+            best_attachment_confidence,
+            method_version AS attachment_method_version,
+            instance_resolution_status,
+            instance_resolution_method,
+            instance_ambiguity_flag,
+            eligibility_status,
+            analysis_status
+        FROM protacability_attachment_analysis
+        WHERE pdb_code=?
+          AND model_id=?
+          AND ligand_chain=?
+          AND ligand_residue_id=?
+          AND ligand_insertion_code=?
+          AND ligand_resname=?
+          AND method_version=?
+        """,
+        (pdb_code, model_id, ligand_chain, ligand_residue_id, ligand_insertion_code, ligand_resname, method_version),
+    )
+    return dict(rows[0]) if rows else None
+
+
 def atoms_in_region(conn: sqlite3.Connection, analysis_id: int, region_id: str) -> list[dict[str, Any]]:
     return [
         dict(row)

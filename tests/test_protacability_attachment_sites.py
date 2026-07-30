@@ -18,6 +18,7 @@ from build_protacability_attachment_sites import score_atoms  # noqa: E402
 from ligand_smiles_graph_schema import apply_schema as apply_graph_schema  # noqa: E402
 from protacability_attachment_queries import (  # noqa: E402
     get_analysis,
+    get_attachment_summary,
     get_attachment_atoms,
     get_attachment_regions,
 )
@@ -324,6 +325,15 @@ class ProtacabilityAttachmentSiteTests(unittest.TestCase):
             )
             self.assertIsNotNone(analysis)
             self.assertEqual(analysis["analysis_status"], "completed")
+            summary = get_attachment_summary(
+                conn,
+                pdb_code="T001",
+                ligand_resname="LIG",
+                ligand_chain="A",
+                ligand_residue_id=1,
+            )
+            self.assertEqual(summary["attachment_method_version"], "attachment_v1_1")
+            self.assertEqual(summary["instance_resolution_status"], "resolved")
             regions = get_attachment_regions(conn, analysis["analysis_id"])
             self.assertGreaterEqual(len(regions), 2)
             atom_rows = get_attachment_atoms(conn, analysis["analysis_id"])
