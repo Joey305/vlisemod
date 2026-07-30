@@ -12,8 +12,11 @@ import argparse
 import csv
 import json
 import math
+import os
+import shlex
 import sqlite3
 import sys
+import time
 from collections import Counter, defaultdict, deque
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -23,7 +26,7 @@ from typing import Any
 from protacability_attachment_schema import apply_schema
 
 
-METHOD_VERSION = "attachment_v1"
+METHOD_VERSION = "attachment_v1_1"
 GRAPH_VERSION = "v1"
 
 STRONG_CONTACT_TYPES = {
@@ -68,6 +71,7 @@ class LigandInstance:
     atom_count: int
     heavy_atom_count: int
     bond_count: int
+    collision_group_size: int = 1
 
     @property
     def key(self) -> tuple[str, int, str, int, str, str]:
@@ -123,6 +127,10 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--report-path", help="Write JSON summary report to this path.")
     parser.add_argument("--failure-report", help="Write CSV failure report to this path.")
+    parser.add_argument("--inventory-report", help="Write JSON inventory/classification report to this path.")
+    parser.add_argument("--progress-path", help="Write machine-readable progress JSON during processing.")
+    parser.add_argument("--batch-size", type=int, default=250, help="Commit interval in write mode.")
+    parser.add_argument("--cif-root", default="PDB_FILES", help="Local mmCIF/PDB structure root for collision resolution.")
     parser.add_argument("--routine-density", type=int, default=960)
     parser.add_argument("--validation-density", type=int, default=1920)
     parser.add_argument("--use-validation-density", action="store_true")
@@ -230,6 +238,26 @@ def discover_instances(conn: sqlite3.Connection, args: argparse.Namespace) -> li
             bond_count=int(row["bond_count"]),
         )
         for row in rows
+    ]
+    collision_counts = Counter((inst.pdb_code, inst.model_id, inst.ligand_chain, inst.ligand_resname) for inst in instances)
+    instances = [
+        LigandInstance(
+            source_row_id=inst.source_row_id,
+            pdb_code=inst.pdb_code,
+            model_id=inst.model_id,
+            ligand_chain=inst.ligand_chain,
+            ligand_residue_id=inst.ligand_residue_id,
+            ligand_insertion_code=inst.ligand_insertion_code,
+            ligand_resname=inst.ligand_resname,
+            graph_id=inst.graph_id,
+            mapping_status=inst.mapping_status,
+            source_smiles=inst.source_smiles,
+            atom_count=inst.atom_count,
+            heavy_atom_count=inst.heavy_atom_count,
+            bond_count=inst.bond_count,
+            collision_group_size=collision_counts[(inst.pdb_code, inst.model_id, inst.ligand_chain, inst.ligand_resname)],
+        )
+        for inst in instances
     ]
     if not args.pdb_code and not args.ligand_resname and args.limit:
         return select_representative_pilot(conn, instances, args.limit)
@@ -345,7 +373,250 @@ def graph_distance(adj: dict[int, set[int]], source: int, target: int) -> int | 
     return None
 
 
-def load_atom_context(conn: sqlite3.Connection, inst: LigandInstance) -> list[dict[str, Any]]:
+@dataclass
+class InstanceResolution:
+    status: str
+    method: str
+    ambiguity_flag: int
+    coordinate_source: str
+    mapping_source: str
+    notes: str
+    structure_path: str | None = None
+    atom_records: list[dict[str, Any]] | None = None
+
+
+def find_structure_file(cif_root: Path, pdb_code: str) -> Path | None:
+    pdb = pdb_code.upper()
+    matches = sorted(cif_root.glob(f"**/{pdb}.cif"))
+    if matches:
+        return matches[0]
+    matches = sorted(cif_root.glob(f"**/{pdb}.pdb"))
+    return matches[0] if matches else None
+
+
+def parse_mmcif_atom_site(cif_path: Path) -> list[dict[str, Any]]:
+    lines = cif_path.read_text(errors="ignore").splitlines()
+    atoms: list[dict[str, Any]] = []
+    i = 0
+    while i < len(lines):
+        if lines[i].strip() != "loop_":
+            i += 1
+            continue
+        i += 1
+        headers = []
+        while i < len(lines) and lines[i].strip().startswith("_"):
+            headers.append(lines[i].strip())
+            i += 1
+        if not headers or not any(header.startswith("_atom_site.") for header in headers):
+            continue
+        header_index = {name: idx for idx, name in enumerate(headers)}
+        while i < len(lines):
+            line = lines[i].strip()
+            if not line:
+                i += 1
+                continue
+            if line == "#" or line == "loop_" or line.startswith("_"):
+                break
+            parts = shlex.split(line)
+            if len(parts) >= len(headers):
+                def get(name: str, default: str = "") -> str:
+                    idx = header_index.get(name)
+                    if idx is None or idx >= len(parts):
+                        return default
+                    value = parts[idx]
+                    return "" if value in {".", "?"} else value
+                atoms.append({
+                    "group_PDB": get("_atom_site.group_PDB"),
+                    "atom_id": safe_int(get("_atom_site.id"), -1),
+                    "element": get("_atom_site.type_symbol"),
+                    "atom_name": get("_atom_site.auth_atom_id") or get("_atom_site.label_atom_id"),
+                    "resname": get("_atom_site.auth_comp_id") or get("_atom_site.label_comp_id"),
+                    "chain": get("_atom_site.auth_asym_id") or get("_atom_site.label_asym_id"),
+                    "residue_id": safe_int(get("_atom_site.auth_seq_id") or get("_atom_site.label_seq_id"), -999999),
+                    "insertion_code": get("_atom_site.pdbx_PDB_ins_code"),
+                    "model_id": safe_int(get("_atom_site.pdbx_PDB_model_num"), 1) - 1,
+                    "x": float(get("_atom_site.Cartn_x", "nan")),
+                    "y": float(get("_atom_site.Cartn_y", "nan")),
+                    "z": float(get("_atom_site.Cartn_z", "nan")),
+                })
+            i += 1
+    return atoms
+
+
+def resolve_instance(
+    conn: sqlite3.Connection,
+    inst: LigandInstance,
+    cif_root: Path,
+    structure_cache: dict[str, tuple[Path | None, list[dict[str, Any]]]],
+) -> InstanceResolution:
+    if inst.collision_group_size <= 1:
+        return InstanceResolution(
+            status="resolved",
+            method="existing_database_identity",
+            ambiguity_flag=0,
+            coordinate_source="ligand_atoms_by_unique_pdb_ligand_chain",
+            mapping_source="SMILES_MAP_PDB_by_pdb_ligand_chain_atom_id",
+            notes="No same-PDB/model/chain/ligand-resname collision in Ligand_Atoms_Smiles inventory.",
+        )
+    if inst.mapping_status == "no_pdb_to_smiles_mapping":
+        return InstanceResolution(
+            status="unresolved",
+            method="safe_exclusion_no_mapping",
+            ambiguity_flag=1,
+            coordinate_source="none",
+            mapping_source="none",
+            notes="Repeated ligand instance has no PDB-to-SMILES mapping; excluded before atom-level analysis.",
+        )
+
+    pdb = inst.pdb_code.upper()
+    if pdb not in structure_cache:
+        path = find_structure_file(cif_root, pdb)
+        structure_cache[pdb] = (path, parse_mmcif_atom_site(path) if path and path.suffix.lower() == ".cif" else [])
+    path, atom_site = structure_cache[pdb]
+    if path is None or not atom_site:
+        return InstanceResolution(
+            status="unresolved",
+            method="safe_exclusion_missing_structure_file",
+            ambiguity_flag=1,
+            coordinate_source="none",
+            mapping_source="none",
+            notes="Same-ligand/same-chain collision cannot be separated without a local mmCIF atom_site record.",
+        )
+
+    residue_atoms = [
+        atom for atom in atom_site
+        if atom["chain"] == inst.ligand_chain
+        and atom["resname"] == inst.ligand_resname
+        and atom["residue_id"] == inst.ligand_residue_id
+        and atom["insertion_code"] == inst.ligand_insertion_code
+        and atom["element"].upper() != "H"
+        and atom["atom_id"] >= 0
+    ]
+    if not residue_atoms:
+        return InstanceResolution(
+            status="unresolved",
+            method="safe_exclusion_structure_residue_not_found",
+            ambiguity_flag=1,
+            coordinate_source=str(path),
+            mapping_source="none",
+            notes="No matching ligand residue found in mmCIF atom_site for the full instance key.",
+            structure_path=str(path),
+        )
+
+    name_to_smiles: dict[str, int] = {}
+    for row in conn.execute(
+        """
+        SELECT exact_atom, smiles_atom_index
+        FROM SMILES_MAP_PDB
+        WHERE pdb_id=? AND ligand=? AND chain=?
+          AND smiles_atom_index IS NOT NULL
+        """,
+        (inst.pdb_code, inst.ligand_resname, inst.ligand_chain),
+    ):
+        name = norm_text(row["exact_atom"])
+        if name and name not in name_to_smiles:
+            name_to_smiles[name] = safe_int(row["smiles_atom_index"], -1)
+    if not name_to_smiles:
+        return InstanceResolution(
+            status="unresolved",
+            method="safe_exclusion_no_atom_name_mapping",
+            ambiguity_flag=1,
+            coordinate_source=str(path),
+            mapping_source="none",
+            notes="Structure residue exists but SMILES_MAP_PDB has no atom-name mapping for this ligand.",
+            structure_path=str(path),
+        )
+    resolved_atoms = []
+    for atom in residue_atoms:
+        smiles_idx = name_to_smiles.get(atom["atom_name"])
+        if smiles_idx is None or smiles_idx < 0:
+            continue
+        resolved_atoms.append({**atom, "smiles_atom_index": smiles_idx})
+    if not resolved_atoms:
+        return InstanceResolution(
+            status="unresolved",
+            method="safe_exclusion_structure_mapping_mismatch",
+            ambiguity_flag=1,
+            coordinate_source=str(path),
+            mapping_source="SMILES_MAP_PDB_atom_name_to_smiles_index",
+            notes="No structure atom names matched the PDB-to-SMILES atom-name mapping.",
+            structure_path=str(path),
+        )
+    return InstanceResolution(
+        status="resolved",
+        method="structure_file_atom_site",
+        ambiguity_flag=0,
+        coordinate_source=str(path),
+        mapping_source="SMILES_MAP_PDB_atom_name_to_smiles_index",
+        notes=f"Resolved repeated ligand instance using mmCIF atom_site residue {inst.ligand_chain}/{inst.ligand_resname}/{inst.ligand_residue_id}.",
+        structure_path=str(path),
+        atom_records=resolved_atoms,
+    )
+
+
+def load_atom_context(
+    conn: sqlite3.Connection,
+    inst: LigandInstance,
+    resolution: InstanceResolution,
+) -> list[dict[str, Any]]:
+    if resolution.atom_records is not None:
+        atom_rows = []
+        for atom in resolution.atom_records:
+            serial = int(atom["atom_id"])
+            graph_atom = conn.execute(
+                """
+                SELECT is_aromatic, is_in_ring, degree, element
+                FROM Ligand_SMILES_Atoms
+                WHERE graph_id=? AND smiles_atom_index=?
+                """,
+                (inst.graph_id, atom["smiles_atom_index"]),
+            ).fetchone()
+            if graph_atom is None:
+                continue
+            sasa = conn.execute(
+                """
+                SELECT SASA_Area
+                FROM RUPLEY_SASA_DATA
+                WHERE pdb_id=? AND ligand=? AND chain=? AND atom_id=?
+                LIMIT 1
+                """,
+                (inst.pdb_code, inst.ligand_resname, inst.ligand_chain, serial),
+            ).fetchone()
+            exposed = conn.execute(
+                """
+                SELECT 1
+                FROM solvent_exposed_atoms
+                WHERE pdb_id=? AND ligand=? AND chain=? AND atom_id=?
+                LIMIT 1
+                """,
+                (inst.pdb_code, inst.ligand_resname, inst.ligand_chain, serial),
+            ).fetchone()
+            db_atom = conn.execute(
+                """
+                SELECT rowid
+                FROM ligand_atoms
+                WHERE pdb_id=? AND ligand=? AND chain=? AND atom_id=?
+                LIMIT 1
+                """,
+                (inst.pdb_code, inst.ligand_resname, inst.ligand_chain, serial),
+            ).fetchone()
+            atom_rows.append({
+                "database_atom_id": None if db_atom is None else db_atom["rowid"],
+                "pdb_atom_serial": serial,
+                "pdb_atom_name": atom["atom_name"],
+                "element": atom["element"] or graph_atom["element"],
+                "x": atom["x"],
+                "y": atom["y"],
+                "z": atom["z"],
+                "smiles_atom_index": atom["smiles_atom_index"],
+                "is_aromatic": graph_atom["is_aromatic"],
+                "is_in_ring": graph_atom["is_in_ring"],
+                "degree": graph_atom["degree"],
+                "complex_sasa": None if sasa is None else sasa["SASA_Area"],
+                "existing_exposed_atom_status": 0 if exposed is None else 1,
+            })
+        return atom_rows
+
     rows = conn.execute(
         """
         SELECT
@@ -812,10 +1083,20 @@ def evaluate_instance(
     inst: LigandInstance,
     method_version: str,
     params: dict[str, Any],
+    resolution: InstanceResolution,
     contact_cache: dict[tuple[str, str, str, int], dict[int, dict[str, Any]]] | None = None,
     functional_group_cache: dict[tuple[str, str, str], dict[int, list[str]]] | None = None,
 ) -> dict[str, Any]:
-    atoms = load_atom_context(conn, inst)
+    if resolution.status != "resolved":
+        return skipped_result(
+            inst,
+            method_version,
+            params,
+            resolution,
+            "ambiguous_ligand_instance" if resolution.ambiguity_flag else "no_mapping",
+            resolution.notes,
+        )
+    atoms = load_atom_context(conn, inst, resolution)
     completeness = {
         "graph_assignment_mapping_status": inst.mapping_status,
         "mapped_heavy_atoms": len(atoms),
@@ -825,11 +1106,15 @@ def evaluate_instance(
         "missing_complex_sasa_atoms": sum(1 for atom in atoms if atom.get("complex_sasa") is None),
         "contact_source_rows": 0,
         "functional_group_atoms": 0,
-        "coordinate_source": "ligand_atoms_by_pdb_ligand_chain",
-        "instance_specific_coordinate_caveat": "ligand_atoms and SMILES_MAP_PDB do not include ligand_residue_id",
+        "coordinate_source": resolution.coordinate_source,
+        "mapping_source": resolution.mapping_source,
+        "instance_resolution_status": resolution.status,
+        "instance_resolution_method": resolution.method,
+        "instance_ambiguity_flag": resolution.ambiguity_flag,
+        "resolution_notes": resolution.notes,
     }
     if not atoms:
-        raise ValueError("No mapped ligand heavy atoms were found for the instance.")
+        return skipped_result(inst, method_version, params, resolution, "no_mapping", "No mapped ligand heavy atoms were found for the instance.")
     contacts = (
         contact_cache.get(contact_cache_key(inst), {})
         if contact_cache is not None
@@ -860,6 +1145,8 @@ def evaluate_instance(
     return {
         "instance": inst,
         "analysis_status": "completed",
+        "eligibility_status": "full_analysis_eligible" if completeness["complete_pdb_to_smiles_mapping"] else "limited_analysis_eligible",
+        "skip_reason": None,
         "mapping_status": inst.mapping_status,
         "source_data_completeness": completeness,
         "has_attachment_site_evidence": int(bool(region_summaries and candidates)),
@@ -872,11 +1159,59 @@ def evaluate_instance(
         "contact_source": "Arpeggio_Contacts_Data",
         "method_version": method_version,
         "calculation_parameters": params,
+        "resolution": resolution,
         "atoms": atoms,
         "regions": region_summaries,
         "prototype_region_mapping": prototype_region_mapping(region_summaries)
         if inst.pdb_code == "3EKY" and inst.ligand_resname == "DR7"
         else {},
+    }
+
+
+def skipped_result(
+    inst: LigandInstance,
+    method_version: str,
+    params: dict[str, Any],
+    resolution: InstanceResolution,
+    eligibility_status: str,
+    skip_reason: str,
+) -> dict[str, Any]:
+    return {
+        "instance": inst,
+        "analysis_status": "skipped",
+        "eligibility_status": eligibility_status,
+        "skip_reason": skip_reason,
+        "mapping_status": inst.mapping_status,
+        "source_data_completeness": {
+            "graph_assignment_mapping_status": inst.mapping_status,
+            "mapped_heavy_atoms": 0,
+            "graph_heavy_atoms": inst.heavy_atom_count,
+            "complete_pdb_to_smiles_mapping": False,
+            "complex_sasa_atoms": 0,
+            "missing_complex_sasa_atoms": inst.heavy_atom_count,
+            "contact_source_rows": 0,
+            "functional_group_atoms": 0,
+            "coordinate_source": resolution.coordinate_source,
+            "mapping_source": resolution.mapping_source,
+            "instance_resolution_status": resolution.status,
+            "instance_resolution_method": resolution.method,
+            "instance_ambiguity_flag": resolution.ambiguity_flag,
+            "resolution_notes": resolution.notes,
+        },
+        "has_attachment_site_evidence": 0,
+        "attachment_region_count": 0,
+        "candidate_atom_count": 0,
+        "best_attachment_score": None,
+        "best_attachment_confidence": "none",
+        "bond_source": "Ligand_SMILES_Bonds",
+        "sasa_source": "not_evaluated",
+        "contact_source": "not_evaluated",
+        "method_version": method_version,
+        "calculation_parameters": params,
+        "resolution": resolution,
+        "atoms": [],
+        "regions": [],
+        "prototype_region_mapping": {},
     }
 
 
@@ -897,6 +1232,7 @@ def delete_version(conn: sqlite3.Connection, method_version: str) -> dict[str, i
 
 def write_result(conn: sqlite3.Connection, result: dict[str, Any], now: str) -> int:
     inst: LigandInstance = result["instance"]
+    resolution: InstanceResolution = result["resolution"]
     cur = conn.execute(
         """
         INSERT OR REPLACE INTO protacability_attachment_analysis (
@@ -905,9 +1241,13 @@ def write_result(conn: sqlite3.Connection, result: dict[str, Any], now: str) -> 
             source_data_completeness_json, has_attachment_site_evidence,
             attachment_region_count, candidate_atom_count, best_attachment_score,
             best_attachment_confidence, bond_source, sasa_source, contact_source,
-            method_version, calculation_parameters_json, generated_at
+            instance_resolution_status, instance_resolution_method,
+            instance_ambiguity_flag, coordinate_source, mapping_source,
+            resolution_notes, eligibility_status, skip_reason,
+            software_versions_json, method_version, calculation_parameters_json,
+            generated_at
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             inst.pdb_code,
@@ -928,6 +1268,18 @@ def write_result(conn: sqlite3.Connection, result: dict[str, Any], now: str) -> 
             result["bond_source"],
             result["sasa_source"],
             result["contact_source"],
+            resolution.status,
+            resolution.method,
+            resolution.ambiguity_flag,
+            resolution.coordinate_source,
+            resolution.mapping_source,
+            resolution.notes,
+            result["eligibility_status"],
+            result["skip_reason"],
+            json_text({
+                "python": sys.version.split()[0],
+                "sqlite": sqlite3.sqlite_version,
+            }),
             result["method_version"],
             json_text(result["calculation_parameters"]),
             now,
@@ -1111,6 +1463,35 @@ def audit_counts(conn: sqlite3.Connection, graph_version: str) -> dict[str, Any]
     }
 
 
+def inventory_record(result: dict[str, Any]) -> dict[str, Any]:
+    inst: LigandInstance = result["instance"]
+    completeness = result["source_data_completeness"]
+    return {
+        "pdb_code": inst.pdb_code,
+        "model_id": inst.model_id,
+        "ligand_chain": inst.ligand_chain,
+        "ligand_residue_id": inst.ligand_residue_id,
+        "ligand_insertion_code": inst.ligand_insertion_code,
+        "ligand_resname": inst.ligand_resname,
+        "graph_id": inst.graph_id,
+        "mapping_status": inst.mapping_status,
+        "coordinate_available": bool(completeness.get("mapped_heavy_atoms", 0)),
+        "stored_sasa_available": bool(completeness.get("complex_sasa_atoms", 0)),
+        "contact_data_available": bool(completeness.get("contact_source_rows", 0)),
+        "functional_group_available": bool(completeness.get("functional_group_atoms", 0)),
+        "instance_resolution_status": result["resolution"].status,
+        "instance_resolution_method": result["resolution"].method,
+        "instance_ambiguity_flag": result["resolution"].ambiguity_flag,
+        "eligibility_status": result["eligibility_status"],
+        "analysis_status": result["analysis_status"],
+        "skip_or_limitation_reason": result["skip_reason"],
+        "attachment_region_count": result["attachment_region_count"],
+        "candidate_atom_count": result["candidate_atom_count"],
+        "best_attachment_score": result["best_attachment_score"],
+        "best_attachment_confidence": result["best_attachment_confidence"],
+    }
+
+
 def main() -> int:
     args = parse_args()
     db_path = Path(args.database).expanduser().resolve()
@@ -1122,6 +1503,7 @@ def main() -> int:
     if args.replace_version:
         replace_version = method_version if args.replace_version == "__CURRENT__" else args.replace_version
     density = args.validation_density if args.use_validation_density else args.routine_density
+    cif_root = Path(args.cif_root).expanduser().resolve()
     params = {
         "method_version": method_version,
         "graph_version": args.graph_version,
@@ -1134,10 +1516,13 @@ def main() -> int:
         "region_vector_dot_min": args.region_vector_dot_min,
         "minimum_surface_sasa": args.minimum_surface_sasa,
         "surface_region_method": "region_seeded_hybrid_graph_v1",
+        "instance_resolution_method_version": "instance_resolution_v1_1",
     }
     now = utc_now()
+    start_time = time.monotonic()
     failures: list[dict[str, Any]] = []
     results: list[dict[str, Any]] = []
+    inventory: list[dict[str, Any]] = []
 
     with sqlite3.connect(db_path) as conn:
         conn.row_factory = sqlite3.Row
@@ -1152,9 +1537,12 @@ def main() -> int:
         audit = audit_counts(conn, args.graph_version)
         contact_cache = build_contact_cache(conn, instances)
         functional_group_cache = build_functional_group_cache(conn, instances)
-        for inst in instances:
+        structure_cache: dict[str, tuple[Path | None, list[dict[str, Any]]]] = {}
+        total = len(instances)
+        for pos, inst in enumerate(instances, start=1):
             savepoint_name = f"attachment_instance_{len(results) + len(failures)}"
             try:
+                resolution = resolve_instance(conn, inst, cif_root, structure_cache)
                 if write:
                     conn.execute(f"SAVEPOINT {savepoint_name}")
                 result = evaluate_instance(
@@ -1162,6 +1550,7 @@ def main() -> int:
                     inst,
                     method_version,
                     params,
+                    resolution,
                     contact_cache,
                     functional_group_cache,
                 )
@@ -1169,11 +1558,12 @@ def main() -> int:
                     write_result(conn, result, now)
                     conn.execute(f"RELEASE {savepoint_name}")
                 results.append(result)
+                inventory.append(inventory_record(result))
             except Exception as exc:
                 if write:
                     conn.execute(f"ROLLBACK TO {savepoint_name}")
                     conn.execute(f"RELEASE {savepoint_name}")
-                failures.append({
+                failure = {
                     "pdb_code": inst.pdb_code,
                     "model_id": inst.model_id,
                     "ligand_chain": inst.ligand_chain,
@@ -1183,11 +1573,46 @@ def main() -> int:
                     "graph_id": inst.graph_id,
                     "mapping_status": inst.mapping_status,
                     "error": str(exc),
+                }
+                failures.append(failure)
+                inventory.append({
+                    **{k: failure[k] for k in ("pdb_code", "model_id", "ligand_chain", "ligand_residue_id", "ligand_insertion_code", "ligand_resname", "graph_id", "mapping_status")},
+                    "eligibility_status": "failed_validation",
+                    "analysis_status": "failed",
+                    "skip_or_limitation_reason": str(exc),
+                    "instance_resolution_status": "unknown",
+                    "instance_resolution_method": "unknown",
+                    "instance_ambiguity_flag": None,
+                    "coordinate_available": False,
+                    "stored_sasa_available": False,
+                    "contact_data_available": False,
+                    "functional_group_available": False,
                 })
+            if args.progress_path and (pos == total or pos % max(1, min(args.batch_size, 100)) == 0):
+                elapsed = time.monotonic() - start_time
+                rate = pos / elapsed if elapsed else 0
+                progress = {
+                    "total_eligible": total,
+                    "completed": pos,
+                    "successful": sum(1 for result in results if result["analysis_status"] == "completed"),
+                    "limited": sum(1 for result in results if result["eligibility_status"] == "limited_analysis_eligible"),
+                    "failed": len(failures),
+                    "skipped": sum(1 for result in results if result["analysis_status"] == "skipped"),
+                    "current_instance": inst.key,
+                    "elapsed_seconds": elapsed,
+                    "estimated_time_remaining_seconds": None if not rate else (total - pos) / rate,
+                    "checkpoint_position": pos,
+                    "current_database_size": db_path.stat().st_size,
+                }
+                Path(args.progress_path).write_text(json.dumps(progress, indent=2, sort_keys=True))
+            if write and pos % args.batch_size == 0:
+                conn.commit()
         if write:
             conn.commit()
 
     status_counts = Counter(result["analysis_status"] for result in results)
+    eligibility_counts = Counter(result["eligibility_status"] for result in results)
+    resolution_counts = Counter(result["resolution"].method for result in results)
     region_counts = Counter(result["attachment_region_count"] for result in results)
     candidate_counts = Counter(result["candidate_atom_count"] for result in results)
     pilot_selection = [
@@ -1200,6 +1625,9 @@ def main() -> int:
             "ligand_resname": result["instance"].ligand_resname,
             "graph_id": result["instance"].graph_id,
             "mapping_status": result["mapping_status"],
+            "eligibility_status": result["eligibility_status"],
+            "resolution_method": result["resolution"].method,
+            "ambiguity_flag": result["resolution"].ambiguity_flag,
             "atom_count": result["instance"].atom_count,
             "region_count": result["attachment_region_count"],
             "candidate_atom_count": result["candidate_atom_count"],
@@ -1226,10 +1654,13 @@ def main() -> int:
         "instances_completed": len(results),
         "instances_failed": len(failures),
         "analysis_status_counts": dict(status_counts),
+        "eligibility_status_counts": dict(eligibility_counts),
+        "resolution_method_counts": dict(resolution_counts),
         "attachment_region_count_distribution": dict(region_counts),
         "candidate_atom_count_distribution": dict(candidate_counts),
         "pilot_selection": pilot_selection,
         "failure_count": len(failures),
+        "runtime_seconds": time.monotonic() - start_time,
         "calculation_parameters": params,
         "validation_3EKY_DR7": None if three is None else {
             "atom_count": three["instance"].atom_count,
@@ -1287,6 +1718,18 @@ def main() -> int:
     }
     if args.report_path:
         Path(args.report_path).write_text(json.dumps(report, indent=2, sort_keys=True))
+    if args.inventory_report:
+        Path(args.inventory_report).write_text(json.dumps({
+            "audit": audit,
+            "method_version": method_version,
+            "generated_at": now,
+            "inventory": inventory,
+            "summary": {
+                "total": len(inventory),
+                "eligibility_status_counts": dict(Counter(row["eligibility_status"] for row in inventory)),
+                "analysis_status_counts": dict(Counter(row["analysis_status"] for row in inventory)),
+            },
+        }, indent=2, sort_keys=True))
     write_failure_report(args.failure_report, failures)
     print(json.dumps(report, indent=2, sort_keys=True))
     return 1 if failures else 0

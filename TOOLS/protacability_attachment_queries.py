@@ -27,7 +27,7 @@ def get_analysis(
     ligand_residue_id: int,
     model_id: int = 0,
     ligand_insertion_code: str = "",
-    method_version: str = "attachment_v1",
+    method_version: str = "attachment_v1_1",
 ) -> dict[str, Any] | None:
     rows = _rows(
         conn,

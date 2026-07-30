@@ -360,10 +360,13 @@ class ProtacabilityAttachmentSiteTests(unittest.TestCase):
 
     def test_batch_failure_isolation(self):
         result = self._run_builder("--limit", "2", "--routine-density", "80")
-        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         report = json.loads(result.stdout)
-        self.assertEqual(report["instances_completed"], 1)
-        self.assertEqual(report["instances_failed"], 1)
+        self.assertEqual(report["instances_completed"], 2)
+        self.assertEqual(report["instances_failed"], 0)
+        self.assertEqual(report["analysis_status_counts"]["completed"], 1)
+        self.assertEqual(report["analysis_status_counts"]["skipped"], 1)
+        self.assertEqual(report["eligibility_status_counts"]["no_mapping"], 1)
 
     def test_zero_isolated_sasa_and_missing_sasa_are_not_positive_evidence(self):
         atoms = [

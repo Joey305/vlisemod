@@ -40,6 +40,15 @@ CREATE_STATEMENTS = (
         bond_source TEXT NOT NULL,
         sasa_source TEXT NOT NULL,
         contact_source TEXT NOT NULL,
+        instance_resolution_status TEXT NOT NULL DEFAULT 'not_recorded',
+        instance_resolution_method TEXT NOT NULL DEFAULT 'not_recorded',
+        instance_ambiguity_flag INTEGER NOT NULL DEFAULT 0,
+        coordinate_source TEXT NOT NULL DEFAULT 'not_recorded',
+        mapping_source TEXT NOT NULL DEFAULT 'not_recorded',
+        resolution_notes TEXT,
+        eligibility_status TEXT NOT NULL DEFAULT 'not_recorded',
+        skip_reason TEXT,
+        software_versions_json TEXT NOT NULL DEFAULT '{}',
         method_version TEXT NOT NULL,
         calculation_parameters_json TEXT NOT NULL,
         generated_at TEXT NOT NULL,
@@ -129,6 +138,19 @@ CREATE_STATEMENTS = (
 )
 
 
+ANALYSIS_ADDED_COLUMNS = (
+    ("instance_resolution_status", "TEXT NOT NULL DEFAULT 'not_recorded'"),
+    ("instance_resolution_method", "TEXT NOT NULL DEFAULT 'not_recorded'"),
+    ("instance_ambiguity_flag", "INTEGER NOT NULL DEFAULT 0"),
+    ("coordinate_source", "TEXT NOT NULL DEFAULT 'not_recorded'"),
+    ("mapping_source", "TEXT NOT NULL DEFAULT 'not_recorded'"),
+    ("resolution_notes", "TEXT"),
+    ("eligibility_status", "TEXT NOT NULL DEFAULT 'not_recorded'"),
+    ("skip_reason", "TEXT"),
+    ("software_versions_json", "TEXT NOT NULL DEFAULT '{}'"),
+)
+
+
 INDEX_STATEMENTS = (
     """
     CREATE INDEX IF NOT EXISTS idx_attachment_analysis_instance
@@ -154,6 +176,16 @@ def apply_schema(conn: sqlite3.Connection) -> None:
     conn.execute("PRAGMA foreign_keys = ON")
     for statement in CREATE_STATEMENTS:
         conn.execute(statement)
+    columns = {
+        row[1]
+        for row in conn.execute("PRAGMA table_info(protacability_attachment_analysis)")
+    }
+    for column_name, column_spec in ANALYSIS_ADDED_COLUMNS:
+        if column_name not in columns:
+            conn.execute(
+                f"ALTER TABLE protacability_attachment_analysis "
+                f"ADD COLUMN {column_name} {column_spec}"
+            )
     for statement in INDEX_STATEMENTS:
         conn.execute(statement)
 
