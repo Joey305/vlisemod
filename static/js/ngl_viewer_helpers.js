@@ -1,5 +1,5 @@
 (function () {
-  const HELPER_VERSION = 'pdb-ligand-default-focus-v7-attachment-coordinate-map';
+  const HELPER_VERSION = 'pdb-ligand-default-focus-v8-ligand-spin';
   const viewerRegistry = new Map();
   let ligandElementSchemeId = null;
   const WATER_RESNAMES = new Set(['HOH', 'WAT', 'DOD', 'H2O', 'TIP', 'SOL']);
@@ -101,6 +101,7 @@
   function disposeViewer(containerId) {
     const entry = viewerRegistry.get(containerId);
     if (entry && entry.stage) {
+      try { entry.stage.setSpin(false); } catch (e) {}
       try {
         if (typeof entry.stage.removeAllComponents === 'function') entry.stage.removeAllComponents();
       } catch (e) {}
@@ -681,18 +682,56 @@
     entry.component.autoView(entry.proteinSele, 900);
   }
 
-  function focusLigand(containerId) {
+  function focusLigand(containerId, duration) {
     const entry = viewerRegistry.get(containerId);
     if (!entry) return;
     if (entry.ligandComponent && entry.ligandAdded) {
-      try { entry.ligandComponent.autoView(undefined, 900); return; } catch (e) {}
+      try { entry.ligandComponent.autoView(undefined, duration || 900); return; } catch (e) {}
     }
     if (!entry.component) return;
     if (!entry.ligandAdded || !entry.ligandSele) {
-      entry.component.autoView(entry.proteinSele, 900);
+      entry.component.autoView(entry.proteinSele, duration || 900);
       return;
     }
-    entry.component.autoView(entry.ligandSele, 900);
+    entry.component.autoView(entry.ligandSele, duration || 900);
+  }
+
+  function stopSpin(containerId) {
+    const entry = viewerRegistry.get(containerId);
+    if (!entry || !entry.stage) return false;
+    try { entry.stage.setSpin(false); } catch (e) {}
+    entry.isSpinning = false;
+    const container = document.getElementById(containerId);
+    if (container) container.dataset.ligandSpin = 'off';
+    return true;
+  }
+
+  function setLigandSpin(containerId, enabled, options) {
+    const entry = viewerRegistry.get(containerId);
+    if (!entry || !entry.stage || typeof entry.stage.setSpin !== 'function') return false;
+    const shouldSpin = enabled !== false;
+    const container = document.getElementById(containerId);
+    if (!shouldSpin) return stopSpin(containerId);
+    if (!entry.ligandAdded) return false;
+    const opts = options || {};
+    try {
+      focusLigand(containerId, opts.focusDuration || 450);
+      entry.stage.setSpin(true);
+      entry.isSpinning = true;
+      if (container) container.dataset.ligandSpin = 'on';
+      return true;
+    } catch (e) {
+      console.warn('[VLNGLViewer] ligand spin failed', e);
+      stopSpin(containerId);
+      return false;
+    }
+  }
+
+  function toggleLigandSpin(containerId, enabled, options) {
+    const entry = viewerRegistry.get(containerId);
+    if (!entry) return false;
+    const nextState = typeof enabled === 'boolean' ? enabled : !entry.isSpinning;
+    return setLigandSpin(containerId, nextState, options);
   }
 
   function fitAll(containerId) {
@@ -957,6 +996,9 @@
     resetView: resetView,
     focusLigand: focusLigand,
     fitAll: fitAll,
+	    stopSpin: stopSpin,
+	    setLigandSpin: setLigandSpin,
+	    toggleLigandSpin: toggleLigandSpin,
 	    toggleSurface: toggleSurface,
 	    highlightAtomSerials: highlightAtomSerials,
 	    highlightAttachmentSerialSets: highlightAttachmentSerialSets,

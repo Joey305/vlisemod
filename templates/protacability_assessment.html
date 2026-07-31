@@ -1237,7 +1237,7 @@
             $('#protac-detail-content').html(`
                 <div class="section-heading"><span class="page-kicker">Chain Detail</span><h2 class="page-title">${escapeHtml(assessment.virus_name)} · ${escapeHtml(assessment.display_protein_type || assessment.protein_type)}</h2><p class="page-subtitle">PDB ${escapeHtml(assessment.pdb_code)} · Chain ${escapeHtml(assessment.chain_id)}</p></div>
                 <div class="protac-detail-two-col">
-                    <div class="page-card protacability-detail-card"><div id="protac-ngl-viewer" class="protac-ngl-viewer"></div><p id="protac-ngl-status" class="viewer-status"></p>${renderLigandDebugPanel()}<div class="action-row"><button id="protac-use-warhead" type="button" class="button-secondary">Use as Warhead</button></div></div>
+                    <div class="page-card protacability-detail-card"><div id="protac-ngl-viewer" class="protac-ngl-viewer"></div><p id="protac-ngl-status" class="viewer-status"></p>${renderLigandDebugPanel()}<div class="action-row"><button id="protac-rotate-ligand" type="button" class="button-secondary ligand-spin-toggle" aria-pressed="false">Rotate Molecule</button><button id="protac-use-warhead" type="button" class="button-secondary">Use as Warhead</button></div></div>
                     <div class="page-card protacability-detail-card"><p><strong>Ligand context:</strong> ${ligandContextBadge(assessment)}</p><p><strong>Overall degrader readiness:</strong> ${formatValue(assessment.degrader_design_readiness_score, 2)}</p><p><strong>Evidence level:</strong> <span class="${evidenceBadgeClass(assessment.evidence_level)}">${escapeHtml(assessment.evidence_level || '—')}</span></p>${renderConcernBadges(assessment)}</div>
                 </div>
                 <div class="tool-grid protacability-detail-grid">
@@ -1358,7 +1358,7 @@
             $('#protac-detail-content').html(`
                 <div class="section-heading"><span class="page-kicker">Structure Summary</span><h2 class="page-title">${escapeHtml(summary.virus_name)} · ${escapeHtml(summary.protein_type)}</h2><p class="page-subtitle">PDB ${escapeHtml(summary.pdb_code)} · ${summary.chain_count} chains summarized</p></div>
                 <div class="protac-detail-two-col">
-                    <div class="page-card protacability-detail-card"><div id="protac-ngl-viewer" class="protac-ngl-viewer"></div><p id="protac-ngl-status" class="viewer-status"></p>${renderLigandDebugPanel()}<div class="action-row"><button id="protac-use-warhead" type="button" class="button-secondary">Use as Warhead</button></div></div>
+                    <div class="page-card protacability-detail-card"><div id="protac-ngl-viewer" class="protac-ngl-viewer"></div><p id="protac-ngl-status" class="viewer-status"></p>${renderLigandDebugPanel()}<div class="action-row"><button id="protac-rotate-ligand" type="button" class="button-secondary ligand-spin-toggle" aria-pressed="false">Rotate Molecule</button><button id="protac-use-warhead" type="button" class="button-secondary">Use as Warhead</button></div></div>
                     <div class="page-card protacability-detail-card"><p><strong>Ligand context:</strong> ${ligandContextBadge(summary)}</p><p><strong>Overall degrader readiness:</strong> ${formatValue(summary.degrader_design_readiness_score, 2)}</p><p><strong>Representative chain:</strong> ${escapeHtml(data.representative_chain_id || '—')}</p>${renderConcernBadges(summary)}</div>
                 </div>
                 <div class="tool-grid protacability-detail-grid">
@@ -1463,7 +1463,7 @@
             $('#protac-detail-content').html(`
                 <div class="section-heading"><span class="page-kicker">Protein Summary</span><h2 class="page-title">${escapeHtml(summary.virus_name)} · ${escapeHtml(summary.protein_type)}</h2><p class="page-subtitle">${summary.pdb_count} structures · ${summary.chain_count} chains represented</p></div>
                 <div class="protac-detail-two-col">
-                    <div class="page-card protacability-detail-card"><div id="protac-ngl-viewer" class="protac-ngl-viewer"></div><p id="protac-ngl-status" class="viewer-status"></p>${renderLigandDebugPanel()}<div class="action-row"><button id="protac-use-warhead" type="button" class="button-secondary">Use as Warhead</button></div></div>
+                    <div class="page-card protacability-detail-card"><div id="protac-ngl-viewer" class="protac-ngl-viewer"></div><p id="protac-ngl-status" class="viewer-status"></p>${renderLigandDebugPanel()}<div class="action-row"><button id="protac-rotate-ligand" type="button" class="button-secondary ligand-spin-toggle" aria-pressed="false">Rotate Molecule</button><button id="protac-use-warhead" type="button" class="button-secondary">Use as Warhead</button></div></div>
                     <div class="page-card protacability-detail-card"><p><strong>Top PDB:</strong> ${escapeHtml(summary.top_pdb_code || '—')} / ${escapeHtml(summary.top_chain_id || '—')}</p><p><strong>Ligand context:</strong> ${ligandContextBadge(summary)}</p><p><strong>Best score:</strong> ${formatValue(summary.best_score, 2)}</p></div>
                 </div>
                 <div class="tool-grid protacability-detail-grid">
@@ -1713,6 +1713,14 @@
             }, 350);
         }
 
+        function updateProtacLigandSpinButton(isSpinning) {
+            const button = $('#protac-rotate-ligand');
+            if (!button.length) return;
+            button.toggleClass('is-active', Boolean(isSpinning));
+            button.attr('aria-pressed', isSpinning ? 'true' : 'false');
+            button.text(isSpinning ? 'Stop Rotation' : 'Rotate Molecule');
+        }
+
         function highlightAttachmentRegions(regionSets, label, scrollToViewer = false) {
             const status = $('#protac-ngl-status');
             const regions = Array.isArray(regionSets) ? regionSets : [];
@@ -1766,7 +1774,10 @@
         function attachProtacViewerControls(pdbCode, chainId, ligandResname, ligandChain, ligandResidueId, warheadLigandCode, candidateLinkerAtomIds = [], attachmentSites = {}) {
             const containerId = 'protac-ngl-viewer';
             const status = $('#protac-ngl-status');
+            const rotateButton = $('#protac-rotate-ligand');
             status.text('Loading protein PDB and ligand instance SDF...');
+            updateProtacLigandSpinButton(false);
+            rotateButton.prop('disabled', true);
             const viewerPayload = {
                 pdbCode: pdbCode,
                 chainId: chainId || '',
@@ -1821,7 +1832,14 @@
 	                    if (ligandDebugEnabled()) updateProtacLigandDebugPanel(viewerPayload, viewerPayload);
 	                }
                 });
-            }).catch(() => status.text('Unable to load 3D context from RCSB right now.'));
+            }).then(function() {
+                rotateButton.prop('disabled', false);
+                updateProtacLigandSpinButton(false);
+            }).catch(() => {
+                rotateButton.prop('disabled', true);
+                updateProtacLigandSpinButton(false);
+                status.text('Unable to load 3D context from RCSB right now.');
+            });
             updateProtacLigandDebugPanel(viewerPayload, viewerPayload);
             attachAttachmentHighlightControls(attachmentSites);
             $('#protac-reset-view').off('click').on('click', function() { VLNGLViewer.resetView(containerId); });
@@ -1830,6 +1848,17 @@
             $('#protac-toggle-surface').off('click').on('click', function() {
                 protacState.modalSurfaceOn = !protacState.modalSurfaceOn;
                 VLNGLViewer.toggleSurface(containerId, protacState.modalSurfaceOn);
+            });
+            rotateButton.off('click').on('click', function() {
+                const nextState = String(rotateButton.attr('aria-pressed')) !== 'true';
+                const ok = VLNGLViewer.toggleLigandSpin(containerId, nextState);
+                if (ok) {
+                    updateProtacLigandSpinButton(nextState);
+                    status.text(nextState ? 'Rotating around the centered ligand SDF.' : 'Ligand rotation stopped.');
+                } else {
+                    updateProtacLigandSpinButton(false);
+                    status.text('Ligand rotation is unavailable until the 3D ligand context finishes loading.');
+                }
             });
             $('#protac-open-rcsb').off('click').on('click', function() { window.open(`https://www.rcsb.org/structure/${encodeURIComponent(pdbCode)}`, '_blank'); });
             $('#protac-open-full-viewer').off('click').on('click', function() { window.open(`https://www.rcsb.org/3d-view/${encodeURIComponent(pdbCode)}`, '_blank'); });
@@ -1890,6 +1919,7 @@
                             <button id="protac-focus-ligand" type="button" class="button-secondary">Focus ligand</button>
                             <button id="protac-fit-all" type="button" class="button-secondary">Fit full complex</button>
                             <button id="protac-toggle-surface" type="button" class="button-secondary">Toggle surface</button>
+                            <button id="protac-rotate-ligand" type="button" class="button-secondary ligand-spin-toggle" aria-pressed="false">Rotate Molecule</button>
                             <button id="protac-use-warhead" type="button" class="button-secondary">Use as Warhead</button>
                             <button id="protac-open-rcsb" type="button" class="button-secondary">Open RCSB</button>
                             <button id="protac-open-full-viewer" type="button" class="button-secondary">Open full viewer</button>

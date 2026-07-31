@@ -681,6 +681,18 @@ a {
     border: 1px solid var(--button-secondary-border);
 }
 
+.ligand-spin-toggle.is-active,
+.ligand-spin-toggle[aria-pressed="true"] {
+    background: var(--vl-green-deep);
+    border-color: var(--vl-green-deep);
+    color: #ffffff;
+}
+
+.ligand-spin-toggle:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
 .button-ghost {
     background: transparent;
     color: var(--accent-green);

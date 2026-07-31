@@ -73,6 +73,7 @@
                     <button id="return-2d" type="button" class="button-secondary" style="display:none;" onclick="replaceWith2D()">Return to 2D</button>
                     <button id="view-solvent-exposed" type="button" class="button-secondary" onclick="toggleSolventExposed()">View Solvent-Exposed 2D Image</button>
                     <button id="view-regular-2d" type="button" class="button-secondary" onclick="showRegular2D()">View Regular 2D Image</button>
+                    <button id="rotate-ligand-btn" type="button" class="button-secondary ligand-spin-toggle" aria-pressed="false" onclick="toggleDisplayLigandSpin('{{ primary_image.pdb_id }}', '{{ primary_image.ligand_code }}')">Rotate Molecule</button>
                     <button id="use-as-warhead-btn" type="button" onclick="useAsWarhead('{{ primary_image.ligand_code }}')">🧪 Use as Warhead</button>
                     <a class="button-secondary" href="{{ url_for('download_image', filename=primary_image.filename) }}" download="{{ primary_image.filename }}">Download 2D SVG</a>
                     <a class="button-secondary" href="{{ url_for('download_SASA_image', filename=solvent_filename) }}" download="{{ solvent_filename }}">Download SASA SVG</a>
@@ -217,6 +218,7 @@ const useDirectRcsbPdb = (new URLSearchParams(window.location.search).get('useDi
 let isSolventExposedView = false;
 let latestDisplayViewerPayload = null;
 let latestLoadedSourceUrl = null;
+let displayLigandSpinRequested = false;
 
 function getAllLigandContexts() {
     return Array.from(document.querySelectorAll('input[name="chain_residue"]')).map(function(input) {
@@ -466,7 +468,20 @@ function replaceWith3D(pdb_id, ligand_code) {
             latestLoadedSourceUrl = sourceUrl || null;
             if (ligandDebugEnabled()) updateLigandDebugPanel(payload, ligandCtx);
         }
+    }).then(function() {
+        if (displayLigandSpinRequested) {
+            const spinStarted = VLNGLViewer.toggleLigandSpin('viewport', true);
+            updateDisplayLigandSpinButton(spinStarted);
+            if (!spinStarted) {
+                viewerStatus.textContent = "Structure loaded, but ligand rotation is unavailable for this viewer.";
+                viewerStatus.classList.add('is-visible');
+            }
+        } else {
+            updateDisplayLigandSpinButton(false);
+        }
     }).catch(function() {
+        displayLigandSpinRequested = false;
+        updateDisplayLigandSpinButton(false);
         viewerStatus.textContent = "The 3D viewer could not load this structure from RCSB right now. Please try again later.";
         viewerStatus.classList.add('is-visible');
         replaceWith2D({ preserveButton: true });
@@ -487,6 +502,8 @@ function replaceWith2D(options = {}) {
     const viewport = document.getElementById('viewport');
     const viewerButton = document.getElementById('view-3d-in-window');
     const returnButton = document.getElementById('return-2d');
+    displayLigandSpinRequested = false;
+    updateDisplayLigandSpinButton(false);
     VLNGLViewer.disposeViewer('viewport');
 
     imageViewer.style.display = 'flex';
@@ -504,6 +521,38 @@ function replaceWith2D(options = {}) {
     const viewerStatus = document.getElementById('viewer-status');
     viewerStatus.textContent = '';
     viewerStatus.classList.remove('is-visible');
+}
+
+function updateDisplayLigandSpinButton(isSpinning) {
+    const rotateButton = document.getElementById('rotate-ligand-btn');
+    if (!rotateButton) return;
+    rotateButton.classList.toggle('is-active', Boolean(isSpinning));
+    rotateButton.setAttribute('aria-pressed', isSpinning ? 'true' : 'false');
+    rotateButton.textContent = isSpinning ? 'Stop Rotation' : 'Rotate Molecule';
+}
+
+function toggleDisplayLigandSpin(pdbId, ligandCode) {
+    const viewport = document.getElementById('viewport');
+    const viewerStatus = document.getElementById('viewer-status');
+    const is3DVisible = viewport && viewport.style.display !== 'none' && viewport.innerHTML.trim();
+
+    displayLigandSpinRequested = !displayLigandSpinRequested;
+    updateDisplayLigandSpinButton(displayLigandSpinRequested);
+
+    if (!is3DVisible && displayLigandSpinRequested) {
+        replaceWith3D(pdbId, ligandCode);
+        return;
+    }
+
+    const spinChanged = VLNGLViewer.toggleLigandSpin('viewport', displayLigandSpinRequested);
+    if (!spinChanged) {
+        displayLigandSpinRequested = false;
+        updateDisplayLigandSpinButton(false);
+        if (viewerStatus) {
+            viewerStatus.textContent = "Load the 3D ligand context before rotating the molecule.";
+            viewerStatus.classList.add('is-visible');
+        }
+    }
 }
 
 window.addEventListener('resize', function() {
