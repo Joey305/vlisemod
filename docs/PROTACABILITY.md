@@ -8,6 +8,7 @@ In V-LiSEMOD, PROTACability means a transparent, structure-guided prioritization
 
 - a way to separate promising ligand contexts from weaker ones
 - a way to review solvent-exposed ligand atoms and potential linker-attachment cues
+- a way to review exact ligand-instance attachment-site regions when attachment enrichment is available
 - a way to evaluate whether target-side exposed lysines exist in the same structural context
 - a way to rank structures for deeper design review
 
@@ -29,6 +30,13 @@ PROTACability outputs are transparent structural-priority and design-readiness h
 - Focus: ligand-centered attachment opportunity
 - Interprets: solvent-exposed mapped atoms, contact preservation, functional-group context, and chemically interpretable linkerability cues
 - Best phrasing: "the bound ligand shows stronger or weaker structure-supported linker-attachment potential"
+
+### Candidate Attachment Sites
+
+- Focus: exact ligand-instance attachment regions generated from `attachment_v1_1`
+- Interprets: candidate atom scores, region-level exposure, interaction cautions, and PDB atom serials for optional 3D highlighting
+- Best phrasing: "this ligand instance has structure-supported candidate attachment-site regions"
+- Boundary: these regions do not claim retained affinity, synthetic feasibility, ternary-complex formation, or degradation
 
 ### Target Lysine Accessibility
 
@@ -78,6 +86,7 @@ Avoid language such as:
 
 - limited by the quality and completeness of available co-crystal structures
 - dependent on ligand mapping, SMILES coverage, and atom-level annotation quality
+- attachment-site enrichment is only available for ligand instances that passed the graph/mapping eligibility checks
 - lysine exposure is a structural cue, not a ubiquitination outcome
 - geometry cues are simplified and do not model full ternary-complex behavior
 - absence of a strong score does not prove a target is not degradable
@@ -94,6 +103,7 @@ Expected inputs:
 - `PDB_FILES/PROTACability_Ligand_Inventory.csv`
 - optional `PDB_FILES/PROTACability_Warhead_Linkability.csv`
 - optional `PDB_FILES/PROTACability_Degrader_Readiness.csv`
+- optional SQLite attachment enrichment tables: `protacability_attachment_analysis`, `protacability_attachment_regions`, and `protacability_attachment_atoms`
 
 Operational note:
 
@@ -106,8 +116,9 @@ Before presenting or exporting PROTACability results:
 1. Confirm the relevant PROTACability tables are present in `viral_data.db`.
 2. Confirm the dashboard no longer shows the "data not imported yet" message.
 3. Spot-check a few structures for ligand presence, chain mapping, and exposed lysine context.
-4. Verify that warhead/linkability language remains heuristic and non-claiming.
-5. Verify that exported CSVs reflect the currently selected view or named legacy dataset.
+4. Spot-check at least one attachment-enriched ligand instance in the Candidate Attachment Sites detail section.
+5. Verify that warhead/linkability and attachment-site language remains heuristic and non-claiming.
+6. Verify that exported CSVs reflect the currently selected view or named legacy dataset.
 
 ## Export Behavior
 
@@ -119,5 +130,8 @@ The dashboard exposes CSV export for:
 - ligand inventory
 - warhead linkability
 - degrader readiness
+- attachment analysis
+- attachment atoms
+- attachment regions
 
 Exports should be treated as analysis outputs for review, not as standalone evidence of biological activity.

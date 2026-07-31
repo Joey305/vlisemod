@@ -2214,6 +2214,19 @@ body.protacability-page .status-card.status-warning.protacability-callout strong
     line-height: 1.6;
 }
 
+.protacability-page .protac-attachment-sites-card {
+    display: grid;
+    gap: 10px;
+}
+
+.protacability-page .protac-attachment-actions {
+    margin: 0 0 4px;
+}
+
+.protacability-page .protac-attachment-sites-card .table-wrap + .table-wrap {
+    margin-top: 8px;
+}
+
 .protacability-page .table-wrap {
     width: 100%;
     max-width: 100%;

@@ -713,6 +713,49 @@
     }
   }
 
+  function atomSerialSelection(atomSerials) {
+    const serials = (Array.isArray(atomSerials) ? atomSerials : [])
+      .map(function (value) { return parseInt(value, 10); })
+      .filter(function (value) { return Number.isFinite(value) && value > 0; });
+    if (!serials.length) return '';
+    return serials.map(function (serial) { return `@${serial}`; }).join(' or ');
+  }
+
+  function clearAttachmentHighlights(containerId) {
+    const entry = viewerRegistry.get(containerId);
+    if (!entry) return;
+    const targetComponent = entry.component || entry.proteinComponent;
+    if (targetComponent && entry.attachmentRepr) {
+      try { targetComponent.removeRepresentation(entry.attachmentRepr); } catch (e) {}
+    }
+    entry.attachmentRepr = null;
+  }
+
+  function highlightAtomSerials(containerId, atomSerials, options) {
+    const entry = viewerRegistry.get(containerId);
+    const targetComponent = entry && (entry.component || entry.proteinComponent);
+    if (!entry || !targetComponent) return false;
+    const opts = options || {};
+    const sele = atomSerialSelection(atomSerials);
+    clearAttachmentHighlights(containerId);
+    if (!sele) return false;
+    try {
+      entry.attachmentRepr = targetComponent.addRepresentation(opts.representation || 'spacefill', {
+        sele: sele,
+        color: opts.color || '#d94f3d',
+        radiusScale: opts.radiusScale || 0.72,
+        opacity: opts.opacity || 1.0,
+        name: 'attachment-site-highlight'
+      });
+      targetComponent.autoView(sele, opts.duration || 800);
+      return true;
+    } catch (e) {
+      console.warn('[VLNGLViewer] attachment-site highlight failed', e);
+      clearAttachmentHighlights(containerId);
+      return false;
+    }
+  }
+
   function resizeViewer(containerId) {
     const entry = viewerRegistry.get(containerId);
     if (!entry || !entry.stage) return;
@@ -727,6 +770,8 @@
     focusLigand: focusLigand,
     fitAll: fitAll,
     toggleSurface: toggleSurface,
+    highlightAtomSerials: highlightAtomSerials,
+    clearAttachmentHighlights: clearAttachmentHighlights,
     resizeViewer: resizeViewer,
     ligandDebugEnabled: ligandDebugEnabled,
     makeLigandCodeAliases: makeLigandCodeAliases,
