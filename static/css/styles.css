@@ -2272,14 +2272,25 @@ body.protacability-page .status-card.status-warning.protacability-callout strong
 
 .protacability-page .attachment-region-map {
     width: 100%;
-    aspect-ratio: 19 / 7;
-    min-height: 180px;
+    aspect-ratio: 13 / 6;
+    min-height: 240px;
     display: block;
     overflow: visible;
 }
 
+.protacability-page .attachment-map-envelopes .attachment-region-envelope {
+    opacity: 0.13;
+    stroke-width: 1.4;
+}
+
+.protacability-page .attachment-map-envelopes .attachment-region-envelope-line {
+    opacity: 0.18;
+    stroke-width: 30;
+    stroke-linecap: round;
+}
+
 .protacability-page .attachment-map-bonds line {
-    stroke: rgba(84, 92, 88, 0.55);
+    stroke: rgba(54, 65, 60, 0.48);
     stroke-linecap: round;
 }
 
@@ -2293,6 +2304,7 @@ body.protacability-page .status-card.status-warning.protacability-callout strong
     stroke: #ffffff;
     stroke-width: 2.4;
     opacity: 1;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.18));
 }
 
 .protacability-page .attachment-map-labels text {

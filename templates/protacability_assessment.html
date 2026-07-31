@@ -668,32 +668,185 @@
             return attachmentRegionColor(regionId, attachmentRegionIds(attachmentSites));
         }
 
+        function graphNodeIndex(node) {
+            return Number(node?.smiles_atom_index);
+        }
+
+        function attachmentGraphAdjacency(nodes, bonds) {
+            const nodeIds = new Set(nodes.map(graphNodeIndex).filter(Number.isFinite));
+            const adjacency = new Map();
+            nodeIds.forEach(id => adjacency.set(id, new Set()));
+            (bonds || []).forEach(bond => {
+                const a = Number(bond.begin_atom_index);
+                const b = Number(bond.end_atom_index);
+                if (!nodeIds.has(a) || !nodeIds.has(b)) return;
+                adjacency.get(a).add(b);
+                adjacency.get(b).add(a);
+            });
+            return adjacency;
+        }
+
+        function attachmentGraphDistances(nodes, adjacency) {
+            const ids = nodes.map(graphNodeIndex).filter(Number.isFinite);
+            const distances = new Map();
+            ids.forEach(start => {
+                const row = new Map([[start, 0]]);
+                const queue = [start];
+                for (let cursor = 0; cursor < queue.length; cursor += 1) {
+                    const current = queue[cursor];
+                    const nextDistance = row.get(current) + 1;
+                    (adjacency.get(current) || []).forEach(next => {
+                        if (row.has(next)) return;
+                        row.set(next, nextDistance);
+                        queue.push(next);
+                    });
+                }
+                distances.set(start, row);
+            });
+            return distances;
+        }
+
+        function farthestGraphNode(fromId, ids, distances) {
+            let best = fromId;
+            let bestDistance = -1;
+            ids.forEach(id => {
+                const distance = distances.get(fromId)?.get(id);
+                if (Number.isFinite(distance) && distance > bestDistance) {
+                    best = id;
+                    bestDistance = distance;
+                }
+            });
+            return best;
+        }
+
+        function svgRegionEnvelope(nodes, color) {
+            if (!nodes.length) return '';
+            const padding = 15;
+            const points = nodes.map(node => [Number(node.x), Number(node.y)]).filter(([x, y]) => Number.isFinite(x) && Number.isFinite(y));
+            if (!points.length) return '';
+            if (points.length === 1) {
+                const [x, y] = points[0];
+                return `<ellipse class="attachment-region-envelope" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="20" ry="17" fill="${color}" stroke="${color}" />`;
+            }
+            const centroid = points.reduce((acc, point) => [acc[0] + point[0], acc[1] + point[1]], [0, 0]).map(value => value / points.length);
+            const sorted = points.slice().sort((a, b) => Math.atan2(a[1] - centroid[1], a[0] - centroid[0]) - Math.atan2(b[1] - centroid[1], b[0] - centroid[0]));
+            const padded = sorted.map(([x, y]) => {
+                const dx = x - centroid[0];
+                const dy = y - centroid[1];
+                const length = Math.sqrt(dx * dx + dy * dy) || 1;
+                return [(x + (dx / length) * padding).toFixed(1), (y + (dy / length) * padding).toFixed(1)];
+            });
+            if (padded.length === 2) {
+                const [[x1, y1], [x2, y2]] = padded.map(([x, y]) => [Number(x), Number(y)]);
+                return `<line class="attachment-region-envelope-line" x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${color}" />`;
+            }
+            return `<polygon class="attachment-region-envelope" points="${padded.map(point => point.join(',')).join(' ')}" fill="${color}" stroke="${color}" />`;
+        }
+
+        function boxesOverlap(a, b) {
+            return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
+        }
+
+        function attachmentMapCandidateLabels(nodes, width, height) {
+            const placed = [];
+            const offsets = [
+                [9, -9],
+                [9, 18],
+                [-28, -9],
+                [-28, 18],
+                [0, -22],
+                [0, 30],
+                [14, 4],
+                [-34, 4]
+            ];
+            return nodes
+                .filter(node => Number(node.candidate_attachment_flag || 0) > 0)
+                .slice(0, 16)
+                .map(node => {
+                    const label = String(node.pdb_atom_name || node.pdb_atom_serial || node.smiles_atom_index || '');
+                    const boxWidth = Math.max(18, label.length * 7.1);
+                    const boxHeight = 14;
+                    let chosen = offsets[0];
+                    for (const offset of offsets) {
+                        const box = {
+                            x: Math.max(4, Math.min(width - boxWidth - 4, node.x + offset[0])),
+                            y: Math.max(4, Math.min(height - boxHeight - 4, node.y + offset[1] - boxHeight)),
+                            width: boxWidth,
+                            height: boxHeight
+                        };
+                        if (!placed.some(existing => boxesOverlap(box, existing))) {
+                            chosen = offset;
+                            placed.push(box);
+                            return { label, x: box.x, y: box.y + boxHeight - 2 };
+                        }
+                    }
+                    const fallback = {
+                        x: Math.max(4, Math.min(width - boxWidth - 4, node.x + chosen[0])),
+                        y: Math.max(4, Math.min(height - boxHeight - 4, node.y + chosen[1] - boxHeight)),
+                        width: boxWidth,
+                        height: boxHeight
+                    };
+                    placed.push(fallback);
+                    return { label, x: fallback.x, y: fallback.y + boxHeight - 2 };
+                });
+        }
+
         function layoutAttachmentGraphNodes(nodes, bonds) {
-            const width = 760;
-            const height = 280;
-            const padding = 34;
+            const width = 780;
+            const height = 360;
+            const padding = 44;
+            const bondLength = 35;
+            const adjacency = attachmentGraphAdjacency(nodes, bonds);
+            const distances = attachmentGraphDistances(nodes, adjacency);
+            const ids = nodes.map(graphNodeIndex).filter(Number.isFinite);
+            const seed = ids[0] ?? 0;
+            const leftAnchor = farthestGraphNode(seed, ids, distances);
+            const rightAnchor = farthestGraphNode(leftAnchor, ids, distances);
+            const anchorDistance = Math.max(1, distances.get(leftAnchor)?.get(rightAnchor) || 1);
             const layout = nodes.map((node, index) => {
-                const angle = (Math.PI * 2 * index) / Math.max(1, nodes.length);
+                const id = graphNodeIndex(node);
+                const leftDistance = distances.get(leftAnchor)?.get(id) ?? index;
+                const rightDistance = distances.get(rightAnchor)?.get(id) ?? Math.max(0, ids.length - index - 1);
+                const xDistance = (leftDistance * leftDistance + anchorDistance * anchorDistance - rightDistance * rightDistance) / (2 * anchorDistance);
+                const yMagnitude = Math.sqrt(Math.max(0, leftDistance * leftDistance - xDistance * xDistance));
+                const aromaticOffset = Number(node.is_aromatic || 0) ? -0.32 : 0.32;
+                const sign = ((index + Math.round(yMagnitude * 10)) % 2 === 0 ? 1 : -1);
                 return {
                     ...node,
-                    x: width / 2 + Math.cos(angle) * width * 0.36,
-                    y: height / 2 + Math.sin(angle) * height * 0.30
+                    x: xDistance * bondLength,
+                    y: (yMagnitude * sign + aromaticOffset) * bondLength
                 };
             });
-            const byIndex = new Map(layout.map(node => [Number(node.smiles_atom_index), node]));
-            for (let tick = 0; tick < 90; tick += 1) {
+            const byIndex = new Map(layout.map(node => [graphNodeIndex(node), node]));
+            for (let tick = 0; tick < 220; tick += 1) {
                 for (let i = 0; i < layout.length; i += 1) {
                     for (let j = i + 1; j < layout.length; j += 1) {
                         const a = layout[i];
                         const b = layout[j];
                         const dx = a.x - b.x || 0.01;
                         const dy = a.y - b.y || 0.01;
-                        const distSq = Math.max(25, dx * dx + dy * dy);
-                        const force = 230 / distSq;
-                        a.x += dx * force;
-                        a.y += dy * force;
-                        b.x -= dx * force;
-                        b.y -= dy * force;
+                        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+                        const graphDistance = distances.get(graphNodeIndex(a))?.get(graphNodeIndex(b));
+                        if (Number.isFinite(graphDistance) && graphDistance > 0) {
+                            const ideal = Math.min(210, Math.max(30, graphDistance * bondLength));
+                            const stress = (dist - ideal) * 0.0022;
+                            const sx = (dx / dist) * stress;
+                            const sy = (dy / dist) * stress;
+                            a.x -= sx;
+                            a.y -= sy;
+                            b.x += sx;
+                            b.y += sy;
+                        }
+                        const minDistance = 22;
+                        if (dist < minDistance) {
+                            const repel = (minDistance - dist) * 0.02;
+                            const rx = (dx / dist) * repel;
+                            const ry = (dy / dist) * repel;
+                            a.x += rx;
+                            a.y += ry;
+                            b.x -= rx;
+                            b.y -= ry;
+                        }
                     }
                 }
                 (bonds || []).forEach(bond => {
@@ -703,8 +856,8 @@
                     const dx = b.x - a.x;
                     const dy = b.y - a.y;
                     const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-                    const target = 42;
-                    const force = (dist - target) * 0.018;
+                    const target = Number(bond.is_aromatic || 0) ? 31 : 35;
+                    const force = (dist - target) * 0.045;
                     const fx = (dx / dist) * force;
                     const fy = (dy / dist) * force;
                     a.x += fx;
@@ -713,12 +866,25 @@
                     b.y -= fy;
                 });
                 layout.forEach(node => {
-                    node.x += (width / 2 - node.x) * 0.018;
-                    node.y += (height / 2 - node.y) * 0.018;
-                    node.x = Math.max(padding, Math.min(width - padding, node.x));
-                    node.y = Math.max(padding, Math.min(height - padding, node.y));
+                    node.x *= 0.998;
+                    node.y *= 0.998;
                 });
             }
+            const xs = layout.map(node => node.x);
+            const ys = layout.map(node => node.y);
+            const minX = Math.min(...xs);
+            const maxX = Math.max(...xs);
+            const minY = Math.min(...ys);
+            const maxY = Math.max(...ys);
+            const scale = Math.min(
+                (width - padding * 2) / Math.max(1, maxX - minX),
+                (height - padding * 2) / Math.max(1, maxY - minY),
+                2.2
+            );
+            layout.forEach(node => {
+                node.x = padding + (node.x - minX) * scale + ((width - padding * 2) - (maxX - minX) * scale) / 2;
+                node.y = padding + (node.y - minY) * scale + ((height - padding * 2) - (maxY - minY) * scale) / 2;
+            });
             return { width, height, nodes: layout, byIndex };
         }
 
@@ -730,6 +896,10 @@
             if (!nodes.length) return '';
             const regionIds = Array.from(new Set(nodes.map(node => String(node.region_id || '')).filter(Boolean))).sort();
             const layout = layoutAttachmentGraphNodes(nodes, bonds);
+            const envelopeHtml = regionIds.map(regionId => {
+                const regionNodes = layout.nodes.filter(node => String(node.region_id || '') === regionId);
+                return svgRegionEnvelope(regionNodes, attachmentRegionColor(regionId, regionIds));
+            }).join('');
             const bondHtml = bonds.map(bond => {
                 const a = layout.byIndex.get(Number(bond.begin_atom_index));
                 const b = layout.byIndex.get(Number(bond.end_atom_index));
@@ -749,10 +919,9 @@
                 const label = [node.pdb_atom_name, node.pdb_atom_serial].filter(value => value !== null && value !== undefined && value !== '').join(' ');
                 return `<circle class="${classes.join(' ')}" cx="${node.x.toFixed(1)}" cy="${node.y.toFixed(1)}" r="${radius}" fill="${color}"><title>${escapeHtml(label || `SMILES atom ${node.smiles_atom_index}`)}${regionId ? `, ${escapeHtml(regionId)}` : ''}</title></circle>`;
             }).join('');
-            const labelHtml = layout.nodes.filter(node => Number(node.candidate_attachment_flag || 0) > 0).slice(0, 14).map(node => {
-                const label = String(node.pdb_atom_name || node.pdb_atom_serial || node.smiles_atom_index || '');
-                return `<text x="${(node.x + 8).toFixed(1)}" y="${(node.y - 7).toFixed(1)}">${escapeHtml(label)}</text>`;
-            }).join('');
+            const labelHtml = attachmentMapCandidateLabels(layout.nodes, layout.width, layout.height).map(label => (
+                `<text x="${label.x.toFixed(1)}" y="${label.y.toFixed(1)}">${escapeHtml(label.label)}</text>`
+            )).join('');
             const legendHtml = regionIds.map(regionId => `
                 <span class="attachment-map-legend-item"><span style="background:${attachmentRegionColor(regionId, regionIds)}"></span>${escapeHtml(regionId)}</span>
             `).join('');
@@ -763,6 +932,7 @@
                         <div class="attachment-map-legend">${legendHtml}</div>
                     </div>
                     <svg class="attachment-region-map" viewBox="0 0 ${layout.width} ${layout.height}" role="img" aria-label="Ligand attachment region map">
+                        <g class="attachment-map-envelopes">${envelopeHtml}</g>
                         <g class="attachment-map-bonds">${bondHtml}</g>
                         <g class="attachment-map-nodes">${nodeHtml}</g>
                         <g class="attachment-map-labels">${labelHtml}</g>
