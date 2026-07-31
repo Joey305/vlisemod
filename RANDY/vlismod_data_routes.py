@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import re
 import sqlite3
@@ -142,6 +143,12 @@ def _available_export_data_sets(conn: sqlite3.Connection) -> list[str]:
             data_sets.append("PROTACability Warhead Linkability")
         if _table_exists(conn, "protacability_degrader_readiness"):
             data_sets.append("PROTACability Degrader Readiness")
+        if _attachment_tables_available(conn):
+            data_sets.extend([
+                "PROTACability Attachment Analysis",
+                "PROTACability Attachment Atoms",
+                "PROTACability Attachment Regions",
+            ])
     return data_sets
 
 
@@ -161,6 +168,7 @@ def _protacability_source_payload_local(
                 "assessment_rows": [],
                 "readiness_rows": [],
                 "warhead_rows": [],
+                "attachment_rows": [],
                 "lysine_rows": [],
                 "ligand_inventory": [],
             }
@@ -207,6 +215,10 @@ def _protacability_source_payload_local(
 
         readiness_rows = _load_optional_rows("protacability_degrader_readiness")
         warhead_rows = _load_optional_rows("protacability_warhead_linkability")
+        attachment_rows = [
+            row for row in _load_optional_rows("protacability_attachment_analysis")
+            if row.get("method_version") == ATTACHMENT_METHOD_VERSION
+        ]
         lysine_rows = _load_optional_rows("protacability_lysine_proximity") if include_lysine else []
         ligand_inventory = _load_optional_rows("protacability_ligand_inventory") if include_inventory else []
 
@@ -215,6 +227,7 @@ def _protacability_source_payload_local(
             "assessment_rows": assessment_rows,
             "readiness_rows": readiness_rows,
             "warhead_rows": warhead_rows,
+            "attachment_rows": attachment_rows,
             "lysine_rows": lysine_rows,
             "ligand_inventory": ligand_inventory,
         }
@@ -235,6 +248,9 @@ data_set_queries = {
     "PROTACability Ligand Inventory": "SELECT * FROM protacability_ligand_inventory WHERE pdb_code IN ({placeholders})",
     "PROTACability Warhead Linkability": "SELECT * FROM protacability_warhead_linkability WHERE pdb_code IN ({placeholders})",
     "PROTACability Degrader Readiness": "SELECT * FROM protacability_degrader_readiness WHERE pdb_code IN ({placeholders})",
+    "PROTACability Attachment Analysis": "SELECT * FROM protacability_attachment_analysis WHERE pdb_code IN ({placeholders})",
+    "PROTACability Attachment Atoms": "SELECT atoms.* FROM protacability_attachment_atoms atoms JOIN protacability_attachment_analysis analysis USING (analysis_id) WHERE analysis.pdb_code IN ({placeholders})",
+    "PROTACability Attachment Regions": "SELECT regions.* FROM protacability_attachment_regions regions JOIN protacability_attachment_analysis analysis USING (analysis_id) WHERE analysis.pdb_code IN ({placeholders})",
 }
 
 def connect_db():
@@ -250,6 +266,16 @@ PROTACABILITY_REQUIRED_TABLES = (
 PROTACABILITY_OPTIONAL_TABLES = (
     "protacability_warhead_linkability",
     "protacability_degrader_readiness",
+    "protacability_attachment_analysis",
+    "protacability_attachment_atoms",
+    "protacability_attachment_regions",
+)
+
+ATTACHMENT_METHOD_VERSION = "attachment_v1_1"
+PROTACABILITY_ATTACHMENT_TABLES = (
+    "protacability_attachment_analysis",
+    "protacability_attachment_atoms",
+    "protacability_attachment_regions",
 )
 
 PROTACABILITY_SORT_COLUMNS = {
@@ -388,6 +414,10 @@ def _table_columns(conn, table_name):
     return {row[1] for row in conn.execute(f"PRAGMA table_info({table_name})").fetchall()}
 
 
+def _attachment_tables_available(conn):
+    return all(_table_exists(conn, table_name) for table_name in PROTACABILITY_ATTACHMENT_TABLES)
+
+
 def _protacability_optional_table_names(conn):
     return {name for name in PROTACABILITY_OPTIONAL_TABLES if _table_exists(conn, name)}
 
@@ -414,6 +444,12 @@ def get_available_export_data_sets():
             data_sets.append("PROTACability Warhead Linkability")
         if "protacability_degrader_readiness" in optional_tables:
             data_sets.append("PROTACability Degrader Readiness")
+        if PROTACABILITY_ATTACHMENT_TABLES[0] in optional_tables and _attachment_tables_available(conn):
+            data_sets.extend([
+                "PROTACability Attachment Analysis",
+                "PROTACability Attachment Atoms",
+                "PROTACability Attachment Regions",
+            ])
     return data_sets
 
 
@@ -462,6 +498,7 @@ def _build_protacability_filters(args):
     filters["has_mapped_atoms"] = _parse_bool_filter(args.get("has_mapped_atoms"))
     filters["has_valid_rdkit_smiles"] = _parse_bool_filter(args.get("has_valid_rdkit_smiles"))
     filters["has_exposed_target_lysines"] = _parse_bool_filter(args.get("has_exposed_target_lysines"))
+    filters["has_attachment_sites"] = _parse_bool_filter(args.get("has_attachment_sites"))
     return filters
 
 
@@ -489,6 +526,7 @@ def _copy_protacability_filters(filters):
         "has_mapped_atoms": filters.get("has_mapped_atoms"),
         "has_valid_rdkit_smiles": filters.get("has_valid_rdkit_smiles"),
         "has_exposed_target_lysines": filters.get("has_exposed_target_lysines"),
+        "has_attachment_sites": filters.get("has_attachment_sites"),
     }
 
 
@@ -521,6 +559,7 @@ def _clear_protacability_filter_dimension(filters, key):
         "has_mapped_atoms",
         "has_valid_rdkit_smiles",
         "has_exposed_target_lysines",
+        "has_attachment_sites",
     }:
         filters[key] = None
 
@@ -539,12 +578,13 @@ def _filter_options_for_context(rows, filters, collapse_labels=True, ignore_key=
 def _build_protacability_filter_options_payload(conn, args):
     collapse_labels = _protacability_collapse_labels(args.get("collapse_labels"))
     filters = _build_protacability_filters(args)
-    readiness_rows, warhead_rows = _load_protacability_enrichment_tables(conn)
+    readiness_rows, warhead_rows, attachment_rows = _load_protacability_enrichment_tables(conn)
     rows = _decorate_protacability_rows(
         _load_protacability_assessment_rows(conn),
         collapse_labels=collapse_labels,
         readiness_rows=readiness_rows,
         warhead_rows=warhead_rows,
+        attachment_rows=attachment_rows,
     )
 
     virus_rows = _filter_options_for_context(rows, filters, collapse_labels=collapse_labels, ignore_key="virus_names")
@@ -904,6 +944,9 @@ def _build_readiness_indexes(rows):
 
 def _row_representative_ligands(row):
     ligands = list(row.get("ligand_names") or [])
+    for ligand in _split_candidate_ligands(row.get("candidate_ligand_resnames")):
+        if ligand not in ligands:
+            ligands.append(ligand)
     best_resname = _normalize_text_key(row.get("best_ligand_resname"))
     if best_resname and best_resname not in ligands:
         ligands.insert(0, best_resname)
@@ -950,9 +993,222 @@ def _find_matching_readiness_row(row, readiness_indexes):
     return readiness_indexes["by_target"].get((full_key[0], full_key[1], full_key[2]))
 
 
-def _merge_optional_protacability_data(rows, readiness_rows=None, warhead_rows=None):
+def _normalize_attachment_key(row):
+    if not row:
+        return None
+
+    pdb_code = _normalize_text_key(row.get("pdb_code"))
+    ligand_resname = _normalize_text_key(row.get("ligand_resname") or row.get("best_ligand_resname"))
+    ligand_chain = _normalize_text_key(row.get("ligand_chain") or row.get("best_ligand_chain"))
+    ligand_residue_id = row.get("ligand_residue_id")
+    if ligand_residue_id in (None, ""):
+        ligand_residue_id = row.get("best_ligand_residue_id")
+    ligand_insertion_code = _normalize_text_key(row.get("ligand_insertion_code"))
+    model_id = row.get("model_id")
+    try:
+        model_id = int(model_id or 0)
+    except (TypeError, ValueError):
+        model_id = 0
+    try:
+        ligand_residue_id = int(ligand_residue_id)
+    except (TypeError, ValueError):
+        return None
+    if not (pdb_code and ligand_resname and ligand_chain):
+        return None
+    return (pdb_code, model_id, ligand_chain, ligand_residue_id, ligand_insertion_code, ligand_resname)
+
+
+def _build_attachment_index(attachment_rows):
+    index = {}
+    for row in attachment_rows or []:
+        key = _normalize_attachment_key(row)
+        if key:
+            index[key] = dict(row)
+    return index
+
+
+def _attachment_defaults():
+    return {
+        "attachment_analysis_id": None,
+        "attachment_method_version": None,
+        "attachment_analysis_status": None,
+        "attachment_eligibility_status": None,
+        "attachment_mapping_status": None,
+        "attachment_region_count": 0,
+        "attachment_candidate_atom_count": 0,
+        "best_attachment_score": None,
+        "best_attachment_confidence": None,
+        "has_attachment_site_evidence": 0,
+        "has_candidate_attachment_regions": 0,
+        "attachment_instance_resolution_status": None,
+        "attachment_instance_ambiguity_flag": 0,
+    }
+
+
+def _attachment_summary_from_match(attachment_match):
+    summary = _attachment_defaults()
+    if not attachment_match:
+        return summary
+    region_count = int(_numeric_value(attachment_match.get("attachment_region_count")))
+    candidate_count = int(_numeric_value(attachment_match.get("candidate_atom_count") or attachment_match.get("attachment_candidate_atom_count")))
+    has_evidence = int(_has_positive_value(attachment_match.get("has_attachment_site_evidence")) or region_count > 0 or candidate_count > 0)
+    summary.update({
+        "attachment_analysis_id": attachment_match.get("analysis_id"),
+        "attachment_method_version": attachment_match.get("method_version") or attachment_match.get("attachment_method_version"),
+        "attachment_analysis_status": attachment_match.get("analysis_status"),
+        "attachment_eligibility_status": attachment_match.get("eligibility_status"),
+        "attachment_mapping_status": attachment_match.get("mapping_status"),
+        "attachment_region_count": region_count,
+        "attachment_candidate_atom_count": candidate_count,
+        "best_attachment_score": attachment_match.get("best_attachment_score"),
+        "best_attachment_confidence": attachment_match.get("best_attachment_confidence"),
+        "has_attachment_site_evidence": has_evidence,
+        "has_candidate_attachment_regions": int(has_evidence and region_count > 0),
+        "attachment_instance_resolution_status": attachment_match.get("instance_resolution_status"),
+        "attachment_instance_ambiguity_flag": int(_has_positive_value(attachment_match.get("instance_ambiguity_flag"))),
+    })
+    return summary
+
+
+def _json_list(value):
+    if value in (None, ""):
+        return []
+    if isinstance(value, list):
+        return value
+    try:
+        parsed = json.loads(value)
+    except (TypeError, ValueError):
+        return []
+    return parsed if isinstance(parsed, list) else []
+
+
+def _json_dict(value):
+    if value in (None, ""):
+        return {}
+    if isinstance(value, dict):
+        return value
+    try:
+        parsed = json.loads(value)
+    except (TypeError, ValueError):
+        return {}
+    return parsed if isinstance(parsed, dict) else {}
+
+
+def _load_attachment_analysis_rows(conn):
+    if not _table_exists(conn, "protacability_attachment_analysis"):
+        return []
+    return [
+        dict(row)
+        for row in conn.execute(
+            """
+            SELECT *
+            FROM protacability_attachment_analysis
+            WHERE method_version=?
+            """,
+            (ATTACHMENT_METHOD_VERSION,),
+        ).fetchall()
+    ]
+
+
+def _attachment_detail_payload(conn, row):
+    if not _attachment_tables_available(conn):
+        return {
+            "data_available": False,
+            "summary": _attachment_defaults(),
+            "regions": [],
+            "atoms": [],
+            "candidate_atom_serials": [],
+        }
+    key = _normalize_attachment_key(row)
+    if not key:
+        return {
+            "data_available": True,
+            "summary": _attachment_defaults(),
+            "regions": [],
+            "atoms": [],
+            "candidate_atom_serials": [],
+        }
+    analysis = conn.execute(
+        """
+        SELECT *
+        FROM protacability_attachment_analysis
+        WHERE pdb_code=?
+          AND model_id=?
+          AND ligand_chain=?
+          AND ligand_residue_id=?
+          AND ligand_insertion_code=?
+          AND ligand_resname=?
+          AND method_version=?
+        """,
+        (*key, ATTACHMENT_METHOD_VERSION),
+    ).fetchone()
+    if not analysis:
+        return {
+            "data_available": True,
+            "summary": _attachment_defaults(),
+            "regions": [],
+            "atoms": [],
+            "candidate_atom_serials": [],
+        }
+
+    analysis_dict = dict(analysis)
+    analysis_id = analysis_dict["analysis_id"]
+    atoms = [
+        {
+            **dict(atom),
+            "interaction_types": _json_list(atom["interaction_types_json"]),
+            "functional_group_annotations": _json_list(atom["functional_group_annotations_json"]),
+            "reasons": _json_list(atom["reasons_json"]),
+            "cautions": _json_list(atom["cautions_json"]),
+        }
+        for atom in conn.execute(
+            """
+            SELECT *
+            FROM protacability_attachment_atoms
+            WHERE analysis_id=?
+            ORDER BY candidate_attachment_flag DESC, attachment_score DESC, pdb_atom_name
+            """,
+            (analysis_id,),
+        ).fetchall()
+    ]
+    regions = [
+        {
+            **dict(region),
+            "member_atom_ids": _json_list(region["member_atom_ids_json"]),
+            "member_smiles_indices": _json_list(region["member_smiles_indices_json"]),
+            "candidate_atom_ids": _json_list(region["candidate_atom_ids_json"]),
+            "interaction_summary": _json_dict(region["interaction_summary_json"]),
+            "reasons": _json_list(region["reasons_json"]),
+            "cautions": _json_list(region["cautions_json"]),
+        }
+        for region in conn.execute(
+            """
+            SELECT *
+            FROM protacability_attachment_regions
+            WHERE analysis_id=?
+            ORDER BY region_score DESC, region_id
+            """,
+            (analysis_id,),
+        ).fetchall()
+    ]
+    candidate_atom_serials = [
+        atom.get("pdb_atom_serial")
+        for atom in atoms
+        if atom.get("candidate_attachment_flag") and atom.get("pdb_atom_serial") is not None
+    ]
+    return {
+        "data_available": True,
+        "summary": _attachment_summary_from_match(analysis_dict),
+        "regions": regions,
+        "atoms": atoms,
+        "candidate_atom_serials": candidate_atom_serials,
+    }
+
+
+def _merge_optional_protacability_data(rows, readiness_rows=None, warhead_rows=None, attachment_rows=None):
     readiness_indexes = _build_readiness_indexes(readiness_rows or []) if readiness_rows else None
     warhead_indexes = _build_warhead_indexes(warhead_rows or []) if warhead_rows else None
+    attachment_index = _build_attachment_index(attachment_rows or []) if attachment_rows else None
 
     merged = []
     for row in rows:
@@ -1019,6 +1275,8 @@ def _merge_optional_protacability_data(rows, readiness_rows=None, warhead_rows=N
                 }:
                     current[key] = value
 
+        attachment_match = attachment_index.get(_normalize_attachment_key(current)) if attachment_index else None
+        current.update(_attachment_summary_from_match(attachment_match))
         current["candidate_linker_atom_ids_list"] = _candidate_linker_ids_list(current.get("candidate_linker_atom_ids"))
         current["has_candidate_linker_atoms"] = int(_has_positive_value(current.get("candidate_linker_atom_count")))
         current["has_solvent_exposed_ligand_atoms"] = int(_has_positive_value(current.get("solvent_exposed_ligand_atom_count")))
@@ -1119,8 +1377,13 @@ def _row_priority_key(row):
     )
 
 
-def _decorate_protacability_rows(rows, collapse_labels=True, readiness_rows=None, warhead_rows=None):
-    decorated = _merge_optional_protacability_data(rows, readiness_rows=readiness_rows, warhead_rows=warhead_rows)
+def _decorate_protacability_rows(rows, collapse_labels=True, readiness_rows=None, warhead_rows=None, attachment_rows=None):
+    decorated = _merge_optional_protacability_data(
+        rows,
+        readiness_rows=readiness_rows,
+        warhead_rows=warhead_rows,
+        attachment_rows=attachment_rows,
+    )
     display_labels = {}
     if collapse_labels:
         labels_by_chain = defaultdict(list)
@@ -1213,6 +1476,8 @@ def _filter_protacability_rows(rows, filters, collapse_labels=True):
         if filters["has_valid_rdkit_smiles"] is not None and int(bool(row.get("has_valid_rdkit_smiles"))) != filters["has_valid_rdkit_smiles"]:
             continue
         if filters["has_exposed_target_lysines"] is not None and int(bool(row.get("has_exposed_target_lysines"))) != filters["has_exposed_target_lysines"]:
+            continue
+        if filters["has_attachment_sites"] is not None and int(bool(row.get("has_attachment_site_evidence"))) != filters["has_attachment_sites"]:
             continue
         filtered.append(row)
     return filtered
@@ -1316,6 +1581,19 @@ def _protacability_enrichment_snapshot(row):
         "has_mapped_atoms",
         "has_valid_rdkit_smiles",
         "has_exposed_target_lysines",
+        "has_attachment_site_evidence",
+        "has_candidate_attachment_regions",
+        "attachment_analysis_id",
+        "attachment_method_version",
+        "attachment_analysis_status",
+        "attachment_eligibility_status",
+        "attachment_mapping_status",
+        "attachment_region_count",
+        "attachment_candidate_atom_count",
+        "best_attachment_score",
+        "best_attachment_confidence",
+        "attachment_instance_resolution_status",
+        "attachment_instance_ambiguity_flag",
         "warhead_evidence_score",
         "readiness_rank_score",
     ]
@@ -1663,7 +1941,8 @@ def _load_protacability_enrichment_tables(conn):
     optional_tables = _protacability_optional_table_names(conn)
     readiness_rows = _load_optional_table_rows(conn, "protacability_degrader_readiness") if "protacability_degrader_readiness" in optional_tables else []
     warhead_rows = _load_optional_table_rows(conn, "protacability_warhead_linkability") if "protacability_warhead_linkability" in optional_tables else []
-    return readiness_rows, warhead_rows
+    attachment_rows = _load_attachment_analysis_rows(conn) if "protacability_attachment_analysis" in optional_tables else []
+    return readiness_rows, warhead_rows, attachment_rows
 
 
 def _prepare_protacability_result_set(conn, args, export_all=False):
@@ -1678,12 +1957,13 @@ def _prepare_protacability_result_set(conn, args, export_all=False):
         offset = max(args.get("offset", type=int) or 0, 0)
     filters = _build_protacability_filters(args)
 
-    readiness_rows, warhead_rows = _load_protacability_enrichment_tables(conn)
+    readiness_rows, warhead_rows, attachment_rows = _load_protacability_enrichment_tables(conn)
     rows = _decorate_protacability_rows(
         _load_protacability_assessment_rows(conn),
         collapse_labels=collapse_labels,
         readiness_rows=readiness_rows,
         warhead_rows=warhead_rows,
+        attachment_rows=attachment_rows,
     )
     filtered_rows = _filter_protacability_rows(rows, filters, collapse_labels=collapse_labels)
 
@@ -1726,7 +2006,7 @@ def _prepare_protacability_result_set(conn, args, export_all=False):
     }
 
 
-def _build_protacability_filter_options_payload_from_rows(assessment_rows, readiness_rows, warhead_rows, args):
+def _build_protacability_filter_options_payload_from_rows(assessment_rows, readiness_rows, warhead_rows, args, attachment_rows=None):
     collapse_labels = _protacability_collapse_labels(args.get("collapse_labels"))
     filters = _build_protacability_filters(args)
     rows = _decorate_protacability_rows(
@@ -1734,6 +2014,7 @@ def _build_protacability_filter_options_payload_from_rows(assessment_rows, readi
         collapse_labels=collapse_labels,
         readiness_rows=readiness_rows,
         warhead_rows=warhead_rows,
+        attachment_rows=attachment_rows,
     )
 
     virus_rows = _filter_options_for_context(rows, filters, collapse_labels=collapse_labels, ignore_key="virus_names")
@@ -1770,7 +2051,7 @@ def _build_protacability_filter_options_payload_from_rows(assessment_rows, readi
     }
 
 
-def _prepare_protacability_result_set_from_rows(assessment_rows, readiness_rows, warhead_rows, args, export_all=False):
+def _prepare_protacability_result_set_from_rows(assessment_rows, readiness_rows, warhead_rows, args, export_all=False, attachment_rows=None):
     view = _protacability_view_mode(args.get("view"))
     collapse_labels = _protacability_collapse_labels(args.get("collapse_labels"))
     requested_limit = args.get("page_size", type=int) or args.get("limit", type=int) or 50
@@ -1787,6 +2068,7 @@ def _prepare_protacability_result_set_from_rows(assessment_rows, readiness_rows,
         collapse_labels=collapse_labels,
         readiness_rows=readiness_rows,
         warhead_rows=warhead_rows,
+        attachment_rows=attachment_rows,
     )
     filtered_rows = _filter_protacability_rows(rows, filters, collapse_labels=collapse_labels)
 
@@ -2377,6 +2659,9 @@ def create_vlismod_blueprint(blueprint_name: str, url_prefix: str) -> Blueprint:
             "PROTACability Ligand Inventory": ("SELECT * FROM protacability_ligand_inventory WHERE pdb_code IN ({placeholders})", "pdb_code"),
             "PROTACability Warhead Linkability": ("SELECT * FROM protacability_warhead_linkability WHERE pdb_code IN ({placeholders})", "pdb_code"),
             "PROTACability Degrader Readiness": ("SELECT * FROM protacability_degrader_readiness WHERE pdb_code IN ({placeholders})", "pdb_code"),
+            "PROTACability Attachment Analysis": ("SELECT * FROM protacability_attachment_analysis WHERE pdb_code IN ({placeholders})", "pdb_code"),
+            "PROTACability Attachment Atoms": ("SELECT atoms.* FROM protacability_attachment_atoms atoms JOIN protacability_attachment_analysis analysis USING (analysis_id) WHERE analysis.pdb_code IN ({placeholders})", "pdb_code"),
+            "PROTACability Attachment Regions": ("SELECT regions.* FROM protacability_attachment_regions regions JOIN protacability_attachment_analysis analysis USING (analysis_id) WHERE analysis.pdb_code IN ({placeholders})", "pdb_code"),
         }
 
         with _connect() as conn:
@@ -2407,6 +2692,7 @@ def create_vlismod_blueprint(blueprint_name: str, url_prefix: str) -> Blueprint:
                         "assessment_rows": [],
                         "readiness_rows": [],
                         "warhead_rows": [],
+                        "attachment_rows": [],
                         "lysine_rows": [],
                         "ligand_inventory": [],
                     }
@@ -2456,6 +2742,10 @@ def create_vlismod_blueprint(blueprint_name: str, url_prefix: str) -> Blueprint:
 
             readiness_rows = _load_optional_rows("protacability_degrader_readiness")
             warhead_rows = _load_optional_rows("protacability_warhead_linkability")
+            attachment_rows = [
+                row for row in _load_optional_rows("protacability_attachment_analysis")
+                if row.get("method_version") == ATTACHMENT_METHOD_VERSION
+            ]
             lysine_rows = _load_optional_rows("protacability_lysine_proximity") if include_lysine else []
             ligand_inventory = _load_optional_rows("protacability_ligand_inventory") if include_inventory else []
 
@@ -2465,6 +2755,7 @@ def create_vlismod_blueprint(blueprint_name: str, url_prefix: str) -> Blueprint:
                     "assessment_rows": assessment_rows,
                     "readiness_rows": readiness_rows,
                     "warhead_rows": warhead_rows,
+                    "attachment_rows": attachment_rows,
                     "lysine_rows": lysine_rows,
                     "ligand_inventory": ligand_inventory,
                 }
@@ -2480,6 +2771,9 @@ def create_vlismod_blueprint(blueprint_name: str, url_prefix: str) -> Blueprint:
             "PROTACability Ligand Inventory": "protacability_ligand_inventory",
             "PROTACability Warhead Linkability": "protacability_warhead_linkability",
             "PROTACability Degrader Readiness": "protacability_degrader_readiness",
+            "PROTACability Attachment Analysis": "protacability_attachment_analysis",
+            "PROTACability Attachment Atoms": "protacability_attachment_atoms",
+            "PROTACability Attachment Regions": "protacability_attachment_regions",
         }
         table_name = table_map.get(raw_export)
         if not table_name:
@@ -2514,6 +2808,7 @@ def create_vlismod_blueprint(blueprint_name: str, url_prefix: str) -> Blueprint:
                 payload.get("readiness_rows", []),
                 payload.get("warhead_rows", []),
                 request.args,
+                attachment_rows=payload.get("attachment_rows", []),
             )
         )
 
@@ -2533,6 +2828,7 @@ def create_vlismod_blueprint(blueprint_name: str, url_prefix: str) -> Blueprint:
             payload.get("readiness_rows", []),
             payload.get("warhead_rows", []),
             request.args,
+            attachment_rows=payload.get("attachment_rows", []),
         )
         return jsonify({
             "data_available": True,
@@ -2569,6 +2865,7 @@ def create_vlismod_blueprint(blueprint_name: str, url_prefix: str) -> Blueprint:
             collapse_labels=True,
             readiness_rows=readiness_rows,
             warhead_rows=warhead_rows,
+            attachment_rows=payload.get("attachment_rows", []),
         )
         assessment = max(assessment_rows, key=_row_priority_key) if assessment_rows else None
         if assessment is None:
@@ -2612,6 +2909,8 @@ def create_vlismod_blueprint(blueprint_name: str, url_prefix: str) -> Blueprint:
             for row in payload.get("assessment_rows", [])
             if row.get("pdb_code") == pdb_code
         ]
+        with _connect() as conn:
+            attachment_sites = _attachment_detail_payload(conn, assessment)
         return jsonify({
             "data_available": True,
             "assessment": dict(assessment),
@@ -2619,6 +2918,7 @@ def create_vlismod_blueprint(blueprint_name: str, url_prefix: str) -> Blueprint:
             "ligand_inventory": ligand_inventory,
             "ligand_contexts": _serialize_ligand_contexts(ligand_inventory),
             "related_chains": related_chains,
+            "attachment_sites": attachment_sites,
         })
 
     @bp.get("/protacability/structure-detail/<pdb_code>")
@@ -2642,6 +2942,7 @@ def create_vlismod_blueprint(blueprint_name: str, url_prefix: str) -> Blueprint:
             collapse_labels=collapse_labels,
             readiness_rows=readiness_rows,
             warhead_rows=warhead_rows,
+            attachment_rows=payload.get("attachment_rows", []),
         )
         if virus_name:
             decorated_rows = [row for row in decorated_rows if row.get("virus_name") == virus_name]
@@ -2689,6 +2990,14 @@ def create_vlismod_blueprint(blueprint_name: str, url_prefix: str) -> Blueprint:
             allow_glycan=summary_row.get("ligand_context_class") == "glycan_only",
             preferred_chain=representative_chain,
         )
+        attachment_lookup_row = {
+            **summary_row,
+            **(representative_ligand or {}),
+            "pdb_code": pdb_code,
+            "model_id": (representative_ligand or {}).get("model_id") or summary_row.get("model_id") or 0,
+        }
+        with _connect() as conn:
+            attachment_sites = _attachment_detail_payload(conn, attachment_lookup_row)
         return jsonify({
             "data_available": True,
             "summary": summary_row,
@@ -2701,6 +3010,7 @@ def create_vlismod_blueprint(blueprint_name: str, url_prefix: str) -> Blueprint:
             "lysine_rows": lysine_rows,
             "ligand_inventory": ligand_inventory,
             "ligand_contexts": _serialize_ligand_contexts(ligand_inventory),
+            "attachment_sites": attachment_sites,
         })
 
     @bp.get("/protacability/protein-detail")
@@ -2720,6 +3030,7 @@ def create_vlismod_blueprint(blueprint_name: str, url_prefix: str) -> Blueprint:
             collapse_labels=collapse_labels,
             readiness_rows=readiness_rows,
             warhead_rows=warhead_rows,
+            attachment_rows=payload.get("attachment_rows", []),
         )
         decorated_rows = [
             row for row in decorated_rows
@@ -2734,12 +3045,22 @@ def create_vlismod_blueprint(blueprint_name: str, url_prefix: str) -> Blueprint:
         structure_rows = _group_structure_rows(decorated_rows)
         structure_rows, _ = _sort_protacability_rows(structure_rows, "summary", "best_score_desc")
         tier_distribution = dict(Counter(row.get("best_tier") or "Unknown" for row in structure_rows))
+        attachment_lookup_row = {
+            **protein_row,
+            "pdb_code": protein_row.get("top_pdb_code"),
+            "ligand_resname": protein_row.get("best_ligand_resname"),
+            "ligand_chain": protein_row.get("best_ligand_chain"),
+            "ligand_residue_id": protein_row.get("best_ligand_residue_id"),
+        }
+        with _connect() as conn:
+            attachment_sites = _attachment_detail_payload(conn, attachment_lookup_row)
         return jsonify({
             "data_available": True,
             "summary": protein_row,
             "top_structures": structure_rows[:10],
             "tier_distribution": tier_distribution,
             "explanation": "This view groups multiple structures and chains into a single protein-level summary so repeated biological contexts do not dominate the table.",
+            "attachment_sites": attachment_sites,
         })
 
     @bp.get("/protacability/target-detail")
@@ -2768,6 +3089,7 @@ def create_vlismod_blueprint(blueprint_name: str, url_prefix: str) -> Blueprint:
             collapse_labels=collapse_labels,
             readiness_rows=readiness_rows,
             warhead_rows=warhead_rows,
+            attachment_rows=payload.get("attachment_rows", []),
         )
         rows = [row for row in rows if row.get("virus_name") == virus_name and (row.get("display_protein_type") or row.get("protein_type")) == protein_type]
         if min_score is not None:
@@ -2852,6 +3174,14 @@ def create_vlismod_blueprint(blueprint_name: str, url_prefix: str) -> Blueprint:
             for row in payload.get("ligand_inventory", [])
             if row.get("pdb_code") == active_pdb_code
         ]
+        attachment_lookup_row = {
+            **target_summary,
+            **(representative_ligand or {}),
+            "pdb_code": active_pdb_code,
+            "model_id": (representative_ligand or {}).get("model_id") or target_summary.get("model_id") or 0,
+        }
+        with _connect() as conn:
+            attachment_sites = _attachment_detail_payload(conn, attachment_lookup_row)
         return jsonify({
             "data_available": True,
             "target_summary": target_summary,
@@ -2860,6 +3190,7 @@ def create_vlismod_blueprint(blueprint_name: str, url_prefix: str) -> Blueprint:
             "representative_contexts": representative_contexts,
             "representative_ligand": representative_ligand,
             "ligand_contexts": _serialize_ligand_contexts(ligand_inventory),
+            "attachment_sites": attachment_sites,
         })
 
     @bp.get("/protacability/export-filtered")
@@ -2874,6 +3205,7 @@ def create_vlismod_blueprint(blueprint_name: str, url_prefix: str) -> Blueprint:
             payload.get("warhead_rows", []),
             request.args,
             export_all=True,
+            attachment_rows=payload.get("attachment_rows", []),
         )
         return jsonify({
             "data_available": True,
