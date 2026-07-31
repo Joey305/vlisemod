@@ -1,5 +1,5 @@
 (function () {
-  const HELPER_VERSION = 'pdb-ligand-default-focus-v4';
+  const HELPER_VERSION = 'pdb-ligand-default-focus-v5-attachment-indices';
   const viewerRegistry = new Map();
   let ligandElementSchemeId = null;
   const WATER_RESNAMES = new Set(['HOH', 'WAT', 'DOD', 'H2O', 'TIP', 'SOL']);
@@ -317,7 +317,8 @@
       proteinStructureUrl: '',
       proteinStructureExt: 'pdb',
       ligandSdfUrl: '',
-      ligandLabelAsymId: ''
+      ligandLabelAsymId: '',
+      attachmentSerialMap: {}
     }, options || {});
 
     const container = document.getElementById(containerId);
@@ -352,11 +353,12 @@
     const stage = new NGL.Stage(containerId, { backgroundColor: opts.backgroundColor || '#fbfdfc' });
     viewerRegistry.set(containerId, {
       stage: stage,
-      component: null,
-      proteinComponent: null,
-      ligandComponent: null,
-      options: opts,
-      proteinSele: 'protein',
+	      component: null,
+	      proteinComponent: null,
+	      ligandComponent: null,
+	      options: opts,
+	      attachmentSerialMap: normalizeSerialIndexMap(opts.attachmentSerialMap),
+	      proteinSele: 'protein',
       ligandSele: '',
       defaultFocus: resolveDefaultFocusMode(opts, Boolean(ligandSdfUrl))
     });
@@ -518,9 +520,10 @@
 
       viewerRegistry.set(containerId, {
         stage: stage,
-        component: component,
-        options: opts,
-        proteinSele: 'protein',
+	        component: component,
+	        options: opts,
+	        attachmentSerialMap: normalizeSerialIndexMap(opts.attachmentSerialMap),
+	        proteinSele: 'protein',
         ligandSele: ligandSele,
         ligandAdded: ligandAdded,
         defaultFocus: resolveDefaultFocusMode(opts, false)
@@ -587,8 +590,9 @@
         component: proteinComponent,
         proteinComponent: proteinComponent,
         ligandComponent: ligandComponent,
-        options: Object.assign({}, opts, { defaultFocus: resolvedDefaultFocus }),
-        proteinSele: 'protein',
+	        options: Object.assign({}, opts, { defaultFocus: resolvedDefaultFocus }),
+	        attachmentSerialMap: normalizeSerialIndexMap(opts.attachmentSerialMap),
+	        proteinSele: 'protein',
         ligandSele: 'all',
         ligandAdded: ligandAdded,
         proteinRepr: proteinRepr,
@@ -713,26 +717,73 @@
     }
   }
 
-  function atomSerialSelection(atomSerials) {
-    const serials = (Array.isArray(atomSerials) ? atomSerials : [])
+  function cleanPositiveIntegers(values) {
+    return (Array.isArray(values) ? values : [])
       .map(function (value) { return parseInt(value, 10); })
       .filter(function (value) { return Number.isFinite(value) && value > 0; });
-    if (!serials.length) return '';
-    return serials.map(function (serial) { return `@${serial}`; }).join(' or ');
+  }
+
+  function cleanNonNegativeIntegers(values) {
+    return (Array.isArray(values) ? values : [])
+      .map(function (value) { return parseInt(value, 10); })
+      .filter(function (value) { return Number.isFinite(value) && value >= 0; });
+  }
+
+  function atomIndexSelection(atomIndices) {
+    const indices = cleanNonNegativeIntegers(atomIndices);
+    if (!indices.length) return '';
+    return indices.map(function (index) { return `@${index}`; }).join(' or ');
+  }
+
+  function atomSerialSelection(atomSerials) {
+    return atomIndexSelection(cleanPositiveIntegers(atomSerials));
+  }
+
+  function normalizeSerialIndexMap(value) {
+    const map = {};
+    const entries = value && typeof value === 'object' ? Object.entries(value) : [];
+    entries.forEach(function (entry) {
+      const serial = parseInt(entry[0], 10);
+      const atomIndex = parseInt(entry[1], 10);
+      if (Number.isFinite(serial) && serial > 0 && Number.isFinite(atomIndex) && atomIndex >= 0) {
+        map[String(serial)] = atomIndex;
+      }
+    });
+    return map;
+  }
+
+  function ligandIndicesFromSerials(entry, atomSerials) {
+    const serialMap = normalizeSerialIndexMap(entry && entry.attachmentSerialMap);
+    const seen = new Set();
+    return cleanPositiveIntegers(atomSerials).map(function (serial) {
+      const mapped = serialMap[String(serial)];
+      return Number.isFinite(mapped) ? mapped : null;
+    }).filter(function (atomIndex) {
+      if (!Number.isFinite(atomIndex) || atomIndex < 0 || seen.has(atomIndex)) return false;
+      seen.add(atomIndex);
+      return true;
+    });
+  }
+
+  function removeRepresentationFromAnyComponent(entry, repr) {
+    if (!entry || !repr) return;
+    const components = [entry.ligandComponent, entry.component, entry.proteinComponent];
+    const seen = new Set();
+    components.forEach(function (component) {
+      if (!component || seen.has(component)) return;
+      seen.add(component);
+      try { component.removeRepresentation(repr); } catch (e) {}
+    });
   }
 
   function clearAttachmentHighlights(containerId) {
     const entry = viewerRegistry.get(containerId);
     if (!entry) return;
-    const targetComponent = entry.component || entry.proteinComponent;
-    if (targetComponent && entry.attachmentRepr) {
-      try { targetComponent.removeRepresentation(entry.attachmentRepr); } catch (e) {}
-    }
-    if (targetComponent && entry.attachmentSurfaceRepr) {
-      try { targetComponent.removeRepresentation(entry.attachmentSurfaceRepr); } catch (e) {}
-    }
+    removeRepresentationFromAnyComponent(entry, entry.attachmentRepr);
+    removeRepresentationFromAnyComponent(entry, entry.attachmentSurfaceRepr);
     entry.attachmentRepr = null;
     entry.attachmentSurfaceRepr = null;
+    entry.lastAttachmentHighlight = null;
   }
 
   function highlightAtomSerials(containerId, atomSerials, options) {
@@ -762,17 +813,29 @@
 
   function highlightAttachmentSerialSets(containerId, serialSets, options) {
     const entry = viewerRegistry.get(containerId);
-    const targetComponent = entry && (entry.component || entry.proteinComponent);
-    if (!entry || !targetComponent) return false;
+    const fallbackComponent = entry && (entry.component || entry.proteinComponent);
+    if (!entry || (!entry.ligandComponent && !fallbackComponent)) return false;
     const opts = options || {};
     const candidateSerials = Array.isArray(serialSets && serialSets.candidateSerials) ? serialSets.candidateSerials : [];
-    const candidateSet = new Set(candidateSerials.map(function (value) { return parseInt(value, 10); }));
+    const candidateSet = new Set(cleanPositiveIntegers(candidateSerials));
     const surfaceSerials = (Array.isArray(serialSets && serialSets.surfaceSerials) ? serialSets.surfaceSerials : [])
       .map(function (value) { return parseInt(value, 10); })
       .filter(function (value) { return Number.isFinite(value) && value > 0 && !candidateSet.has(value); });
-    const candidateSele = atomSerialSelection(candidateSerials);
-    const surfaceSele = atomSerialSelection(surfaceSerials);
     clearAttachmentHighlights(containerId);
+
+    const ligandCandidateIndices = ligandIndicesFromSerials(entry, candidateSerials);
+    const ligandSurfaceIndices = ligandIndicesFromSerials(entry, surfaceSerials)
+      .filter(function (atomIndex) { return ligandCandidateIndices.indexOf(atomIndex) === -1; });
+    const ligandCandidateSele = atomIndexSelection(ligandCandidateIndices);
+    const ligandSurfaceSele = atomIndexSelection(ligandSurfaceIndices);
+    const useLigandComponent = entry.ligandComponent && entry.ligandAdded && (
+      (ligandCandidateSele && countAtomsForSelection(entry.ligandComponent, ligandCandidateSele) > 0) ||
+      (ligandSurfaceSele && countAtomsForSelection(entry.ligandComponent, ligandSurfaceSele) > 0)
+    );
+
+    const targetComponent = useLigandComponent ? entry.ligandComponent : fallbackComponent;
+    const candidateSele = useLigandComponent ? ligandCandidateSele : atomSerialSelection(candidateSerials);
+    const surfaceSele = useLigandComponent ? ligandSurfaceSele : atomSerialSelection(surfaceSerials);
     if (!candidateSele && !surfaceSele) return false;
     try {
       if (surfaceSele) {
@@ -796,6 +859,14 @@
       } else {
         targetComponent.autoView(surfaceSele, opts.duration || 800);
       }
+      entry.lastAttachmentHighlight = {
+        mode: useLigandComponent ? 'ligand-sdf-index' : 'component-atom-index',
+        candidateSerials: cleanPositiveIntegers(candidateSerials),
+        surfaceSerials: cleanPositiveIntegers(surfaceSerials),
+        candidateLigandIndices: ligandCandidateIndices,
+        surfaceLigandIndices: ligandSurfaceIndices
+      };
+      console.log('[VLNGLViewer] attachment highlight', entry.lastAttachmentHighlight);
       return true;
     } catch (e) {
       console.warn('[VLNGLViewer] attachment-site highlight failed', e);
@@ -810,6 +881,19 @@
     try { entry.stage.handleResize(); } catch (e) {}
   }
 
+  function debugViewerState(containerId) {
+    const entry = viewerRegistry.get(containerId);
+    if (!entry) return null;
+    return {
+      helperVersion: HELPER_VERSION,
+      hasProteinComponent: Boolean(entry.proteinComponent || entry.component),
+      hasLigandComponent: Boolean(entry.ligandComponent),
+      ligandAdded: Boolean(entry.ligandAdded),
+      attachmentSerialMapSize: Object.keys(entry.attachmentSerialMap || {}).length,
+      lastAttachmentHighlight: entry.lastAttachmentHighlight || null
+    };
+  }
+
   window.VLNGLViewer = {
     initCleanProteinLigandViewer: initCleanProteinLigandViewer,
     initProteinWithLigandSdfViewer: initCleanProteinLigandViewer,
@@ -822,9 +906,10 @@
     highlightAttachmentSerialSets: highlightAttachmentSerialSets,
     clearAttachmentHighlights: clearAttachmentHighlights,
     resizeViewer: resizeViewer,
-    ligandDebugEnabled: ligandDebugEnabled,
-    makeLigandCodeAliases: makeLigandCodeAliases,
-    VERSION: HELPER_VERSION
+	    ligandDebugEnabled: ligandDebugEnabled,
+	    makeLigandCodeAliases: makeLigandCodeAliases,
+	    debugViewerState: debugViewerState,
+	    VERSION: HELPER_VERSION
   };
   console.log('[VLNGLViewer] helper version', HELPER_VERSION);
 })();

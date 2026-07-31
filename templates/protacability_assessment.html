@@ -651,6 +651,115 @@
             `;
         }
 
+        function attachmentRegionColor(regionId, regionIds) {
+            const palette = ['#2f6fb8', '#1b8e5a', '#ef8a47', '#d94f3d', '#7c5fb8', '#168ba3'];
+            const index = Math.max(0, regionIds.indexOf(String(regionId || '')));
+            return palette[index % palette.length];
+        }
+
+        function layoutAttachmentGraphNodes(nodes, bonds) {
+            const width = 760;
+            const height = 280;
+            const padding = 34;
+            const layout = nodes.map((node, index) => {
+                const angle = (Math.PI * 2 * index) / Math.max(1, nodes.length);
+                return {
+                    ...node,
+                    x: width / 2 + Math.cos(angle) * width * 0.36,
+                    y: height / 2 + Math.sin(angle) * height * 0.30
+                };
+            });
+            const byIndex = new Map(layout.map(node => [Number(node.smiles_atom_index), node]));
+            for (let tick = 0; tick < 90; tick += 1) {
+                for (let i = 0; i < layout.length; i += 1) {
+                    for (let j = i + 1; j < layout.length; j += 1) {
+                        const a = layout[i];
+                        const b = layout[j];
+                        const dx = a.x - b.x || 0.01;
+                        const dy = a.y - b.y || 0.01;
+                        const distSq = Math.max(25, dx * dx + dy * dy);
+                        const force = 230 / distSq;
+                        a.x += dx * force;
+                        a.y += dy * force;
+                        b.x -= dx * force;
+                        b.y -= dy * force;
+                    }
+                }
+                (bonds || []).forEach(bond => {
+                    const a = byIndex.get(Number(bond.begin_atom_index));
+                    const b = byIndex.get(Number(bond.end_atom_index));
+                    if (!a || !b) return;
+                    const dx = b.x - a.x;
+                    const dy = b.y - a.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+                    const target = 42;
+                    const force = (dist - target) * 0.018;
+                    const fx = (dx / dist) * force;
+                    const fy = (dy / dist) * force;
+                    a.x += fx;
+                    a.y += fy;
+                    b.x -= fx;
+                    b.y -= fy;
+                });
+                layout.forEach(node => {
+                    node.x += (width / 2 - node.x) * 0.018;
+                    node.y += (height / 2 - node.y) * 0.018;
+                    node.x = Math.max(padding, Math.min(width - padding, node.x));
+                    node.y = Math.max(padding, Math.min(height - padding, node.y));
+                });
+            }
+            return { width, height, nodes: layout, byIndex };
+        }
+
+        function renderAttachmentGraph(attachmentSites) {
+            const payload = attachmentSites || {};
+            const graph = payload.graph || {};
+            const nodes = Array.isArray(graph.nodes) ? graph.nodes : [];
+            const bonds = Array.isArray(graph.bonds) ? graph.bonds : [];
+            if (!nodes.length) return '';
+            const regionIds = Array.from(new Set(nodes.map(node => String(node.region_id || '')).filter(Boolean))).sort();
+            const layout = layoutAttachmentGraphNodes(nodes, bonds);
+            const bondHtml = bonds.map(bond => {
+                const a = layout.byIndex.get(Number(bond.begin_atom_index));
+                const b = layout.byIndex.get(Number(bond.end_atom_index));
+                if (!a || !b) return '';
+                const width = Number(bond.is_aromatic || 0) ? 2.4 : 1.7;
+                return `<line x1="${a.x.toFixed(1)}" y1="${a.y.toFixed(1)}" x2="${b.x.toFixed(1)}" y2="${b.y.toFixed(1)}" stroke-width="${width}" />`;
+            }).join('');
+            const nodeHtml = layout.nodes.map(node => {
+                const regionId = String(node.region_id || '');
+                const isCandidate = Number(node.candidate_attachment_flag || 0) > 0;
+                const isSurface = Number(node.surface_defining_flag || 0) > 0;
+                const color = regionId ? attachmentRegionColor(regionId, regionIds) : '#a9afb2';
+                const radius = isCandidate ? 7.2 : isSurface ? 5.4 : 3.4;
+                const classes = ['attachment-map-node'];
+                if (isCandidate) classes.push('candidate');
+                if (isSurface) classes.push('surface');
+                const label = [node.pdb_atom_name, node.pdb_atom_serial].filter(value => value !== null && value !== undefined && value !== '').join(' ');
+                return `<circle class="${classes.join(' ')}" cx="${node.x.toFixed(1)}" cy="${node.y.toFixed(1)}" r="${radius}" fill="${color}"><title>${escapeHtml(label || `SMILES atom ${node.smiles_atom_index}`)}${regionId ? `, ${escapeHtml(regionId)}` : ''}</title></circle>`;
+            }).join('');
+            const labelHtml = layout.nodes.filter(node => Number(node.candidate_attachment_flag || 0) > 0).slice(0, 14).map(node => {
+                const label = String(node.pdb_atom_name || node.pdb_atom_serial || node.smiles_atom_index || '');
+                return `<text x="${(node.x + 8).toFixed(1)}" y="${(node.y - 7).toFixed(1)}">${escapeHtml(label)}</text>`;
+            }).join('');
+            const legendHtml = regionIds.map(regionId => `
+                <span class="attachment-map-legend-item"><span style="background:${attachmentRegionColor(regionId, regionIds)}"></span>${escapeHtml(regionId)}</span>
+            `).join('');
+            return `
+                <div class="attachment-map-wrap">
+                    <div class="attachment-map-header">
+                        <h4>Attachment Region Map</h4>
+                        <div class="attachment-map-legend">${legendHtml}</div>
+                    </div>
+                    <svg class="attachment-region-map" viewBox="0 0 ${layout.width} ${layout.height}" role="img" aria-label="Ligand attachment region map">
+                        <g class="attachment-map-bonds">${bondHtml}</g>
+                        <g class="attachment-map-nodes">${nodeHtml}</g>
+                        <g class="attachment-map-labels">${labelHtml}</g>
+                    </svg>
+                </div>
+            `;
+        }
+
         function renderAttachmentSitesPanel(attachmentSites, row) {
             const payload = attachmentSites || {};
             const summary = payload.summary || {};
@@ -684,11 +793,12 @@
             `).join('') || '<tr><td colspan="7">No candidate attachment atoms available.</td></tr>';
             return `
                 <div class="page-card protacability-detail-card protac-attachment-sites-card">
-                    <h3>Candidate Attachment Sites</h3>
-                    <p><strong>Evidence:</strong> ${boolText(summary.has_attachment_site_evidence || row?.has_attachment_site_evidence)} | <strong>Regions:</strong> ${formatValue(summary.attachment_region_count ?? row?.attachment_region_count, 0)} | <strong>Candidate atoms:</strong> ${formatValue(summary.attachment_candidate_atom_count ?? row?.attachment_candidate_atom_count, 0)}</p>
-                    <p><strong>Best score/confidence:</strong> ${formatValue(summary.best_attachment_score ?? row?.best_attachment_score, 2)} / ${escapeHtml(summary.best_attachment_confidence || row?.best_attachment_confidence || '—')}</p>
-                    <div class="action-row protac-attachment-actions">
-                        <button type="button" class="button-secondary protac-attachment-highlight-all" data-candidate-serials="${escapeHtml(allCandidateSerials.join(','))}" data-surface-serials="${escapeHtml(allSurfaceSerials.join(','))}">All Regions</button>
+	                    <h3>Candidate Attachment Sites</h3>
+	                    <p><strong>Evidence:</strong> ${boolText(summary.has_attachment_site_evidence || row?.has_attachment_site_evidence)} | <strong>Regions:</strong> ${formatValue(summary.attachment_region_count ?? row?.attachment_region_count, 0)} | <strong>Candidate atoms:</strong> ${formatValue(summary.attachment_candidate_atom_count ?? row?.attachment_candidate_atom_count, 0)}</p>
+	                    <p><strong>Best score/confidence:</strong> ${formatValue(summary.best_attachment_score ?? row?.best_attachment_score, 2)} / ${escapeHtml(summary.best_attachment_confidence || row?.best_attachment_confidence || '—')}</p>
+	                    ${renderAttachmentGraph(payload)}
+	                    <div class="action-row protac-attachment-actions">
+	                        <button type="button" class="button-secondary protac-attachment-highlight-all" data-candidate-serials="${escapeHtml(allCandidateSerials.join(','))}" data-surface-serials="${escapeHtml(allSurfaceSerials.join(','))}">All Regions</button>
                         <button type="button" class="button-secondary protac-attachment-clear">Hide</button>
                     </div>
                     <p class="attachment-region-note"><strong>Medicinal-chemistry limitation:</strong> these structural sites do not prove synthetic tractability, retained binding, or SAR tolerance. <strong>Outward-direction limitation:</strong> vectors are local surface-orientation cues, not predicted linker trajectories.</p>
@@ -1213,7 +1323,29 @@
             return String(value || '').split(',').map(item => Number(item.trim())).filter(Number.isFinite);
         }
 
-        function highlightAttachmentSerials(candidateSerials, surfaceSerials, label) {
+        function attachmentLigandSerialMap(attachmentSites) {
+            const map = {};
+            const atoms = Array.isArray((attachmentSites || {}).atoms) ? attachmentSites.atoms : [];
+            atoms.forEach(atom => {
+                const serial = Number(atom.pdb_atom_serial);
+                const atomIndex = Number(atom.smiles_atom_index);
+                if (Number.isFinite(serial) && serial > 0 && Number.isFinite(atomIndex) && atomIndex >= 0) {
+                    map[String(serial)] = atomIndex;
+                }
+            });
+            return map;
+        }
+
+        function scrollProtacViewerIntoView() {
+            const viewer = document.getElementById('protac-ngl-viewer');
+            if (!viewer) return;
+            viewer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            window.setTimeout(() => {
+                if (window.VLNGLViewer && VLNGLViewer.resizeViewer) VLNGLViewer.resizeViewer('protac-ngl-viewer');
+            }, 350);
+        }
+
+        function highlightAttachmentSerials(candidateSerials, surfaceSerials, label, scrollToViewer = false) {
             const status = $('#protac-ngl-status');
             const candidate = cleanSerials(candidateSerials);
             const surface = cleanSerials(surfaceSerials);
@@ -1224,7 +1356,12 @@
             const ok = VLNGLViewer.highlightAttachmentSerialSets
                 ? VLNGLViewer.highlightAttachmentSerialSets('protac-ngl-viewer', { candidateSerials: candidate, surfaceSerials: surface }, { candidateColor: '#d94f3d', surfaceColor: '#2a9d8f' })
                 : VLNGLViewer.highlightAtomSerials('protac-ngl-viewer', candidate.length ? candidate : surface, { color: '#d94f3d' });
-            if (ok) status.text(`Highlighted candidate atoms in red and surface-defining atoms in teal${label ? ` for ${label}` : ''}.`);
+            if (ok) {
+                const state = VLNGLViewer.debugViewerState ? VLNGLViewer.debugViewerState('protac-ngl-viewer') : null;
+                const location = state?.lastAttachmentHighlight?.mode === 'ligand-sdf-index' ? ' on the ligand' : '';
+                status.text(`Highlighted candidate atoms in red and surface-defining atoms in teal${location}${label ? ` for ${label}` : ''}.`);
+                if (scrollToViewer) scrollProtacViewerIntoView();
+            }
             else status.text('Attachment-site highlighting is not supported for the currently loaded viewer components.');
         }
 
@@ -1234,10 +1371,10 @@
             $('.protac-attachment-highlight-all').off('click').on('click', function() {
                 const candidate = serialsFromAttribute($(this).data('candidate-serials'));
                 const surface = serialsFromAttribute($(this).data('surface-serials'));
-                highlightAttachmentSerials(candidate.length ? candidate : allCandidateSerials, surface.length ? surface : allSurfaceSerials, 'all regions');
+                highlightAttachmentSerials(candidate.length ? candidate : allCandidateSerials, surface.length ? surface : allSurfaceSerials, 'all regions', true);
             });
             $('.protac-attachment-region-button').off('click').on('click', function() {
-                highlightAttachmentSerials(serialsFromAttribute($(this).data('candidate-serials')), serialsFromAttribute($(this).data('surface-serials')), $(this).data('label') || 'region');
+                highlightAttachmentSerials(serialsFromAttribute($(this).data('candidate-serials')), serialsFromAttribute($(this).data('surface-serials')), $(this).data('label') || 'region', true);
             });
             $('.protac-attachment-clear').off('click').on('click', function() {
                 VLNGLViewer.clearAttachmentHighlights('protac-ngl-viewer');
@@ -1263,9 +1400,10 @@
                 structureExt: 'pdb',
                 useDirectRcsbPdb: useDirectRcsbPdb,
                 ligandColorMode: 'element',
-                defaultFocus: 'ligand',
-                candidateLinkerAtomIds: Array.isArray(candidateLinkerAtomIds) ? candidateLinkerAtomIds : []
-            };
+	                defaultFocus: 'ligand',
+	                candidateLinkerAtomIds: Array.isArray(candidateLinkerAtomIds) ? candidateLinkerAtomIds : [],
+	                attachmentSerialMap: attachmentLigandSerialMap(attachmentSites)
+	            };
             latestProtacViewerPayload = viewerPayload;
             if (ligandDebugEnabled()) {
                 console.log('[protacability] selected ligand context', viewerPayload);
@@ -1284,8 +1422,9 @@
                 structureExt: viewerPayload.structureExt,
                 useDirectRcsbPdb: viewerPayload.useDirectRcsbPdb,
                 ligandColorMode: viewerPayload.ligandColorMode,
-                defaultFocus: viewerPayload.defaultFocus,
-                allowBroadLigandFallback: false,
+	                defaultFocus: viewerPayload.defaultFocus,
+	                attachmentSerialMap: viewerPayload.attachmentSerialMap,
+	                allowBroadLigandFallback: false,
                 focusLigand: true,
                 retryCifOnLigandMiss: ligandDebugEnabled(),
                 proteinColor: '#005030',

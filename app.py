@@ -2911,6 +2911,90 @@ def _load_attachment_analysis_rows(conn):
     ]
 
 
+def _empty_attachment_graph_payload():
+    return {"graph_id": None, "nodes": [], "bonds": []}
+
+
+def _attachment_graph_payload(conn, analysis_dict, atoms):
+    graph_id = analysis_dict.get("graph_id")
+    payload = {"graph_id": graph_id, "nodes": [], "bonds": []}
+    try:
+        graph_id_int = int(graph_id)
+    except (TypeError, ValueError):
+        return _empty_attachment_graph_payload()
+
+    atom_by_index = {}
+    for atom in atoms:
+        try:
+            smiles_index = int(atom.get("smiles_atom_index"))
+        except (TypeError, ValueError):
+            continue
+        current = atom_by_index.get(smiles_index)
+        if (
+            current is None
+            or int(bool(atom.get("candidate_attachment_flag"))) > int(bool(current.get("candidate_attachment_flag")))
+            or (atom.get("attachment_score") or 0) > (current.get("attachment_score") or 0)
+        ):
+            atom_by_index[smiles_index] = atom
+
+    if _table_exists(conn, "Ligand_SMILES_Atoms"):
+        graph_atoms = conn.execute(
+            """
+            SELECT smiles_atom_index, element, atomic_number, is_aromatic, is_in_ring
+            FROM Ligand_SMILES_Atoms
+            WHERE graph_id=?
+            ORDER BY smiles_atom_index
+            """,
+            (graph_id_int,),
+        ).fetchall()
+        for graph_atom in graph_atoms:
+            node = dict(graph_atom)
+            detail = atom_by_index.get(node.get("smiles_atom_index"))
+            if detail:
+                node.update(
+                    {
+                        "pdb_atom_serial": detail.get("pdb_atom_serial"),
+                        "pdb_atom_name": detail.get("pdb_atom_name"),
+                        "region_id": detail.get("region_id"),
+                        "candidate_attachment_flag": detail.get("candidate_attachment_flag"),
+                        "surface_defining_flag": detail.get("surface_defining_flag"),
+                        "attachment_score": detail.get("attachment_score"),
+                        "confidence": detail.get("confidence"),
+                    }
+                )
+            payload["nodes"].append(node)
+    else:
+        for smiles_index, detail in sorted(atom_by_index.items()):
+            payload["nodes"].append(
+                {
+                    "smiles_atom_index": smiles_index,
+                    "element": detail.get("element"),
+                    "pdb_atom_serial": detail.get("pdb_atom_serial"),
+                    "pdb_atom_name": detail.get("pdb_atom_name"),
+                    "region_id": detail.get("region_id"),
+                    "candidate_attachment_flag": detail.get("candidate_attachment_flag"),
+                    "surface_defining_flag": detail.get("surface_defining_flag"),
+                    "attachment_score": detail.get("attachment_score"),
+                    "confidence": detail.get("confidence"),
+                }
+            )
+
+    if _table_exists(conn, "Ligand_SMILES_Bonds"):
+        payload["bonds"] = [
+            dict(row)
+            for row in conn.execute(
+                """
+                SELECT smiles_bond_index, begin_atom_index, end_atom_index, bond_type, bond_order, is_aromatic, is_in_ring
+                FROM Ligand_SMILES_Bonds
+                WHERE graph_id=?
+                ORDER BY smiles_bond_index
+                """,
+                (graph_id_int,),
+            ).fetchall()
+        ]
+    return payload
+
+
 def _attachment_detail_payload(conn, row):
     if not _attachment_tables_available(conn):
         return {
@@ -2920,6 +3004,7 @@ def _attachment_detail_payload(conn, row):
             "atoms": [],
             "candidate_atom_serials": [],
             "surface_atom_serials": [],
+            "graph": _empty_attachment_graph_payload(),
         }
     key = _normalize_attachment_key(row)
     if not key:
@@ -2930,6 +3015,7 @@ def _attachment_detail_payload(conn, row):
             "atoms": [],
             "candidate_atom_serials": [],
             "surface_atom_serials": [],
+            "graph": _empty_attachment_graph_payload(),
         }
     analysis = conn.execute(
         """
@@ -2953,6 +3039,7 @@ def _attachment_detail_payload(conn, row):
             "atoms": [],
             "candidate_atom_serials": [],
             "surface_atom_serials": [],
+            "graph": _empty_attachment_graph_payload(),
         }
 
     analysis_dict = dict(analysis)
@@ -3032,6 +3119,7 @@ def _attachment_detail_payload(conn, row):
         "atoms": atoms,
         "candidate_atom_serials": candidate_atom_serials,
         "surface_atom_serials": surface_atom_serials,
+        "graph": _attachment_graph_payload(conn, analysis_dict, atoms),
     }
 
 

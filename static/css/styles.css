@@ -2227,6 +2227,94 @@ body.protacability-page .status-card.status-warning.protacability-callout strong
     color: var(--muted-text);
 }
 
+.protacability-page .attachment-map-wrap {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.42);
+}
+
+.protacability-page .attachment-map-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.protacability-page .attachment-map-header h4 {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.protacability-page .attachment-map-legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 6px 10px;
+    font-size: 0.82rem;
+    color: var(--muted-text);
+}
+
+.protacability-page .attachment-map-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+}
+
+.protacability-page .attachment-map-legend-item span {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.protacability-page .attachment-region-map {
+    width: 100%;
+    aspect-ratio: 19 / 7;
+    min-height: 180px;
+    display: block;
+    overflow: visible;
+}
+
+.protacability-page .attachment-map-bonds line {
+    stroke: rgba(84, 92, 88, 0.55);
+    stroke-linecap: round;
+}
+
+.protacability-page .attachment-map-node {
+    stroke: rgba(255, 255, 255, 0.92);
+    stroke-width: 1.6;
+    opacity: 0.88;
+}
+
+.protacability-page .attachment-map-node.candidate {
+    stroke: #ffffff;
+    stroke-width: 2.4;
+    opacity: 1;
+}
+
+.protacability-page .attachment-map-labels text {
+    fill: var(--text-color);
+    font-size: 11px;
+    paint-order: stroke;
+    stroke: rgba(255, 255, 255, 0.82);
+    stroke-width: 3px;
+    stroke-linejoin: round;
+}
+
+html[data-theme="dark"] .protacability-page .attachment-map-wrap {
+    background: #ffffff;
+    color: #173d2e;
+}
+
+html[data-theme="dark"] .protacability-page .attachment-map-header h4,
+html[data-theme="dark"] .protacability-page .attachment-map-labels text {
+    fill: #173d2e;
+    color: #173d2e;
+}
+
 .protacability-page .attachment-region-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));

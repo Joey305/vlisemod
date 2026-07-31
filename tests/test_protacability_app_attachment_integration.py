@@ -8,6 +8,7 @@ sys.path.insert(0, str(ROOT / "RANDY"))
 sys.path.insert(0, str(ROOT / "TOOLS"))
 
 import vlismod_data_routes as routes  # noqa: E402
+from ligand_smiles_graph_schema import apply_schema as apply_graph_schema  # noqa: E402
 from protacability_attachment_schema import CREATE_STATEMENTS  # noqa: E402
 
 
@@ -102,8 +103,42 @@ class ProtacabilityAttachmentAppIntegrationTests(unittest.TestCase):
     def test_attachment_detail_payload_serializes_regions_and_candidate_serials(self):
         conn = sqlite3.connect(":memory:")
         conn.row_factory = sqlite3.Row
+        apply_graph_schema(conn)
         for statement in CREATE_STATEMENTS:
             conn.execute(statement)
+        conn.execute(
+            """
+            INSERT INTO Ligand_SMILES_Graphs (
+                graph_id, source_smiles, canonical_smiles, isomeric_smiles,
+                smiles_hash, atom_count, heavy_atom_count, bond_count,
+                formal_charge, rdkit_valid, parse_status, graph_method,
+                graph_version, rdkit_version, generated_at
+            )
+            VALUES (1, 'CCS', 'CCS', 'CCS', 'hash-test', 3, 3, 2, 0, 1, 'parsed', 'test', 'v1', 'test', '2026-07-31T00:00:00Z')
+            """
+        )
+        conn.executemany(
+            """
+            INSERT INTO Ligand_SMILES_Atoms (
+                graph_id, smiles_atom_index, element, atomic_number,
+                formal_charge, isotope, is_aromatic, is_in_ring,
+                hybridization, chiral_tag, degree, total_valence,
+                explicit_h_count, implicit_h_count, atom_map_number
+            )
+            VALUES (1, ?, ?, ?, 0, 0, 0, 0, 'SP3', 'CHI_UNSPECIFIED', 1, 4, 0, 0, 0)
+            """,
+            [(3, "C", 6), (4, "S", 16), (5, "C", 6)],
+        )
+        conn.executemany(
+            """
+            INSERT INTO Ligand_SMILES_Bonds (
+                graph_id, smiles_bond_index, begin_atom_index, end_atom_index,
+                bond_type, bond_order
+            )
+            VALUES (1, ?, ?, ?, 'SINGLE', 1.0)
+            """,
+            [(0, 3, 4), (1, 4, 5)],
+        )
         conn.execute(
             """
             INSERT INTO protacability_attachment_analysis (
@@ -116,7 +151,7 @@ class ProtacabilityAttachmentAppIntegrationTests(unittest.TestCase):
                 calculation_parameters_json, generated_at
             )
             VALUES (
-                7, '3EKY', 0, 'A', 101, '', 'DR7', NULL, 'completed',
+                7, '3EKY', 0, 'A', 101, '', 'DR7', 1, 'completed',
                 'complete', '{}', 1, 1, 2, 0.91, 'high', 'graph',
                 'sasa', 'contacts', 'full_analysis_eligible', '{}', ?, '{}',
                 '2026-07-31T00:00:00Z'
@@ -170,6 +205,11 @@ class ProtacabilityAttachmentAppIntegrationTests(unittest.TestCase):
         self.assertEqual(payload["regions"][0]["candidate_atom_serials"], [1567, 1568])
         self.assertEqual(payload["regions"][0]["surface_atom_serials"], [1567])
         self.assertEqual(payload["atoms"][0]["pdb_atom_name"], "CAO")
+        self.assertEqual(payload["graph"]["graph_id"], 1)
+        self.assertEqual(len(payload["graph"]["nodes"]), 3)
+        self.assertEqual(len(payload["graph"]["bonds"]), 2)
+        self.assertEqual(payload["graph"]["nodes"][0]["pdb_atom_serial"], 1567)
+        self.assertEqual(payload["graph"]["nodes"][0]["candidate_attachment_flag"], 1)
 
 
 if __name__ == "__main__":
