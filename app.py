@@ -1139,7 +1139,7 @@ def generate_pymol_session():
 
 
 def _local_get_viruses_payload():
-    conn = sqlite3.connect('viral_data.db')
+    conn = sqlite3.connect(str(LOCAL_DB_PATH))
     cursor = conn.cursor()
     cursor.execute('SELECT DISTINCT virus_name FROM ligand_atoms')
     viruses = [row[0] for row in cursor.fetchall()]
@@ -1148,7 +1148,7 @@ def _local_get_viruses_payload():
 
 
 def _local_get_pdb_codes_payload(virus_name):
-    conn = sqlite3.connect('viral_data.db')
+    conn = sqlite3.connect(str(LOCAL_DB_PATH))
     cursor = conn.cursor()
     cursor.execute(
         '''
@@ -1164,7 +1164,7 @@ def _local_get_pdb_codes_payload(virus_name):
 
 
 def _local_get_ligands_payload(pdb_code):
-    conn = sqlite3.connect('viral_data.db')
+    conn = sqlite3.connect(str(LOCAL_DB_PATH))
     cursor = conn.cursor()
     cursor.execute(
         '''
@@ -1194,7 +1194,7 @@ def _local_get_ligands_payload(pdb_code):
 
 
 def _local_check_functional_groups_payload(pdb_code):
-    conn = sqlite3.connect('viral_data.db')
+    conn = sqlite3.connect(str(LOCAL_DB_PATH))
     cursor = conn.cursor()
     cursor.execute(
         '''
@@ -1210,7 +1210,7 @@ def _local_check_functional_groups_payload(pdb_code):
 
 
 def _local_get_ligands_list_payload():
-    conn = sqlite3.connect('viral_data.db')
+    conn = sqlite3.connect(str(LOCAL_DB_PATH))
     cursor = conn.cursor()
     cursor.execute('SELECT DISTINCT ligand FROM Ligand_Atoms_Smiles')
     ligands = [row[0] for row in cursor.fetchall()]
@@ -1219,7 +1219,7 @@ def _local_get_ligands_list_payload():
 
 
 def _local_get_viruses_by_ligand_payload(ligand_code):
-    conn = sqlite3.connect('viral_data.db')
+    conn = sqlite3.connect(str(LOCAL_DB_PATH))
     cursor = conn.cursor()
     cursor.execute('SELECT DISTINCT Virus_Name FROM Arpeggio_Contacts_Data WHERE Ligand = ?', (ligand_code,))
     viruses = [row[0] for row in cursor.fetchall()]
@@ -1228,7 +1228,7 @@ def _local_get_viruses_by_ligand_payload(ligand_code):
 
 
 def _local_get_pdb_residue_by_ligand_payload(ligand_code):
-    conn = sqlite3.connect('viral_data.db')
+    conn = sqlite3.connect(str(LOCAL_DB_PATH))
     cursor = conn.cursor()
     cursor.execute(
         '''
@@ -1244,7 +1244,7 @@ def _local_get_pdb_residue_by_ligand_payload(ligand_code):
 
 
 def _local_get_sasa_chains_payload(pdb_code, ligand_name):
-    conn = sqlite3.connect('viral_data.db')
+    conn = sqlite3.connect(str(LOCAL_DB_PATH))
     cursor = conn.cursor()
     cursor.execute(
         '''
@@ -1260,7 +1260,7 @@ def _local_get_sasa_chains_payload(pdb_code, ligand_name):
 
 
 def _local_get_pdb_mapping_payload(ligand_code):
-    conn = sqlite3.connect('viral_data.db')
+    conn = sqlite3.connect(str(LOCAL_DB_PATH))
     cursor = conn.cursor()
     cursor.execute(
         '''
@@ -2053,7 +2053,7 @@ data_set_queries = {
 }
 
 def connect_db():
-    return sqlite3.connect('viral_data.db')
+    return sqlite3.connect(str(LOCAL_DB_PATH))
 
 
 PROTACABILITY_REQUIRED_TABLES = (
@@ -2178,7 +2178,7 @@ PROTACABILITY_SORT_OPTIONS = {
 
 
 def connect_db_row():
-    conn = sqlite3.connect('viral_data.db')
+    conn = sqlite3.connect(str(LOCAL_DB_PATH))
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -2919,6 +2919,7 @@ def _attachment_detail_payload(conn, row):
             "regions": [],
             "atoms": [],
             "candidate_atom_serials": [],
+            "surface_atom_serials": [],
         }
     key = _normalize_attachment_key(row)
     if not key:
@@ -2928,6 +2929,7 @@ def _attachment_detail_payload(conn, row):
             "regions": [],
             "atoms": [],
             "candidate_atom_serials": [],
+            "surface_atom_serials": [],
         }
     analysis = conn.execute(
         """
@@ -2950,6 +2952,7 @@ def _attachment_detail_payload(conn, row):
             "regions": [],
             "atoms": [],
             "candidate_atom_serials": [],
+            "surface_atom_serials": [],
         }
 
     analysis_dict = dict(analysis)
@@ -2972,37 +2975,63 @@ def _attachment_detail_payload(conn, row):
             (analysis_id,),
         ).fetchall()
     ]
-    regions = [
-        {
-            **dict(region),
-            "member_atom_ids": _json_list(region["member_atom_ids_json"]),
-            "member_smiles_indices": _json_list(region["member_smiles_indices_json"]),
-            "candidate_atom_ids": _json_list(region["candidate_atom_ids_json"]),
-            "interaction_summary": _json_dict(region["interaction_summary_json"]),
-            "reasons": _json_list(region["reasons_json"]),
-            "cautions": _json_list(region["cautions_json"]),
-        }
-        for region in conn.execute(
-            """
-            SELECT *
-            FROM protacability_attachment_regions
-            WHERE analysis_id=?
-            ORDER BY region_score DESC, region_id
-            """,
-            (analysis_id,),
-        ).fetchall()
-    ]
     candidate_atom_serials = [
         atom.get("pdb_atom_serial")
         for atom in atoms
         if atom.get("candidate_attachment_flag") and atom.get("pdb_atom_serial") is not None
     ]
+    surface_atom_serials = [
+        atom.get("pdb_atom_serial")
+        for atom in atoms
+        if atom.get("surface_defining_flag") and atom.get("pdb_atom_serial") is not None
+    ]
+    region_rows = conn.execute(
+        """
+        SELECT *
+        FROM protacability_attachment_regions
+        WHERE analysis_id=?
+        ORDER BY region_score DESC, region_id
+        """,
+        (analysis_id,),
+    ).fetchall()
+    regions = []
+    for region in region_rows:
+        region_dict = dict(region)
+        region_id = str(region_dict.get("region_id") or "")
+        region_atoms = [atom for atom in atoms if str(atom.get("region_id") or "") == region_id]
+        region_dict.update(
+            {
+                "member_atom_ids": _json_list(region["member_atom_ids_json"]),
+                "member_smiles_indices": _json_list(region["member_smiles_indices_json"]),
+                "candidate_atom_ids": _json_list(region["candidate_atom_ids_json"]),
+                "interaction_summary": _json_dict(region["interaction_summary_json"]),
+                "reasons": _json_list(region["reasons_json"]),
+                "cautions": _json_list(region["cautions_json"]),
+                "candidate_atom_serials": [
+                    atom.get("pdb_atom_serial")
+                    for atom in region_atoms
+                    if atom.get("candidate_attachment_flag") and atom.get("pdb_atom_serial") is not None
+                ],
+                "surface_atom_serials": [
+                    atom.get("pdb_atom_serial")
+                    for atom in region_atoms
+                    if atom.get("surface_defining_flag") and atom.get("pdb_atom_serial") is not None
+                ],
+                "member_atom_serials": [
+                    atom.get("pdb_atom_serial")
+                    for atom in region_atoms
+                    if atom.get("pdb_atom_serial") is not None
+                ],
+            }
+        )
+        regions.append(region_dict)
     return {
         "data_available": True,
         "summary": _attachment_summary_from_match(analysis_dict),
         "regions": regions,
         "atoms": atoms,
         "candidate_atom_serials": candidate_atom_serials,
+        "surface_atom_serials": surface_atom_serials,
     }
 
 

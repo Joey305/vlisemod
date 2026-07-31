@@ -140,12 +140,12 @@ class ProtacabilityAttachmentAppIntegrationTests(unittest.TestCase):
             INSERT INTO protacability_attachment_atoms (
                 analysis_id, region_id, pdb_atom_serial, pdb_atom_name, element,
                 smiles_atom_index, interaction_types_json, functional_group_annotations_json,
-                candidate_attachment_flag, attachment_score, confidence, reasons_json,
-                cautions_json, method_version
+                candidate_attachment_flag, surface_defining_flag, attachment_score,
+                confidence, reasons_json, cautions_json, method_version
             )
             VALUES
-                (7, 'R1', 1567, 'CAO', 'C', 3, '[]', '[]', 1, 0.91, 'high', '["terminal"]', '[]', ?),
-                (7, 'R1', 1568, 'CAS', 'S', 4, '[]', '[]', 1, 0.89, 'high', '["exposed"]', '[]', ?)
+                (7, 'R1', 1567, 'CAO', 'C', 3, '[]', '[]', 1, 1, 0.91, 'high', '["terminal"]', '[]', ?),
+                (7, 'R1', 1568, 'CAS', 'S', 4, '[]', '[]', 1, 0, 0.89, 'high', '["exposed"]', '[]', ?)
             """,
             (routes.ATTACHMENT_METHOD_VERSION, routes.ATTACHMENT_METHOD_VERSION),
         )
@@ -165,7 +165,10 @@ class ProtacabilityAttachmentAppIntegrationTests(unittest.TestCase):
         self.assertTrue(payload["data_available"])
         self.assertEqual(payload["summary"]["attachment_analysis_id"], 7)
         self.assertEqual(payload["candidate_atom_serials"], [1567, 1568])
+        self.assertEqual(payload["surface_atom_serials"], [1567])
         self.assertEqual(payload["regions"][0]["reasons"], ["exposed"])
+        self.assertEqual(payload["regions"][0]["candidate_atom_serials"], [1567, 1568])
+        self.assertEqual(payload["regions"][0]["surface_atom_serials"], [1567])
         self.assertEqual(payload["atoms"][0]["pdb_atom_name"], "CAO")
 
 

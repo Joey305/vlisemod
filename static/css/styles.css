@@ -2223,6 +2223,69 @@ body.protacability-page .status-card.status-warning.protacability-callout strong
     margin: 0 0 4px;
 }
 
+.protacability-page .attachment-region-note {
+    color: var(--muted-text);
+}
+
+.protacability-page .attachment-region-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 10px;
+}
+
+.protacability-page .attachment-region-card {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px;
+    background: var(--panel-subtle-bg, rgba(255, 255, 255, 0.56));
+}
+
+.protacability-page .attachment-region-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.protacability-page .attachment-region-card h4,
+.protacability-page .attachment-region-card p {
+    margin: 0 0 8px;
+}
+
+.protacability-page .attachment-region-card h4 {
+    font-size: 1rem;
+}
+
+.protacability-page .attachment-region-card-header p,
+.protacability-page .attachment-region-muted {
+    color: var(--muted-text);
+}
+
+.protacability-page .attachment-atom-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.protacability-page .attachment-atom-pill {
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    padding: 4px 8px;
+    font-size: 0.82rem;
+    line-height: 1.2;
+    background: rgba(42, 157, 143, 0.08);
+}
+
+.protacability-page .attachment-atom-pill.candidate {
+    border-color: rgba(217, 79, 61, 0.4);
+    background: rgba(217, 79, 61, 0.1);
+}
+
+.protacability-page .attachment-atom-pill.surface:not(.candidate) {
+    border-color: rgba(42, 157, 143, 0.42);
+}
+
 .protacability-page .protac-attachment-sites-card .table-wrap + .table-wrap {
     margin-top: 8px;
 }

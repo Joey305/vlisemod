@@ -728,7 +728,11 @@
     if (targetComponent && entry.attachmentRepr) {
       try { targetComponent.removeRepresentation(entry.attachmentRepr); } catch (e) {}
     }
+    if (targetComponent && entry.attachmentSurfaceRepr) {
+      try { targetComponent.removeRepresentation(entry.attachmentSurfaceRepr); } catch (e) {}
+    }
     entry.attachmentRepr = null;
+    entry.attachmentSurfaceRepr = null;
   }
 
   function highlightAtomSerials(containerId, atomSerials, options) {
@@ -756,6 +760,50 @@
     }
   }
 
+  function highlightAttachmentSerialSets(containerId, serialSets, options) {
+    const entry = viewerRegistry.get(containerId);
+    const targetComponent = entry && (entry.component || entry.proteinComponent);
+    if (!entry || !targetComponent) return false;
+    const opts = options || {};
+    const candidateSerials = Array.isArray(serialSets && serialSets.candidateSerials) ? serialSets.candidateSerials : [];
+    const candidateSet = new Set(candidateSerials.map(function (value) { return parseInt(value, 10); }));
+    const surfaceSerials = (Array.isArray(serialSets && serialSets.surfaceSerials) ? serialSets.surfaceSerials : [])
+      .map(function (value) { return parseInt(value, 10); })
+      .filter(function (value) { return Number.isFinite(value) && value > 0 && !candidateSet.has(value); });
+    const candidateSele = atomSerialSelection(candidateSerials);
+    const surfaceSele = atomSerialSelection(surfaceSerials);
+    clearAttachmentHighlights(containerId);
+    if (!candidateSele && !surfaceSele) return false;
+    try {
+      if (surfaceSele) {
+        entry.attachmentSurfaceRepr = targetComponent.addRepresentation('spacefill', {
+          sele: surfaceSele,
+          color: opts.surfaceColor || '#2a9d8f',
+          radiusScale: opts.surfaceRadiusScale || 0.46,
+          opacity: opts.surfaceOpacity || 0.72,
+          name: 'attachment-site-surface-atoms'
+        });
+      }
+      if (candidateSele) {
+        entry.attachmentRepr = targetComponent.addRepresentation(opts.representation || 'spacefill', {
+          sele: candidateSele,
+          color: opts.candidateColor || opts.color || '#d94f3d',
+          radiusScale: opts.candidateRadiusScale || opts.radiusScale || 0.78,
+          opacity: opts.candidateOpacity || opts.opacity || 1.0,
+          name: 'attachment-site-candidate-atoms'
+        });
+        targetComponent.autoView(candidateSele, opts.duration || 800);
+      } else {
+        targetComponent.autoView(surfaceSele, opts.duration || 800);
+      }
+      return true;
+    } catch (e) {
+      console.warn('[VLNGLViewer] attachment-site highlight failed', e);
+      clearAttachmentHighlights(containerId);
+      return false;
+    }
+  }
+
   function resizeViewer(containerId) {
     const entry = viewerRegistry.get(containerId);
     if (!entry || !entry.stage) return;
@@ -771,6 +819,7 @@
     fitAll: fitAll,
     toggleSurface: toggleSurface,
     highlightAtomSerials: highlightAtomSerials,
+    highlightAttachmentSerialSets: highlightAttachmentSerialSets,
     clearAttachmentHighlights: clearAttachmentHighlights,
     resizeViewer: resizeViewer,
     ligandDebugEnabled: ligandDebugEnabled,

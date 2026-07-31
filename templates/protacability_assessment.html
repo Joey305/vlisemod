@@ -618,14 +618,37 @@
             return `<span class="ligand-context-badge context-candidate_small_molecule">Attachment regions: ${count}${escapeHtml(confidence)}</span>`;
         }
 
-        function serialsForAttachmentRegion(region, atoms) {
+        function cleanSerials(values) {
+            return (Array.isArray(values) ? values : [])
+                .map(value => Number(value))
+                .filter(value => Number.isFinite(value) && value > 0);
+        }
+
+        function attachmentRegionSerials(region, atoms) {
             const regionId = String(region.region_id || '');
-            const serials = (atoms || [])
-                .filter(atom => String(atom.region_id || '') === regionId && Number(atom.candidate_attachment_flag || 0) && atom.pdb_atom_serial)
-                .map(atom => atom.pdb_atom_serial);
-            return serials.length ? serials : (atoms || [])
-                .filter(atom => String(atom.region_id || '') === regionId && atom.pdb_atom_serial)
-                .map(atom => atom.pdb_atom_serial);
+            const regionAtoms = (atoms || []).filter(atom => String(atom.region_id || '') === regionId);
+            const candidateSerials = cleanSerials(region.candidate_atom_serials).length ? cleanSerials(region.candidate_atom_serials) : cleanSerials(regionAtoms.filter(atom => Number(atom.candidate_attachment_flag || 0)).map(atom => atom.pdb_atom_serial));
+            const surfaceSerials = cleanSerials(region.surface_atom_serials).length ? cleanSerials(region.surface_atom_serials) : cleanSerials(regionAtoms.filter(atom => Number(atom.surface_defining_flag || 0)).map(atom => atom.pdb_atom_serial));
+            const memberSerials = cleanSerials(region.member_atom_serials).length ? cleanSerials(region.member_atom_serials) : cleanSerials(regionAtoms.map(atom => atom.pdb_atom_serial));
+            return { candidateSerials, surfaceSerials, memberSerials };
+        }
+
+        function renderAttachmentAtomDetails(region, atoms) {
+            const regionId = String(region.region_id || '');
+            const rows = (atoms || [])
+                .filter(atom => String(atom.region_id || '') === regionId)
+                .sort((a, b) => Number(b.candidate_attachment_flag || 0) - Number(a.candidate_attachment_flag || 0) || Number(b.attachment_score || 0) - Number(a.attachment_score || 0))
+                .slice(0, 8);
+            if (!rows.length) return '<p class="attachment-region-muted">No atom-level detail available for this region.</p>';
+            return `
+                <div class="attachment-atom-list">
+                    ${rows.map(atom => `
+                        <span class="attachment-atom-pill ${Number(atom.candidate_attachment_flag || 0) ? 'candidate' : ''} ${Number(atom.surface_defining_flag || 0) ? 'surface' : ''}">
+                            ${escapeHtml(atom.pdb_atom_name || 'Atom')} ${escapeHtml(atom.pdb_atom_serial ?? '—')} · ${formatValue(atom.attachment_score, 2)}
+                        </span>
+                    `).join('')}
+                </div>
+            `;
         }
 
         function renderAttachmentSitesPanel(attachmentSites, row) {
@@ -633,35 +656,44 @@
             const summary = payload.summary || {};
             const regions = Array.isArray(payload.regions) ? payload.regions : [];
             const atoms = Array.isArray(payload.atoms) ? payload.atoms : [];
-            const allSerials = (payload.candidate_atom_serials || []).filter(Boolean);
-            const regionRows = regions.length ? regions.map(region => {
-                const serials = serialsForAttachmentRegion(region, atoms);
-                const reasons = Array.isArray(region.reasons) ? region.reasons.join('; ') : '';
+            const allCandidateSerials = cleanSerials(payload.candidate_atom_serials);
+            const allSurfaceSerials = cleanSerials(payload.surface_atom_serials);
+            const regionCards = regions.length ? regions.map(region => {
+                const { candidateSerials, surfaceSerials, memberSerials } = attachmentRegionSerials(region, atoms);
+                const reasons = Array.isArray(region.reasons) && region.reasons.length ? region.reasons.join('; ') : '—';
+                const cautions = Array.isArray(region.cautions) && region.cautions.length ? region.cautions.join('; ') : '—';
                 return `
-                    <tr>
-                        <td>${escapeHtml(region.region_id || '—')}</td>
-                        <td>${formatValue(region.region_score, 2)}</td>
-                        <td>${escapeHtml(region.confidence || '—')}</td>
-                        <td>${escapeHtml(serials.join(', ') || '—')}</td>
-                        <td>${escapeHtml(reasons || '—')}</td>
-                        <td><button type="button" class="button-secondary compact-detail-button protac-attachment-region-button" data-serials="${escapeHtml(serials.join(','))}" data-label="${escapeHtml(region.region_id || 'region')}">Highlight</button></td>
-                    </tr>
+                    <article class="attachment-region-card">
+                        <div class="attachment-region-card-header">
+                            <div>
+                                <h4>${escapeHtml(region.region_id || 'Attachment region')}</h4>
+                                <p>${escapeHtml(region.confidence || '—')} confidence · score ${formatValue(region.region_score, 2)}</p>
+                            </div>
+                            <button type="button" class="button-secondary compact-detail-button protac-attachment-region-button" data-candidate-serials="${escapeHtml(candidateSerials.join(','))}" data-surface-serials="${escapeHtml(surfaceSerials.join(','))}" data-label="${escapeHtml(region.region_id || 'region')}">Highlight</button>
+                        </div>
+                        <p><strong>Candidate atoms:</strong> ${escapeHtml(candidateSerials.join(', ') || '—')}</p>
+                        <p><strong>Surface-defining atoms:</strong> ${escapeHtml(surfaceSerials.join(', ') || memberSerials.join(', ') || '—')}</p>
+                        <p><strong>Reasons:</strong> ${escapeHtml(reasons)}</p>
+                        <p><strong>Cautions:</strong> ${escapeHtml(cautions)}</p>
+                        ${renderAttachmentAtomDetails(region, atoms)}
+                    </article>
                 `;
-            }).join('') : '<tr><td colspan="6">No attachment-site regions available for this ligand instance.</td></tr>';
+            }).join('') : '<p class="attachment-region-muted">No attachment-site regions available for this ligand instance.</p>';
             const atomRows = atoms.filter(atom => Number(atom.candidate_attachment_flag || 0)).slice(0, 12).map(atom => `
-                <tr><td>${escapeHtml(atom.pdb_atom_name || '—')}</td><td>${escapeHtml(atom.pdb_atom_serial ?? '—')}</td><td>${escapeHtml(atom.element || '—')}</td><td>${formatValue(atom.attachment_score, 2)}</td><td>${escapeHtml(atom.confidence || '—')}</td><td>${escapeHtml(atom.region_id || '—')}</td></tr>
-            `).join('') || '<tr><td colspan="6">No candidate attachment atoms available.</td></tr>';
+                <tr><td>${escapeHtml(atom.pdb_atom_name || '—')}</td><td>${escapeHtml(atom.pdb_atom_serial ?? '—')}</td><td>${escapeHtml(atom.element || '—')}</td><td>${formatValue(atom.attachment_score, 2)}</td><td>${escapeHtml(atom.confidence || '—')}</td><td>${escapeHtml(atom.region_id || '—')}</td><td>${boolText(atom.surface_defining_flag)}</td></tr>
+            `).join('') || '<tr><td colspan="7">No candidate attachment atoms available.</td></tr>';
             return `
                 <div class="page-card protacability-detail-card protac-attachment-sites-card">
                     <h3>Candidate Attachment Sites</h3>
                     <p><strong>Evidence:</strong> ${boolText(summary.has_attachment_site_evidence || row?.has_attachment_site_evidence)} | <strong>Regions:</strong> ${formatValue(summary.attachment_region_count ?? row?.attachment_region_count, 0)} | <strong>Candidate atoms:</strong> ${formatValue(summary.attachment_candidate_atom_count ?? row?.attachment_candidate_atom_count, 0)}</p>
                     <p><strong>Best score/confidence:</strong> ${formatValue(summary.best_attachment_score ?? row?.best_attachment_score, 2)} / ${escapeHtml(summary.best_attachment_confidence || row?.best_attachment_confidence || '—')}</p>
                     <div class="action-row protac-attachment-actions">
-                        <button type="button" class="button-secondary protac-attachment-highlight-all" data-serials="${escapeHtml(allSerials.join(','))}">Highlight candidates</button>
-                        <button type="button" class="button-secondary protac-attachment-clear">Clear highlight</button>
+                        <button type="button" class="button-secondary protac-attachment-highlight-all" data-candidate-serials="${escapeHtml(allCandidateSerials.join(','))}" data-surface-serials="${escapeHtml(allSurfaceSerials.join(','))}">All Regions</button>
+                        <button type="button" class="button-secondary protac-attachment-clear">Hide</button>
                     </div>
-                    <div class="table-wrap"><table><thead><tr><th>Region</th><th>Score</th><th>Confidence</th><th>Atom serials</th><th>Reasons</th><th>3D</th></tr></thead><tbody>${regionRows}</tbody></table></div>
-                    <div class="table-wrap"><table><thead><tr><th>Atom</th><th>Serial</th><th>Element</th><th>Score</th><th>Confidence</th><th>Region</th></tr></thead><tbody>${atomRows}</tbody></table></div>
+                    <p class="attachment-region-note"><strong>Medicinal-chemistry limitation:</strong> these structural sites do not prove synthetic tractability, retained binding, or SAR tolerance. <strong>Outward-direction limitation:</strong> vectors are local surface-orientation cues, not predicted linker trajectories.</p>
+                    <div class="attachment-region-grid">${regionCards}</div>
+                    <div class="table-wrap"><table><thead><tr><th>Atom</th><th>Serial</th><th>Element</th><th>Score</th><th>Confidence</th><th>Region</th><th>Surface</th></tr></thead><tbody>${atomRows}</tbody></table></div>
                 </div>
             `;
         }
@@ -953,6 +985,7 @@
                     <p><strong>Warhead flags:</strong> ${escapeHtml(assessment.warhead_flags || '—')}</p>
                     <p><strong>Warhead notes:</strong> ${escapeHtml(assessment.warhead_notes || '—')}</p>
                 </div>
+                ${renderAttachmentSitesPanel(attachmentSites, assessment)}
                 <div class="page-card protacability-detail-card">
                     <h3>Target Lysine Accessibility</h3>
                     <p><strong>Lysine count:</strong> ${assessment.lys_count ?? '—'}</p>
@@ -970,7 +1003,6 @@
                     <p><strong>Best linker geometry class:</strong> ${escapeHtml(assessment.best_linker_geometry_class || '—')}</p>
                     <p><strong>Warning:</strong> Ternary geometry cues are hypothesis-generating only and should not be interpreted as proof of productive degradation.</p>
                 </div>
-                ${renderAttachmentSitesPanel(attachmentSites, assessment)}
                 <div class="page-card protacability-detail-card">
                     <h3>Ligand Context</h3>
                     <p>${ligandContextBadge(assessment)}</p>
@@ -1066,6 +1098,7 @@
                     <p><strong>Interaction preservation score:</strong> ${formatValue(summary.interaction_preservation_score, 2)}</p>
                     <p><strong>Warhead flags / notes:</strong> ${escapeHtml(summary.warhead_flags || '—')} / ${escapeHtml(summary.warhead_notes || '—')}</p>
                 </div>
+                ${renderAttachmentSitesPanel(attachmentSites, summary)}
                 <div class="page-card protacability-detail-card">
                     <h3>Target Lysine Accessibility</h3>
                     <p><strong>Lysine count:</strong> ${summary.total_lys_count ?? '—'}</p>
@@ -1081,7 +1114,6 @@
                     <p><strong>Best linker geometry class:</strong> ${escapeHtml(summary.best_linker_geometry_class || '—')}</p>
                     <p><strong>Warning:</strong> Ternary geometry cues are hypothesis-generating only and should not be interpreted as proof of productive degradation.</p>
                 </div>
-                ${renderAttachmentSitesPanel(attachmentSites, summary)}
                 <div class="page-card protacability-detail-card">
                     <h3>Ligand context</h3>
                     ${renderLigandChips(summary.candidate_ligand_resnames_full || summary.candidate_ligand_resnames)}
@@ -1181,29 +1213,35 @@
             return String(value || '').split(',').map(item => Number(item.trim())).filter(Number.isFinite);
         }
 
-        function highlightAttachmentSerials(serials, label) {
+        function highlightAttachmentSerials(candidateSerials, surfaceSerials, label) {
             const status = $('#protac-ngl-status');
-            if (!serials.length) {
+            const candidate = cleanSerials(candidateSerials);
+            const surface = cleanSerials(surfaceSerials);
+            if (!candidate.length && !surface.length) {
                 status.text('No PDB atom serials are available for this attachment-site highlight.');
                 return;
             }
-            const ok = VLNGLViewer.highlightAtomSerials('protac-ngl-viewer', serials, { color: '#d94f3d' });
-            if (ok) status.text(`Highlighted attachment-site atoms${label ? ` for ${label}` : ''}.`);
+            const ok = VLNGLViewer.highlightAttachmentSerialSets
+                ? VLNGLViewer.highlightAttachmentSerialSets('protac-ngl-viewer', { candidateSerials: candidate, surfaceSerials: surface }, { candidateColor: '#d94f3d', surfaceColor: '#2a9d8f' })
+                : VLNGLViewer.highlightAtomSerials('protac-ngl-viewer', candidate.length ? candidate : surface, { color: '#d94f3d' });
+            if (ok) status.text(`Highlighted candidate atoms in red and surface-defining atoms in teal${label ? ` for ${label}` : ''}.`);
             else status.text('Attachment-site highlighting is not supported for the currently loaded viewer components.');
         }
 
         function attachAttachmentHighlightControls(attachmentSites) {
-            const allSerials = ((attachmentSites || {}).candidate_atom_serials || []).filter(Boolean);
+            const allCandidateSerials = cleanSerials((attachmentSites || {}).candidate_atom_serials || []);
+            const allSurfaceSerials = cleanSerials((attachmentSites || {}).surface_atom_serials || []);
             $('.protac-attachment-highlight-all').off('click').on('click', function() {
-                const serials = serialsFromAttribute($(this).data('serials')).length ? serialsFromAttribute($(this).data('serials')) : allSerials;
-                highlightAttachmentSerials(serials, 'candidate atoms');
+                const candidate = serialsFromAttribute($(this).data('candidate-serials'));
+                const surface = serialsFromAttribute($(this).data('surface-serials'));
+                highlightAttachmentSerials(candidate.length ? candidate : allCandidateSerials, surface.length ? surface : allSurfaceSerials, 'all regions');
             });
             $('.protac-attachment-region-button').off('click').on('click', function() {
-                highlightAttachmentSerials(serialsFromAttribute($(this).data('serials')), $(this).data('label') || 'region');
+                highlightAttachmentSerials(serialsFromAttribute($(this).data('candidate-serials')), serialsFromAttribute($(this).data('surface-serials')), $(this).data('label') || 'region');
             });
             $('.protac-attachment-clear').off('click').on('click', function() {
                 VLNGLViewer.clearAttachmentHighlights('protac-ngl-viewer');
-                $('#protac-ngl-status').text('Attachment-site highlight cleared.');
+                $('#protac-ngl-status').text('Attachment-site highlight hidden.');
             });
         }
 
@@ -1261,8 +1299,9 @@
                     if (ligandDebugEnabled()) updateProtacLigandDebugPanel(viewerPayload, viewerPayload);
                 }
             }).then(function() {
-                const serials = ((attachmentSites || {}).candidate_atom_serials || []).filter(Boolean);
-                if (serials.length) highlightAttachmentSerials(serials, 'candidate atoms');
+                const candidateSerials = cleanSerials((attachmentSites || {}).candidate_atom_serials || []);
+                const surfaceSerials = cleanSerials((attachmentSites || {}).surface_atom_serials || []);
+                if (candidateSerials.length || surfaceSerials.length) highlightAttachmentSerials(candidateSerials, surfaceSerials, 'all regions');
             }).catch(() => status.text('Unable to load 3D context from RCSB right now.'));
             updateProtacLigandDebugPanel(viewerPayload, viewerPayload);
             attachAttachmentHighlightControls(attachmentSites);
