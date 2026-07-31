@@ -24,7 +24,7 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-beta.1/js/select2.min.js"></script>
     <script src="https://unpkg.com/ngl@2.0.0-dev.37/dist/ngl.js"></script>
-    <script src="{{ url_for('static', filename='js/ngl_viewer_helpers.js') }}?v=attachment-sdf-map-v1"></script>
+    <script src="{{ url_for('static', filename='js/ngl_viewer_helpers.js') }}?v=attachment-coordinate-map-v1"></script>
 {% endblock %}
 
 {% block content %}
@@ -1512,12 +1512,21 @@
             return String(value === null || value === undefined ? '' : value).trim().toUpperCase();
         }
 
-        function parseLigandPdbAtomNameToSdfIndex(pdbText, ligandResname, ligandChain, ligandResidueId) {
-            const nameToIndex = {};
+        function inferPdbElement(atomName, elementField) {
+            const explicit = normalizePdbAtomName(elementField);
+            if (explicit) return explicit;
+            const letters = normalizePdbAtomName(atomName).replace(/[^A-Z]/g, '');
+            if (!letters) return '';
+            const twoLetter = letters.slice(0, 2);
+            const commonTwoLetter = new Set(['CL', 'BR', 'NA', 'MG', 'ZN', 'FE', 'CA', 'MN', 'CU', 'CO', 'NI']);
+            return commonTwoLetter.has(twoLetter) ? twoLetter : letters.slice(0, 1);
+        }
+
+        function parseLigandPdbAtoms(pdbText, ligandResname, ligandChain, ligandResidueId) {
             const resname = normalizePdbAtomName(ligandResname);
             const chain = normalizePdbAtomName(ligandChain);
             const residueId = normalizePdbResidueId(ligandResidueId);
-            let sdfIndex = 0;
+            const atoms = [];
             String(pdbText || '').split(/\r?\n/).forEach(line => {
                 if (!line.startsWith('HETATM') && !line.startsWith('ATOM  ')) return;
                 const lineResname = normalizePdbAtomName(line.slice(17, 20));
@@ -1527,21 +1536,113 @@
                 if (chain && lineChain !== chain) return;
                 if (residueId && lineResidueId !== residueId) return;
                 const atomName = normalizePdbAtomName(line.slice(12, 16));
-                if (atomName && nameToIndex[atomName] === undefined) {
-                    nameToIndex[atomName] = sdfIndex;
-                }
+                const element = inferPdbElement(atomName, line.slice(76, 78));
+                const serial = Number(line.slice(6, 11));
+                const x = Number(line.slice(30, 38));
+                const y = Number(line.slice(38, 46));
+                const z = Number(line.slice(46, 54));
+                if (!atomName || !Number.isFinite(serial) || !Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) return;
+                atoms.push({
+                    serial,
+                    atomName,
+                    element,
+                    altLoc: normalizePdbAtomName(line.slice(16, 17)),
+                    occupancy: Number(line.slice(54, 60)),
+                    x,
+                    y,
+                    z
+                });
+            });
+            return atoms;
+        }
+
+        function parseSdfAtoms(sdfText) {
+            const lines = String(sdfText || '').split(/\r?\n/);
+            const countLine = lines[3] || '';
+            const atomCount = Number(countLine.slice(0, 3)) || Number(countLine.trim().split(/\s+/)[0]) || 0;
+            if (!Number.isFinite(atomCount) || atomCount <= 0) return [];
+            const parseCoordinate = (fixedWidthValue, fallbackValue) => {
+                const fixed = Number(fixedWidthValue);
+                if (Number.isFinite(fixed)) return fixed;
+                return Number(fallbackValue);
+            };
+            const atoms = [];
+            for (let index = 0; index < atomCount; index += 1) {
+                const line = lines[4 + index] || '';
+                const parts = line.trim().split(/\s+/);
+                const x = parseCoordinate(line.slice(0, 10), parts[0]);
+                const y = parseCoordinate(line.slice(10, 20), parts[1]);
+                const z = parseCoordinate(line.slice(20, 30), parts[2]);
+                const element = normalizePdbAtomName(line.slice(31, 34) || parts[3]);
+                if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z) || !element) continue;
+                atoms.push({ index, element, x, y, z });
+            }
+            return atoms;
+        }
+
+        function squaredDistance(a, b) {
+            const dx = Number(a.x) - Number(b.x);
+            const dy = Number(a.y) - Number(b.y);
+            const dz = Number(a.z) - Number(b.z);
+            return dx * dx + dy * dy + dz * dz;
+        }
+
+        function pdbFallbackNameMap(pdbAtoms) {
+            const nameToIndex = {};
+            let sdfIndex = 0;
+            (pdbAtoms || []).forEach(atom => {
+                if (nameToIndex[atom.atomName] !== undefined) return;
+                nameToIndex[atom.atomName] = sdfIndex;
                 sdfIndex += 1;
             });
             return nameToIndex;
         }
 
-        function attachmentLigandSerialMap(attachmentSites, pdbAtomNameToSdfIndex = {}) {
+        function mapPdbAtomsToSdfAtoms(pdbAtoms, sdfAtoms) {
+            const serialToSdfIndex = {};
+            const atomNameToSdfIndex = {};
+            const usedSdfIndices = new Set();
+            const candidates = [];
+            (pdbAtoms || []).forEach(pdbAtom => {
+                (sdfAtoms || []).forEach(sdfAtom => {
+                    if (pdbAtom.element && sdfAtom.element && pdbAtom.element !== sdfAtom.element) return;
+                    const distanceSq = squaredDistance(pdbAtom, sdfAtom);
+                    if (distanceSq <= 0.16) {
+                        candidates.push({ pdbAtom, sdfAtom, distanceSq });
+                    }
+                });
+            });
+            candidates.sort((a, b) => a.distanceSq - b.distanceSq || Number(b.pdbAtom.occupancy || 0) - Number(a.pdbAtom.occupancy || 0));
+            candidates.forEach(candidate => {
+                const serialKey = String(candidate.pdbAtom.serial);
+                if (serialToSdfIndex[serialKey] !== undefined || usedSdfIndices.has(candidate.sdfAtom.index)) return;
+                serialToSdfIndex[serialKey] = candidate.sdfAtom.index;
+                if (atomNameToSdfIndex[candidate.pdbAtom.atomName] === undefined) {
+                    atomNameToSdfIndex[candidate.pdbAtom.atomName] = candidate.sdfAtom.index;
+                }
+                usedSdfIndices.add(candidate.sdfAtom.index);
+            });
+            if (!Object.keys(atomNameToSdfIndex).length) {
+                Object.assign(atomNameToSdfIndex, pdbFallbackNameMap(pdbAtoms));
+            }
+            return {
+                serialToSdfIndex,
+                atomNameToSdfIndex,
+                mappedAtomCount: Object.keys(serialToSdfIndex).length,
+                sdfAtomCount: (sdfAtoms || []).length,
+                pdbLigandAtomCount: (pdbAtoms || []).length
+            };
+        }
+
+        function attachmentLigandSerialMap(attachmentSites, pdbToSdfMap = {}) {
             const map = {};
             const atoms = Array.isArray((attachmentSites || {}).atoms) ? attachmentSites.atoms : [];
+            const serialToSdfIndex = pdbToSdfMap.serialToSdfIndex || {};
+            const atomNameToSdfIndex = pdbToSdfMap.atomNameToSdfIndex || {};
             atoms.forEach(atom => {
                 const serial = Number(atom.pdb_atom_serial);
                 const atomName = normalizePdbAtomName(atom.pdb_atom_name);
-                const mappedIndex = pdbAtomNameToSdfIndex[atomName];
+                const mappedIndex = atomNameToSdfIndex[atomName] ?? serialToSdfIndex[String(serial)];
                 const atomIndex = mappedIndex !== undefined ? Number(mappedIndex) : Number(atom.sdf_atom_index);
                 if (Number.isFinite(serial) && serial > 0 && Number.isFinite(atomIndex) && atomIndex >= 0) {
                     map[String(serial)] = atomIndex;
@@ -1551,25 +1652,32 @@
         }
 
         function loadAttachmentSerialMap(viewerPayload, attachmentSites) {
-            if (!viewerPayload.structureUrl || !Array.isArray((attachmentSites || {}).atoms) || !attachmentSites.atoms.length) {
+            if (!viewerPayload.structureUrl || !viewerPayload.ligandSdfUrl || !Array.isArray((attachmentSites || {}).atoms) || !attachmentSites.atoms.length) {
                 return Promise.resolve({});
             }
-            return fetch(viewerPayload.structureUrl, { cache: 'force-cache' })
-                .then(response => {
+            return Promise.all([
+                fetch(viewerPayload.structureUrl, { cache: 'force-cache' }).then(response => {
                     if (!response.ok) throw new Error(`Unable to load ligand PDB atom order (${response.status})`);
                     return response.text();
+                }),
+                fetch(viewerPayload.ligandSdfUrl, { cache: 'force-cache' }).then(response => {
+                    if (!response.ok) throw new Error(`Unable to load ligand SDF atom coordinates (${response.status})`);
+                    return response.text();
                 })
-                .then(pdbText => {
-                    const atomNameToSdfIndex = parseLigandPdbAtomNameToSdfIndex(
+            ])
+                .then(([pdbText, sdfText]) => {
+                    const pdbAtoms = parseLigandPdbAtoms(
                         pdbText,
                         viewerPayload.ligandResname,
                         viewerPayload.ligandChain,
                         viewerPayload.ligandResidueId
                     );
-                    const serialMap = attachmentLigandSerialMap(attachmentSites, atomNameToSdfIndex);
+                    const sdfAtoms = parseSdfAtoms(sdfText);
+                    const pdbToSdfMap = mapPdbAtomsToSdfAtoms(pdbAtoms, sdfAtoms);
+                    const serialMap = attachmentLigandSerialMap(attachmentSites, pdbToSdfMap);
                     if (ligandDebugEnabled()) {
-                        console.log('[protacability] attachment PDB-to-SDF atom map', {
-                            atomNameToSdfIndex,
+                        console.log('[protacability] attachment coordinate PDB-to-SDF atom map', {
+                            pdbToSdfMap,
                             serialMap,
                             mappedSerialCount: Object.keys(serialMap).length
                         });

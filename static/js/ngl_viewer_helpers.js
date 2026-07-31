@@ -1,5 +1,5 @@
 (function () {
-  const HELPER_VERSION = 'pdb-ligand-default-focus-v6-attachment-sdf-map';
+  const HELPER_VERSION = 'pdb-ligand-default-focus-v7-attachment-coordinate-map';
   const viewerRegistry = new Map();
   let ligandElementSchemeId = null;
   const WATER_RESNAMES = new Set(['HOH', 'WAT', 'DOD', 'H2O', 'TIP', 'SOL']);
@@ -850,12 +850,14 @@
     clearAttachmentHighlights(containerId);
     if (!regions.length) return false;
 
-    const useLigandComponent = entry.ligandComponent && entry.ligandAdded && regions.some(function (region) {
+    const hasLigandSerialMap = Object.keys(entry.attachmentSerialMap || {}).length > 0;
+    const hasLigandSelection = entry.ligandComponent && entry.ligandAdded && regions.some(function (region) {
       const candidateSele = atomIndexSelection(ligandIndicesFromSerials(entry, region.candidateSerials));
       const surfaceSele = atomIndexSelection(ligandIndicesFromSerials(entry, region.surfaceSerials));
       return (candidateSele && countAtomsForSelection(entry.ligandComponent, candidateSele) > 0) ||
         (surfaceSele && countAtomsForSelection(entry.ligandComponent, surfaceSele) > 0);
     });
+    const useLigandComponent = entry.ligandComponent && entry.ligandAdded && (hasLigandSelection || hasLigandSerialMap);
 
     const targetComponent = useLigandComponent ? entry.ligandComponent : fallbackComponent;
     const highlightRecords = [];
