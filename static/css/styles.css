@@ -2315,6 +2315,40 @@ html[data-theme="dark"] .protacability-page .attachment-map-labels text {
     color: #173d2e;
 }
 
+html[data-theme="dark"] .protacability-page .attachment-region-card {
+    background: #f8fbf7;
+    color: #143829;
+    border-color: rgba(20, 56, 41, 0.18);
+    border-top-color: var(--attachment-region-color, #22c55e);
+}
+
+html[data-theme="dark"] .protacability-page .attachment-region-card-header p,
+html[data-theme="dark"] .protacability-page .attachment-region-muted,
+html[data-theme="dark"] .protacability-page .attachment-region-card p {
+    color: #315a47;
+}
+
+html[data-theme="dark"] .protacability-page .attachment-region-card strong,
+html[data-theme="dark"] .protacability-page .attachment-region-card h4 {
+    color: #0b3324;
+}
+
+html[data-theme="dark"] .protacability-page .attachment-atom-pill {
+    border-color: rgba(20, 56, 41, 0.16);
+    background: rgba(20, 56, 41, 0.06);
+    color: #143829;
+}
+
+html[data-theme="dark"] .protacability-page .attachment-atom-pill.candidate {
+    border-color: rgba(239, 68, 68, 0.28);
+    background: rgba(239, 68, 68, 0.10);
+}
+
+html[data-theme="dark"] .protacability-page .attachment-atom-pill.surface:not(.candidate) {
+    border-color: rgba(34, 197, 94, 0.32);
+    background: rgba(34, 197, 94, 0.08);
+}
+
 .protacability-page .attachment-region-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -2326,6 +2360,7 @@ html[data-theme="dark"] .protacability-page .attachment-map-labels text {
     border-radius: 8px;
     padding: 12px;
     background: var(--panel-subtle-bg, rgba(255, 255, 255, 0.56));
+    border-top: 4px solid var(--attachment-region-color, var(--border-color));
 }
 
 .protacability-page .attachment-region-card-header {

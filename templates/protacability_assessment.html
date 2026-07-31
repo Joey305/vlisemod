@@ -24,7 +24,7 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-beta.1/js/select2.min.js"></script>
     <script src="https://unpkg.com/ngl@2.0.0-dev.37/dist/ngl.js"></script>
-    <script src="{{ url_for('static', filename='js/ngl_viewer_helpers.js') }}?v=pdb-only-handle-validation-v3"></script>
+    <script src="{{ url_for('static', filename='js/ngl_viewer_helpers.js') }}?v=attachment-sdf-map-v1"></script>
 {% endblock %}
 
 {% block content %}
@@ -652,9 +652,20 @@
         }
 
         function attachmentRegionColor(regionId, regionIds) {
-            const palette = ['#2f6fb8', '#1b8e5a', '#ef8a47', '#d94f3d', '#7c5fb8', '#168ba3'];
+            const palette = ['#22c55e', '#ef4444', '#3b82f6', '#eab308', '#ec4899', '#06b6d4', '#8b5cf6', '#f97316'];
             const index = Math.max(0, regionIds.indexOf(String(regionId || '')));
             return palette[index % palette.length];
+        }
+
+        function attachmentRegionIds(attachmentSites) {
+            return (Array.isArray((attachmentSites || {}).regions) ? attachmentSites.regions : [])
+                .map(region => String(region.region_id || ''))
+                .filter(Boolean)
+                .sort();
+        }
+
+        function attachmentRegionColorFor(regionId, attachmentSites) {
+            return attachmentRegionColor(regionId, attachmentRegionIds(attachmentSites));
         }
 
         function layoutAttachmentGraphNodes(nodes, bonds) {
@@ -772,13 +783,13 @@
                 const reasons = Array.isArray(region.reasons) && region.reasons.length ? region.reasons.join('; ') : '—';
                 const cautions = Array.isArray(region.cautions) && region.cautions.length ? region.cautions.join('; ') : '—';
                 return `
-                    <article class="attachment-region-card">
+                    <article class="attachment-region-card" style="--attachment-region-color: ${attachmentRegionColorFor(region.region_id, payload)}">
                         <div class="attachment-region-card-header">
                             <div>
                                 <h4>${escapeHtml(region.region_id || 'Attachment region')}</h4>
                                 <p>${escapeHtml(region.confidence || '—')} confidence · score ${formatValue(region.region_score, 2)}</p>
                             </div>
-                            <button type="button" class="button-secondary compact-detail-button protac-attachment-region-button" data-candidate-serials="${escapeHtml(candidateSerials.join(','))}" data-surface-serials="${escapeHtml(surfaceSerials.join(','))}" data-label="${escapeHtml(region.region_id || 'region')}">Highlight</button>
+                            <button type="button" class="button-secondary compact-detail-button protac-attachment-region-button" data-region-id="${escapeHtml(region.region_id || 'region')}" data-region-color="${attachmentRegionColorFor(region.region_id, payload)}" data-candidate-serials="${escapeHtml(candidateSerials.join(','))}" data-surface-serials="${escapeHtml(surfaceSerials.join(','))}" data-label="${escapeHtml(region.region_id || 'region')}">Highlight</button>
                         </div>
                         <p><strong>Candidate atoms:</strong> ${escapeHtml(candidateSerials.join(', ') || '—')}</p>
                         <p><strong>Surface-defining atoms:</strong> ${escapeHtml(surfaceSerials.join(', ') || memberSerials.join(', ') || '—')}</p>
@@ -1323,17 +1334,96 @@
             return String(value || '').split(',').map(item => Number(item.trim())).filter(Number.isFinite);
         }
 
-        function attachmentLigandSerialMap(attachmentSites) {
+        function normalizePdbAtomName(value) {
+            return String(value || '').trim().toUpperCase();
+        }
+
+        function normalizePdbResidueId(value) {
+            return String(value === null || value === undefined ? '' : value).trim().toUpperCase();
+        }
+
+        function parseLigandPdbAtomNameToSdfIndex(pdbText, ligandResname, ligandChain, ligandResidueId) {
+            const nameToIndex = {};
+            const resname = normalizePdbAtomName(ligandResname);
+            const chain = normalizePdbAtomName(ligandChain);
+            const residueId = normalizePdbResidueId(ligandResidueId);
+            let sdfIndex = 0;
+            String(pdbText || '').split(/\r?\n/).forEach(line => {
+                if (!line.startsWith('HETATM') && !line.startsWith('ATOM  ')) return;
+                const lineResname = normalizePdbAtomName(line.slice(17, 20));
+                const lineChain = normalizePdbAtomName(line.slice(21, 22));
+                const lineResidueId = normalizePdbResidueId(line.slice(22, 27));
+                if (resname && lineResname !== resname) return;
+                if (chain && lineChain !== chain) return;
+                if (residueId && lineResidueId !== residueId) return;
+                const atomName = normalizePdbAtomName(line.slice(12, 16));
+                if (atomName && nameToIndex[atomName] === undefined) {
+                    nameToIndex[atomName] = sdfIndex;
+                }
+                sdfIndex += 1;
+            });
+            return nameToIndex;
+        }
+
+        function attachmentLigandSerialMap(attachmentSites, pdbAtomNameToSdfIndex = {}) {
             const map = {};
             const atoms = Array.isArray((attachmentSites || {}).atoms) ? attachmentSites.atoms : [];
             atoms.forEach(atom => {
                 const serial = Number(atom.pdb_atom_serial);
-                const atomIndex = Number(atom.smiles_atom_index);
+                const atomName = normalizePdbAtomName(atom.pdb_atom_name);
+                const mappedIndex = pdbAtomNameToSdfIndex[atomName];
+                const atomIndex = mappedIndex !== undefined ? Number(mappedIndex) : Number(atom.sdf_atom_index);
                 if (Number.isFinite(serial) && serial > 0 && Number.isFinite(atomIndex) && atomIndex >= 0) {
                     map[String(serial)] = atomIndex;
                 }
             });
             return map;
+        }
+
+        function loadAttachmentSerialMap(viewerPayload, attachmentSites) {
+            if (!viewerPayload.structureUrl || !Array.isArray((attachmentSites || {}).atoms) || !attachmentSites.atoms.length) {
+                return Promise.resolve({});
+            }
+            return fetch(viewerPayload.structureUrl, { cache: 'force-cache' })
+                .then(response => {
+                    if (!response.ok) throw new Error(`Unable to load ligand PDB atom order (${response.status})`);
+                    return response.text();
+                })
+                .then(pdbText => {
+                    const atomNameToSdfIndex = parseLigandPdbAtomNameToSdfIndex(
+                        pdbText,
+                        viewerPayload.ligandResname,
+                        viewerPayload.ligandChain,
+                        viewerPayload.ligandResidueId
+                    );
+                    const serialMap = attachmentLigandSerialMap(attachmentSites, atomNameToSdfIndex);
+                    if (ligandDebugEnabled()) {
+                        console.log('[protacability] attachment PDB-to-SDF atom map', {
+                            atomNameToSdfIndex,
+                            serialMap,
+                            mappedSerialCount: Object.keys(serialMap).length
+                        });
+                    }
+                    return serialMap;
+                })
+                .catch(error => {
+                    console.warn('[protacability] unable to build attachment PDB-to-SDF atom map', error);
+                    return {};
+                });
+        }
+
+        function attachmentRegionSets(attachmentSites) {
+            const payload = attachmentSites || {};
+            const atoms = Array.isArray(payload.atoms) ? payload.atoms : [];
+            return (Array.isArray(payload.regions) ? payload.regions : []).map(region => {
+                const { candidateSerials, surfaceSerials } = attachmentRegionSerials(region, atoms);
+                return {
+                    regionId: String(region.region_id || 'region'),
+                    color: attachmentRegionColorFor(region.region_id, payload),
+                    candidateSerials,
+                    surfaceSerials
+                };
+            }).filter(region => region.candidateSerials.length || region.surfaceSerials.length);
         }
 
         function scrollProtacViewerIntoView() {
@@ -1345,36 +1435,49 @@
             }, 350);
         }
 
-        function highlightAttachmentSerials(candidateSerials, surfaceSerials, label, scrollToViewer = false) {
+        function highlightAttachmentRegions(regionSets, label, scrollToViewer = false) {
             const status = $('#protac-ngl-status');
-            const candidate = cleanSerials(candidateSerials);
-            const surface = cleanSerials(surfaceSerials);
-            if (!candidate.length && !surface.length) {
+            const regions = Array.isArray(regionSets) ? regionSets : [];
+            if (!regions.some(region => cleanSerials(region.candidateSerials).length || cleanSerials(region.surfaceSerials).length)) {
                 status.text('No PDB atom serials are available for this attachment-site highlight.');
                 return;
             }
-            const ok = VLNGLViewer.highlightAttachmentSerialSets
-                ? VLNGLViewer.highlightAttachmentSerialSets('protac-ngl-viewer', { candidateSerials: candidate, surfaceSerials: surface }, { candidateColor: '#d94f3d', surfaceColor: '#2a9d8f' })
-                : VLNGLViewer.highlightAtomSerials('protac-ngl-viewer', candidate.length ? candidate : surface, { color: '#d94f3d' });
+            const ok = VLNGLViewer.highlightAttachmentRegionSets
+                ? VLNGLViewer.highlightAttachmentRegionSets('protac-ngl-viewer', regions, { opacity: 0.48, candidateRadiusScale: 0.50, surfaceRadiusScale: 0.38 })
+                : false;
             if (ok) {
                 const state = VLNGLViewer.debugViewerState ? VLNGLViewer.debugViewerState('protac-ngl-viewer') : null;
                 const location = state?.lastAttachmentHighlight?.mode === 'ligand-sdf-index' ? ' on the ligand' : '';
-                status.text(`Highlighted candidate atoms in red and surface-defining atoms in teal${location}${label ? ` for ${label}` : ''}.`);
+                status.text(`Highlighted translucent attachment-site atoms${location}${label ? ` for ${label}` : ''}.`);
                 if (scrollToViewer) scrollProtacViewerIntoView();
             }
             else status.text('Attachment-site highlighting is not supported for the currently loaded viewer components.');
         }
 
+        function highlightAttachmentSerials(candidateSerials, surfaceSerials, label, scrollToViewer = false, color = '#22c55e') {
+            highlightAttachmentRegions([{ regionId: label || 'attachment-site', color, candidateSerials, surfaceSerials }], label, scrollToViewer);
+        }
+
         function attachAttachmentHighlightControls(attachmentSites) {
             const allCandidateSerials = cleanSerials((attachmentSites || {}).candidate_atom_serials || []);
             const allSurfaceSerials = cleanSerials((attachmentSites || {}).surface_atom_serials || []);
+            const regionSets = attachmentRegionSets(attachmentSites);
             $('.protac-attachment-highlight-all').off('click').on('click', function() {
-                const candidate = serialsFromAttribute($(this).data('candidate-serials'));
-                const surface = serialsFromAttribute($(this).data('surface-serials'));
-                highlightAttachmentSerials(candidate.length ? candidate : allCandidateSerials, surface.length ? surface : allSurfaceSerials, 'all regions', true);
+                if (regionSets.length) highlightAttachmentRegions(regionSets, 'all regions', true);
+                else {
+                    const candidate = serialsFromAttribute($(this).data('candidate-serials'));
+                    const surface = serialsFromAttribute($(this).data('surface-serials'));
+                    highlightAttachmentSerials(candidate.length ? candidate : allCandidateSerials, surface.length ? surface : allSurfaceSerials, 'all regions', true);
+                }
             });
             $('.protac-attachment-region-button').off('click').on('click', function() {
-                highlightAttachmentSerials(serialsFromAttribute($(this).data('candidate-serials')), serialsFromAttribute($(this).data('surface-serials')), $(this).data('label') || 'region', true);
+                highlightAttachmentSerials(
+                    serialsFromAttribute($(this).data('candidate-serials')),
+                    serialsFromAttribute($(this).data('surface-serials')),
+                    $(this).data('label') || 'region',
+                    true,
+                    $(this).data('region-color') || '#22c55e'
+                );
             });
             $('.protac-attachment-clear').off('click').on('click', function() {
                 VLNGLViewer.clearAttachmentHighlights('protac-ngl-viewer');
@@ -1400,16 +1503,18 @@
                 structureExt: 'pdb',
                 useDirectRcsbPdb: useDirectRcsbPdb,
                 ligandColorMode: 'element',
-	                defaultFocus: 'ligand',
-	                candidateLinkerAtomIds: Array.isArray(candidateLinkerAtomIds) ? candidateLinkerAtomIds : [],
-	                attachmentSerialMap: attachmentLigandSerialMap(attachmentSites)
-	            };
+                defaultFocus: 'ligand',
+                candidateLinkerAtomIds: Array.isArray(candidateLinkerAtomIds) ? candidateLinkerAtomIds : [],
+                attachmentSerialMap: {}
+            };
             latestProtacViewerPayload = viewerPayload;
             if (ligandDebugEnabled()) {
                 console.log('[protacability] selected ligand context', viewerPayload);
                 console.log('[protacability] viewer payload', viewerPayload);
             }
-            VLNGLViewer.initCleanProteinLigandViewer(containerId, {
+            loadAttachmentSerialMap(viewerPayload, attachmentSites).then(function(serialMap) {
+                viewerPayload.attachmentSerialMap = serialMap;
+                return VLNGLViewer.initCleanProteinLigandViewer(containerId, {
                 pdbCode: viewerPayload.pdbCode,
                 chainId: viewerPayload.chainId,
                 ligandResname: viewerPayload.ligandResname,
@@ -1433,14 +1538,11 @@
                 onStatus: function(message) {
                     status.text(message || '');
                 },
-                onSourceLoaded: function(sourceUrl) {
-                    latestProtacLoadedSourceUrl = sourceUrl || null;
-                    if (ligandDebugEnabled()) updateProtacLigandDebugPanel(viewerPayload, viewerPayload);
-                }
-            }).then(function() {
-                const candidateSerials = cleanSerials((attachmentSites || {}).candidate_atom_serials || []);
-                const surfaceSerials = cleanSerials((attachmentSites || {}).surface_atom_serials || []);
-                if (candidateSerials.length || surfaceSerials.length) highlightAttachmentSerials(candidateSerials, surfaceSerials, 'all regions');
+	                onSourceLoaded: function(sourceUrl) {
+	                    latestProtacLoadedSourceUrl = sourceUrl || null;
+	                    if (ligandDebugEnabled()) updateProtacLigandDebugPanel(viewerPayload, viewerPayload);
+	                }
+                });
             }).catch(() => status.text('Unable to load 3D context from RCSB right now.'));
             updateProtacLigandDebugPanel(viewerPayload, viewerPayload);
             attachAttachmentHighlightControls(attachmentSites);
