@@ -55,7 +55,6 @@ Direct pages:
 | FAQ | [vlisemod.com/faq](https://vlisemod.com/faq) | Answer common interpretation and usage questions. |
 | Citation | [vlisemod.com/citation](https://vlisemod.com/citation) | Find citation and attribution guidance. |
 | Contact | [vlisemod.com/contact](https://vlisemod.com/contact) | Start a collaboration or methods discussion. |
-| Drug GPT / BioGPT | `/drugapp/` | Optional deployment-dependent assistant surface when enabled. |
 
 ## Core Capabilities
 
@@ -68,7 +67,6 @@ Direct pages:
 | Solvent Exposure Review | SASA-derived exposed-atom interpretation for modification-site discussion. |
 | PROTACability Assessment | Transparent target, structure, chain, lysine-proximity, warhead-linkability, and readiness triage. |
 | Companion Tool Handoff | Continuation into external design environments such as PROTAC Builder. |
-| Optional Drug GPT / BioGPT | Local-model assistant workflow when explicitly provisioned and enabled. |
 
 ## Conceptual Workflow
 
@@ -110,60 +108,28 @@ This repository is prepared for public source review. It includes:
 
 - Flask application code,
 - templates and static assets,
-- documentation for application behavior, deployment, database expectations, and maintenance,
+- documentation for application behavior, interpretation, development, and maintenance,
 - enrichment, import, and maintenance scripts,
 - small curated source assets needed to understand the project.
 
-It intentionally excludes local runtime assets such as:
+It intentionally excludes private runtime assets such as:
 
-- local databases such as `viral_data.db`,
-- local `.env` files and tokens,
-- generated PDB, SDF, PyMOL, chart, export, and cache directories,
-- generated model checkpoints and training runs,
+- credentials, tokens, and private configuration,
+- generated structure, chart, export, and cache directories,
+- generated model, training, and runtime artifacts,
 - local backups and archives.
 
-## Quick Start
+## Development Note
 
-Create an environment and install dependencies:
+The public repository is shared for transparency, review, and collaboration around the V-LiSEMOD application code and scientific framing. The hosted application at [vlisemod.com](https://vlisemod.com) is the primary way to use the tool.
 
-```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-```
-
-Configure local settings:
-
-```bash
-cp .env.example .env
-```
-
-At minimum, provide the data backend expected by your deployment mode:
-
-- local SQLite mode: set `VLISMOD_LOCAL_DB_PATH` or provide `viral_data.db` at the repo root,
-- RANDY-backed mode: set `VLISMOD_DATA_BACKEND`, `RANDY_API_BASE_URL` or `VLISMOD_BACKUP_URL`, and the matching token variable.
-
-Start the app:
-
-```bash
-python app.py
-```
-
-Then validate:
-
-- `http://127.0.0.1:5003/healthz`
-- `http://127.0.0.1:5003/`
-- `http://127.0.0.1:5003/protacability_page`
-
-The optional Drug GPT / BioGPT module is disabled by default unless the deployment explicitly enables and provisions the local model runtime.
+Local development is possible for collaborators with project access, but this README focuses on the public tool rather than setup instructions.
 
 ## Documentation
 
 - [Documentation index](docs/README.md)
 - [Application guide](docs/APP_GUIDE.md)
-- [Database guide](docs/DATABASE.md)
 - [PROTACability guide](docs/PROTACABILITY.md)
-- [Deployment guide](docs/DEPLOYMENT.md)
 - [Developer notes](docs/DEVELOPER_NOTES.md)
 - [Maintenance guide](docs/MAINTENANCE.md)
 
@@ -171,23 +137,23 @@ The optional Drug GPT / BioGPT module is disabled by default unless the deployme
 
 Before moving this repository from private to public:
 
-- confirm `.env` and local credential files are untracked,
-- confirm `viral_data.db`, backups, generated caches, and model artifacts are untracked,
+- confirm local credential and configuration files are untracked,
+- confirm private runtime data, backups, generated caches, and model artifacts are untracked,
 - run a secret scan over tracked files,
 - verify documentation links point to tracked files or live public pages,
-- verify public claims remain aligned with the implementation and current data provisioning.
+- verify public claims remain aligned with the implementation and live tool behavior.
 
 Helpful commands:
 
 ```bash
 git status --ignored --short
-git ls-files -- .env '.env*' '*secret*' '*credentials*' '*.pem' '*.key' '*.sqlite' '*.db'
+git ls-files -- '*secret*' '*credentials*' '*.pem' '*.key'
 rg -n "(api[_-]?key|secret|token|password|credential|private[_-]?key|sk-[A-Za-z0-9]|ghp_|github_pat_|AKIA[0-9A-Z]{16})" --glob "!.git/**"
 ```
 
 ## Project Status
 
-V-LiSEMOD is an active research-oriented web platform. The public repository supports review, collaboration, and reproducible development around the application code and documentation. Full functionality depends on provisioned scientific data and deployment-specific configuration.
+V-LiSEMOD is an active research-oriented web platform. The public repository supports review, collaboration, and development around the application code, documentation, and scientific framing. The hosted site remains the primary public tool.
 
 ## Citation
 
