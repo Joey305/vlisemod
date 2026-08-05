@@ -73,7 +73,7 @@ Whenever public routes, page labels, feature flags, or backend behavior change:
 1. update `README.md` if the public-facing story changed,
 2. update `docs/APP_GUIDE.md` for module and workflow changes,
 3. update `docs/DEPLOYMENT.md` for env vars or runtime changes,
-4. update `docs/MANUSCRIPT_OUTLINE.md` and the manuscript folder if the scientific framing needs to change.
+4. update public manuscript or citation materials once they are added to the documentation tree.
 
 ## Troubleshooting Common App Issues
 

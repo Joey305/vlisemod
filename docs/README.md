@@ -12,16 +12,10 @@ This `docs/` folder keeps detailed technical, deployment, maintenance, and manus
 | [DEPLOYMENT.md](DEPLOYMENT.md) | Local run, environment variables, local-vs-RANDY modes, and deployment caveats |
 | [MAINTENANCE.md](MAINTENANCE.md) | Repo hygiene, generated-folder handling, and pre-release checks |
 | [DEVELOPER_NOTES.md](DEVELOPER_NOTES.md) | Flask structure, route conventions, feature flags, and developer caveats |
-| [MANUSCRIPT_OUTLINE.md](MANUSCRIPT_OUTLINE.md) | Manuscript-ready high-level outline and safe language scaffold |
 
-## Manuscript Planning Folder
+## Manuscript Planning
 
-The dedicated manuscript-planning material lives under [`docs/manuscript/`](manuscript/):
-
-- [MANUSCRIPT_PLAN.md](manuscript/MANUSCRIPT_PLAN.md)
-- [CLAIMS_AND_LIMITATIONS_MATRIX.md](manuscript/CLAIMS_AND_LIMITATIONS_MATRIX.md)
-- [FIGURE_AND_TABLE_PLAN.md](manuscript/FIGURE_AND_TABLE_PLAN.md)
-- [VALIDATION_AND_REPRODUCIBILITY_PLAN.md](manuscript/VALIDATION_AND_REPRODUCIBILITY_PLAN.md)
+Manuscript-specific planning material is not currently included in the public documentation tree. Add those files here once a manuscript, preprint, or software record is ready for public-facing review.
 
 ## Suggested Reading Order
 
@@ -29,4 +23,4 @@ The dedicated manuscript-planning material lives under [`docs/manuscript/`](manu
 2. Read [PROTACABILITY.md](PROTACABILITY.md) before describing degrader-readiness outputs.
 3. Use [DATABASE.md](DATABASE.md), [DEPLOYMENT.md](DEPLOYMENT.md), and [MAINTENANCE.md](MAINTENANCE.md) for implementation and operational context.
 4. Use [DEVELOPER_NOTES.md](DEVELOPER_NOTES.md) when changing routes, templates, or feature flags.
-5. Use [MANUSCRIPT_OUTLINE.md](MANUSCRIPT_OUTLINE.md) and the manuscript folder when drafting publication-facing language.
+5. Keep publication-facing language aligned with the implementation notes in [APP_GUIDE.md](APP_GUIDE.md) and [PROTACABILITY.md](PROTACABILITY.md).

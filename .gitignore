@@ -5,9 +5,14 @@
 .env
 .env.*
 !.env.example
+.flaskenv
+.envrc
+*.local
 *.secret
 *.secrets
 secrets/
+private/
+credentials/
 *.key
 *.pem
 *.crt
@@ -35,6 +40,7 @@ htmlcov/
 venv/
 env/
 .ipynb_checkpoints/
+.cache/
 
 # Local databases and backups
 viral_data.db
@@ -61,6 +67,10 @@ downloads/
 reports/
 generated_exports/
 generated_zip_bundles/
+generated_data/
+generated_training_data/
+training_runs/
+tokenized_datasets/
 static/charts/
 static/coordinate_cache/
 static/ligand_sdf_cache/
@@ -89,6 +99,11 @@ wandb/
 *.gguf
 *.joblib
 *.pkl
+*.pickle
+*.npy
+*.npz
+*.parquet
+*.feather
 
 # Scientific runtime downloads and temporary structures
 *.smi
@@ -120,3 +135,4 @@ backups/
 
 # Project-specific generated or local reference files
 failed_protac_candidates.csv
+training_text.txt
