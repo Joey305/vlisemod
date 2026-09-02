@@ -2012,7 +2012,16 @@
             const ligandContexts = data.ligand_contexts || [];
             const attachmentSites = data.attachment_sites || {};
             const best = contexts.best_candidate_small_molecule_context || contexts.best_candidate_plus_glycan_context || contexts.best_glycan_only_context || {};
-            const structureRows = structures.length ? structures.map(row => `<tr><td>${escapeHtml(row.pdb_code || '—')}</td><td>${formatValue(row.best_score, 2)}</td><td>${escapeHtml(row.best_tier || '—')}</td><td>${row.chain_count ?? 0}</td><td>${ligandContextBadge(row)}</td><td>${escapeHtml(row.candidate_ligand_resnames || 'None')}</td></tr>`).join('') : '<tr><td colspan=\"6\">No structures available.</td></tr>';
+            const structureRows = structures.length ? structures.map(row => {
+                const pdbCode = row.pdb_code || '';
+                const chainId = row.representative_chain_id || row.best_ligand_chain || '';
+                const ligandResname = row.best_ligand_resname || '';
+                const ligandChain = row.best_ligand_chain || '';
+                const ligandResidueId = row.best_ligand_residue_id || '';
+                const linkerAtomIds = (row.candidate_linker_atom_ids_list || []).join(',');
+                const selected = String(pdbCode).toUpperCase() === String(best.pdb_code || summary.best_pdb_code || '').toUpperCase();
+                return `<tr class="protac-target-structure-row${selected ? ' is-selected' : ''}" role="button" tabindex="0" aria-label="Load 3D model for PDB ${escapeHtml(pdbCode)}" aria-pressed="${selected}" data-pdb-code="${escapeHtml(pdbCode)}" data-chain-id="${escapeHtml(chainId)}" data-ligand-resname="${escapeHtml(ligandResname)}" data-ligand-chain="${escapeHtml(ligandChain)}" data-ligand-residue-id="${escapeHtml(ligandResidueId)}" data-linker-atom-ids="${escapeHtml(linkerAtomIds)}"><td><span class="protac-structure-link">${escapeHtml(pdbCode || '—')}</span></td><td>${formatValue(row.best_score, 2)}</td><td>${escapeHtml(row.best_tier || '—')}</td><td>${row.chain_count ?? 0}</td><td>${ligandContextBadge(row)}</td><td>${escapeHtml(row.candidate_ligand_resnames || 'None')}</td></tr>`;
+            }).join('') : '<tr><td colspan="6">No structures available.</td></tr>';
             const ligandRows = ligands.length ? ligands.map(row => `<tr><td>${escapeHtml(row.ligand_resname || '—')}</td><td>${escapeHtml(row.context_class || '—')}</td><td>${row.pdb_count ?? 0}</td><td>${escapeHtml(row.top_pdb_code || '—')}</td><td>${escapeHtml((row.associated_protein_chains || []).join(', ') || '—')}</td><td>${formatValue(row.best_score, 2)}</td></tr>`).join('') : '<tr><td colspan=\"6\">No ligand groups available.</td></tr>';
             $('#protac-detail-content').html(`
                 <div class="section-heading"><span class="page-kicker">Target Browser Detail</span><h2 class="page-title">${escapeHtml(summary.virus_name || '—')} · ${escapeHtml(summary.protein_type || '—')}</h2><p class="page-subtitle">${escapeHtml(summary.interpretation_label || '')} · ${escapeHtml(summary.interpretation_note || '')}</p></div>
@@ -2020,6 +2029,7 @@
                     <div class="page-card protacability-detail-card">
                         <div id="protac-ngl-viewer" class="protac-ngl-viewer"></div>
                         <p id="protac-ngl-status" class="viewer-status"></p>
+                        <p id="protac-selected-structure" class="protac-selected-structure" aria-live="polite">Showing PDB ${escapeHtml(best.pdb_code || summary.best_pdb_code || '—')}.</p>
                         ${renderLigandDebugPanel()}
                         <div class="action-row">
                             <button id="protac-reset-view" type="button" class="button-secondary">Reset view</button>
@@ -2063,6 +2073,27 @@
                 [],
                 attachmentSites
             );
+            const loadStructureModel = function(row) {
+                const pdbCode = String(row.data('pdb-code') || '').trim();
+                if (!pdbCode) return;
+                const chainId = String(row.data('chain-id') || '').trim();
+                const ligandResname = String(row.data('ligand-resname') || '').trim();
+                const ligandChain = String(row.data('ligand-chain') || '').trim();
+                const ligandResidueId = String(row.data('ligand-residue-id') || '').trim();
+                const candidateLinkerAtomIds = String(row.data('linker-atom-ids') || '').split(',').map(value => value.trim()).filter(Boolean);
+                $('.protac-target-structure-row').removeClass('is-selected').attr('aria-pressed', 'false');
+                row.addClass('is-selected').attr('aria-pressed', 'true');
+                $('#protac-selected-structure').text(`Showing PDB ${pdbCode.toUpperCase()}${chainId ? ` · chain ${chainId}` : ''}.`);
+                attachProtacViewerControls(pdbCode, chainId, ligandResname, ligandChain, ligandResidueId, ligandResname, candidateLinkerAtomIds);
+            };
+            $('.protac-target-structure-row').off('click').on('click', function() {
+                loadStructureModel($(this));
+            }).off('keydown').on('keydown', function(event) {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    loadStructureModel($(this));
+                }
+            });
         }
 
         function fetchDetail(button) {

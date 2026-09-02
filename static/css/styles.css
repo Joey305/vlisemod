@@ -2301,6 +2301,34 @@ body.protacability-page .status-card.status-warning.protacability-callout strong
     line-height: 1.6;
 }
 
+.protacability-page .protac-target-structure-row {
+    cursor: pointer;
+    transition: background-color 160ms ease;
+}
+
+.protacability-page .protac-target-structure-row:hover,
+.protacability-page .protac-target-structure-row:focus-visible,
+.protacability-page .protac-target-structure-row.is-selected {
+    background: rgba(0, 80, 48, 0.09);
+    outline: none;
+}
+
+.protacability-page .protac-target-structure-row:focus-visible {
+    box-shadow: inset 0 0 0 2px var(--accent-color, #005030);
+}
+
+.protacability-page .protac-structure-link {
+    color: var(--accent-color, #005030);
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.protacability-page .protac-selected-structure {
+    color: var(--muted-text);
+    font-size: 0.92rem;
+}
+
 .protacability-page .protac-attachment-sites-card {
     display: grid;
     gap: 10px;
