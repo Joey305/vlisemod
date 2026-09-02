@@ -153,6 +153,8 @@ class ProtacabilityDeepLinkTests(unittest.TestCase):
         self.assertIn("const hasLoaded3DViewer = viewport", template)
         self.assertIn("focusSasaAttachmentSite", template)
         self.assertIn('class="attachment-site-row"', template)
+        self.assertIn('class="viewer-control-groups"', template)
+        self.assertIn("displayLigandSpinRequested = true;\n    replaceWith3D", template)
         self.assertLess(
             template.index("Display Ligand Interaction Diagram"),
             template.index('id="sasa-attachment-panel"'),

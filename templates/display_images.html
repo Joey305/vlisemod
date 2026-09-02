@@ -68,17 +68,37 @@
                         <button id="copy-ligand-debug-payload" type="button" class="button-secondary">Copy debug payload</button>
                     </div>
                 </details>
-                <div class="buttons action-row viewer-actions">
-                    <button id="view-3d-in-window" type="button" onclick="replaceWith3D('{{ primary_image.pdb_id }}', '{{ primary_image.ligand_code }}')">View 3D Context</button>
-                    <button id="return-2d" type="button" class="button-secondary" style="display:none;" onclick="replaceWith2D()">Return to 2D</button>
-                    <button id="view-solvent-exposed" type="button" class="button-secondary" onclick="toggleSolventExposed()">View Solvent-Exposed 2D Image</button>
-                    <button id="view-regular-2d" type="button" class="button-secondary" onclick="showRegular2D()">View Regular 2D Image</button>
-                    <button id="rotate-ligand-btn" type="button" class="button-secondary ligand-spin-toggle" aria-pressed="false" onclick="toggleDisplayLigandSpin('{{ primary_image.pdb_id }}', '{{ primary_image.ligand_code }}')">Rotate Molecule</button>
-                    <button id="use-as-warhead-btn" type="button" onclick="useAsWarhead('{{ primary_image.ligand_code }}')">🧪 Use as Warhead</button>
-                    <a id="assess-protacability-link" class="button-primary" href="/protacability_page?ligand={{ primary_image.ligand_code|urlencode }}&amp;pdb_code={{ primary_image.pdb_id|urlencode }}&amp;ligand_instance_id={{ primary_image.ligand_instance_id|urlencode }}&amp;ligand_chain={{ primary_image.chain|urlencode }}" target="_blank" rel="noopener noreferrer">Assess in PROTACability ↗</a>
-                    <a class="button-secondary" href="{{ url_for('download_image', filename=primary_image.filename) }}" download="{{ primary_image.filename }}">Download 2D SVG</a>
-                    <a class="button-secondary" href="{{ url_for('download_SASA_image', filename=solvent_filename) }}" download="{{ solvent_filename }}">Download SASA SVG</a>
-                    <a class="button-ghost" href="{{ url_for('index') }}">Back to Main Page</a>
+                <div class="viewer-control-groups" aria-label="Ligand viewer controls">
+                    <section class="viewer-control-group">
+                        <h3>View</h3>
+                        <div class="viewer-control-buttons">
+                            <button id="view-3d-in-window" type="button" onclick="replaceWith3D('{{ primary_image.pdb_id }}', '{{ primary_image.ligand_code }}')">Open 3D</button>
+                            <button id="return-2d" type="button" class="button-secondary" style="display:none;" onclick="replaceWith2D()">Show 2D</button>
+                            <button id="view-solvent-exposed" type="button" class="button-secondary" onclick="toggleSolventExposed()">SASA 2D</button>
+                            <button id="view-regular-2d" type="button" class="button-secondary" onclick="showRegular2D()">Regular 2D</button>
+                        </div>
+                    </section>
+                    <section class="viewer-control-group">
+                        <h3>Motion</h3>
+                        <div class="viewer-control-buttons">
+                            <button id="rotate-ligand-btn" type="button" class="button-secondary ligand-spin-toggle" aria-pressed="false" onclick="toggleDisplayLigandSpin('{{ primary_image.pdb_id }}', '{{ primary_image.ligand_code }}')">Start rotation</button>
+                        </div>
+                    </section>
+                    <section class="viewer-control-group viewer-control-group--explore">
+                        <h3>Explore</h3>
+                        <div class="viewer-control-buttons">
+                            <button id="use-as-warhead-btn" type="button" onclick="useAsWarhead('{{ primary_image.ligand_code }}')">Use as Warhead</button>
+                            <a id="assess-protacability-link" class="button-primary" href="/protacability_page?ligand={{ primary_image.ligand_code|urlencode }}&amp;pdb_code={{ primary_image.pdb_id|urlencode }}&amp;ligand_instance_id={{ primary_image.ligand_instance_id|urlencode }}&amp;ligand_chain={{ primary_image.chain|urlencode }}" target="_blank" rel="noopener noreferrer">Assess in PROTACability ↗</a>
+                        </div>
+                    </section>
+                    <section class="viewer-control-group">
+                        <h3>Export</h3>
+                        <div class="viewer-control-buttons">
+                            <a class="button-secondary" href="{{ url_for('download_image', filename=primary_image.filename) }}" download="{{ primary_image.filename }}">2D SVG</a>
+                            <a class="button-secondary" href="{{ url_for('download_SASA_image', filename=solvent_filename) }}" download="{{ solvent_filename }}">SASA SVG</a>
+                        </div>
+                    </section>
+                    <a class="viewer-back-link" href="{{ url_for('index') }}">← Back to Main Page</a>
                 </div>
             </div>
 
@@ -569,6 +589,7 @@ function replaceWith3D(pdb_id, ligand_code) {
     viewport.style.display = 'block';
     returnButton.style.display = 'inline-flex';
     viewerButton.disabled = true;
+    viewerButton.style.display = 'none';
 
     VLNGLViewer.initCleanProteinLigandViewer('viewport', {
         pdbCode: payload.pdbCode,
@@ -642,11 +663,12 @@ function replaceWith2D(options = {}) {
     viewport.innerHTML = '';
     returnButton.style.display = 'none';
     viewerButton.disabled = false;
+    viewerButton.style.display = 'inline-flex';
 
     if (!options.preserveButton) {
-        viewerButton.innerText = "3D Molecule Viewer";
+        viewerButton.innerText = "Open 3D";
     } else {
-        viewerButton.innerText = "View 3D Context";
+        viewerButton.innerText = "Open 3D";
     }
     viewerButton.setAttribute('onclick', `replaceWith3D('{{ primary_image.pdb_id }}', '{{ primary_image.ligand_code }}')`);
     const viewerStatus = document.getElementById('viewer-status');
@@ -659,7 +681,7 @@ function updateDisplayLigandSpinButton(isSpinning) {
     if (!rotateButton) return;
     rotateButton.classList.toggle('is-active', Boolean(isSpinning));
     rotateButton.setAttribute('aria-pressed', isSpinning ? 'true' : 'false');
-    rotateButton.textContent = isSpinning ? 'Stop Rotation' : 'Rotate Molecule';
+    rotateButton.textContent = isSpinning ? 'Stop rotation' : 'Start rotation';
 }
 
 function toggleDisplayLigandSpin(pdbId, ligandCode) {
@@ -779,6 +801,8 @@ document.addEventListener('DOMContentLoaded', function() {
         first.checked = true;
     }
     loadSasaAttachmentSites();
+    displayLigandSpinRequested = true;
+    replaceWith3D('{{ primary_image.pdb_id }}', '{{ primary_image.ligand_code }}');
     const attachmentButton = document.getElementById('highlight-sasa-attachment-button');
     if (attachmentButton) attachmentButton.addEventListener('click', highlightSasaAttachmentSites);
     document.querySelectorAll('input[name="chain_residue"]').forEach(function(input) {
