@@ -3959,14 +3959,18 @@ def create_vlismod_blueprint(blueprint_name: str, url_prefix: str) -> Blueprint:
                 (virus_name, pdb_code, ligand_name),
             ).fetchall()
 
+            # Ligand_Arp_Diagram is a legacy display view without occurrence
+            # columns.  Use the V2-backed ligand_atoms compatibility view so
+            # each image selector and PROTACability handoff retains identity.
             chain_rows = conn.execute(
                 """
                 SELECT DISTINCT chain, ligand_id, ligand_instance_id, model_id
-                FROM Ligand_Arp_Diagram
+                FROM ligand_atoms
                 WHERE virus_name = ? AND pdb_id = ? AND ligand = ?
-                ORDER BY chain, ligand_id
+                  AND (? IS NULL OR ligand_instance_id = ?)
+                ORDER BY chain, ligand_id, model_id, ligand_instance_id
                 """,
-                (virus_name, pdb_code, ligand_name),
+                (virus_name, pdb_code, ligand_name, requested_instance_id, requested_instance_id),
             ).fetchall()
 
             if not smiles_rows:
