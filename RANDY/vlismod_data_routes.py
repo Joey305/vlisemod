@@ -3005,86 +3005,67 @@ def create_vlismod_blueprint(blueprint_name: str, url_prefix: str) -> Blueprint:
     @require_token
     def compare_ligand_interactions():
         payload = request.get_json(silent=True) or {}
+        selected_occurrence_ids = payload.get("ligand_instance_ids") or payload.get("occurrence_ids") or []
         selected_pdbs = payload.get("pdb_ids") or []
         ligand = _required_json_arg(payload, "ligand")
-
-        interactions_data = []
-        smiles_interactions_data = []
         with _connect() as conn:
-            for unique_key in selected_pdbs:
-                pdb_id, ligand_id, chain = str(unique_key).split("-")
-                rows = conn.execute(
-                    """
-                    SELECT A.pdb_id, A.ligand, A.chain, A.Contact, A.Distance, A.exact_atom, A.atom_id,
-                           A.residue, A.residue_number, A.residue_atom, A.residue_chain,
-                           S.smiles_atom_index, A.virus_name, A.ligand_id
-                    FROM Arpeggio_Contacts_Data A
-                    LEFT JOIN SMILES_MAP_PDB S
-                      ON A.atom_id = S.atom_id
-                     AND A.pdb_id = S.pdb_id
-                     AND A.chain = S.chain
-                     AND A.exact_atom = S.exact_atom
-                    WHERE A.pdb_id = ?
-                      AND A.ligand_id = ?
-                      AND A.chain = ?
-                      AND A.ligand = ?
-                    """,
-                    (pdb_id, ligand_id, chain, ligand),
-                ).fetchall()
-
-                cleaned_rows = []
-                smiles_rows = []
-                for row in rows:
-                    row_dict = dict(row)
-                    contact = row_dict.get("Contact")
-                    if contact == "proximal":
-                        pass
-                    else:
-                        if contact == "weak_polar":
-                            row_dict["Contact"] = "polar"
-                        elif contact == "vdw_clash":
-                            row_dict["Contact"] = "vdw"
-                        atom_id = row_dict.get("atom_id")
-                        if atom_id not in (None, "", "N/A"):
-                            try:
-                                row_dict["atom_id"] = int(atom_id)
-                                cleaned_rows.append(row_dict)
-                            except (TypeError, ValueError):
-                                pass
-
-                    smiles_atom_index = row_dict.get("smiles_atom_index")
-                    if smiles_atom_index not in (None, "", "N/A"):
-                        try:
-                            smiles_rows.append(
-                                {
-                                    "pdb_id": row_dict.get("pdb_id"),
-                                    "Contact": row_dict.get("Contact"),
-                                    "smiles_atom_index": int(float(smiles_atom_index)),
-                                }
-                            )
-                        except (TypeError, ValueError):
-                            pass
-
-                if cleaned_rows:
-                    interactions_data.append(
-                        {
-                            "pdb_id": pdb_id,
-                            "virus_name": cleaned_rows[0].get("virus_name"),
-                            "ligand_id": int(cleaned_rows[0].get("ligand_id")),
-                            "interactions": cleaned_rows,
-                        }
-                    )
-                if smiles_rows:
-                    smiles_interactions_data.append(
-                        {"pdb_id": pdb_id, "interactions": smiles_rows}
-                    )
-
-        return jsonify(
-            {
-                "interactions_data": interactions_data,
-                "smiles_interactions_data": smiles_interactions_data,
-            }
-        )
+            normalized_occurrence_ids: list[int] = []
+            for value in selected_occurrence_ids:
+                try:
+                    occurrence_id = int(value)
+                except (TypeError, ValueError):
+                    return _json_error("Each selected ligand occurrence must be a valid identifier.", 400)
+                if occurrence_id not in normalized_occurrence_ids:
+                    normalized_occurrence_ids.append(occurrence_id)
+            for legacy_key in selected_pdbs:
+                parts = str(legacy_key).split("-")
+                if len(parts) != 3 or not all(parts):
+                    return _json_error("A legacy ligand selection is malformed. Refresh the available structures and try again.", 400)
+                matches = conn.execute("""SELECT i.ligand_instance_id FROM ligand_instances i JOIN structures s ON s.structure_id=i.structure_id WHERE s.entry_id=? AND i.auth_seq_id=? AND i.auth_asym_id=? AND i.label_comp_id=? AND i.curation_status='included'""", (*parts, ligand)).fetchall()
+                if len(matches) != 1:
+                    return _json_error("The selected ligand occurrence is no longer valid. Refresh the available structures and try again.", 400)
+                if matches[0][0] not in normalized_occurrence_ids:
+                    normalized_occurrence_ids.append(matches[0][0])
+            if not normalized_occurrence_ids:
+                return _json_error("Select one or more mapped ligand occurrences before comparing.", 400)
+            placeholders = ", ".join("?" for _ in normalized_occurrence_ids)
+            valid_count = conn.execute(
+                f"SELECT COUNT(*) FROM ligand_instances WHERE ligand_instance_id IN ({placeholders}) AND label_comp_id=? AND curation_status='included'",
+                (*normalized_occurrence_ids, ligand),
+            ).fetchone()[0]
+            if valid_count != len(normalized_occurrence_ids):
+                return _json_error("The selected ligand occurrence is no longer valid. Refresh the available structures and try again.", 400)
+            rows = conn.execute(f"""
+                WITH so AS (SELECT i.ligand_instance_id,s.entry_id pdb_id,i.deposited_model_num model_id,i.auth_asym_id chain,i.auth_seq_id ligand_id,i.insertion_code_normalized insertion_code,COALESCE(sc.virus_label,'Unknown') virus_name FROM ligand_instances i JOIN structures s ON s.structure_id=i.structure_id LEFT JOIN structure_classifications sc ON sc.structure_id=i.structure_id WHERE i.ligand_instance_id IN ({placeholders}) AND i.label_comp_id=? AND i.curation_status='included'),
+                mr AS (SELECT m.ligand_instance_id,MAX(m.run_id) run_id FROM ligand_smiles_atom_mapping m JOIN so ON so.ligand_instance_id=m.ligand_instance_id WHERE m.method_version='legacy_mcs_etkdg_uff_cif_v2.5' GROUP BY m.ligand_instance_id),
+                cr AS (SELECT r.ligand_instance_id,MAX(r.run_id) run_id FROM ligand_arpeggio_runs r JOIN so ON so.ligand_instance_id=r.ligand_instance_id WHERE r.status='completed' GROUP BY r.ligand_instance_id),
+                sr AS (SELECT s.ligand_instance_id,MAX(s.run_id) run_id FROM ligand_sasa_atoms s JOIN so ON so.ligand_instance_id=s.ligand_instance_id WHERE s.method_version='biopython-shrake_rupley-1.40-cif-v2.1' AND s.status='complete' GROUP BY s.ligand_instance_id),
+                metrics AS (SELECT m.ligand_instance_id,COUNT(DISTINCT m.ligand_instance_atom_id) mapped_atom_count,COUNT(DISTINCT CASE WHEN s.legacy_exposed=1 THEN m.ligand_instance_atom_id END) solvent_exposed_atom_count FROM ligand_smiles_atom_mapping m JOIN mr ON mr.ligand_instance_id=m.ligand_instance_id AND mr.run_id=m.run_id LEFT JOIN sr ON sr.ligand_instance_id=m.ligand_instance_id LEFT JOIN ligand_sasa_atoms s ON s.ligand_instance_id=m.ligand_instance_id AND s.run_id=sr.run_id AND s.ligand_instance_atom_id=m.ligand_instance_atom_id WHERE m.smiles_atom_index IS NOT NULL GROUP BY m.ligand_instance_id)
+                SELECT so.*,metrics.mapped_atom_count,metrics.solvent_exposed_atom_count,m.smiles_atom_index,r.interaction_label Contact,r.distance Distance,COALESCE(a.auth_atom_id,a.label_atom_id) exact_atom,a.atom_site_id atom_id,json_extract(r.partner_identity_json,'$.label_comp_id') residue,json_extract(r.partner_identity_json,'$.auth_seq_id') residue_number,COALESCE(json_extract(r.partner_identity_json,'$.auth_atom_id'),json_extract(r.partner_identity_json,'$.label_atom_id')) residue_atom,json_extract(r.partner_identity_json,'$.auth_asym_id') residue_chain
+                FROM so JOIN mr ON mr.ligand_instance_id=so.ligand_instance_id JOIN ligand_smiles_atom_mapping m ON m.ligand_instance_id=so.ligand_instance_id AND m.run_id=mr.run_id JOIN cr ON cr.ligand_instance_id=so.ligand_instance_id JOIN arpeggio_raw_contact_labels r ON r.ligand_instance_id=so.ligand_instance_id AND r.run_id=cr.run_id AND r.filter_class='raw_environment' AND r.ligand_instance_atom_id=m.ligand_instance_atom_id JOIN metrics ON metrics.ligand_instance_id=so.ligand_instance_id LEFT JOIN ligand_instance_atoms a ON a.ligand_instance_atom_id=m.ligand_instance_atom_id WHERE m.smiles_atom_index IS NOT NULL ORDER BY so.pdb_id,so.model_id,so.chain,so.ligand_id,so.insertion_code,so.ligand_instance_id,m.smiles_atom_index
+            """, (*normalized_occurrence_ids, ligand)).fetchall()
+        grouped: dict[int, list[dict[str, Any]]] = defaultdict(list)
+        for row in rows:
+            record = dict(row)
+            if record["Contact"] == "proximal":
+                continue
+            try:
+                record["atom_id"] = int(record["atom_id"])
+                record["smiles_atom_index"] = int(record["smiles_atom_index"])
+            except (TypeError, ValueError):
+                continue
+            record["Contact"] = {"weak_polar":"polar", "vdw_clash":"vdw"}.get(record["Contact"], record["Contact"])
+            grouped[record["ligand_instance_id"]].append(record)
+        interactions_data, smiles_interactions_data = [], []
+        for occurrence_id in normalized_occurrence_ids:
+            records = grouped.get(occurrence_id, [])
+            if not records:
+                continue
+            first = records[0]
+            label = f"{first['pdb_id']} · model {first['model_id'] or '—'} · {first['chain'] or '—'}:{first['ligand_id'] or '—'}{first['insertion_code'] or ''}"
+            interactions_data.append({"pdb_id":first["pdb_id"],"occurrence_label":label,"virus_name":first["virus_name"],"ligand_id":str(first["ligand_id"]),"ligand_instance_id":occurrence_id,"model_id":first["model_id"],"chain":first["chain"],"insertion_code":first["insertion_code"],"mapped_atom_count":int(first["mapped_atom_count"] or 0),"solvent_exposed_atom_count":int(first["solvent_exposed_atom_count"] or 0),"interaction_count":len(records),"interactions":records})
+            smiles_interactions_data.append({"pdb_id":first["pdb_id"],"occurrence_label":label,"ligand_instance_id":occurrence_id,"interactions":[{"pdb_id":first["pdb_id"],"Contact":r["Contact"],"smiles_atom_index":r["smiles_atom_index"]} for r in records]})
+        return jsonify({"interactions_data":interactions_data,"smiles_interactions_data":smiles_interactions_data})
 
     def _protein_query_exportable_pdbs(conn, virus_name, protein_types, ligand_filter=""):
         """Return retained-ligand PDBs eligible for Protein Query exports."""

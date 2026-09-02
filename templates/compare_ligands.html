@@ -283,12 +283,8 @@
                 const selectedOccurrenceIds = $('input[name="pdb_residues"]:checked').map(function() {
                     return this.value;
                 }).get();
-                const selectedPdbs = $('input[name="pdb_residues"]:checked').map(function() {
-                    return this.dataset.legacyKey;
-                }).get();
-
                 if (selectedLigand && selectedOccurrenceIds.length > 0) {
-                    compareLigandInteractions(selectedLigand, selectedOccurrenceIds, selectedPdbs);
+                    compareLigandInteractions(selectedLigand, selectedOccurrenceIds);
                 } else {
                     setComparisonStatus('Please select a ligand and one or more structural occurrences.', true);
                 }
@@ -346,7 +342,11 @@
             // Fetch PDB mappings for the selected ligand and apply shades of green for different viruses
             function fetchPDBMappings(ligand_id) {
                 fetch(`/get_pdb_mapping/${ligand_id}`)
-                    .then(response => response.json())
+                    .then(async response => {
+                        const payload = await response.json();
+                        if (!response.ok) throw new Error(payload.message || 'Unable to load ligand occurrences.');
+                        return payload;
+                    })
                     .then(data => {
                         const checkboxContainer = $('#pdb_residues_grid');
                         const selectionCount = $('#structure-selection-count');
@@ -361,8 +361,10 @@
                             virusColorMap[virus] = virusColors[index];
                         });
 
-                        Object.keys(data.pdb_mapping).forEach(uniqueKey => {
-                            const pdbInfo = data.pdb_mapping[uniqueKey];
+                        const mapping = data.pdb_mapping || {};
+                        Object.keys(mapping).forEach(uniqueKey => {
+                            const pdbInfo = mapping[uniqueKey];
+                            if (!pdbInfo || !Number.isInteger(Number(pdbInfo.ligand_instance_id))) return;
                             const safeId = `pdb_${uniqueKey.replace(/[^a-zA-Z0-9_-]/g, '_')}`;
                             const virusColor = virusColorMap[pdbInfo.virus_name] || '#005030';  // Default green
 
@@ -370,7 +372,7 @@
                             const model = pdbInfo.model_id ? ` · Model ${pdbInfo.model_id}` : '';
                             const checkbox = `
                                 <div class="checkbox-item tooltip-container" style="background-color: ${virusColor};">
-                                    <input type="checkbox" name="pdb_residues" value="${pdbInfo.ligand_instance_id}" data-legacy-key="${pdbInfo.legacy_key}" id="${safeId}" />
+                                    <input type="checkbox" name="pdb_residues" value="${pdbInfo.ligand_instance_id}" id="${safeId}" />
                                     <label for="${safeId}">
                                         <span class="structure-code">${pdbInfo.pdb_id}</span>
                                         <span class="structure-meta">Res ${pdbInfo.ligand_id} · Chain ${pdbInfo.chain}${insertion}${model}</span>
@@ -401,14 +403,20 @@
                             );
                         });
 
-                        selectionCount.text(`${Object.keys(data.pdb_mapping).length} structures available · select one or more`);
-                        const requestedInstances = (new URLSearchParams(window.location.search).get('instances') || '').split(',').filter(Boolean);
+                        const validOccurrenceIds = new Set(Object.values(mapping).map(item => String(item.ligand_instance_id)));
+                        const requestedInstances = (new URLSearchParams(window.location.search).get('instances') || '').split(',').filter(id => validOccurrenceIds.has(id));
+                        selectionCount.text(`${validOccurrenceIds.size} structures available · select one or more`);
                         requestedInstances.forEach(id => checkboxContainer.find(`input[value="${CSS.escape(id)}"]`).prop('checked', true));
                         updateSelectedStructureState();
                         $('#showComparisonButton').prop('disabled', !requestedInstances.length);
                         if (requestedInstances.length) $('#showComparisonButton').trigger('click');
                     })
-                    .catch(error => console.error('Error fetching PDB mappings:', error));
+                    .catch(error => {
+                        $('#pdb_residues_grid').empty();
+                        $('#structure-selection-count').text('No valid structures available');
+                        updateSelectedStructureState();
+                        setComparisonStatus(error.message || 'Unable to load ligand occurrences.', true);
+                    });
             }
             // Fetch and show the ligand SVG
             // Fetch and show the ligand SVG
@@ -455,7 +463,7 @@
             // Compare ligand interactions and generate charts
             const MANY_SELECTED_THRESHOLD = 4;
 
-            async function compareLigandInteractions(ligand_id, occurrenceIds, legacyPdbIds) {
+            async function compareLigandInteractions(ligand_id, occurrenceIds) {
                 const selectedCount = occurrenceIds.length;
                 const manySelected = selectedCount > MANY_SELECTED_THRESHOLD;
                 $('#results-container').toggleClass('many-selected', manySelected);
@@ -469,7 +477,7 @@
                     const response = await fetch('/compare_ligand_interactions', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ ligand: ligand_id, occurrence_ids: occurrenceIds, pdb_ids: legacyPdbIds }),
+                        body: JSON.stringify({ ligand: ligand_id, ligand_instance_ids: occurrenceIds }),
                         signal: controller.signal
                     });
                     let data = {};
@@ -480,7 +488,7 @@
                         // than being mistaken for a scientific zero-result.
                     }
                     if (!response.ok) {
-                        throw new Error('Unable to retrieve interaction data for the selected ligand occurrences.');
+                        throw new Error(data.message || data.error || 'Unable to retrieve interaction data for the selected ligand occurrences.');
                     }
                     if (data.status === 'no_data' || !Array.isArray(data.interactions_data) || !data.interactions_data.length) {
                         const message = data.message || 'No recorded non-proximal protein–ligand interactions are available for the selected ligand occurrence(s).';
@@ -545,7 +553,7 @@
             }
 
             function renderComparisonWorkspace(ligand, occurrences) {
-                const ids = occurrences.map(item => item.ligand_instance_id);
+                const ids = occurrences.map(item => item.ligand_instance_id).filter(id => Number.isInteger(Number(id)));
                 const interactionLabels = occurrences.reduce((total, item) => total + Number(item.interaction_count || item.interaction_label_count || (item.interactions || []).length || 0), 0);
                 const mappedAtoms = occurrences.reduce((total, item) => total + Number(item.mapped_atom_count || 0), 0);
                 const canonicalUrl = VLiSEMODWorkspace.paramsUrl('/compare_ligands', { ligand, instances: ids.join(',') });
@@ -560,19 +568,24 @@
                     '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
                 }[character]));
                 const occurrenceCards = occurrences.map(occurrence => {
+                    const occurrenceId = Number.isInteger(Number(occurrence.ligand_instance_id)) ? occurrence.ligand_instance_id : '';
                     const occurrenceUrl = buildProtacabilityUrl({
                         ligand,
-                        pdb_code: occurrence.pdb_id,
-                        ligand_instance_id: occurrence.ligand_instance_id,
-                        ligand_chain: occurrence.chain,
-                        ligand_residue_id: occurrence.ligand_id,
-                        model_id: occurrence.model_id,
+                        pdb_code: occurrence.pdb_id || '',
+                        ligand_instance_id: occurrenceId,
+                        ligand_chain: occurrence.chain || '',
+                        ligand_residue_id: occurrence.ligand_id || '',
+                        model_id: occurrence.model_id || '',
                     });
-                    const modelLabel = occurrence.model_id ? `model ${occurrence.model_id} · ` : '';
-                    return `<article class="comparison-occurrence-card" data-ligand-instance-id="${escapeHtml(occurrence.ligand_instance_id)}">
-                        <div><strong>${escapeHtml(occurrence.pdb_id)}</strong><span>${escapeHtml(`${modelLabel}Chain ${occurrence.chain} · Residue ${occurrence.ligand_id}`)}</span></div>
-                        <small>${escapeHtml(`${occurrence.mapped_atom_count || 0} mapped atoms · ${occurrence.solvent_exposed_atom_count || 0} solvent-exposed atoms`)}</small>
-                        <a class="button-secondary" target="_blank" rel="noopener noreferrer" href="${escapeHtml(occurrenceUrl)}" aria-label="Assess ${escapeHtml(ligand)} occurrence ${escapeHtml(occurrence.ligand_instance_id)} in PROTACability">Assess in PROTACability ↗</a>
+                    const modelLabel = occurrence.model_id == null || occurrence.model_id === '' ? 'model —' : `model ${occurrence.model_id}`;
+                    const chainLabel = occurrence.chain || '—';
+                    const residueLabel = occurrence.ligand_id == null || occurrence.ligand_id === '' ? '—' : occurrence.ligand_id;
+                    const mappedAtoms = Number.isFinite(Number(occurrence.mapped_atom_count)) ? occurrence.mapped_atom_count : '—';
+                    const exposedAtoms = Number.isFinite(Number(occurrence.solvent_exposed_atom_count)) ? occurrence.solvent_exposed_atom_count : '—';
+                    return `<article class="comparison-occurrence-card" data-ligand-instance-id="${escapeHtml(occurrenceId)}">
+                        <div><strong>${escapeHtml(occurrence.pdb_id || '—')}</strong><span>${escapeHtml(`${modelLabel} · Chain ${chainLabel} · Residue ${residueLabel}`)}</span></div>
+                        <small>${escapeHtml(`${mappedAtoms} mapped atoms · ${exposedAtoms} solvent-exposed atoms`)}</small>
+                        <a class="button-secondary" target="_blank" rel="noopener noreferrer" href="${escapeHtml(occurrenceUrl)}" aria-label="Assess ${escapeHtml(ligand)} occurrence ${escapeHtml(occurrenceId || '—')} in PROTACability">Assess in PROTACability ↗</a>
                     </article>`;
                 }).join('');
                 const rail = document.getElementById('comparison-rail-content');

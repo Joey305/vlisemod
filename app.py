@@ -1936,7 +1936,9 @@ def build_query(filters):
 def compare_ligand_interactions():
     data = request.get_json(silent=True) or {}
     ligand = str(data.get('ligand') or '').strip()
-    occurrence_ids = data.get('occurrence_ids') or []
+    # `ligand_instance_ids` is the public occurrence-resolved contract.
+    # Keep the previous spelling only for clients deployed during the migration.
+    occurrence_ids = data.get('ligand_instance_ids') or data.get('occurrence_ids') or []
     legacy_pdb_ids = data.get('pdb_ids') or []
     if not ligand or not isinstance(occurrence_ids, list) or not occurrence_ids:
         return jsonify({
@@ -1949,7 +1951,10 @@ def compare_ligand_interactions():
         try:
             payload = randy_post(
                 'ligand-interactions/compare',
-                json={'ligand': ligand, 'pdb_ids': legacy_pdb_ids},
+                json={
+                    'ligand': ligand,
+                    'ligand_instance_ids': occurrence_ids,
+                },
             )
         except RandyBackendError as exc:
             return jsonify({'error': str(exc)}), exc.status_code
@@ -1959,7 +1964,10 @@ def compare_ligand_interactions():
         try:
             payload = randy_post(
                 'ligand-interactions/compare',
-                json={'ligand': ligand, 'pdb_ids': legacy_pdb_ids},
+                json={
+                    'ligand': ligand,
+                    'ligand_instance_ids': occurrence_ids,
+                },
             )
             return jsonify(payload)
         except RandyBackendError:

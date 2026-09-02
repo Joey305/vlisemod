@@ -127,7 +127,7 @@ class ProtacabilityDeepLinkTests(unittest.TestCase):
 
     def test_ligand_comparison_protacability_exact_links(self):
         comparison = (ROOT / "templates" / "compare_ligands.html").read_text()
-        self.assertIn("ligand_instance_id: occurrence.ligand_instance_id", comparison)
+        self.assertIn("ligand_instance_id: occurrenceId", comparison)
         self.assertIn("noopener noreferrer", comparison)
 
     def test_ligand_comparison_protacability_all_ligand_link(self):

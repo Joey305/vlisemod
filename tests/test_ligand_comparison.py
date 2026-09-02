@@ -179,7 +179,7 @@ class LigandComparisonTests(unittest.TestCase):
         self.assertEqual(response.get_json(), expected)
         randy_post.assert_called_once_with(
             "ligand-interactions/compare",
-            json={"ligand": "DR7", "pdb_ids": self._payload((11,))["pdb_ids"]},
+            json={"ligand": "DR7", "ligand_instance_ids": [11]},
         )
 
     def test_compare_ligands_randy_failure_is_not_a_zero_result(self):
@@ -199,7 +199,7 @@ class LigandComparisonTests(unittest.TestCase):
     def test_compare_ligands_synonym_uses_component_id(self):
         page = self.client.get("/compare_ligands").get_data(as_text=True)
         self.assertIn('value="${item.ligand_code}"', page)
-        self.assertIn("occurrence_ids: occurrenceIds", page)
+        self.assertIn("ligand_instance_ids: occurrenceIds", page)
 
 
 if __name__ == "__main__":
