@@ -49,7 +49,7 @@ class WorkspaceUiTests(unittest.TestCase):
 
     def test_attachment_site_selection_is_occurrence_resolved(self):
         self.assertIn("ligand_instance_id: nextInstanceId", PROTAC)
-        self.assertIn("renderAttachmentSitesPanel(detail.attachment_sites || {}, detail.summary || {})", PROTAC)
+        self.assertGreaterEqual(PROTAC.count("renderAttachmentSitesPanel(detail.attachment_sites || {}, detail.summary || {})"), 2)
         self.assertIn("ligand_instance_id", PROTAC)
 
 

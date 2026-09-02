@@ -2150,6 +2150,8 @@
                     const selectedLigand = detail.representative_ligand || { ligand_resname: ligandResname, ligand_chain: ligandChain, ligand_residue_id: ligandResidueId };
                     updateSelectedContext(detail.summary || structureSummary, selectedLigand);
                     $('#protac-ligand-context-selector').html(renderLigandContextSelector(detail.ligand_contexts || [], selectedLigand));
+                    // The table and viewer must always consume the same occurrence payload.
+                    $('.protac-attachment-sites-card').replaceWith(renderAttachmentSitesPanel(detail.attachment_sites || {}, detail.summary || {}));
                     attachProtacViewerControls(pdbCode, detail.representative_chain_id || chainId, selectedLigand.ligand_resname || '', selectedLigand.ligand_chain || '', selectedLigand.ligand_residue_id || '', selectedLigand.ligand_resname || '', candidateLinkerAtomIds, detail.attachment_sites || {}, syncSelectedLigand);
                 }).fail(function(xhr) {
                     console.warn('[protacability] selected structure detail failed', { pdbCode, status: xhr.status });
