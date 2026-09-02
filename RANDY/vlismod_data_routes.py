@@ -3961,7 +3961,7 @@ def create_vlismod_blueprint(blueprint_name: str, url_prefix: str) -> Blueprint:
 
             chain_rows = conn.execute(
                 """
-                SELECT DISTINCT chain, ligand_id
+                SELECT DISTINCT chain, ligand_id, ligand_instance_id, model_id
                 FROM Ligand_Arp_Diagram
                 WHERE virus_name = ? AND pdb_id = ? AND ligand = ?
                 ORDER BY chain, ligand_id
@@ -4033,7 +4033,10 @@ def create_vlismod_blueprint(blueprint_name: str, url_prefix: str) -> Blueprint:
                     for row in smiles_rows
                 ],
                 "chain_residue_data": [
-                    {"chain": row["chain"], "ligand_id": row["ligand_id"]}
+                    {
+                        "chain": row["chain"], "ligand_id": row["ligand_id"],
+                        "ligand_instance_id": row["ligand_instance_id"], "model_id": row["model_id"],
+                    }
                     for row in chain_rows
                 ],
                 "solvent_exposed_atom_map": solvent_exposed_atom_map,

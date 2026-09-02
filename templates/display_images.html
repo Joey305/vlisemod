@@ -75,6 +75,7 @@
                     <button id="view-regular-2d" type="button" class="button-secondary" onclick="showRegular2D()">View Regular 2D Image</button>
                     <button id="rotate-ligand-btn" type="button" class="button-secondary ligand-spin-toggle" aria-pressed="false" onclick="toggleDisplayLigandSpin('{{ primary_image.pdb_id }}', '{{ primary_image.ligand_code }}')">Rotate Molecule</button>
                     <button id="use-as-warhead-btn" type="button" onclick="useAsWarhead('{{ primary_image.ligand_code }}')">🧪 Use as Warhead</button>
+                    <a id="assess-protacability-link" class="button-primary" href="/protacability_page?ligand={{ primary_image.ligand_code|urlencode }}&amp;pdb_code={{ primary_image.pdb_id|urlencode }}&amp;ligand_instance_id={{ primary_image.ligand_instance_id|urlencode }}&amp;ligand_chain={{ primary_image.chain|urlencode }}" target="_blank" rel="noopener noreferrer">Assess in PROTACability ↗</a>
                     <a class="button-secondary" href="{{ url_for('download_image', filename=primary_image.filename) }}" download="{{ primary_image.filename }}">Download 2D SVG</a>
                     <a class="button-secondary" href="{{ url_for('download_SASA_image', filename=solvent_filename) }}" download="{{ solvent_filename }}">Download SASA SVG</a>
                     <a class="button-ghost" href="{{ url_for('index') }}">Back to Main Page</a>
@@ -86,9 +87,9 @@
                 <div id="chain-residue-selection">
                     <h3>Select Chain and Residue</h3>
                     <form id="chain-residue-form">
-                        {% for chain, residue_id in chain_residues %}
+                        {% for chain, residue_id, ligand_instance_id, model_id in chain_residues %}
                         <label>
-                            <input type="checkbox" name="chain_residue" value="{{ chain }}_{{ residue_id }}" data-ligand-resname="{{ primary_image.ligand_code }}" data-ligand-chain="{{ chain }}" data-ligand-residue-id="{{ residue_id }}" onclick="selectOnlyOne(this)">
+                            <input type="checkbox" name="chain_residue" value="{{ chain }}_{{ residue_id }}" data-ligand-resname="{{ primary_image.ligand_code }}" data-ligand-chain="{{ chain }}" data-ligand-residue-id="{{ residue_id }}" data-ligand-instance-id="{{ ligand_instance_id }}" data-model-id="{{ model_id }}" onclick="selectOnlyOne(this)">
                             Display {{ primary_image.ligand_code }} {{ residue_id }}{{ chain }}
                         </label>
                         {% endfor %}
@@ -249,6 +250,21 @@ function getSelectedLigandContext() {
         checkboxes.forEach((item) => {
             if (item !== checkbox) item.checked = false;
         });
+        updateProtacabilityLink(checkbox);
+    }
+
+    function updateProtacabilityLink(checkbox) {
+        const link = document.getElementById('assess-protacability-link');
+        if (!link || !checkbox) return;
+        const params = new URLSearchParams({
+            ligand: '{{ primary_image.ligand_code }}',
+            pdb_code: '{{ primary_image.pdb_id }}',
+            ligand_instance_id: checkbox.dataset.ligandInstanceId || '{{ primary_image.ligand_instance_id }}',
+            ligand_chain: checkbox.dataset.ligandChain || '',
+            ligand_residue_id: checkbox.dataset.ligandResidueId || '',
+            model_id: checkbox.dataset.modelId || ''
+        });
+        link.href = `/protacability_page?${params.toString()}`;
     }
      
     // Use the selected chain-residue pair to generate the diagram

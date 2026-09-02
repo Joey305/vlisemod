@@ -136,6 +136,12 @@ class ProtacabilityDeepLinkTests(unittest.TestCase):
         self.assertIn("ligand_instance_id: selectedOccurrence.val()", template)
         self.assertIn("displayCarouselModal(payload.chart_urls, selectedLigand, selectedOccurrence)", template)
 
+    def test_ligand_image_workspace_can_open_the_exact_occurrence(self):
+        template = (ROOT / "templates" / "display_images.html").read_text()
+        self.assertIn('id="assess-protacability-link"', template)
+        self.assertIn("data-ligand-instance-id", template)
+        self.assertIn("updateProtacabilityLink(checkbox)", template)
+
     def test_ligand_comparison_protacability_all_ligand_link(self):
         comparison = (ROOT / "templates" / "compare_ligands.html").read_text()
         self.assertIn("Explore ${ligand} across PROTACability", comparison)

@@ -746,7 +746,7 @@ def generate_ligand_images():
             for row in remote_payload.get("smiles_data", [])
         ]
         chain_residue_data = [
-            (row.get("chain"), row.get("ligand_id"))
+            (row.get("chain"), row.get("ligand_id"), row.get("ligand_instance_id"), row.get("model_id"))
             for row in remote_payload.get("chain_residue_data", [])
         ]
         solvent_exposed_atom_map = remote_payload.get("solvent_exposed_atom_map") or {}
@@ -776,12 +776,13 @@ def generate_ligand_images():
             status_code = 500 if mode == "local" else exc.status_code
             return jsonify({"error": str(exc)}), status_code
         solvent_exposed_atom_map = None
+        chain_residue_data = [(chain, residue_id, None, None) for chain, residue_id in chain_residue_data]
 
     if not smiles_data:
         return "No SMILES data found for the selected virus, PDB code, and ligand.", 404
 
     effective_chain = selected_chain or next(
-        (str(chain).strip() for chain, _ligand_id in chain_residue_data if chain),
+        (str(context[0]).strip() for context in chain_residue_data if context[0]),
         None,
     )
 
@@ -925,6 +926,7 @@ def generate_images_from_smiles(smiles_data, selected_chain, output_folder, solv
             "pdb_id": pdb_id,
             "ligand_code": ligand_code,
             "chain": selected_chain,
+            "ligand_instance_id": ligand_instance_id,
             "filename": os.path.basename(svg_path)
         })
 
