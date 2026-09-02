@@ -12,6 +12,11 @@ from typing import Any, Callable
 from flask import Blueprint, current_app, jsonify, request
 from werkzeug.exceptions import HTTPException
 
+try:
+    from rdkit import Chem
+except ImportError:  # The production environment installs the project requirements.
+    Chem = None
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_DB_PATH = PROJECT_ROOT / "viral_data.db"
 
@@ -27,6 +32,11 @@ REQUIRED_TABLES = (
     "SMILES_MAP_PDB",
     "Virus_Proteins",
 )
+
+# Presentation-only site clusters retain the historic user-facing definition:
+# solvent-exposed candidate atoms must be spatially close and connected within
+# two ligand bonds.  Atom-level Stage-13 scores and support flags are unchanged.
+ATTACHMENT_DISPLAY_SITE_DISTANCE_A = 5.0
 
 
 def _configured_token() -> str:
@@ -1052,6 +1062,92 @@ def _attachment_defaults():
     }
 
 
+def _parse_smiles_atom_indices(value):
+    if value in (None, ""):
+        return []
+    indices = []
+    for token in re.split(r"[;,|\s]+", str(value).strip()):
+        try:
+            index = int(float(token))
+        except (TypeError, ValueError):
+            continue
+        if index not in indices:
+            indices.append(index)
+    return indices
+
+
+def _attachment_display_site_count(atoms):
+    """Return the historic bonded/SASA display-region count for candidates.
+
+    This is deliberately a display calculation only.  A cluster must have at
+    least two candidate atoms, be within 5 Å, and have a graph distance of at
+    most two bonds; isolated candidates remain visible atom evidence but are
+    not called a site.
+    """
+    candidates = [
+        atom for atom in (atoms or [])
+        if int(_numeric_value(atom.get("candidate_attachment_flag") or atom.get("candidate_attachment_atom")))
+    ]
+    if len(candidates) < 2 or Chem is None:
+        return 0
+    canonical_smiles = next((atom.get("canonical_smiles") for atom in candidates if atom.get("canonical_smiles")), None)
+    molecule = Chem.MolFromSmiles(canonical_smiles) if canonical_smiles else None
+    if molecule is None:
+        return 0
+
+    def coordinates(atom):
+        try:
+            return [float(atom[axis]) for axis in ("x", "y", "z")]
+        except (KeyError, TypeError, ValueError):
+            return None
+
+    parent = list(range(len(candidates)))
+
+    def find(index):
+        while parent[index] != index:
+            parent[index] = parent[parent[index]]
+            index = parent[index]
+        return index
+
+    def union(left, right):
+        left_root, right_root = find(left), find(right)
+        if left_root != right_root:
+            parent[right_root] = left_root
+
+    neighborhoods = {}
+
+    def within_two_bonds(atom_index):
+        if atom_index < 0 or atom_index >= molecule.GetNumAtoms():
+            return set()
+        if atom_index not in neighborhoods:
+            direct = [neighbor.GetIdx() for neighbor in molecule.GetAtomWithIdx(atom_index).GetNeighbors()]
+            neighborhoods[atom_index] = {atom_index, *direct}
+            for neighbor_index in direct:
+                neighborhoods[atom_index].update(
+                    neighbor.GetIdx() for neighbor in molecule.GetAtomWithIdx(neighbor_index).GetNeighbors()
+                )
+        return neighborhoods[atom_index]
+
+    smiles_indices = [_parse_smiles_atom_indices(atom.get("smiles_atom_indices")) for atom in candidates]
+    candidate_coordinates = [coordinates(atom) for atom in candidates]
+    for left, left_coordinates in enumerate(candidate_coordinates):
+        if left_coordinates is None:
+            continue
+        nearby_indices = set().union(*(within_two_bonds(index) for index in smiles_indices[left]))
+        if not nearby_indices:
+            continue
+        for right in range(left + 1, len(candidates)):
+            right_coordinates = candidate_coordinates[right]
+            if right_coordinates is None or not nearby_indices.intersection(smiles_indices[right]):
+                continue
+            distance_squared = sum((left_coordinates[axis] - right_coordinates[axis]) ** 2 for axis in range(3))
+            if distance_squared <= ATTACHMENT_DISPLAY_SITE_DISTANCE_A ** 2:
+                union(left, right)
+
+    cluster_sizes = Counter(find(index) for index in range(len(candidates)))
+    return sum(1 for size in cluster_sizes.values() if size > 1)
+
+
 def _attachment_summary_from_match(attachment_match):
     summary = _attachment_defaults()
     if not attachment_match:
@@ -1075,9 +1171,9 @@ def _attachment_summary_from_match(attachment_match):
         "has_attachment_site_evidence": has_evidence,
         "has_candidate_attachment_regions": 0,
         "attachment_instance_resolution_status": "ligand_instance_id",
-        # Randy summarizes the atom-level payload into one presentation group;
-        # this is a UI label only and does not change atom-specific evidence.
-        "attachment_display_site_count": int(has_evidence),
+        "attachment_display_site_count": int(_numeric_value(
+            attachment_match.get("attachment_display_site_count")
+        )),
         "mapped_atom_count": int(_numeric_value(attachment_match.get("mapped_atom_count"))),
         "attachment_exposed_mapped_atom_count": int(_numeric_value(attachment_match.get("exposed_mapped_atom_count"))),
         "attachment_chemically_supported_candidate_count": int(_numeric_value(attachment_match.get("chemically_supported_candidate_count"))),
@@ -1114,7 +1210,7 @@ def _json_dict(value):
 def _load_attachment_analysis_rows(conn):
     if not _table_exists(conn, "protacability_attachment_site_summary"):
         return []
-    return [
+    attachment_rows = [
         dict(row)
         for row in conn.execute(
             """
@@ -1150,6 +1246,45 @@ def _load_attachment_analysis_rows(conn):
             (ATTACHMENT_METHOD_VERSION, ATTACHMENT_METHOD_VERSION),
         ).fetchall()
     ]
+    if not attachment_rows or Chem is None:
+        return attachment_rows
+
+    # Keep the summary badge aligned with the atom table/detail viewer.  The
+    # current-run query avoids legacy runs while preserving the deposited atom
+    # coordinates and canonical ligand graph needed for the display grouping.
+    candidate_rows = [
+        dict(row)
+        for row in conn.execute(
+            """
+            WITH current_candidates AS (
+                SELECT s.*,
+                       MAX(s.run_id) OVER (PARTITION BY s.ligand_instance_id) AS current_run_id
+                FROM protacability_attachment_sites s
+                WHERE s.method_version=? AND s.candidate_attachment_atom=1
+            )
+            SELECT s.ligand_instance_id, s.atom_site_id, s.exact_atom,
+                   s.smiles_atom_indices, s.candidate_attachment_atom,
+                   a.x, a.y, a.z, l.canonical_smiles
+            FROM current_candidates s
+            LEFT JOIN ligand_instance_atoms a
+              ON a.ligand_instance_atom_id=s.ligand_instance_atom_id
+            LEFT JOIN ligand_instances li
+              ON li.ligand_instance_id=s.ligand_instance_id
+            LEFT JOIN ligands l ON l.ligand_id=li.ligand_id
+            WHERE s.run_id=s.current_run_id
+            """,
+            (ATTACHMENT_METHOD_VERSION,),
+        ).fetchall()
+    ]
+    candidates_by_instance = defaultdict(list)
+    for candidate in candidate_rows:
+        candidate["candidate_attachment_flag"] = candidate.get("candidate_attachment_atom")
+        candidates_by_instance[candidate["ligand_instance_id"]].append(candidate)
+    for attachment in attachment_rows:
+        attachment["attachment_display_site_count"] = _attachment_display_site_count(
+            candidates_by_instance.get(attachment.get("ligand_instance_id"), [])
+        )
+    return attachment_rows
 
 
 def _empty_attachment_graph_payload():

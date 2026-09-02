@@ -102,9 +102,19 @@ class RandyAttachmentV26Tests(unittest.TestCase):
         row = response.get_json()["rows"][0]
         self.assertEqual(row["has_attachment_site_evidence"], 1)
         self.assertEqual(row["attachment_candidate_atom_count"], 18)
-        self.assertEqual(row["attachment_display_site_count"], 1)
+        self.assertEqual(row["attachment_display_site_count"], 3)
         self.assertEqual(row["best_attachment_score"], 79.0)
         self.assertEqual(row["best_attachment_confidence"], "Moderate")
+
+    def test_search_summary_uses_bonded_sasa_groups_for_3eky_dr7(self):
+        response = self.client.get(
+            "/api/vlismod/protacability/search?pdb_code=3EKY&collapse_labels=1",
+            headers={"Authorization": "Bearer test-token"},
+        )
+        self.assertEqual(response.status_code, 200)
+        row = response.get_json()["rows"][0]
+        self.assertEqual(row["best_ligand_resname"], "DR7")
+        self.assertEqual(row["attachment_display_site_count"], 4)
 
     def test_canonical_protease_detail_retains_3eky(self):
         response = self.client.get(
