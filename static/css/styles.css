@@ -1619,6 +1619,20 @@ button:disabled {
     font-weight: 800;
 }
 
+.display-images-page .attachment-site-row {
+    cursor: pointer;
+}
+
+.display-images-page .attachment-site-row:hover td,
+.display-images-page .attachment-site-row:focus td {
+    background: rgba(42, 157, 143, 0.12);
+}
+
+.display-images-page .attachment-site-row:focus {
+    outline: 2px solid var(--accent-color, #ff7a29);
+    outline-offset: -2px;
+}
+
 .display-images-page .attachment-site-swatch {
     display: inline-block;
     width: 0.72rem;

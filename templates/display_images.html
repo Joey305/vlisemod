@@ -229,6 +229,7 @@ let latestLoadedSourceUrl = null;
 let displayLigandSpinRequested = false;
 let currentAttachmentSites = null;
 let pendingAttachmentHighlight = false;
+let pendingAttachmentRegions = null;
 const attachmentSiteColors = ['#22c55e', '#ef4444', '#3b82f6', '#eab308', '#a855f7', '#14b8a6'];
 
 function escapeAttachmentHtml(value) {
@@ -269,6 +270,7 @@ async function loadSasaAttachmentSites() {
         const attachment = payload.attachment_sites || {};
         const regions = attachmentSiteSets(attachment);
         currentAttachmentSites = attachment;
+        pendingAttachmentRegions = null;
         const exposed = Number(attachment.summary?.attachment_exposed_mapped_atom_count || attachment.surface_atom_serials?.length || 0);
         const candidates = Number(attachment.summary?.attachment_candidate_atom_count || attachment.candidate_atom_serials?.length || 0);
         if (!regions.length) {
@@ -278,13 +280,24 @@ async function loadSasaAttachmentSites() {
         }
         summary.textContent = `${exposed} exposed mapped atom(s) · ${candidates} candidate atom(s) · ${regions.length} attachment-site group(s)`;
         const clusters = Array.isArray(attachment.display_site_clusters) ? attachment.display_site_clusters : [];
-        table.innerHTML = `<table><thead><tr><th>Site</th><th>Candidate atoms</th><th>Best score</th><th>Priority</th><th>Supported</th></tr></thead><tbody>${clusters.map((cluster, index) => {
-            const color = attachmentSiteColors[index % attachmentSiteColors.length];
+        table.innerHTML = `<table><thead><tr><th>Site</th><th>Candidate atoms</th><th>Best score</th><th>Priority</th><th>Supported</th></tr></thead><tbody>${regions.map((region, index) => {
+            const cluster = clusters.find(item => String(item.display_site_id || '') === region.regionId) || {};
+            const color = region.color;
             const names = Array.isArray(cluster.candidate_atom_names) ? cluster.candidate_atom_names.join(', ') : '—';
             const score = Number(cluster.best_attachment_score);
             const scoreText = Number.isFinite(score) ? score.toFixed(0) : '—';
-            return `<tr><td><span class="attachment-site-swatch" style="background:${color}"></span>${escapeAttachmentHtml(cluster.display_site_id || `Site ${index + 1}`)}</td><td>${escapeAttachmentHtml(names)}</td><td>${scoreText}</td><td>${escapeAttachmentHtml(cluster.best_attachment_priority_tier)}</td><td>${Number(cluster.chemically_supported_candidate_count || 0)}</td></tr>`;
+            return `<tr class="attachment-site-row" role="button" tabindex="0" data-attachment-region-id="${escapeAttachmentHtml(region.regionId)}" aria-label="Center 3D view on ${escapeAttachmentHtml(region.regionId)}"><td><span class="attachment-site-swatch" style="background:${color}"></span>${escapeAttachmentHtml(region.regionId)}</td><td>${escapeAttachmentHtml(names)}</td><td>${scoreText}</td><td>${escapeAttachmentHtml(cluster.best_attachment_priority_tier)}</td><td>${Number(cluster.chemically_supported_candidate_count || 0)}</td></tr>`;
         }).join('')}</tbody></table>`;
+        table.querySelectorAll('.attachment-site-row').forEach(row => {
+            const focusSite = () => focusSasaAttachmentSite(row.dataset.attachmentRegionId);
+            row.addEventListener('click', focusSite);
+            row.addEventListener('keydown', event => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    focusSite();
+                }
+            });
+        });
         table.hidden = false;
         button.disabled = false;
     } catch (error) {
@@ -295,10 +308,20 @@ async function loadSasaAttachmentSites() {
 }
 
 function highlightSasaAttachmentSites() {
-    const regions = attachmentSiteSets(currentAttachmentSites);
+    activateSasaAttachmentRegions(attachmentSiteSets(currentAttachmentSites), 'Highlighted exposed SASA and candidate attachment atoms in 3D.');
+}
+
+function focusSasaAttachmentSite(regionId) {
+    const region = attachmentSiteSets(currentAttachmentSites).find(item => item.regionId === String(regionId || ''));
+    if (!region) return;
+    activateSasaAttachmentRegions([region], `Centered 3D view on ${region.regionId}.`);
+}
+
+function activateSasaAttachmentRegions(regions, completionMessage) {
     const status = document.getElementById('viewer-status');
     if (!regions.length) return;
     pendingAttachmentHighlight = true;
+    pendingAttachmentRegions = regions;
     displayLigandSpinRequested = true;
     updateDisplayLigandSpinButton(true);
     const viewport = document.getElementById('viewport');
@@ -309,11 +332,11 @@ function highlightSasaAttachmentSites() {
     }
     applySasaAttachmentHighlight();
     VLNGLViewer.toggleLigandSpin('viewport', true);
-    if (status) status.textContent = 'Highlighted exposed SASA and candidate attachment atoms in 3D.';
+    if (status) status.textContent = completionMessage;
 }
 
 function applySasaAttachmentHighlight() {
-    const regions = attachmentSiteSets(currentAttachmentSites);
+    const regions = pendingAttachmentRegions || attachmentSiteSets(currentAttachmentSites);
     if (!pendingAttachmentHighlight || !regions.length || !window.VLNGLViewer) return;
     const atoms = Array.isArray(currentAttachmentSites?.atoms) ? currentAttachmentSites.atoms : [];
     VLNGLViewer.mapAttachmentAtomsToLigandIndices('viewport', atoms);
@@ -321,6 +344,7 @@ function applySasaAttachmentHighlight() {
         candidateRadiusScale: 0.50, surfaceRadiusScale: 0.38, opacity: 0.48
     });
     pendingAttachmentHighlight = !highlighted;
+    if (highlighted) pendingAttachmentRegions = null;
 }
 
 function getAllLigandContexts() {
