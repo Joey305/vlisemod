@@ -3407,6 +3407,8 @@ def create_vlismod_blueprint(blueprint_name: str, url_prefix: str) -> Blueprint:
             best = max(matches, key=lambda r: _numeric_value(r.get("best_score")))
             ligand_rows = [
                 {
+                    "ligand_instance_id": row.get("ligand_instance_id"),
+                    "model_id": row.get("model_id"),
                     "ligand_resname": row.get("ligand_resname"),
                     "ligand_chain": row.get("ligand_chain"),
                     "ligand_residue_id": row.get("ligand_residue_id"),
