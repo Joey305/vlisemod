@@ -1,5 +1,5 @@
 (function () {
-  const HELPER_VERSION = 'pdb-ligand-default-focus-v8-ligand-spin';
+  const HELPER_VERSION = 'rcsb-mmcif-direct-v1';
   const viewerRegistry = new Map();
   let ligandElementSchemeId = null;
   const WATER_RESNAMES = new Set(['HOH', 'WAT', 'DOD', 'H2O', 'TIP', 'SOL']);
@@ -316,9 +316,10 @@
       structureExt: 'pdb',
       useDirectRcsbPdb: false,
       proteinStructureUrl: '',
-      proteinStructureExt: 'pdb',
+      proteinStructureExt: 'cif',
       ligandSdfUrl: '',
       ligandLabelAsymId: '',
+      ligandMetadataUrl: '',
       attachmentSerialMap: {}
     }, options || {});
 
@@ -350,7 +351,7 @@
     if (getComputedStyle(container).display === 'none') container.style.display = 'block';
     if (!container.style.height || container.clientHeight < 80) container.style.height = '420px';
 
-    const ligandSdfUrl = String(opts.ligandSdfUrl || '').trim();
+    const directMmcifUrl = `https://files.rcsb.org/download/${pdbCode}.cif`;
     const stage = new NGL.Stage(containerId, { backgroundColor: opts.backgroundColor || '#fbfdfc' });
     viewerRegistry.set(containerId, {
       stage: stage,
@@ -361,17 +362,108 @@
 	      attachmentSerialMap: normalizeSerialIndexMap(opts.attachmentSerialMap),
 	      proteinSele: 'protein',
       ligandSele: '',
-      defaultFocus: resolveDefaultFocusMode(opts, Boolean(ligandSdfUrl))
+      defaultFocus: resolveDefaultFocusMode(opts, Boolean(opts.ligandSdfUrl || opts.ligandLabelAsymId))
     });
 
-    const pdbUrl = `https://files.rcsb.org/view/${pdbCode}.pdb`;
-    const pdbDownloadUrl = `https://files.rcsb.org/download/${pdbCode}.pdb`;
     const explicitStructureUrl = String(opts.structureUrl || '').trim();
-    const proteinStructureUrl = String(opts.proteinStructureUrl || '').trim();
+    const proteinStructureUrl = String(opts.proteinStructureUrl || directMmcifUrl).trim();
+
+    function buildLigandSdfUrl(labelAsymId) {
+      const label = String(labelAsymId || '').trim().toUpperCase();
+      const residue = encodeURIComponent(String(parsedContext.resno || opts.ligandResidueId || '').trim());
+      if (!label || !residue || !ligandResname) return '';
+      const pdbLower = pdbCode.toLowerCase();
+      return `https://models.rcsb.org/v1/${pdbLower}/ligand?auth_seq_id=${residue}&label_asym_id=${encodeURIComponent(label)}&encoding=sdf&filename=${pdbLower}_${encodeURIComponent(label)}_${encodeURIComponent(ligandResname)}.sdf`;
+    }
+
+    function parseLabelAsymIdFromMmcif(text) {
+      const ligand = ligandResname;
+      const authChain = parsedContext.chain;
+      const authResidue = normalizeResno(parsedContext.resno);
+      const lines = String(text || '').split(/\r?\n/);
+      let headers = [];
+      for (let index = 0; index < lines.length; index += 1) {
+        const line = lines[index].trim();
+        if (line === 'loop_') { headers = []; continue; }
+        if (line.startsWith('_atom_site.')) { headers.push(line); continue; }
+        if (!headers.length || !line || line.startsWith('_')) continue;
+        const parts = line.split(/\s+/);
+        if (parts.length < headers.length) continue;
+        const values = Object.fromEntries(headers.map((header, headerIndex) => [header, parts[headerIndex]]));
+        if (String(values['_atom_site.group_PDB'] || '').toUpperCase() !== 'HETATM') continue;
+        const comp = String(values['_atom_site.auth_comp_id'] || values['_atom_site.label_comp_id'] || '').toUpperCase();
+        const chain = normalizeChain(values['_atom_site.auth_asym_id']);
+        const residue = normalizeResno(values['_atom_site.auth_seq_id']);
+        if (comp === ligand && chain === authChain && residue === authResidue) {
+          return String(values['_atom_site.label_asym_id'] || '').trim().toUpperCase();
+        }
+      }
+      return '';
+    }
+
+    async function resolveLigandSdfUrl() {
+      if (String(opts.ligandSdfUrl || '').trim()) return String(opts.ligandSdfUrl).trim();
+      let labelAsymId = String(opts.ligandLabelAsymId || '').trim().toUpperCase();
+      if (!labelAsymId && String(opts.ligandMetadataUrl || '').trim()) {
+        try {
+          const response = await fetch(opts.ligandMetadataUrl, { cache: 'no-store' });
+          if (response.ok) labelAsymId = String((await response.json()).label_asym_id || '').trim().toUpperCase();
+        } catch (error) {
+          ligandDebugLog('[VLNGLViewer] local ligand occurrence metadata unavailable', error);
+        }
+      }
+      if (!labelAsymId) {
+        try {
+          const response = await fetch(directMmcifUrl, { cache: 'force-cache' });
+          if (response.ok) labelAsymId = parseLabelAsymIdFromMmcif(await response.text());
+        } catch (error) {
+          ligandDebugLog('[VLNGLViewer] RCSB ligand metadata lookup failed', error);
+        }
+      }
+      return buildLigandSdfUrl(labelAsymId);
+    }
+
+    function mmcifWithoutChemicalComponentLoops(text) {
+      const lines = String(text || '').split(/\r?\n/);
+      const output = [];
+      for (let index = 0; index < lines.length;) {
+        if (lines[index].trim() !== 'loop_') {
+          output.push(lines[index]);
+          index += 1;
+          continue;
+        }
+        let headerEnd = index + 1;
+        while (headerEnd < lines.length && lines[headerEnd].trim().startsWith('_')) headerEnd += 1;
+        const headers = lines.slice(index + 1, headerEnd);
+        const isChemicalComponentLoop = headers.some(function (header) {
+          return header.trim().startsWith('_chem_comp.');
+        });
+        if (!isChemicalComponentLoop) {
+          output.push(lines[index]);
+          index += 1;
+          continue;
+        }
+        index = headerEnd;
+        while (index < lines.length && lines[index].trim() !== '#') index += 1;
+        if (index < lines.length) index += 1;
+      }
+      return output.join('\n');
+    }
 
     function loadStructure(url, extLabel) {
       ligandDebugLog('[NGL ligand debug] load attempt', { url: url, fileType: extLabel });
-      return stage.loadFile(url, { ext: 'pdb', defaultRepresentation: false }).then(function (component) {
+      const extension = extLabel || 'cif';
+      const sourcePromise = extension === 'cif'
+        ? fetch(url, { cache: 'force-cache' }).then(function (response) {
+            if (!response.ok) throw new Error(`RCSB mmCIF request failed (${response.status})`);
+            return response.text();
+          }).then(function (text) {
+            return new Blob([mmcifWithoutChemicalComponentLoops(text)], { type: 'chemical/x-cif' });
+          })
+        : Promise.resolve(url);
+      return sourcePromise.then(function (source) {
+        return stage.loadFile(source, { ext: extension, defaultRepresentation: false });
+      }).then(function (component) {
         ligandDebugLog('[NGL ligand debug] load success', { url: url, fileType: extLabel });
         return { component: component, loadInfo: { url: url, fileType: extLabel, success: true } };
       });
@@ -474,7 +566,7 @@
       const component = componentInfo.component;
       console.log('[VLNGLViewer] helper version', HELPER_VERSION);
       console.log('[VLNGLViewer] loadedSourceUrl', componentInfo.loadInfo ? componentInfo.loadInfo.url : null);
-      console.log('[VLNGLViewer] loadedExt', 'pdb');
+      console.log('[VLNGLViewer] loadedExt', componentInfo.loadInfo ? componentInfo.loadInfo.fileType : 'cif');
       if (typeof opts.onSourceLoaded === 'function') {
         try { opts.onSourceLoaded(componentInfo.loadInfo ? componentInfo.loadInfo.url : ''); } catch (e) {}
       }
@@ -622,16 +714,16 @@
       return viewerRegistry.get(containerId);
     }
 
+    const proteinUrlToUse = opts.useDirectRcsbPdb === true ? directMmcifUrl : (proteinStructureUrl || explicitStructureUrl || directMmcifUrl);
+    const proteinPromise = loadStructure(proteinUrlToUse, opts.proteinStructureExt || 'cif');
+    const ligandSdfUrl = await resolveLigandSdfUrl();
     if (ligandSdfUrl) {
       try {
-        const proteinUrlToUse = opts.useDirectRcsbPdb === true ? pdbUrl : (proteinStructureUrl || explicitStructureUrl || pdbUrl);
-        const proteinInfo = await loadStructure(proteinUrlToUse, opts.proteinStructureExt || 'pdb');
-        let ligandInfo = null;
-        try {
-          ligandInfo = await loadLigandStructure(ligandSdfUrl);
-        } catch (ligandErr) {
+        const ligandPromise = loadLigandStructure(ligandSdfUrl).catch(function (ligandErr) {
           console.error('[VLNGLViewer] ligand SDF load failed', ligandErr);
-        }
+          return null;
+        });
+        const [proteinInfo, ligandInfo] = await Promise.all([proteinPromise, ligandPromise]);
         return await renderSeparateProteinAndLigand(proteinInfo, ligandInfo);
       } catch (separateErr) {
         console.error('[VLNGLViewer] separate protein/ligand rendering failed; falling back to single-file mode', separateErr);
@@ -641,25 +733,12 @@
 
     let pdbComponentInfo;
     try {
-      if (opts.useDirectRcsbPdb === true) {
-        pdbComponentInfo = await loadStructure(pdbUrl, 'pdb');
-      } else if (explicitStructureUrl) {
-        pdbComponentInfo = await loadStructure(explicitStructureUrl, 'pdb');
-      } else {
-        pdbComponentInfo = await loadStructure(pdbUrl, 'pdb');
-      }
-      ligandDebugLog('[VLNGLViewer] PDB loaded', pdbCode);
+      pdbComponentInfo = await proteinPromise;
+      ligandDebugLog('[VLNGLViewer] mmCIF loaded', pdbCode);
     } catch (pdbLoadErr) {
-      console.warn('[VLNGLViewer] primary PDB load failed, trying fallback PDB URL:', pdbDownloadUrl, pdbLoadErr);
-      try {
-        const fallbackPdbInfo = await loadStructure(pdbDownloadUrl, 'pdb');
-        const fallbackRenderResult = await renderFromComponent(fallbackPdbInfo);
-        return fallbackRenderResult.entry;
-      } catch (loadFallbackErr) {
-        console.error('[VLNGLViewer] all structure loading attempts failed for', pdbCode, loadFallbackErr);
-        if (typeof opts.onStatus === 'function') opts.onStatus('Unable to load 3D context from RCSB right now.');
-        throw loadFallbackErr;
-      }
+      console.error('[VLNGLViewer] RCSB mmCIF load failed for', pdbCode, pdbLoadErr);
+      if (typeof opts.onStatus === 'function') opts.onStatus('The 3D viewer could not load RCSB coordinates. Stored analysis results remain available.');
+      throw pdbLoadErr;
     }
 
     let pdbRenderResult;
@@ -846,6 +925,40 @@
     return true;
   }
 
+  function mapAttachmentAtomsToLigandIndices(containerId, attachmentAtoms) {
+    const entry = viewerRegistry.get(containerId);
+    if (!entry || !entry.ligandComponent || !entry.ligandComponent.structure) return {};
+    const ligandAtoms = [];
+    try {
+      entry.ligandComponent.structure.eachAtom(function (atom) {
+        ligandAtoms.push({ index: atom.index, x: atom.x, y: atom.y, z: atom.z });
+      });
+    } catch (error) {
+      console.warn('[VLNGLViewer] unable to read loaded ligand coordinates', error);
+      return {};
+    }
+    const serialMap = {};
+    (Array.isArray(attachmentAtoms) ? attachmentAtoms : []).forEach(function (attachmentAtom) {
+      const serial = Number(attachmentAtom && attachmentAtom.pdb_atom_serial);
+      const x = Number(attachmentAtom && attachmentAtom.x);
+      const y = Number(attachmentAtom && attachmentAtom.y);
+      const z = Number(attachmentAtom && attachmentAtom.z);
+      if (!Number.isFinite(serial) || !Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) return;
+      let closest = null;
+      let closestDistanceSquared = Infinity;
+      ligandAtoms.forEach(function (ligandAtom) {
+        const distanceSquared = (ligandAtom.x - x) ** 2 + (ligandAtom.y - y) ** 2 + (ligandAtom.z - z) ** 2;
+        if (distanceSquared < closestDistanceSquared) {
+          closest = ligandAtom;
+          closestDistanceSquared = distanceSquared;
+        }
+      });
+      if (closest && closestDistanceSquared <= 0.01) serialMap[String(serial)] = closest.index;
+    });
+    setAttachmentSerialMap(containerId, serialMap);
+    return serialMap;
+  }
+
   function highlightAtomSerials(containerId, atomSerials, options) {
     const entry = viewerRegistry.get(containerId);
     const targetComponent = entry && (entry.component || entry.proteinComponent);
@@ -1003,8 +1116,9 @@
 	    highlightAtomSerials: highlightAtomSerials,
 	    highlightAttachmentSerialSets: highlightAttachmentSerialSets,
 	    highlightAttachmentRegionSets: highlightAttachmentRegionSets,
-	    clearAttachmentHighlights: clearAttachmentHighlights,
-	    setAttachmentSerialMap: setAttachmentSerialMap,
+    clearAttachmentHighlights: clearAttachmentHighlights,
+    setAttachmentSerialMap: setAttachmentSerialMap,
+    mapAttachmentAtomsToLigandIndices: mapAttachmentAtomsToLigandIndices,
     resizeViewer: resizeViewer,
 	    ligandDebugEnabled: ligandDebugEnabled,
 	    makeLigandCodeAliases: makeLigandCodeAliases,

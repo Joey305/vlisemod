@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "components/workspace_region.html" import region %}
 
 {% block title %}V-LiSEMOD | PROTACability Assessment{% endblock %}
 
@@ -39,6 +40,8 @@
         <p>Warhead linkability evaluates whether the bound ligand contains solvent-exposed, chemically modifiable atoms that may tolerate linker attachment while preserving binding. Target lysine accessibility is evaluated separately as a ubiquitination-readiness cue. Ternary geometry cues are hypothesis-generating only and should not be interpreted as proof of productive degradation.</p>
     </section>
 
+    {{ region('protac-workspace-region') }}
+
     {% if not protacability_data_available %}
     <section class="empty-state page-section">
         <h2>PROTACability data not imported yet</h2>
@@ -62,6 +65,10 @@
         <div class="section-heading">
             <h2 class="page-title">Filter structural-priority results</h2>
             <p class="page-subtitle">Candidate small-molecule ligand contexts and higher-evidence warhead rows are prioritized by default. Glycan-only structures remain available for structural context, but they are not treated as strong warhead evidence.</p>
+        </div>
+        <div id="protac-deep-link-context" class="page-card hidden" aria-live="polite" style="margin-bottom: 18px;">
+            <p id="protac-deep-link-copy" style="margin: 0;"></p>
+            <button id="clear-protac-deep-link" type="button" class="button-secondary" style="margin-top: 10px;">Clear filters</button>
         </div>
 
         <div class="protacability-toolbar">
@@ -89,6 +96,7 @@
 
         <form id="protacability-filter-form" class="form-grid protac-filter-grid">
             <input type="hidden" id="protac-view" value="targets">
+            <input type="hidden" id="protac-ligand-instance-id" value="">
             <div class="form-row-grid">
                 <div class="form-group">
                     <label for="protac-virus-name">Virus name</label>
@@ -194,8 +202,8 @@
                 <label class="checkbox-label">
                     <input type="checkbox" id="toggle-has-attachment-sites">
                     <span class="checkbox-copy">
-                        <span class="checkbox-title">Has attachment-site regions</span>
-                        <span class="checkbox-meta">Require exact ligand-instance attachment-site evidence.</span>
+                    <span class="checkbox-title">Has attachment sites</span>
+                        <span class="checkbox-meta">Require exact ligand-instance atom-level attachment evidence.</span>
                     </span>
                 </label>
                 <label class="checkbox-label">
@@ -237,11 +245,10 @@
                     <option value="PROTACability Ligand Inventory">Old PROTACability Ligand Inventory</option>
                     <option value="PROTACability Warhead Linkability">New Warhead Linkability</option>
                     <option value="PROTACability Degrader Readiness">New Degrader Readiness</option>
-                    <option value="PROTACability Attachment Analysis">Attachment Analysis</option>
-                    <option value="PROTACability Attachment Atoms">Attachment Atoms</option>
-                    <option value="PROTACability Attachment Regions">Attachment Regions</option>
+                    <option value="PROTACability Attachment-Site Summary">Attachment-site summary</option>
+                    <option value="PROTACability Candidate Attachment Atoms">Candidate Attachment Atoms</option>
                 </select>
-                <button type="button" id="export-protac-csv" class="button-secondary">Export CSV</button>
+                <button type="button" id="export-protac-csv" class="button-secondary">Download PROTACability evidence</button>
             </div>
             <p id="protac-filter-feedback" class="field-help" aria-live="polite"></p>
         </form>
@@ -293,6 +300,17 @@
             <div id="protac-detail-content">
                 <h2 class="page-title">Loading detail...</h2>
             </div>
+            <footer id="protac-detail-footer" class="protac-detail-footer hidden" aria-label="Selected ligand actions">
+                <div class="protac-detail-footer-copy">
+                    <strong>Selected ligand</strong>
+                    <span id="protac-detail-footer-context">Choose a ligand context to continue.</span>
+                </div>
+                <div class="action-row">
+                    <button id="protac-footer-copy-context" type="button" class="button-secondary">Copy context</button>
+                    <button id="protac-footer-use-warhead" type="button" class="button-primary">Use as Warhead</button>
+                    <a id="protac-footer-open-builder" class="button-secondary" target="_blank" rel="noopener noreferrer">Open PROTAC Builder ↗</a>
+                </div>
+            </footer>
         </div>
     </div>
 {% endblock %}
@@ -300,7 +318,7 @@
 {% block scripts %}
     <script>
         const initialProtacabilityDataAvailable = {{ 'true' if protacability_data_available else 'false' }};
-        const protacState = { view: 'targets', offset: 0, limit: 50, totalRows: 0, hasMore: false, currentSort: 'ligand_priority_desc', modalSurfaceOn: false };
+        const protacState = { view: 'targets', offset: 0, limit: 50, totalRows: 0, hasMore: false, currentSort: 'ligand_priority_desc', modalSurfaceOn: false, autoOpenedOccurrenceId: null };
         let latestProtacViewerPayload = null;
         let latestProtacLoadedSourceUrl = null;
         let refreshingFilterOptions = false;
@@ -533,6 +551,7 @@
             const minReadinessScore = ($('#protac-min-readiness-score').val() || '').trim();
             const minWarheadScore = ($('#protac-min-warhead-score').val() || '').trim();
             const ligand = ($('#protac-ligand-filter').val() || '').trim();
+            const ligandInstanceId = ($('#protac-ligand-instance-id').val() || '').trim();
             const ligandPresence = ($('#protac-ligand-presence').val() || '').trim();
             const ligandContextClass = ($('#protac-ligand-context-class').val() || '').trim();
 
@@ -541,6 +560,7 @@
             if (minReadinessScore) params.set('min_readiness_score', minReadinessScore);
             if (minWarheadScore) params.set('min_warhead_score', minWarheadScore);
             if (ligand) params.set('ligand', ligand);
+            if (ligandInstanceId) params.set('ligand_instance_id', ligandInstanceId);
             if (ligandPresence) params.set('ligand_presence', ligandPresence);
             if (ligandContextClass) params.set('ligand_context_class', ligandContextClass);
 
@@ -596,7 +616,10 @@
             if (String(row.smiles_source || '').toLowerCase().includes('component')) badges.push('<span class="ligand-context-badge context-glycan_common_mixed">Component SMILES only</span>');
             if (!Number(row.has_mapped_atoms || 0)) badges.push('<span class="ligand-context-badge context-common_buffer_only">No mapped atoms</span>');
             if (!Number(row.has_candidate_linker_atoms || 0)) badges.push('<span class="ligand-context-badge context-common_buffer_only">No candidate linker atoms</span>');
-            if (Number(row.has_attachment_site_evidence || 0)) badges.push(`<span class="ligand-context-badge context-candidate_small_molecule">Attachment regions: ${escapeHtml(row.attachment_region_count ?? 0)}</span>`);
+            if (Number(row.has_attachment_site_evidence || 0)) {
+                const clusters = Number(row.attachment_display_site_count || 0);
+                badges.push(`<span class="ligand-context-badge context-candidate_small_molecule">Attachment sites: ${clusters || '—'}</span>`);
+            }
             if (!Number(row.has_exposed_target_lysines || 0)) badges.push('<span class="ligand-context-badge context-no_ligand_context">No exposed target lysines</span>');
             if (row.ligand_context_class === 'glycan_only') badges.push('<span class="ligand-context-badge context-glycan_only">Glycan-only</span>');
             if (row.ligand_context_class === 'common_buffer_only') badges.push('<span class="ligand-context-badge context-common_buffer_only">Common-buffer ligand</span>');
@@ -611,11 +634,11 @@
 
         function renderAttachmentIndicator(row) {
             if (!Number(row.has_attachment_site_evidence || 0)) {
-                return '<span class="ligand-context-badge context-common_buffer_only">Attachment sites unavailable</span>';
+                return '<span class="ligand-context-badge attachment-region-badge context-common_buffer_only"><span class="attachment-region-label">No attachment sites</span></span>';
             }
-            const count = Number(row.attachment_region_count || 0);
+            const clusterCount = Number(row.attachment_display_site_count || 0);
             const confidence = row.best_attachment_confidence ? ` · ${row.best_attachment_confidence}` : '';
-            return `<span class="ligand-context-badge context-candidate_small_molecule">Attachment regions: ${count}${escapeHtml(confidence)}</span>`;
+            return `<span class="ligand-context-badge attachment-region-badge context-candidate_small_molecule"><span class="attachment-region-label">Attachment sites:</span><span class="attachment-region-value">${clusterCount || '—'}${escapeHtml(confidence)}</span></span>`;
         }
 
         function cleanSerials(values) {
@@ -894,11 +917,14 @@
             const nodes = Array.isArray(graph.nodes) ? graph.nodes : [];
             const bonds = Array.isArray(graph.bonds) ? graph.bonds : [];
             if (!nodes.length) return '';
-            const regionIds = Array.from(new Set(nodes.map(node => String(node.region_id || '')).filter(Boolean))).sort();
+            const siteColors = ['#22c55e', '#ef4444', '#3b82f6', '#eab308', '#a855f7', '#14b8a6'];
+            const colorForSite = siteId => siteColors[Math.max(0, Number(String(siteId || '').replace(/\D/g, '')) - 1) % siteColors.length];
+            const displaySites = Array.from(new Set(nodes.map(node => node.display_site_id).filter(Boolean)))
+                .sort((left, right) => Number(String(left).replace(/\D/g, '')) - Number(String(right).replace(/\D/g, '')));
             const layout = layoutAttachmentGraphNodes(nodes, bonds);
-            const envelopeHtml = regionIds.map(regionId => {
-                const regionNodes = layout.nodes.filter(node => String(node.region_id || '') === regionId);
-                return svgRegionEnvelope(regionNodes, attachmentRegionColor(regionId, regionIds));
+            const envelopeHtml = displaySites.map(siteId => {
+                const siteNodes = layout.nodes.filter(node => node.display_site_id === siteId);
+                return svgRegionEnvelope(siteNodes, colorForSite(siteId));
             }).join('');
             const bondHtml = bonds.map(bond => {
                 const a = layout.byIndex.get(Number(bond.begin_atom_index));
@@ -908,30 +934,29 @@
                 return `<line x1="${a.x.toFixed(1)}" y1="${a.y.toFixed(1)}" x2="${b.x.toFixed(1)}" y2="${b.y.toFixed(1)}" stroke-width="${width}" />`;
             }).join('');
             const nodeHtml = layout.nodes.map(node => {
-                const regionId = String(node.region_id || '');
                 const isCandidate = Number(node.candidate_attachment_flag || 0) > 0;
                 const isSurface = Number(node.surface_defining_flag || 0) > 0;
-                const color = regionId ? attachmentRegionColor(regionId, regionIds) : '#a9afb2';
+                const tier = String(node.confidence || node.priority_tier_short || '').toLowerCase();
+                const color = node.display_site_id ? colorForSite(node.display_site_id) : isCandidate ? '#2563eb' : isSurface ? '#22c55e' : '#a9afb2';
                 const radius = isCandidate ? 7.2 : isSurface ? 5.4 : 3.4;
                 const classes = ['attachment-map-node'];
                 if (isCandidate) classes.push('candidate');
                 if (isSurface) classes.push('surface');
                 const label = [node.pdb_atom_name, node.pdb_atom_serial].filter(value => value !== null && value !== undefined && value !== '').join(' ');
-                return `<circle class="${classes.join(' ')}" cx="${node.x.toFixed(1)}" cy="${node.y.toFixed(1)}" r="${radius}" fill="${color}"><title>${escapeHtml(label || `SMILES atom ${node.smiles_atom_index}`)}${regionId ? `, ${escapeHtml(regionId)}` : ''}</title></circle>`;
+                return `<circle class="${classes.join(' ')}" cx="${node.x.toFixed(1)}" cy="${node.y.toFixed(1)}" r="${radius}" fill="${color}"><title>${escapeHtml(label || `SMILES atom ${node.smiles_atom_index}`)}${node.display_site_id ? `, ${escapeHtml(node.display_site_id)}` : ''}${tier ? `, ${escapeHtml(tier)}` : ''}</title></circle>`;
             }).join('');
             const labelHtml = attachmentMapCandidateLabels(layout.nodes, layout.width, layout.height).map(label => (
                 `<text x="${label.x.toFixed(1)}" y="${label.y.toFixed(1)}">${escapeHtml(label.label)}</text>`
             )).join('');
-            const legendHtml = regionIds.map(regionId => `
-                <span class="attachment-map-legend-item"><span style="background:${attachmentRegionColor(regionId, regionIds)}"></span>${escapeHtml(regionId)}</span>
-            `).join('');
             return `
                 <div class="attachment-map-wrap">
                     <div class="attachment-map-header">
-                        <h4>Attachment Region Map</h4>
-                        <div class="attachment-map-legend">${legendHtml}</div>
+                <h4>Attachment-site map</h4>
+                        <div class="attachment-map-legend">
+                            ${displaySites.map(siteId => `<span class="attachment-map-legend-item"><span style="background:${colorForSite(siteId)}"></span>${escapeHtml(siteId)}</span>`).join('')}
+                        </div>
                     </div>
-                    <svg class="attachment-region-map" viewBox="0 0 ${layout.width} ${layout.height}" role="img" aria-label="Ligand attachment region map">
+                    <svg class="attachment-region-map" viewBox="0 0 ${layout.width} ${layout.height}" role="img" aria-label="Ligand attachment-site map">
                         <g class="attachment-map-envelopes">${envelopeHtml}</g>
                         <g class="attachment-map-bonds">${bondHtml}</g>
                         <g class="attachment-map-nodes">${nodeHtml}</g>
@@ -944,47 +969,59 @@
         function renderAttachmentSitesPanel(attachmentSites, row) {
             const payload = attachmentSites || {};
             const summary = payload.summary || {};
-            const regions = Array.isArray(payload.regions) ? payload.regions : [];
             const atoms = Array.isArray(payload.atoms) ? payload.atoms : [];
             const allCandidateSerials = cleanSerials(payload.candidate_atom_serials);
             const allSurfaceSerials = cleanSerials(payload.surface_atom_serials);
-            const regionCards = regions.length ? regions.map(region => {
-                const { candidateSerials, surfaceSerials, memberSerials } = attachmentRegionSerials(region, atoms);
-                const reasons = Array.isArray(region.reasons) && region.reasons.length ? region.reasons.join('; ') : '—';
-                const cautions = Array.isArray(region.cautions) && region.cautions.length ? region.cautions.join('; ') : '—';
+            const candidateAtoms = atoms.filter(atom => Number(atom.candidate_attachment_flag || 0));
+            const rawClusters = Array.isArray(payload.display_site_clusters) ? payload.display_site_clusters : [];
+            const clusters = rawClusters.length ? rawClusters : candidateAtoms.map((atom, index) => ({
+                display_site_id: `Site ${index + 1}`,
+                candidate_atom_serials: [atom.pdb_atom_serial],
+                candidate_atom_names: [atom.pdb_atom_name],
+                surface_atom_serials: Number(atom.surface_defining_flag || 0) ? [atom.pdb_atom_serial] : [],
+                chemically_supported_candidate_count: Number(atom.chemically_supported || 0),
+                high_priority_atom_count: Number(atom.high_priority_attachment_atom || 0),
+                best_attachment_score: atom.attachment_score,
+                best_attachment_priority_tier: atom.priority_tier_short || atom.confidence
+            }));
+            const siteColors = ['#22c55e', '#ef4444', '#3b82f6', '#eab308', '#a855f7', '#14b8a6'];
+            const siteCards = clusters.length ? clusters.map((cluster, index) => {
+                const serials = cleanSerials(cluster.candidate_atom_serials);
+                const members = candidateAtoms.filter(atom => serials.includes(Number(atom.pdb_atom_serial)));
+                const names = Array.isArray(cluster.candidate_atom_names) && cluster.candidate_atom_names.length
+                    ? cluster.candidate_atom_names.join(', ')
+                    : members.map(atom => atom.pdb_atom_name).filter(Boolean).join(', ');
+                const siteColor = siteColors[index % siteColors.length];
                 return `
-                    <article class="attachment-region-card" style="--attachment-region-color: ${attachmentRegionColorFor(region.region_id, payload)}">
+                    <article class="attachment-region-card" style="--attachment-region-color: ${siteColor}">
                         <div class="attachment-region-card-header">
                             <div>
-                                <h4>${escapeHtml(region.region_id || 'Attachment region')}</h4>
-                                <p>${escapeHtml(region.confidence || '—')} confidence · score ${formatValue(region.region_score, 2)}</p>
+                                <h4>${escapeHtml(cluster.display_site_id || `Site ${index + 1}`)}</h4>
+                                <p>${escapeHtml(cluster.best_attachment_priority_tier || '—')} best priority · best atom score ${formatValue(cluster.best_attachment_score, 2)}</p>
                             </div>
-                            <button type="button" class="button-secondary compact-detail-button protac-attachment-region-button" data-region-id="${escapeHtml(region.region_id || 'region')}" data-region-color="${attachmentRegionColorFor(region.region_id, payload)}" data-candidate-serials="${escapeHtml(candidateSerials.join(','))}" data-surface-serials="${escapeHtml(surfaceSerials.join(','))}" data-label="${escapeHtml(region.region_id || 'region')}">Highlight</button>
+                            <button type="button" class="button-secondary compact-detail-button protac-attachment-site-button" data-candidate-serials="${escapeHtml(serials.join(','))}" data-surface-serials="${escapeHtml(cleanSerials(cluster.surface_atom_serials).join(','))}" data-label="${escapeHtml(cluster.display_site_id || `Site ${index + 1}`)}">Highlight</button>
                         </div>
-                        <p><strong>Candidate atoms:</strong> ${escapeHtml(candidateSerials.join(', ') || '—')}</p>
-                        <p><strong>Surface-defining atoms:</strong> ${escapeHtml(surfaceSerials.join(', ') || memberSerials.join(', ') || '—')}</p>
-                        <p><strong>Reasons:</strong> ${escapeHtml(reasons)}</p>
-                        <p><strong>Cautions:</strong> ${escapeHtml(cautions)}</p>
-                        ${renderAttachmentAtomDetails(region, atoms)}
+                        <p><strong>Candidate atoms (${serials.length}):</strong> ${escapeHtml(names || '—')}</p>
+                        <p><strong>Chemically supported:</strong> ${formatValue(cluster.chemically_supported_candidate_count, 0)} | <strong>High-priority atoms:</strong> ${formatValue(cluster.high_priority_atom_count, 0)}</p>
                     </article>
                 `;
-            }).join('') : '<p class="attachment-region-muted">No attachment-site regions available for this ligand instance.</p>';
-            const atomRows = atoms.filter(atom => Number(atom.candidate_attachment_flag || 0)).slice(0, 12).map(atom => `
-                <tr><td>${escapeHtml(atom.pdb_atom_name || '—')}</td><td>${escapeHtml(atom.pdb_atom_serial ?? '—')}</td><td>${escapeHtml(atom.element || '—')}</td><td>${formatValue(atom.attachment_score, 2)}</td><td>${escapeHtml(atom.confidence || '—')}</td><td>${escapeHtml(atom.region_id || '—')}</td><td>${boolText(atom.surface_defining_flag)}</td></tr>
-            `).join('') || '<tr><td colspan="7">No candidate attachment atoms available.</td></tr>';
+            }).join('') : `<p class="attachment-region-muted">${payload.data_available ? 'No attachment sites were identified for this ligand occurrence.' : 'Attachment-site data are unavailable for this database.'}</p>`;
+            const atomRows = candidateAtoms.slice(0, 12).map(atom => `
+                <tr><td>${escapeHtml(atom.display_site_id || '—')}</td><td>${escapeHtml(atom.pdb_atom_name || '—')}</td><td>${escapeHtml(atom.pdb_atom_serial ?? '—')}</td><td>${escapeHtml(atom.element || '—')}</td><td>${formatValue(atom.attachment_score, 2)}</td><td>${escapeHtml(atom.priority_tier_short || atom.confidence || '—')}</td><td>${escapeHtml(atom.atom_chemical_role || '—')}</td><td>${boolText(atom.chemically_supported)}</td><td>${boolText(atom.surface_defining_flag)}</td></tr>
+            `).join('') || '<tr><td colspan="9">No candidate attachment atoms available.</td></tr>';
             return `
                 <div class="page-card protacability-detail-card protac-attachment-sites-card">
-	                    <h3>Candidate Attachment Sites</h3>
-	                    <p><strong>Evidence:</strong> ${boolText(summary.has_attachment_site_evidence || row?.has_attachment_site_evidence)} | <strong>Regions:</strong> ${formatValue(summary.attachment_region_count ?? row?.attachment_region_count, 0)} | <strong>Candidate atoms:</strong> ${formatValue(summary.attachment_candidate_atom_count ?? row?.attachment_candidate_atom_count, 0)}</p>
-	                    <p><strong>Best score/confidence:</strong> ${formatValue(summary.best_attachment_score ?? row?.best_attachment_score, 2)} / ${escapeHtml(summary.best_attachment_confidence || row?.best_attachment_confidence || '—')}</p>
+                    <h3>Attachment sites</h3>
+                    <p><strong>Evidence:</strong> ${boolText(summary.has_attachment_site_evidence || row?.has_attachment_site_evidence)} | <strong>Attachment-site groups:</strong> ${formatValue(clusters.length || summary.attachment_display_site_count || row?.attachment_display_site_count, 0)} | <strong>Mapped atoms:</strong> ${formatValue(summary.mapped_atom_count, 0)} | <strong>Exposed mapped atoms:</strong> ${formatValue(summary.attachment_exposed_mapped_atom_count, 0)}</p>
+	                    <p><strong>Chemically supported:</strong> ${formatValue(summary.attachment_chemically_supported_candidate_count, 0)} | <strong>High-priority atoms:</strong> ${formatValue(summary.attachment_high_priority_atom_count, 0)} | <strong>Top score/tier:</strong> ${formatValue(summary.best_attachment_score ?? row?.best_attachment_score, 2)} / ${escapeHtml(summary.best_attachment_confidence || row?.best_attachment_confidence || '—')}</p>
 	                    ${renderAttachmentGraph(payload)}
 	                    <div class="action-row protac-attachment-actions">
-	                        <button type="button" class="button-secondary protac-attachment-highlight-all" data-candidate-serials="${escapeHtml(allCandidateSerials.join(','))}" data-surface-serials="${escapeHtml(allSurfaceSerials.join(','))}">All Regions</button>
+                        <button type="button" class="button-secondary protac-attachment-highlight-all" data-candidate-serials="${escapeHtml(allCandidateSerials.join(','))}" data-surface-serials="${escapeHtml(allSurfaceSerials.join(','))}">All Regions</button>
                         <button type="button" class="button-secondary protac-attachment-clear">Hide</button>
                     </div>
-                    <p class="attachment-region-note"><strong>Medicinal-chemistry limitation:</strong> these structural sites do not prove synthetic tractability, retained binding, or SAR tolerance. <strong>Outward-direction limitation:</strong> vectors are local surface-orientation cues, not predicted linker trajectories.</p>
-                    <div class="attachment-region-grid">${regionCards}</div>
-                    <div class="table-wrap"><table><thead><tr><th>Atom</th><th>Serial</th><th>Element</th><th>Score</th><th>Confidence</th><th>Region</th><th>Surface</th></tr></thead><tbody>${atomRows}</tbody></table></div>
+                    <p class="attachment-region-note"><strong>Site grouping:</strong> these ${formatValue(clusters.length, 0)} visual groups organize nearby candidate atoms for review; attachment-site scores, priorities, and chemical support remain atom-specific. <strong>Medicinal-chemistry limitation:</strong> these cues do not prove synthetic tractability, retained binding, or SAR tolerance. <strong>Outward-direction limitation:</strong> vectors are local surface-orientation cues, not predicted linker trajectories.</p>
+                    <div class="attachment-region-grid">${siteCards}</div>
+                    <div class="table-wrap"><table><thead><tr><th>Region</th><th>Atom</th><th>Serial</th><th>Element</th><th>Score</th><th>Priority</th><th>Chemical role</th><th>Supported</th><th>Surface</th></tr></thead><tbody>${atomRows}</tbody></table></div>
                 </div>
             `;
         }
@@ -1089,6 +1126,7 @@
             const tbody = $('#protacability-table-body');
             const targetBrowser = $('#protac-target-browser');
             const tableWrap = $('.protac-results-section .table-wrap').first();
+            $('#protacability-table').attr('data-view', view);
             tbody.empty();
             targetBrowser.empty();
 
@@ -1110,6 +1148,7 @@
                                     <span class="page-kicker">Target Browser</span>
                                     <h3>${escapeHtml(row.virus_name || '—')} · ${escapeHtml(row.protein_type || '—')}</h3>
                                     <p><strong>Overall degrader readiness:</strong> ${formatValue(row.degrader_design_readiness_score, 2)} | <strong>PDBs:</strong> ${row.pdb_count ?? 0} | <strong>Chains:</strong> ${row.chain_count ?? 0}</p>
+                                    <p><strong>Canonical target ID:</strong> ${escapeHtml(row.canonical_target_id || '—')} | <strong>Source label provenance:</strong> ${escapeHtml(row.source_protein_type || '—')}</p>
                                 </div>
                                 <span class="${evidenceBadgeClass(row.degrader_design_readiness_tier)}">${escapeHtml(row.degrader_design_readiness_tier || 'Readiness pending')}</span>
                             </div>
@@ -1126,10 +1165,10 @@
                             <p><strong>Interpretation:</strong> ${escapeHtml(row.interpretation_note || '—')}</p>
                             ${renderConcernBadges(row)}
                             <div class="action-row">
-                                <button type="button" class="button-secondary protac-target-action" data-action="structures" data-virus="${escapeHtml(row.virus_name)}" data-protein="${escapeHtml(row.protein_type)}">View structures</button>
-                                <button type="button" class="button-secondary protac-target-action" data-action="ligands" data-virus="${escapeHtml(row.virus_name)}" data-protein="${escapeHtml(row.protein_type)}">View ligands</button>
-                                <button type="button" class="button-secondary protac-target-action" data-action="best3d" data-virus="${escapeHtml(row.virus_name)}" data-protein="${escapeHtml(row.protein_type)}">View best 3D context</button>
-                                <button type="button" class="button-secondary protac-detail-button" data-view="targets" data-virus="${escapeHtml(row.virus_name)}" data-protein="${escapeHtml(row.protein_type)}">Details</button>
+                                <button type="button" class="button-secondary protac-target-action" data-action="structures" data-virus="${escapeHtml(row.virus_name)}" data-protein="${escapeHtml(row.protein_type)}" data-target-id="${escapeHtml(row.canonical_target_id)}">View structures</button>
+                                <button type="button" class="button-secondary protac-target-action" data-action="ligands" data-virus="${escapeHtml(row.virus_name)}" data-protein="${escapeHtml(row.protein_type)}" data-target-id="${escapeHtml(row.canonical_target_id)}">View ligands</button>
+                                <button type="button" class="button-secondary protac-target-action" data-action="best3d" data-virus="${escapeHtml(row.virus_name)}" data-protein="${escapeHtml(row.protein_type)}" data-target-id="${escapeHtml(row.canonical_target_id)}">View best 3D context</button>
+                                <button type="button" class="button-secondary protac-detail-button" data-view="targets" data-virus="${escapeHtml(row.virus_name)}" data-protein="${escapeHtml(row.protein_type)}" data-target-id="${escapeHtml(row.canonical_target_id)}">Details</button>
                             </div>
                         </article>
                     `);
@@ -1143,7 +1182,7 @@
                 setTableHead(['Readiness', 'Warhead', 'Evidence', 'Virus', 'Protein', 'PDBs', 'Top PDB', 'Best Ligand', 'Flags', 'Details']);
                 rows.forEach(row => {
                     tbody.append(`
-                        <tr>
+                        <tr class="protac-result-row" tabindex="0" role="button" aria-label="View details for ${escapeHtml(row.virus_name || 'this protein')} ${escapeHtml(row.protein_type || '')}">
                             <td class="compact-cell"><strong>${formatValue(row.degrader_design_readiness_score, 2)}</strong></td>
                             <td class="compact-cell">${formatValue(row.warhead_linkability_score, 2)}</td>
                             <td><span class="${evidenceBadgeClass(row.evidence_level)}">${escapeHtml(row.evidence_level || '—')}</span></td>
@@ -1151,7 +1190,7 @@
                             <td class="text-wrap-cell">${escapeHtml(row.protein_type || '—')}</td>
                             <td class="compact-cell">${row.pdb_count ?? '—'}</td>
                             <td class="compact-cell">${escapeHtml(row.top_pdb_code || '—')}</td>
-                            <td class="compact-cell">${escapeHtml(row.best_ligand_resname || row.distinct_ligands || '—')}<br>${renderAttachmentIndicator(row)}</td>
+                            <td class="attachment-region-cell">${escapeHtml(row.best_ligand_resname || row.distinct_ligands || '—')}<br>${renderAttachmentIndicator(row)}</td>
                             <td>${renderConcernBadges(row)}</td>
                             <td class="compact-cell"><button type="button" class="button-secondary protac-detail-button compact-detail-button" data-view="protein" data-virus="${escapeHtml(row.virus_name)}" data-protein="${escapeHtml(row.protein_type)}">Details</button></td>
                         </tr>
@@ -1164,7 +1203,7 @@
                 setTableHead(['Readiness', 'Warhead', 'Lys Access', 'Protein Priority', 'Virus', 'Protein', 'PDB', 'Chain', 'Best Ligand', 'Details']);
                 rows.forEach(row => {
                     tbody.append(`
-                        <tr>
+                        <tr class="protac-result-row" tabindex="0" role="button" aria-label="View details for ${escapeHtml(row.pdb_code || 'this structure')} ${escapeHtml(row.protein_type || '')}">
                             <td class="compact-cell"><strong>${formatValue(row.degrader_design_readiness_score, 2)}</strong></td>
                             <td class="compact-cell">${formatValue(row.warhead_linkability_score, 2)}</td>
                             <td class="compact-cell">${formatValue(row.target_lysine_accessibility_score, 2)}</td>
@@ -1173,7 +1212,7 @@
                             <td class="text-wrap-cell">${escapeHtml(row.protein_type || '—')}</td>
                             <td class="compact-cell">${escapeHtml(row.pdb_code || '—')}</td>
                             <td class="compact-cell">${escapeHtml(row.representative_chain_id || '—')}</td>
-                            <td>${escapeHtml(row.best_ligand_resname || row.candidate_ligand_resnames || '—')}<br>${renderAttachmentIndicator(row)}</td>
+                            <td class="attachment-region-cell">${escapeHtml(row.best_ligand_resname || row.candidate_ligand_resnames || '—')}<br>${renderAttachmentIndicator(row)}</td>
                             <td class="compact-cell"><button type="button" class="button-secondary protac-detail-button compact-detail-button" data-view="summary" data-pdb="${escapeHtml(row.pdb_code)}" data-virus="${escapeHtml(row.virus_name)}" data-protein="${escapeHtml(row.protein_type)}">Details</button></td>
                         </tr>
                     `);
@@ -1184,7 +1223,7 @@
             setTableHead(['Readiness', 'Warhead', 'Warhead Tier', 'Lys Access', 'Protein Priority', 'Virus', 'Protein', 'PDB', 'Chain', 'Best Ligand', 'Details']);
             rows.forEach(row => {
                 tbody.append(`
-                    <tr>
+                    <tr class="protac-result-row" tabindex="0" role="button" aria-label="View details for ${escapeHtml(row.pdb_code || 'this structure')} chain ${escapeHtml(row.chain_id || '')}">
                         <td class="compact-cell"><strong>${formatValue(row.degrader_design_readiness_score, 2)}</strong></td>
                         <td class="compact-cell">${formatValue(row.warhead_linkability_score, 2)}</td>
                         <td><span class="${evidenceBadgeClass(row.warhead_linkability_tier)}">${escapeHtml(row.warhead_linkability_tier || '—')}</span></td>
@@ -1194,7 +1233,7 @@
                         <td class="text-wrap-cell">${escapeHtml(row.display_protein_type || row.protein_type || '—')}</td>
                         <td class="compact-cell">${escapeHtml(row.pdb_code || '—')}</td>
                         <td class="compact-cell">${escapeHtml(row.chain_id || '—')}</td>
-                        <td>${escapeHtml(row.best_ligand_resname || row.candidate_ligand_resnames_display || '—')}<br>${renderAttachmentIndicator(row)}</td>
+                        <td class="attachment-region-cell">${escapeHtml(row.best_ligand_resname || row.candidate_ligand_resnames_display || '—')}<br>${renderAttachmentIndicator(row)}</td>
                         <td class="compact-cell"><button type="button" class="button-secondary protac-detail-button compact-detail-button" data-view="chains" data-pdb="${escapeHtml(row.pdb_code)}" data-chain="${escapeHtml(row.chain_id)}">Details</button></td>
                     </tr>
                 `);
@@ -1321,6 +1360,7 @@
                 </div>
             `);
             const ligand = String(ligandRecord.ligand_resname || (assessment.candidate_ligand_resnames_full || '').split(';')[0] || '').trim();
+            attachmentSites.label_asym_id = ligandRecord.label_asym_id || '';
             if (ligandDebugEnabled()) {
                 console.log('[protacability] detail payload', data);
                 console.log('[protacability] ligand_contexts', ligandContexts);
@@ -1341,7 +1381,34 @@
                 ligand_chain: data.representative_ligand_chain || '',
                 ligand_residue_id: data.representative_ligand_residue_id || ''
             };
+            const selectedLigand = data.selected_ligand_instance || null;
+            const selectedLigandLabel = selectedLigand ? [
+                selectedLigand.ligand_resname,
+                selectedLigand.ligand_chain ? `Chain ${selectedLigand.ligand_chain}` : '',
+                selectedLigand.ligand_residue_id ? `Residue ${selectedLigand.ligand_residue_id}` : ''
+            ].filter(Boolean).join(' · ') : '';
             const linkerIds = Array.isArray(summary.candidate_linker_atom_ids_list) ? summary.candidate_linker_atom_ids_list.join(', ') : (summary.candidate_linker_atom_ids || '—');
+            const contextLigand = selectedLigand || representativeLigand;
+            attachmentSites.label_asym_id = (contextLigand || {}).label_asym_id || '';
+            const contextOccurrenceId = (contextLigand || {}).ligand_instance_id || new URLSearchParams(window.location.search).get('ligand_instance_id') || '';
+            const detailUrl = VLiSEMODWorkspace.paramsUrl('/protacability_page', {
+                ligand: (contextLigand || {}).ligand_resname || new URLSearchParams(window.location.search).get('ligand') || '',
+                pdb_code: summary.pdb_code, ligand_instance_id: contextOccurrenceId,
+                ligand_chain: (contextLigand || {}).ligand_chain || '', ligand_residue_id: (contextLigand || {}).ligand_residue_id || ''
+            });
+            VLiSEMODWorkspace.render('protac-workspace-region', {
+                url: detailUrl, clearHref: '/protacability_page',
+                context: { chips: [(contextLigand || {}).ligand_resname, summary.pdb_code, (contextLigand || {}).ligand_chain && `Chain ${(contextLigand || {}).ligand_chain}`, (contextLigand || {}).ligand_residue_id && `Residue ${(contextLigand || {}).ligand_residue_id}`], occurrence: contextOccurrenceId ? { ligand: (contextLigand || {}).ligand_resname, ligandInstanceId: contextOccurrenceId, pdbCode: summary.pdb_code, chain: (contextLigand || {}).ligand_chain, residueId: (contextLigand || {}).ligand_residue_id, mappedAtoms: summary.pdb_to_smiles_mapped_atom_count, exposedAtoms: summary.solvent_exposed_mapped_atom_count } : null },
+                summary: { title: 'Observed structural evidence', metrics: [
+                    { value: formatValue(summary.pdb_to_smiles_mapped_atom_count, 0), label: 'mapped atoms' },
+                    { value: formatValue(summary.solvent_exposed_mapped_atom_count, 0), label: 'solvent-exposed mapped atoms' },
+                    { value: formatValue((attachmentSites.display_site_clusters || attachmentSites.sites || []).length, 0), label: 'candidate attachment sites' }
+                ], note: 'Derived degrader-design readiness is shown in the detail panel and does not use ligand-to-lysine distance as a readiness score.' },
+                actions: [
+                    (contextLigand || {}).ligand_resname ? { label: 'Inspect interactions', href: VLiSEMODWorkspace.paramsUrl('/ligand_indexer', { ligand: (contextLigand || {}).ligand_resname, ligand_instance_id: contextOccurrenceId }) } : null,
+                    (contextLigand || {}).ligand_resname ? { label: 'Compare ligand structures', href: VLiSEMODWorkspace.paramsUrl('/compare_ligands', { ligand: (contextLigand || {}).ligand_resname }) } : null
+                ], methods: ['mapping', 'sasa', 'interactions', 'geometry', 'functionalGroups', 'protacability', 'attachment']
+            });
 
             const chainRowsHtml = chains.length ? chains.map(row => `
                 <tr><td>${escapeHtml(row.chain_id || '—')}</td><td>${formatValue(row.protacability_proxy_score, 2)}</td><td><span class="${tierBadgeClass(row.protacability_tier)}">${escapeHtml(row.protacability_tier || 'Unknown')}</span></td><td>${formatValue(row.exposed_lys_fraction, 3)}</td><td>${renderLigandPreview(row.candidate_ligand_resnames_display, row.ligand_names ? row.ligand_names.length : 0)}</td></tr>
@@ -1356,7 +1423,7 @@
             `).join('') : '<tr><td colspan="5">No ligand inventory rows available.</td></tr>';
 
             $('#protac-detail-content').html(`
-                <div class="section-heading"><span class="page-kicker">Structure Summary</span><h2 class="page-title">${escapeHtml(summary.virus_name)} · ${escapeHtml(summary.protein_type)}</h2><p class="page-subtitle">PDB ${escapeHtml(summary.pdb_code)} · ${summary.chain_count} chains summarized</p></div>
+                <div class="section-heading"><span class="page-kicker">Structure Summary</span><h2 class="page-title">${escapeHtml(summary.virus_name)} · ${escapeHtml(summary.protein_type)}</h2><p class="page-subtitle">PDB ${escapeHtml(summary.pdb_code)} · ${summary.chain_count} chains summarized${selectedLigandLabel ? ` · Selected ligand: ${escapeHtml(selectedLigandLabel)}` : ''}</p></div>
                 <div class="protac-detail-two-col">
                     <div class="page-card protacability-detail-card"><div id="protac-ngl-viewer" class="protac-ngl-viewer"></div><p id="protac-ngl-status" class="viewer-status"></p>${renderLigandDebugPanel()}<div class="action-row"><button id="protac-rotate-ligand" type="button" class="button-secondary ligand-spin-toggle" aria-pressed="false">Rotate Molecule</button><button id="protac-use-warhead" type="button" class="button-secondary">Use as Warhead</button></div></div>
                     <div class="page-card protacability-detail-card"><p><strong>Ligand context:</strong> ${ligandContextBadge(summary)}</p><p><strong>Overall degrader readiness:</strong> ${formatValue(summary.degrader_design_readiness_score, 2)}</p><p><strong>Representative chain:</strong> ${escapeHtml(data.representative_chain_id || '—')}</p>${renderConcernBadges(summary)}</div>
@@ -1690,18 +1757,26 @@
                 });
         }
 
-        function attachmentRegionSets(attachmentSites) {
+        function attachmentSiteSets(attachmentSites) {
             const payload = attachmentSites || {};
             const atoms = Array.isArray(payload.atoms) ? payload.atoms : [];
-            return (Array.isArray(payload.regions) ? payload.regions : []).map(region => {
-                const { candidateSerials, surfaceSerials } = attachmentRegionSerials(region, atoms);
+            const rawClusters = Array.isArray(payload.display_site_clusters) ? payload.display_site_clusters : [];
+            const fallbackClusters = atoms.filter(atom => Number(atom.candidate_attachment_flag || 0)).map((atom, index) => ({
+                display_site_id: `Site ${index + 1}`,
+                candidate_atom_serials: [atom.pdb_atom_serial],
+                surface_atom_serials: Number(atom.surface_defining_flag || 0) ? [atom.pdb_atom_serial] : []
+            }));
+            const colors = ['#22c55e', '#ef4444', '#3b82f6', '#eab308', '#a855f7', '#14b8a6'];
+            return (rawClusters.length ? rawClusters : fallbackClusters).map((cluster, index) => {
+                const candidateSerials = cleanSerials(cluster.candidate_atom_serials);
+                const surfaceSerials = cleanSerials(cluster.surface_atom_serials);
                 return {
-                    regionId: String(region.region_id || 'region'),
-                    color: attachmentRegionColorFor(region.region_id, payload),
+                    regionId: String(cluster.display_site_id || `Site ${index + 1}`),
+                    color: colors[index % colors.length],
                     candidateSerials,
                     surfaceSerials
                 };
-            }).filter(region => region.candidateSerials.length || region.surfaceSerials.length);
+            }).filter(site => site.candidateSerials.length || site.surfaceSerials.length);
         }
 
         function scrollProtacViewerIntoView() {
@@ -1721,11 +1796,40 @@
             button.text(isSpinning ? 'Stop Rotation' : 'Rotate Molecule');
         }
 
+        function updateProtacDetailFooter(pdbCode, ligandResname, ligandChain, ligandResidueId) {
+            const ligandCode = String(ligandResname || '').trim().toUpperCase();
+            const context = [
+                ligandCode,
+                pdbCode ? `PDB ${String(pdbCode).toUpperCase()}` : '',
+                ligandChain ? `Chain ${ligandChain}` : '',
+                ligandResidueId ? `Residue ${ligandResidueId}` : ''
+            ].filter(Boolean).join(' · ');
+            const footer = $('#protac-detail-footer');
+            if (!footer.length) return;
+            if (!ligandCode) {
+                footer.addClass('hidden');
+                return;
+            }
+            const builderUrl = `https://protacbuilder.com/builder?ligand=${encodeURIComponent(ligandCode)}`;
+            $('#protac-detail-footer-context').text(context);
+            $('#protac-footer-open-builder').attr('href', builderUrl);
+            $('#protac-footer-use-warhead').off('click').on('click', function() {
+                window.open(builderUrl, '_blank', 'noopener,noreferrer');
+            });
+            $('#protac-footer-copy-context').off('click').on('click', function() {
+                navigator.clipboard.writeText(context).then(function() {
+                    $('#protac-footer-copy-context').text('Copied');
+                    window.setTimeout(function() { $('#protac-footer-copy-context').text('Copy context'); }, 1200);
+                }).catch(function() {});
+            });
+            footer.removeClass('hidden');
+        }
+
         function highlightAttachmentRegions(regionSets, label, scrollToViewer = false) {
             const status = $('#protac-ngl-status');
             const regions = Array.isArray(regionSets) ? regionSets : [];
             if (!regions.some(region => cleanSerials(region.candidateSerials).length || cleanSerials(region.surfaceSerials).length)) {
-                status.text('No PDB atom serials are available for this attachment-site highlight.');
+                status.text('No PDB atom serials are available for this attachment-region highlight.');
                 return;
             }
             const ok = VLNGLViewer.highlightAttachmentRegionSets
@@ -1734,29 +1838,29 @@
             if (ok) {
                 const state = VLNGLViewer.debugViewerState ? VLNGLViewer.debugViewerState('protac-ngl-viewer') : null;
                 const location = state?.lastAttachmentHighlight?.mode === 'ligand-sdf-index' ? ' on the ligand' : '';
-                status.text(`Highlighted translucent attachment-site atoms${location}${label ? ` for ${label}` : ''}.`);
+                status.text(`Highlighted attachment site${location}${label ? ` for ${label}` : ''}.`);
                 if (scrollToViewer) scrollProtacViewerIntoView();
             }
-            else status.text('Attachment-site highlighting is not supported for the currently loaded viewer components.');
+            else status.text('Attachment-region highlighting is not supported for the currently loaded viewer components.');
         }
 
         function highlightAttachmentSerials(candidateSerials, surfaceSerials, label, scrollToViewer = false, color = '#22c55e') {
-            highlightAttachmentRegions([{ regionId: label || 'attachment-site', color, candidateSerials, surfaceSerials }], label, scrollToViewer);
+            highlightAttachmentRegions([{ regionId: label || 'attachment-region', color, candidateSerials, surfaceSerials }], label, scrollToViewer);
         }
 
         function attachAttachmentHighlightControls(attachmentSites) {
             const allCandidateSerials = cleanSerials((attachmentSites || {}).candidate_atom_serials || []);
             const allSurfaceSerials = cleanSerials((attachmentSites || {}).surface_atom_serials || []);
-            const regionSets = attachmentRegionSets(attachmentSites);
+            const siteSets = attachmentSiteSets(attachmentSites);
             $('.protac-attachment-highlight-all').off('click').on('click', function() {
-                if (regionSets.length) highlightAttachmentRegions(regionSets, 'all regions', true);
+                if (siteSets.length) highlightAttachmentRegions(siteSets, 'all regions', true);
                 else {
                     const candidate = serialsFromAttribute($(this).data('candidate-serials'));
                     const surface = serialsFromAttribute($(this).data('surface-serials'));
                     highlightAttachmentSerials(candidate.length ? candidate : allCandidateSerials, surface.length ? surface : allSurfaceSerials, 'all regions', true);
                 }
             });
-            $('.protac-attachment-region-button').off('click').on('click', function() {
+            $('.protac-attachment-site-button').off('click').on('click', function() {
                 highlightAttachmentSerials(
                     serialsFromAttribute($(this).data('candidate-serials')),
                     serialsFromAttribute($(this).data('surface-serials')),
@@ -1767,7 +1871,7 @@
             });
             $('.protac-attachment-clear').off('click').on('click', function() {
                 VLNGLViewer.clearAttachmentHighlights('protac-ngl-viewer');
-                $('#protac-ngl-status').text('Attachment-site highlight hidden.');
+                $('#protac-ngl-status').text('Attachment-region highlight hidden.');
             });
         }
 
@@ -1775,6 +1879,7 @@
             const containerId = 'protac-ngl-viewer';
             const status = $('#protac-ngl-status');
             const rotateButton = $('#protac-rotate-ligand');
+            $('#protac-detail-content, .protacability-detail-modal').scrollTop(0);
             status.text('Loading protein PDB and ligand instance SDF...');
             updateProtacLigandSpinButton(false);
             rotateButton.prop('disabled', true);
@@ -1784,26 +1889,25 @@
                 ligandResname: ligandResname || '',
                 ligandChain: ligandChain || '',
                 ligandResidueId: ligandResidueId || '',
-                proteinStructureUrl: `/api/coordinates/${encodeURIComponent(String(pdbCode || '').toUpperCase())}.pdb?protein_only=1`,
-                proteinStructureExt: 'pdb',
-                ligandSdfUrl: `/api/ligand_instance_sdf/${encodeURIComponent(String(pdbCode || '').toUpperCase())}/${encodeURIComponent(String(ligandResname || '').toUpperCase())}.sdf?auth_chain=${encodeURIComponent(ligandChain || '')}&auth_seq_id=${encodeURIComponent(ligandResidueId || '')}`,
-                ligandMappingUrl: `/api/ligand_instance_sdf_url/${encodeURIComponent(String(pdbCode || '').toUpperCase())}/${encodeURIComponent(String(ligandResname || '').toUpperCase())}?auth_chain=${encodeURIComponent(ligandChain || '')}&auth_seq_id=${encodeURIComponent(ligandResidueId || '')}`,
-                structureUrl: `/api/coordinates/${encodeURIComponent(String(pdbCode || '').toUpperCase())}.pdb?ligand_code=${encodeURIComponent(String(ligandResname || '').toUpperCase())}&chain=${encodeURIComponent(ligandChain || '')}&residue_id=${encodeURIComponent(ligandResidueId || '')}`,
-                structureExt: 'pdb',
-                useDirectRcsbPdb: useDirectRcsbPdb,
+                proteinStructureUrl: `https://files.rcsb.org/download/${encodeURIComponent(String(pdbCode || '').toUpperCase())}.cif`,
+                proteinStructureExt: 'cif',
+                ligandSdfUrl: '',
+                ligandLabelAsymId: String((attachmentSites || {}).label_asym_id || '').trim(),
+                structureUrl: '',
+                structureExt: 'cif',
+                useDirectRcsbPdb: true,
                 ligandColorMode: 'element',
                 defaultFocus: 'ligand',
                 candidateLinkerAtomIds: Array.isArray(candidateLinkerAtomIds) ? candidateLinkerAtomIds : [],
                 attachmentSerialMap: {}
             };
             latestProtacViewerPayload = viewerPayload;
+            updateProtacDetailFooter(pdbCode, ligandResname || warheadLigandCode, ligandChain, ligandResidueId);
             if (ligandDebugEnabled()) {
                 console.log('[protacability] selected ligand context', viewerPayload);
                 console.log('[protacability] viewer payload', viewerPayload);
             }
-            loadAttachmentSerialMap(viewerPayload, attachmentSites).then(function(serialMap) {
-                viewerPayload.attachmentSerialMap = serialMap;
-                return VLNGLViewer.initCleanProteinLigandViewer(containerId, {
+            VLNGLViewer.initCleanProteinLigandViewer(containerId, {
                 pdbCode: viewerPayload.pdbCode,
                 chainId: viewerPayload.chainId,
                 ligandResname: viewerPayload.ligandResname,
@@ -1831,8 +1935,11 @@
 	                    latestProtacLoadedSourceUrl = sourceUrl || null;
 	                    if (ligandDebugEnabled()) updateProtacLigandDebugPanel(viewerPayload, viewerPayload);
 	                }
-                });
-            }).then(function() {
+                }).then(function() {
+                const serialMap = VLNGLViewer.mapAttachmentAtomsToLigandIndices
+                    ? VLNGLViewer.mapAttachmentAtomsToLigandIndices(containerId, (attachmentSites || {}).atoms || [])
+                    : {};
+                viewerPayload.attachmentSerialMap = serialMap;
                 rotateButton.prop('disabled', false);
                 updateProtacLigandSpinButton(false);
             }).catch(() => {
@@ -1927,6 +2034,8 @@
                     </div>
                     <div class="page-card protacability-detail-card">
                         <p><strong>Best representative:</strong> ${escapeHtml(summary.best_pdb_code || '—')} / ${escapeHtml(summary.best_chain_id || '—')}</p>
+                        <p><strong>Canonical target:</strong> ${escapeHtml(summary.canonical_target_id || '—')}</p>
+                        <p><strong>Source label provenance:</strong> ${escapeHtml(summary.source_protein_type || '—')}</p>
                         <p><strong>Best score:</strong> ${formatValue(summary.best_score, 2)}</p>
                         <p><strong>PDBs:</strong> ${summary.pdb_count ?? 0} | <strong>Chains:</strong> ${summary.chain_count ?? 0}</p>
                         <p><strong>Top ligands:</strong> ${escapeHtml(summary.top_candidate_ligands_preview || 'None')}</p>
@@ -1970,6 +2079,7 @@
             };
             if (view === 'targets') {
                 const params = new URLSearchParams({ virus_name: button.data('virus'), protein_type: button.data('protein'), collapse_labels: $('#toggle-collapse-labels').is(':checked') ? '1' : '0' });
+                if (button.data('target-id')) params.set('canonical_target_id', button.data('target-id'));
                 fetchWithLoader(`/api/protacability/target_detail?${params.toString()}`, renderTargetDetail, 'Unable to load target detail.');
                 return;
             }
@@ -1984,6 +2094,28 @@
                 return;
             }
             fetchWithLoader(`/api/protacability/detail/${encodeURIComponent(button.data('pdb'))}/${encodeURIComponent(button.data('chain'))}`, renderChainDetail, 'Unable to load chain detail.');
+        }
+
+        function openDeepLinkedOccurrenceDetail(data) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const occurrenceId = urlParams.get('ligand_instance_id') || '';
+            if (!occurrenceId || protacState.autoOpenedOccurrenceId === occurrenceId) return;
+            const pdbCode = urlParams.get('pdb_code') || (data.deep_link_context || {}).pdb_code || '';
+            if (!pdbCode) return;
+
+            protacState.autoOpenedOccurrenceId = occurrenceId;
+            const params = new URLSearchParams({
+                collapse_labels: $('#toggle-collapse-labels').is(':checked') ? '1' : '0',
+                ligand_instance_id: occurrenceId
+            });
+            $('#protac-detail-content').html('<h2 class="page-title">Opening selected ligand occurrence…</h2>');
+            $('#protacability-detail-modal').show();
+            withProtacLoading(function() {
+                return $.getJSON(`/api/protacability/structure_detail/${encodeURIComponent(pdbCode)}?${params.toString()}`, renderStructureDetail).fail(function(xhr) {
+                    console.error('[protacability] deep-linked structure detail failed', { pdbCode, occurrenceId, status: xhr.status, responseText: xhr.responseText });
+                    $('#protac-detail-content').html('<h2 class="page-title">Unable to open the selected ligand occurrence.</h2>');
+                });
+            }, 'Opening selected ligand occurrence…');
         }
 
         function syncSortOptions() {
@@ -2058,13 +2190,19 @@
                     protacState.limit = Number(data.limit || protacState.limit);
                     protacState.offset = Number(data.offset || 0);
                     protacState.currentSort = data.sort || protacState.currentSort;
+                    if (getCurrentProtacParams().get('ligand_instance_id') && !(data.rows || []).length) {
+                        showEmptyState('No PROTACability record is available for this ligand occurrence.');
+                        return;
+                    }
+                    updateDeepLinkContext(data.deep_link_context || null);
                     updateMetricCards(data.view, data.summary || {});
                     updateResultsNote(data.view);
                     renderRows(data.view, data.rows || []);
                     updatePagination(data.total_rows || 0, data.offset || 0, data.limit || protacState.limit, Boolean(data.has_more));
+                    openDeepLinkedOccurrenceDetail(data);
                 }).fail(function(xhr) {
                     console.error('[protacability] search failed', { params: params.toString(), status: xhr.status, responseText: xhr.responseText });
-                    showEmptyState('Unable to load PROTACability results from server right now. Please try again or reduce your filters.');
+                    showEmptyState((xhr.responseJSON && xhr.responseJSON.message) || 'Unable to load PROTACability results from server right now. Please try again or reduce your filters.');
                 });
             };
             if (options.skipLoader) {
@@ -2125,7 +2263,10 @@
         }
 
         function updateLigandOptions(values) {
-            return updateDynamicSelectOptions($('#protac-ligand-filter'), values || [], 'Any ligand');
+            const requestedLigand = new URLSearchParams(window.location.search).get('ligand') || '';
+            const options = Array.from(values || []);
+            if (requestedLigand && !options.includes(requestedLigand)) options.unshift(requestedLigand);
+            return updateDynamicSelectOptions($('#protac-ligand-filter'), options, 'Any ligand');
         }
 
         function updateLigandContextOptions(items) {
@@ -2176,7 +2317,6 @@
             }
 
             const params = getCurrentProtacParams();
-            params.delete('view');
             params.delete('offset');
             params.delete('limit');
             params.delete('sort');
@@ -2223,7 +2363,12 @@
             $('#protac-min-score').val(params.get('min_score') || '');
             $('#protac-min-readiness-score').val(params.get('min_readiness_score') || '');
             $('#protac-min-warhead-score').val(params.get('min_warhead_score') || '');
-            setSelectValuesSilently($('#protac-ligand-filter'), params.get('ligand') || '');
+            const requestedLigand = params.get('ligand') || '';
+            if (requestedLigand && !$(`#protac-ligand-filter option[value="${CSS.escape(requestedLigand)}"]`).length) {
+                $('#protac-ligand-filter').append($('<option>', { value: requestedLigand, text: requestedLigand }));
+            }
+            setSelectValuesSilently($('#protac-ligand-filter'), requestedLigand);
+            $('#protac-ligand-instance-id').val(params.get('ligand_instance_id') || '');
             const ligandPresence = params.get('ligand_presence') || (params.get('has_candidate_ligand') === '1' ? 'has_candidate_ligand' : '');
             setSelectValuesSilently($('#protac-ligand-presence'), ligandPresence);
             setSelectValuesSilently($('#protac-ligand-context-class'), params.get('ligand_context_class') || '');
@@ -2252,6 +2397,36 @@
             if (params.get('has_valid_rdkit_smiles') === '1') $('#toggle-has-valid-rdkit-smiles').prop('checked', true);
             if (params.get('has_exposed_target_lysines') === '1') $('#toggle-has-exposed-target-lysines').prop('checked', true);
             selectView(params.get('view') || 'targets');
+            updateDeepLinkContext(null);
+        }
+
+        function updateDeepLinkContext(serverContext) {
+            const params = new URLSearchParams(window.location.search);
+            const ligand = params.get('ligand') || '';
+            const occurrenceId = params.get('ligand_instance_id') || '';
+            const context = serverContext || {};
+            if (!ligand && !occurrenceId) {
+                $('#protac-deep-link-context').addClass('hidden');
+                VLiSEMODWorkspace.render('protac-workspace-region', null);
+                return;
+            }
+            const pdbCode = context.pdb_code || params.get('pdb_code') || '';
+            const chain = context.ligand_chain || params.get('ligand_chain') || '';
+            const residue = context.ligand_residue_id || params.get('ligand_residue_id') || '';
+            const details = [ligand, pdbCode, chain && residue ? `Chain ${chain} · Residue ${residue}` : ''].filter(Boolean);
+            $('#protac-deep-link-copy').text(`Viewing PROTACability for ${details.join(' · ')}`);
+            $('#protac-deep-link-context').removeClass('hidden');
+            const url = `/protacability_page?${new URLSearchParams(window.location.search).toString()}`;
+            VLiSEMODWorkspace.render('protac-workspace-region', {
+                url, clearHref: '/protacability_page',
+                context: { chips: details, occurrence: occurrenceId ? { ligand, ligandInstanceId: occurrenceId, pdbCode, chain, residueId: residue, modelId: params.get('model_id') || '' } : null },
+                summary: { title: 'PROTACability evidence', metrics: [], note: 'Ligand-side warhead linkability and target context are evaluated separately.' },
+                actions: [
+                    pdbCode && ligand ? { label: 'Inspect interactions', href: VLiSEMODWorkspace.paramsUrl('/ligand_indexer', { ligand, ligand_instance_id: occurrenceId }) } : null,
+                    ligand ? { label: 'Compare ligand structures', href: VLiSEMODWorkspace.paramsUrl('/compare_ligands', { ligand }) } : null,
+                    pdbCode && ligand ? { label: 'Open structure', href: `/view_ligand_3d/${encodeURIComponent(ligand)}/${encodeURIComponent(pdbCode)}`, newTab: true } : null
+                ], methods: ['mapping', 'sasa', 'interactions', 'geometry', 'functionalGroups', 'protacability', 'attachment']
+            });
         }
 
         $(document).ready(function() {
@@ -2284,7 +2459,7 @@
                     });
                 }).fail(function(xhr) {
                     console.error('[protacability] initial bootstrap failed', { status: xhr.status, responseText: xhr.responseText });
-                    showEmptyState('Unable to load PROTACability filter metadata.');
+                    showEmptyState((xhr.responseJSON && xhr.responseJSON.message) || 'Unable to load PROTACability filter metadata.');
                 });
             }, 'Preparing target summaries…', { immediate: true });
 
@@ -2311,6 +2486,11 @@
                 runProtacRefreshAndSearch('Parsing your search…');
             });
             $('#reset-protac-filters').on('click', function() {
+                const currentUrlParams = new URLSearchParams(window.location.search);
+                if (currentUrlParams.get('ligand') || currentUrlParams.get('ligand_instance_id')) {
+                    window.history.replaceState({}, '', '/protacability_page');
+                    $('#protac-deep-link-context').addClass('hidden');
+                }
                 $('#protacability-filter-form')[0].reset();
                 setFilterFeedback('');
                 setSelectValuesSilently($('#protac-virus-name'), []);
@@ -2321,6 +2501,7 @@
                 setSelectValuesSilently($('#protac-evidence-level'), []);
                 setSelectValuesSilently($('#protac-smiles-source'), []);
                 setSelectValuesSilently($('#protac-ligand-filter'), '');
+                $('#protac-ligand-instance-id').val('');
                 setSelectValuesSilently($('#protac-ligand-presence'), '');
                 setSelectValuesSilently($('#protac-ligand-context-class'), '');
                 $('#toggle-collapse-labels').prop('checked', true);
@@ -2329,7 +2510,12 @@
                 protacState.limit = 50;
                 selectView('targets');
                 protacState.offset = 0;
+                protacState.autoOpenedOccurrenceId = null;
                 runProtacRefreshAndSearch('Preparing target summaries…');
+            });
+            $('#clear-protac-deep-link').on('click', function() {
+                window.history.replaceState({}, '', '/protacability_page');
+                $('#reset-protac-filters').trigger('click');
             });
             $('#protac-sort').on('change', function() { protacState.currentSort = $(this).val(); protacState.offset = 0; searchProtacability({ loadingMessage: 'Rendering results…' }); });
             $('#protac-page-size').on('change', function() { protacState.limit = Number($(this).val()); protacState.offset = 0; searchProtacability({ loadingMessage: 'Rendering results…' }); });
@@ -2345,15 +2531,27 @@
                 window.setTimeout(function() { protacLoadingDepth = 0; hideProtacLoading(true); }, 1200);
             });
             $(document).on('click', '.protac-detail-button', function() { fetchDetail($(this)); });
+            $(document).on('click', '.protac-result-row', function(event) {
+                if ($(event.target).closest('button, a, input, select, textarea, label').length) return;
+                $(this).find('.protac-detail-button').trigger('click');
+            });
+            $(document).on('keydown', '.protac-result-row', function(event) {
+                if ($(event.target).closest('button, a, input, select, textarea, label').length) return;
+                if (event.key !== 'Enter' && event.key !== ' ') return;
+                event.preventDefault();
+                $(this).find('.protac-detail-button').trigger('click');
+            });
             $(document).on('click', '.protac-target-action', function() {
                 const button = $(this);
                 const action = button.data('action');
                 const virus = button.data('virus');
                 const protein = button.data('protein');
-                if (action === 'best3d') {
+                const targetId = button.data('target-id');
+                if (action === 'best3d' || action === 'structures' || action === 'ligands') {
                     $('#protac-detail-content').html('<h2 class="page-title">Loading detail...</h2>');
                     $('#protacability-detail-modal').show();
                     const params = new URLSearchParams({ virus_name: virus, protein_type: protein, collapse_labels: $('#toggle-collapse-labels').is(':checked') ? '1' : '0' });
+                    if (targetId) params.set('canonical_target_id', targetId);
                     withProtacLoading(function() {
                         return $.getJSON(`/api/protacability/target_detail?${params.toString()}`, renderTargetDetail).fail(function(xhr) {
                             console.error('[protacability] target action detail failed', { status: xhr.status, responseText: xhr.responseText });
@@ -2362,16 +2560,6 @@
                     }, 'Mapping degrader-readiness evidence…');
                     return;
                 }
-                if (action === 'structures') {
-                    selectView('summary');
-                } else if (action === 'ligands') {
-                    setSelectValuesSilently($('#protac-ligand-context-class'), 'candidate_small_molecule');
-                    selectView('summary');
-                }
-                setSelectValuesSilently($('#protac-virus-name'), [virus]);
-                setSelectValuesSilently($('#protac-protein-type'), [protein]);
-                protacState.offset = 0;
-                runProtacRefreshAndSearch('Preparing target summaries…');
             });
             $(document).on('click', '.show-raw-chains-button', function() {
                 const button = $(this);

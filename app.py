@@ -24,6 +24,8 @@ import seaborn as sns
 import numpy as np
 import zipfile
 import shutil
+import threading
+import uuid
 from io import BytesIO
 import zipfile
 from datetime import timedelta
@@ -61,26 +63,43 @@ LOCAL_DB_PATH = Path(os.environ.get("VLISMOD_LOCAL_DB_PATH", "viral_data.db")).e
 LIGAND_IMAGE_REQUIRED_TABLES = (
     "Functional_GROUPED",
     "Ligand_Arp_Diagram",
-    "RUPLEY_SASA_DATA",
+    "solvent_exposed_atoms",
     "SMILES_MAP_PDB",
 )
 COMPARE_LIGAND_REQUIRED_TABLES = (
-    "Arpeggio_Contacts_Data",
-    "SMILES_MAP_PDB",
+    "structures",
+    "structure_classifications",
+    "ligand_instances",
+    "ligand_instance_atoms",
+    "ligand_smiles_atom_mapping",
+    "ligand_sasa_atoms",
+    "ligand_arpeggio_runs",
+    "arpeggio_raw_contact_labels",
+)
+LIGAND_INTERACTION_REQUIRED_TABLES = (
+    "structures",
+    "ligand_instances",
+    "ligand_instance_atoms",
+    "ligand_arpeggio_runs",
+    "arpeggio_raw_contact_labels",
 )
 LIGAND_SYNONYM_REQUIRED_TABLES = ("Ligand_Synonyms",)
-LIGAND_INFO_REQUIRED_TABLES = ("Ligand_Atoms_Smiles",)
+LIGAND_INFO_REQUIRED_TABLES = ("Ligand_Atoms_Smiles", "ligands")
 LIGAND_OPTIONS_REQUIRED_TABLES = ("Ligand_Arp_Diagram",)
 QUERY_PROTEIN_REQUIRED_TABLES = (
     "Virus_Proteins",
     "Ligand_Synonyms",
     "Ligand_Arp_Diagram",
+    "structures",
+    "ligand_instances",
+    "ligand_instance_atoms",
 )
 PYMOL_REQUIRED_TABLES = (
     "ligand_atoms",
     "Functional_Group_Atoms",
     "receptor_binding_pocket",
     "distal_atoms",
+    "solvent_exposed_atoms",
     "RUPLEY_SASA_DATA",
 )
 PROTACABILITY_ALL_TABLES = (
@@ -91,7 +110,7 @@ PROTACABILITY_ALL_TABLES = (
     "protacability_degrader_readiness",
 )
 DATA_SET_REQUIRED_TABLES = {
-    "Solvent Exposed Atoms": ("RUPLEY_SASA_DATA",),
+    "Solvent Exposed Atoms": ("solvent_exposed_atoms",),
     "Ligand Atoms": ("ligand_atoms",),
     "Binding Pocket": ("receptor_binding_pocket",),
     "Smiles and Functional Groups": ("Ligand_Atoms_Smiles",),
@@ -259,7 +278,7 @@ def local_tables_available(required_tables):
 
     with sqlite3.connect(str(db_path)) as conn:
         rows = conn.execute(
-            "SELECT name FROM sqlite_master WHERE type = 'table' AND name IN ({})".format(
+            "SELECT name FROM sqlite_master WHERE type IN ('table','view') AND name IN ({})".format(
                 ",".join("?" for _ in required_tables)
             ),
             tuple(required_tables),
@@ -357,7 +376,15 @@ def _local_get_ligand_options_payload():
 def _local_get_smiles_payload(ligand_code):
     with _connect_local_db(LIGAND_INFO_REQUIRED_TABLES) as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT smiles FROM Ligand_Atoms_Smiles WHERE ligand = ?", (ligand_code,))
+        # Stage 07 stores smiles_atom_index values against ligands.smiles.  Do
+        # not substitute the canonicalized display SMILES from
+        # Ligand_Atoms_Smiles here: it can describe the same molecule with a
+        # different atom order, causing hover highlights to land on the wrong
+        # rendered atom.
+        cursor.execute(
+            "SELECT smiles FROM ligands WHERE component_id = ? AND smiles IS NOT NULL LIMIT 1",
+            (ligand_code,),
+        )
         result = cursor.fetchone()
     return {"ligand_id": ligand_code, "smiles": result[0]} if result and result[0] else None
 
@@ -383,24 +410,53 @@ def _load_smiles_for_ligand(ligand_code):
     return payload.get("smiles") if payload else None
 
 
-def _local_interaction_records_payload(pdb_id, ligand, ligand_id, chain):
-    with _connect_local_db(COMPARE_LIGAND_REQUIRED_TABLES) as conn:
+def _local_interaction_records_payload(pdb_id, ligand, ligand_id, chain, ligand_instance_id):
+    """Load one retained occurrence's latest Stage-09 interaction labels."""
+    with _connect_local_db(LIGAND_INTERACTION_REQUIRED_TABLES) as conn:
         query = '''
-            SELECT A.pdb_id, A.ligand, A.chain, A.Contact, A.Distance, A.exact_atom, A.atom_id,
-                   A.residue, A.residue_number, A.residue_atom, A.residue_chain,
-                   S.smiles_atom_index, A.virus_name, A.ligand_id
-            FROM Arpeggio_Contacts_Data A
-            LEFT JOIN SMILES_MAP_PDB S
-              ON A.atom_id = S.atom_id
-             AND A.pdb_id = S.pdb_id
-             AND A.chain = S.chain
-             AND A.exact_atom = S.exact_atom
-            WHERE A.pdb_id = ?
-              AND A.ligand_id = ?
-              AND A.chain = ?
-              AND A.ligand = ?
+            SELECT
+                s.entry_id AS pdb_id,
+                i.label_comp_id AS ligand,
+                i.auth_asym_id AS chain,
+                r.interaction_label AS Contact,
+                r.distance AS Distance,
+                COALESCE(a.auth_atom_id, a.label_atom_id) AS exact_atom,
+                a.atom_site_id AS atom_id,
+                json_extract(r.partner_identity_json, '$.label_comp_id') AS residue,
+                json_extract(r.partner_identity_json, '$.auth_seq_id') AS residue_number,
+                COALESCE(
+                    json_extract(r.partner_identity_json, '$.auth_atom_id'),
+                    json_extract(r.partner_identity_json, '$.label_atom_id')
+                ) AS residue_atom,
+                json_extract(r.partner_identity_json, '$.auth_asym_id') AS residue_chain,
+                i.auth_seq_id AS ligand_id,
+                i.ligand_instance_id,
+                i.deposited_model_num AS model_id
+            FROM ligand_instances AS i
+            JOIN structures AS s ON s.structure_id = i.structure_id
+            JOIN arpeggio_raw_contact_labels AS r
+              ON r.ligand_instance_id = i.ligand_instance_id
+             AND r.filter_class = 'raw_environment'
+             AND r.run_id = (
+                 SELECT MAX(ar.run_id)
+                 FROM ligand_arpeggio_runs AS ar
+                 WHERE ar.ligand_instance_id = i.ligand_instance_id
+                   AND ar.status = 'completed'
+             )
+            LEFT JOIN ligand_instance_atoms AS a
+              ON a.ligand_instance_atom_id = r.ligand_instance_atom_id
+            WHERE i.ligand_instance_id = ?
+              AND s.entry_id = ?
+              AND i.label_comp_id = ?
+              AND i.auth_seq_id = ?
+              AND i.auth_asym_id = ?
+              AND i.curation_status = 'included'
         '''
-        df = pd.read_sql(query, conn, params=(pdb_id, ligand_id, chain, ligand))
+        df = pd.read_sql(
+            query,
+            conn,
+            params=(ligand_instance_id, pdb_id, ligand, ligand_id, chain),
+        )
     return {"records": df.replace({np.nan: None}).to_dict(orient="records")}
 
 
@@ -588,6 +644,7 @@ def get_virus_color_map():
 
 
 CHARTS_DIR = 'static/charts/'
+CHART_GENERATION_LOCK = threading.Lock()
 
 
 @app.route("/", endpoint="index")
@@ -731,19 +788,11 @@ def generate_ligand_images():
         "static/ligand_images",
         solvent_exposed_atom_map=solvent_exposed_atom_map,
     )
-    structure_url = None
-    if images:
-        primary = images[0]
-        structure_url = url_for(
-            "serve_coordinate_for_viewer",
-            pdb_code=str(primary.get("pdb_id") or "").strip().upper(),
-            ligand_code=str(primary.get("ligand_code") or "").strip().upper()
-        )
     return render_template(
         'display_images.html',
         images=images,
         chain_residues=chain_residue_data,
-        structure_url=structure_url
+        structure_url=None
     )
 
 
@@ -1101,8 +1150,8 @@ def generate_pymol_session():
                 if option_flags['solvent_exposed_atoms']:
                     cursor.execute(
                         '''
-                        SELECT atom_id, chain
-                        FROM RUPLEY_SASA_DATA
+                        SELECT DISTINCT atom_id, chain
+                        FROM solvent_exposed_atoms
                         WHERE pdb_id = ? AND ligand = ? AND (chain = ? OR ? IS NULL)
                         ''',
                         (pdb_code, ligand_name, ligand_chain, ligand_chain),
@@ -1228,18 +1277,48 @@ def _local_get_viruses_by_ligand_payload(ligand_code):
 
 
 def _local_get_pdb_residue_by_ligand_payload(ligand_code):
-    conn = sqlite3.connect(str(LOCAL_DB_PATH))
-    cursor = conn.cursor()
-    cursor.execute(
-        '''
-        SELECT DISTINCT pdb_id, chain, ligand_id
-        FROM Ligand_Arp_Diagram
-        WHERE ligand = ?
-        ''',
-        (ligand_code,),
-    )
-    pairs = [{'pdb_id': row[0], 'chain': row[1], 'ligand_id': row[2]} for row in cursor.fetchall()]
-    conn.close()
+    with _connect_local_db(LIGAND_INTERACTION_REQUIRED_TABLES) as conn:
+        rows = conn.execute(
+            '''
+            SELECT DISTINCT
+                s.entry_id AS pdb_id,
+                i.auth_asym_id AS chain,
+                i.auth_seq_id AS ligand_id,
+                i.insertion_code_normalized AS insertion_code,
+                i.deposited_model_num AS model_id,
+                i.ligand_instance_id
+            FROM ligand_instances AS i
+            JOIN structures AS s ON s.structure_id = i.structure_id
+            WHERE i.label_comp_id = ?
+              AND i.curation_status = 'included'
+              AND EXISTS (
+                  SELECT 1
+                  FROM arpeggio_raw_contact_labels AS r
+                  WHERE r.ligand_instance_id = i.ligand_instance_id
+                    AND r.filter_class = 'raw_environment'
+                    AND r.run_id = (
+                        SELECT MAX(ar.run_id)
+                        FROM ligand_arpeggio_runs AS ar
+                        WHERE ar.ligand_instance_id = i.ligand_instance_id
+                          AND ar.status = 'completed'
+                    )
+              )
+            ORDER BY s.entry_id, i.deposited_model_num, i.auth_asym_id,
+                     i.auth_seq_id, i.insertion_code_normalized, i.ligand_instance_id
+            ''',
+            (ligand_code,),
+        ).fetchall()
+    pairs = [
+        {
+            'pdb_id': row[0],
+            'chain': row[1],
+            'ligand_id': row[2],
+            'insertion_code': row[3],
+            'model_id': row[4],
+            'ligand_instance_id': row[5],
+        }
+        for row in rows
+    ]
     return {'pairs': pairs}
 
 
@@ -1248,8 +1327,8 @@ def _local_get_sasa_chains_payload(pdb_code, ligand_name):
     cursor = conn.cursor()
     cursor.execute(
         '''
-        SELECT atom_id, chain
-        FROM RUPLEY_SASA_DATA
+        SELECT DISTINCT atom_id, chain
+        FROM solvent_exposed_atoms
         WHERE pdb_id = ? AND ligand = ?
         ''',
         (pdb_code, ligand_name),
@@ -1260,35 +1339,58 @@ def _local_get_sasa_chains_payload(pdb_code, ligand_name):
 
 
 def _local_get_pdb_mapping_payload(ligand_code):
-    conn = sqlite3.connect(str(LOCAL_DB_PATH))
-    cursor = conn.cursor()
-    cursor.execute(
-        '''
-        SELECT DISTINCT pdb_id, chain, ligand_id, virus_name, ligand
-        FROM Ligand_Atoms_Smiles
-        WHERE ligand = ?
-        ''',
-        (ligand_code,),
-    )
+    """Return mapped, included ligand occurrences without collapsing identity."""
+    with _connect_local_db(COMPARE_LIGAND_REQUIRED_TABLES) as conn:
+        rows = conn.execute(
+            '''
+            WITH selected_occurrences AS (
+                SELECT
+                    i.ligand_instance_id,
+                    s.entry_id AS pdb_id,
+                    i.deposited_model_num AS model_id,
+                    i.auth_asym_id AS chain,
+                    i.auth_seq_id AS ligand_id,
+                    i.insertion_code_normalized AS insertion_code,
+                    COALESCE(sc.virus_label, 'Unknown') AS virus_name,
+                    i.label_comp_id AS ligand
+                FROM ligand_instances AS i
+                JOIN structures AS s ON s.structure_id = i.structure_id
+                LEFT JOIN structure_classifications AS sc ON sc.structure_id = i.structure_id
+                WHERE i.label_comp_id = ?
+                  AND i.curation_status = 'included'
+            ), latest_mapping_runs AS (
+                SELECT m.ligand_instance_id, MAX(m.run_id) AS run_id
+                FROM ligand_smiles_atom_mapping AS m
+                JOIN selected_occurrences AS so
+                  ON so.ligand_instance_id = m.ligand_instance_id
+                WHERE m.method_version = 'legacy_mcs_etkdg_uff_cif_v2.5'
+                GROUP BY m.ligand_instance_id
+            )
+            SELECT so.*
+            FROM selected_occurrences AS so
+            JOIN latest_mapping_runs AS lmr
+              ON lmr.ligand_instance_id = so.ligand_instance_id
+            ORDER BY so.pdb_id, so.model_id, so.chain, so.ligand_id,
+                     so.insertion_code, so.ligand_instance_id
+            ''',
+            (ligand_code,),
+        ).fetchall()
 
     pdb_mapping = {}
-    for row in cursor.fetchall():
-        pdb_id = row[0]
-        chain = row[1]
-        ligand_id = row[2]
-        virus_name = row[3]
-        ligand = row[4]
-        unique_key = f"{pdb_id}-{ligand_id}-{chain}"
-        if unique_key not in pdb_mapping:
-            pdb_mapping[unique_key] = {
-                'pdb_id': pdb_id,
-                'ligand_id': ligand_id,
-                'chain': chain,
-                'virus_name': virus_name,
-                'ligand': ligand
-            }
-
-    conn.close()
+    for row in rows:
+        ligand_instance_id, pdb_id, model_id, chain, ligand_id, insertion_code, virus_name, ligand = row
+        unique_key = str(ligand_instance_id)
+        pdb_mapping[unique_key] = {
+            'ligand_instance_id': ligand_instance_id,
+            'pdb_id': pdb_id,
+            'model_id': model_id,
+            'chain': chain,
+            'ligand_id': ligand_id,
+            'insertion_code': insertion_code,
+            'virus_name': virus_name,
+            'ligand': ligand,
+            'legacy_key': f"{pdb_id}-{ligand_id}-{chain}",
+        }
     return {'pdb_mapping': pdb_mapping}
 
 @app.route('/get_viruses')
@@ -1423,13 +1525,13 @@ def get_pdb_residue_by_ligand(ligand_code):
 
 
 # Function to generate the DataFrame from the SQLite database
-def get_interaction_data(pdb_id, ligand, ligand_id, chain):
+def get_interaction_data(pdb_id, ligand, ligand_id, chain, ligand_instance_id=None):
     mode = _normalized_backend_mode()
 
     if mode == "randy":
         payload = randy_get(
             "interaction-records",
-            params={"pdb_id": pdb_id, "ligand": ligand, "ligand_id": ligand_id, "chain": chain},
+            params={"pdb_id": pdb_id, "ligand": ligand, "ligand_id": ligand_id, "chain": chain, "ligand_instance_id": ligand_instance_id},
         )
         return _records_to_interaction_dataframe(payload.get("records", []))
 
@@ -1437,7 +1539,7 @@ def get_interaction_data(pdb_id, ligand, ligand_id, chain):
         try:
             payload = randy_get(
                 "interaction-records",
-                params={"pdb_id": pdb_id, "ligand": ligand, "ligand_id": ligand_id, "chain": chain},
+                params={"pdb_id": pdb_id, "ligand": ligand, "ligand_id": ligand_id, "chain": chain, "ligand_instance_id": ligand_instance_id},
             )
             return _records_to_interaction_dataframe(payload.get("records", []))
         except RandyBackendError:
@@ -1449,7 +1551,11 @@ def get_interaction_data(pdb_id, ligand, ligand_id, chain):
                 chain,
             )
 
-    payload = _local_interaction_records_payload(pdb_id, ligand, ligand_id, chain)
+    if ligand_instance_id in (None, ""):
+        raise ValueError("ligand_instance_id is required for occurrence-resolved interaction lookup.")
+    payload = _local_interaction_records_payload(
+        pdb_id, ligand, ligand_id, chain, int(ligand_instance_id)
+    )
     return _records_to_interaction_dataframe(payload.get("records", []))
 
 # Function to clean and preprocess interactions (now applies to 'Contact')
@@ -1547,7 +1653,7 @@ def plot_bar_chart(df, output_file, pdb_id, ligand_code):
 
     # Plot the bar chart
     plt.figure(figsize=(10, 6))
-    sns.barplot(x=interaction_counts.index, y=interaction_counts.values, palette=colors)
+    plt.bar(interaction_counts.index, interaction_counts.values, color=colors)
     
     plt.title(f'Count of Interaction Types for PDB: {pdb_id} & Ligand: {ligand_code} ')
     plt.xlabel('Interaction Type')
@@ -1584,16 +1690,18 @@ def plot_scatter_chart(df, output_file, pdb_id, ligand_code):
 def plot_interactions_per_atom(df, output_file, pdb_id, ligand_code, exclude_proximal=True):
     # If exclude_proximal is True, filter out 'proximal' interactions
     if exclude_proximal:
-        df = df[df['Contact'] != 'proximal']
+        df = df[df['Contact'] != 'proximal'].copy()
+    else:
+        df = df.copy()
 
     # Merge 'weak_polar' into 'polar' and 'vdw_clash' into 'vdw'
-    df['Contact'] = df['Contact'].replace({'weak_polar': 'polar', 'vdw_clash': 'vdw', 'weak_hbond': 'hbond'})
+    df.loc[:, 'Contact'] = df['Contact'].replace({'weak_polar': 'polar', 'vdw_clash': 'vdw', 'weak_hbond': 'hbond'})
 
     # Create a new column that combines atom_id and Ligand_Atom for labeling
-    df['Atom_Label'] = df['atom_id'].astype(str) + ' (' + df['exact_atom'] + ')'
+    df.loc[:, 'Atom_Label'] = df['atom_id'].astype(str) + ' (' + df['exact_atom'].astype(str) + ')'
 
     # Filter out rows where Atom_Label contains 'nan'
-    df = df[df['Atom_Label'].notna() & df['Atom_Label'] != 'nan']
+    df = df.loc[df['Atom_Label'].notna() & (df['Atom_Label'] != 'nan')].copy()
 
     # Group by Atom_Label and Contact and count occurrences
     df_atom_interactions = df.groupby(['Atom_Label', 'Contact']).size().unstack(fill_value=0)
@@ -1626,23 +1734,42 @@ def plot_interactions_per_atom(df, output_file, pdb_id, ligand_code, exclude_pro
 # Update generate_charts to include this new plot
 @app.route('/generate_charts', methods=['POST'])
 def generate_charts():
-    data = request.json
-    pdb_id = data['pdb_id']
-    ligand = data['ligand']
-    ligand_id = data['ligand_id']
-    chain = data['chain']
+    data = request.get_json(silent=True) or {}
+    required_fields = ('pdb_id', 'ligand', 'ligand_id', 'chain', 'ligand_instance_id')
+    missing = [field for field in required_fields if data.get(field) in (None, '')]
+    if missing:
+        return jsonify({
+            'error': 'invalid_interaction_request',
+            'message': f"Missing required interaction field(s): {', '.join(missing)}.",
+        }), 400
+
+    pdb_id = str(data['pdb_id']).strip()
+    ligand = str(data['ligand']).strip()
+    ligand_id = str(data['ligand_id']).strip()
+    chain = str(data['chain']).strip()
+    ligand_instance_id = data['ligand_instance_id']
 
     try:
-        df = get_interaction_data(pdb_id, ligand, ligand_id, chain)
+        df = get_interaction_data(
+            pdb_id, ligand, ligand_id, chain, ligand_instance_id
+        )
     except RandyBackendError as exc:
         return jsonify({'error': str(exc)}), exc.status_code
+    except (TypeError, ValueError) as exc:
+        return jsonify({'error': 'invalid_interaction_request', 'message': str(exc)}), 400
 
     if df.empty:
-        return jsonify({'error': 'No data found for the selected inputs'}), 404
+        return jsonify({
+            'error': 'no_interaction_data',
+            'message': 'No recorded protein–ligand interactions are available for this selected ligand occurrence.',
+        }), 404
 
-    # Preprocess the dataframe for filtering
-    df_clean = preprocess_interactions(df)  # Filtered interactions excluding 'proximal', merging 'vdw_clash' and 'weak_polar'
-    df_clean = filter_valid_atom_ids(df_clean)  # Ensure valid atom_ids
+    df_clean = filter_valid_atom_ids(preprocess_interactions(df).copy())
+    if df_clean.empty:
+        return jsonify({
+            'error': 'no_interaction_data',
+            'message': 'No non-proximal protein–ligand interactions are available for this selected ligand occurrence.',
+        }), 422
     
     # Filter the 'proximal' interactions and ensure they have valid atom_ids
     df_proximal = df[df['Contact'] == 'proximal']
@@ -1651,33 +1778,44 @@ def generate_charts():
     # Add 'proximal' interactions back to the dataset for specific plots
     df_with_proximal = pd.concat([df_clean, df_proximal_clean])
 
-    # Ensure CHARTS_DIR exists
-    if not os.path.exists(CHARTS_DIR):
-        os.makedirs(CHARTS_DIR)
+    os.makedirs(CHARTS_DIR, exist_ok=True)
+    chart_request_id = uuid.uuid4().hex
+    chart_specs = [
+        ('pie_chart', plot_pie_chart, df_clean),
+        ('bar_chart', plot_bar_chart, df_clean),
+        ('scatter_chart', plot_scatter_chart, df_clean),
+        ('interactions_per_atom_with_proximal', plot_interactions_per_atom, df_with_proximal),
+        ('interactions_per_atom_without_proximal', plot_interactions_per_atom, df_clean),
+    ]
+    chart_filenames = [f"{chart_request_id}_{name}.png" for name, _, _ in chart_specs]
 
-    # File paths for the generated charts
-    pie_chart_file = os.path.join(CHARTS_DIR, 'pie_chart.png')
-    bar_chart_file = os.path.join(CHARTS_DIR, 'bar_chart.png')
-    scatter_chart_file = os.path.join(CHARTS_DIR, 'scatter_chart.png')
-    interactions_per_atom_with_proximal_file = os.path.join(CHARTS_DIR, 'interactions_per_atom_with_proximal.png')
-    interactions_per_atom_without_proximal_file = os.path.join(CHARTS_DIR, 'interactions_per_atom_without_proximal.png')
+    # Matplotlib is process-global. Serializing only rendering prevents a
+    # concurrent request from corrupting figures, while request-specific names
+    # keep one user's charts from replacing another's.
+    with CHART_GENERATION_LOCK:
+        for (name, plotter, chart_df), filename in zip(chart_specs, chart_filenames):
+            output_file = os.path.join(CHARTS_DIR, filename)
+            if name.startswith('interactions_per_atom'):
+                plotter(
+                    chart_df,
+                    output_file,
+                    pdb_id,
+                    ligand,
+                    exclude_proximal=name.endswith('without_proximal'),
+                )
+            else:
+                plotter(chart_df, output_file, pdb_id, ligand)
 
-     # Generate charts with PDB and Ligand info in the titles
-    plot_pie_chart(df_clean, pie_chart_file, pdb_id, ligand)
-    plot_bar_chart(df_clean, bar_chart_file, pdb_id, ligand)
-    plot_scatter_chart(df_clean, scatter_chart_file, pdb_id, ligand)
-    plot_interactions_per_atom(df_with_proximal, interactions_per_atom_with_proximal_file,  pdb_id, ligand, exclude_proximal=False)
-    plot_interactions_per_atom(df_clean, interactions_per_atom_without_proximal_file,  pdb_id, ligand, exclude_proximal=True)
-
-    # Return the file paths of the charts to be displayed in the carousel
     return jsonify({
-        'chart_paths': [
-            pie_chart_file,
-            bar_chart_file,
-            scatter_chart_file,
-            interactions_per_atom_with_proximal_file,
-            interactions_per_atom_without_proximal_file
-        ]
+        'chart_urls': [
+            f"{url_for('static', filename=f'charts/{filename}')}?v={chart_request_id}"
+            for filename in chart_filenames
+        ],
+        'interaction_label_count': int(len(df.index)),
+        'unique_partner_count': int(
+            df[['residue_chain', 'residue_number', 'residue_atom']].drop_duplicates().shape[0]
+        ),
+        'ligand_instance_id': int(ligand_instance_id),
     })
 
 
@@ -1698,40 +1836,51 @@ def highlight_solvent_exposed_atoms(
     chain,
     output_svg
 ):
+    """
+    Highlight only atoms classified as solvent exposed by the validated
+    `solvent_exposed_atoms` compatibility view.
+
+    `RUPLEY_SASA_DATA` contains the full quantitative per-atom SASA population,
+    including buried / zero-SASA atoms, so it must not be used as the exposed
+    subset.
+    """
     with _connect_local_db(LIGAND_IMAGE_REQUIRED_TABLES) as conn:
         cur = conn.cursor()
         cur.execute(
             """
-            SELECT atom_id, exact_atom
-            FROM RUPLEY_SASA_DATA
-            WHERE virus_name = ? AND pdb_id = ? AND ligand = ? AND chain = ?
+            SELECT DISTINCT m.smiles_atom_index
+            FROM solvent_exposed_atoms e
+            JOIN SMILES_MAP_PDB m
+              ON m.virus_name = e.virus_name
+             AND m.pdb_id = e.pdb_id
+             AND m.ligand = e.ligand
+             AND m.chain = e.chain
+             AND m.atom_id = e.atom_id
+            WHERE e.virus_name = ?
+              AND e.pdb_id = ?
+              AND e.ligand = ?
+              AND e.chain = ?
+              AND m.smiles_atom_index IS NOT NULL
+            ORDER BY m.smiles_atom_index
             """,
             (virus_name, pdb_id, ligand_id, chain),
         )
-        sasa_atoms = cur.fetchall()
+        sasa_smiles_indices = [int(row[0]) for row in cur.fetchall()]
 
-        sasa_smiles_indices = []
-        for atom_id, exact_atom in sasa_atoms:
-            cur.execute(
-                """
-                SELECT smiles_atom_index
-                FROM SMILES_MAP_PDB
-                WHERE virus_name = ?
-                  AND pdb_id = ?
-                  AND ligand = ?
-                  AND chain = ?
-                  AND atom_id = ?
-                  AND exact_atom = ?
-                """,
-                (virus_name, pdb_id, ligand_id, chain, atom_id, exact_atom),
-            )
+    logging.debug(
+        "Solvent-exposed 2D highlight %s/%s/%s/%s: %d mapped exposed atoms",
+        virus_name,
+        pdb_id,
+        ligand_id,
+        chain,
+        len(sasa_smiles_indices),
+    )
 
-            row = cur.fetchone()
-            if row and row[0] is not None:
-                sasa_smiles_indices.append(int(row[0]))
-
-    highlight_solvent_exposed_atoms_from_indices(molecule, sasa_smiles_indices, output_svg)
-
+    highlight_solvent_exposed_atoms_from_indices(
+        molecule,
+        sasa_smiles_indices,
+        output_svg,
+    )
 
 def highlight_solvent_exposed_atoms_from_indices(molecule, smiles_indices, output_svg):
     AllChem.Compute2DCoords(molecule)
@@ -1785,74 +1934,217 @@ def build_query(filters):
 
 @app.route('/compare_ligand_interactions', methods=['POST'])
 def compare_ligand_interactions():
-    data = request.json
-    selected_pdbs = data['pdb_ids']  # Format like ['PDB_ID-Residue-Chain', ...]
-    ligand = data['ligand']
+    data = request.get_json(silent=True) or {}
+    ligand = str(data.get('ligand') or '').strip()
+    occurrence_ids = data.get('occurrence_ids') or []
+    legacy_pdb_ids = data.get('pdb_ids') or []
+    if not ligand or not isinstance(occurrence_ids, list) or not occurrence_ids:
+        return jsonify({
+            'error': 'invalid_comparison_request',
+            'message': 'Select a ligand and one or more mapped ligand occurrences before comparing.',
+        }), 400
 
     mode = _normalized_backend_mode()
     if mode == "randy":
         try:
-            payload = randy_post('ligand-interactions/compare', json=data)
+            payload = randy_post(
+                'ligand-interactions/compare',
+                json={'ligand': ligand, 'pdb_ids': legacy_pdb_ids},
+            )
         except RandyBackendError as exc:
             return jsonify({'error': str(exc)}), exc.status_code
         return jsonify(payload)
 
     if mode == "auto" and randy_available():
         try:
-            payload = randy_post('ligand-interactions/compare', json=data)
+            payload = randy_post(
+                'ligand-interactions/compare',
+                json={'ligand': ligand, 'pdb_ids': legacy_pdb_ids},
+            )
             return jsonify(payload)
         except RandyBackendError:
             logging.warning("Falling back to local ligand interaction comparison for %s", ligand)
 
+    try:
+        payload = _local_compare_ligand_interactions_payload(ligand, occurrence_ids)
+    except (TypeError, ValueError) as exc:
+        return jsonify({'error': 'invalid_comparison_request', 'message': str(exc)}), 400
+
+    if not payload['interactions_data']:
+        return jsonify({
+            **payload,
+            'status': 'no_data',
+            'message': 'No recorded non-proximal protein–ligand interactions are available for the selected ligand occurrence(s).',
+        })
+    return jsonify(payload)
+
+
+def _local_compare_ligand_interactions_payload(ligand, occurrence_ids):
+    """Return Stage-07 mapped, latest Stage-09 contacts for explicit occurrences.
+
+    The query begins with the selected occurrence IDs.  This intentionally
+    avoids materializing broad compatibility views before applying the user's
+    ligand/structure selection.
+    """
+    try:
+        normalized_ids = list(dict.fromkeys(int(value) for value in occurrence_ids))
+    except (TypeError, ValueError) as exc:
+        raise ValueError('Selected ligand occurrence identifiers must be integers.') from exc
+    if not normalized_ids:
+        raise ValueError('Select one or more mapped ligand occurrences before comparing.')
+
+    placeholders = ', '.join('?' for _ in normalized_ids)
+    query = f'''
+        WITH selected_occurrences AS (
+            SELECT
+                i.ligand_instance_id,
+                s.entry_id AS pdb_id,
+                i.deposited_model_num AS model_id,
+                i.auth_asym_id AS chain,
+                i.auth_seq_id AS ligand_id,
+                i.insertion_code_normalized AS insertion_code,
+                COALESCE(sc.virus_label, 'Unknown') AS virus_name
+            FROM ligand_instances AS i
+            JOIN structures AS s ON s.structure_id = i.structure_id
+            LEFT JOIN structure_classifications AS sc ON sc.structure_id = i.structure_id
+            WHERE i.ligand_instance_id IN ({placeholders})
+              AND i.label_comp_id = ?
+              AND i.curation_status = 'included'
+        ), latest_mapping_runs AS (
+            SELECT m.ligand_instance_id, MAX(m.run_id) AS run_id
+            FROM ligand_smiles_atom_mapping AS m
+            JOIN selected_occurrences AS so
+              ON so.ligand_instance_id = m.ligand_instance_id
+            WHERE m.method_version = 'legacy_mcs_etkdg_uff_cif_v2.5'
+            GROUP BY m.ligand_instance_id
+        ), latest_contact_runs AS (
+            SELECT ar.ligand_instance_id, MAX(ar.run_id) AS run_id
+            FROM ligand_arpeggio_runs AS ar
+            JOIN selected_occurrences AS so
+              ON so.ligand_instance_id = ar.ligand_instance_id
+            WHERE ar.status = 'completed'
+            GROUP BY ar.ligand_instance_id
+        ), latest_sasa_runs AS (
+            SELECT sa.ligand_instance_id, MAX(sa.run_id) AS run_id
+            FROM ligand_sasa_atoms AS sa
+            JOIN selected_occurrences AS so
+              ON so.ligand_instance_id = sa.ligand_instance_id
+            WHERE sa.method_version = 'biopython-shrake_rupley-1.40-cif-v2.1'
+              AND sa.status = 'complete'
+            GROUP BY sa.ligand_instance_id
+        ), occurrence_metrics AS (
+            SELECT
+                m.ligand_instance_id,
+                COUNT(DISTINCT m.ligand_instance_atom_id) AS mapped_atom_count,
+                COUNT(DISTINCT CASE WHEN sa.legacy_exposed = 1 THEN m.ligand_instance_atom_id END)
+                    AS solvent_exposed_atom_count
+            FROM ligand_smiles_atom_mapping AS m
+            JOIN latest_mapping_runs AS lmr
+              ON lmr.ligand_instance_id = m.ligand_instance_id
+             AND lmr.run_id = m.run_id
+            LEFT JOIN latest_sasa_runs AS lsr
+              ON lsr.ligand_instance_id = m.ligand_instance_id
+            LEFT JOIN ligand_sasa_atoms AS sa
+              ON sa.ligand_instance_id = m.ligand_instance_id
+             AND sa.run_id = lsr.run_id
+             AND sa.ligand_instance_atom_id = m.ligand_instance_atom_id
+            WHERE m.smiles_atom_index IS NOT NULL
+            GROUP BY m.ligand_instance_id
+        )
+        SELECT
+            so.ligand_instance_id,
+            so.pdb_id,
+            so.model_id,
+            so.chain,
+            so.ligand_id,
+            so.insertion_code,
+            so.virus_name,
+            om.mapped_atom_count,
+            om.solvent_exposed_atom_count,
+            m.smiles_atom_index,
+            r.interaction_label AS Contact,
+            r.distance AS Distance,
+            COALESCE(a.auth_atom_id, a.label_atom_id) AS exact_atom,
+            a.atom_site_id AS atom_id,
+            json_extract(r.partner_identity_json, '$.label_comp_id') AS residue,
+            json_extract(r.partner_identity_json, '$.auth_seq_id') AS residue_number,
+            COALESCE(
+                json_extract(r.partner_identity_json, '$.auth_atom_id'),
+                json_extract(r.partner_identity_json, '$.label_atom_id')
+            ) AS residue_atom,
+            json_extract(r.partner_identity_json, '$.auth_asym_id') AS residue_chain
+        FROM selected_occurrences AS so
+        JOIN latest_mapping_runs AS lmr
+          ON lmr.ligand_instance_id = so.ligand_instance_id
+        JOIN ligand_smiles_atom_mapping AS m
+          ON m.ligand_instance_id = so.ligand_instance_id
+         AND m.run_id = lmr.run_id
+        JOIN latest_contact_runs AS lcr
+          ON lcr.ligand_instance_id = so.ligand_instance_id
+        JOIN arpeggio_raw_contact_labels AS r
+          ON r.ligand_instance_id = so.ligand_instance_id
+         AND r.run_id = lcr.run_id
+         AND r.filter_class = 'raw_environment'
+         AND r.ligand_instance_atom_id = m.ligand_instance_atom_id
+        JOIN occurrence_metrics AS om
+          ON om.ligand_instance_id = so.ligand_instance_id
+        LEFT JOIN ligand_instance_atoms AS a
+          ON a.ligand_instance_atom_id = m.ligand_instance_atom_id
+        WHERE m.smiles_atom_index IS NOT NULL
+        ORDER BY so.pdb_id, so.model_id, so.chain, so.ligand_id,
+                 so.insertion_code, so.ligand_instance_id, m.smiles_atom_index
+    '''
+    with _connect_local_db(COMPARE_LIGAND_REQUIRED_TABLES) as conn:
+        frame = pd.read_sql(query, conn, params=(*normalized_ids, ligand))
+
+    if frame.empty:
+        return {'interactions_data': [], 'smiles_interactions_data': []}
+
+    frame = frame.replace({np.nan: None})
     interactions_data = []
     smiles_interactions_data = []
-    with _connect_local_db(COMPARE_LIGAND_REQUIRED_TABLES) as conn:
-        for unique_key in selected_pdbs:
-            pdb_id, ligand_id, chain = unique_key.split('-')
-            query = '''
-            SELECT A.pdb_id, A.ligand, A.chain, A.Contact, A.Distance, A.exact_atom, A.atom_id,
-                A.residue, A.residue_number, A.residue_atom, A.residue_chain,
-                S.smiles_atom_index, A.virus_name, A.ligand_id
-            FROM Arpeggio_Contacts_Data A
-            LEFT JOIN SMILES_MAP_PDB S
-            ON A.atom_id = S.atom_id
-            AND A.pdb_id = S.pdb_id
-            AND A.chain = S.chain
-            AND A.exact_atom = S.exact_atom
-            WHERE A.pdb_id = ?
-            AND A.ligand_id = ?
-            AND A.chain = ?
-            AND A.ligand = ?
-            '''
-            df = pd.read_sql(query, conn, params=(pdb_id, ligand_id, chain, ligand))
-            df_clean = df.replace({np.nan: None})
-            df_clean = preprocess_interactions(df_clean)
-            df_clean = filter_valid_atom_ids(df_clean)
-
-            if not df_clean.empty:
-                interactions_data.append({
-                    'pdb_id': pdb_id,
-                    'virus_name': df_clean['virus_name'].iloc[0],
-                    'ligand_id': int(df_clean['ligand_id'].iloc[0]),
-                    'interactions': df_clean.to_dict(orient='records')
-                })
-            else:
-                logging.warning(f"No data found for PDB ID: {pdb_id}, Residue ID: {ligand_id}, Chain: {chain}, Ligand: {ligand}")
-
-            if 'smiles_atom_index' in df.columns:
-                smiles_df = df[['pdb_id', 'Contact', 'smiles_atom_index']].dropna(subset=['smiles_atom_index'])
-                smiles_df['smiles_atom_index'] = smiles_df['smiles_atom_index'].astype(float).astype('Int64').replace({pd.NA: None})
-                smiles_interactions_data.append({
-                    'pdb_id': pdb_id,
-                    'interactions': smiles_df.to_dict(orient='records')
-                })
-            else:
-                print(f"'smiles_atom_index' not found for PDB ID: {pdb_id}")
-
-    return jsonify({
+    for occurrence_id, occurrence_frame in frame.groupby('ligand_instance_id', sort=False):
+        clean_frame = filter_valid_atom_ids(preprocess_interactions(occurrence_frame.copy()))
+        if clean_frame.empty:
+            continue
+        first = clean_frame.iloc[0]
+        insertion = first['insertion_code'] or ''
+        occurrence_label = (
+            f"{first['pdb_id']} · model {first['model_id']} · {first['chain']}:{first['ligand_id']}"
+            f"{insertion}"
+        )
+        interaction_records = clean_frame.to_dict(orient='records')
+        interactions_data.append({
+            'pdb_id': first['pdb_id'],
+            'occurrence_label': occurrence_label,
+            'virus_name': first['virus_name'],
+            'ligand_id': str(first['ligand_id']),
+            'ligand_instance_id': int(occurrence_id),
+            'model_id': first['model_id'],
+            'chain': first['chain'],
+            'insertion_code': first['insertion_code'],
+            'mapped_atom_count': int(first['mapped_atom_count']),
+            'solvent_exposed_atom_count': int(first['solvent_exposed_atom_count']),
+            'interactions': interaction_records,
+        })
+        smiles_interactions_data.append({
+            'pdb_id': first['pdb_id'],
+            'occurrence_label': occurrence_label,
+            'ligand_instance_id': int(occurrence_id),
+            'interactions': [
+                {
+                    'pdb_id': row['pdb_id'],
+                    'Contact': row['Contact'],
+                    'smiles_atom_index': int(row['smiles_atom_index']),
+                }
+                for row in interaction_records
+                if row['smiles_atom_index'] is not None
+            ],
+        })
+    return {
         'interactions_data': interactions_data,
-        'smiles_interactions_data': smiles_interactions_data
-    })
+        'smiles_interactions_data': smiles_interactions_data,
+    }
 
 # Function to generate the atom bar chart that compares multiple PDB structures
 def plot_atom_interactions_comparison(df_list, output_file, pdb_ids, ligand_code):
@@ -2038,7 +2330,7 @@ def highlight_atoms():
 #SCRIPTS FOR PROTEIN QUERYING
 
 data_set_queries = {
-    "Solvent Exposed Atoms": "SELECT * FROM RUPLEY_SASA_data WHERE pdb_id IN ({placeholders})",
+    "Solvent Exposed Atoms": "SELECT * FROM solvent_exposed_atoms WHERE pdb_id IN ({placeholders})",
     "Ligand Atoms": "SELECT * FROM ligand_atoms WHERE pdb_id IN ({placeholders})",
     "Binding Pocket": "SELECT * FROM receptor_binding_pocket WHERE pdb_id IN ({placeholders})",
     "Smiles and Functional Groups": "SELECT * FROM Ligand_Atoms_Smiles WHERE pdb_id IN ({placeholders})",
@@ -2051,6 +2343,256 @@ data_set_queries = {
     "PROTACability Warhead Linkability": "SELECT * FROM protacability_warhead_linkability WHERE pdb_code IN ({placeholders})",
     "PROTACability Degrader Readiness": "SELECT * FROM protacability_degrader_readiness WHERE pdb_code IN ({placeholders})",
 }
+
+
+def _protein_query_export_eligible_pdbs(
+    conn,
+    *,
+    pdb_codes=None,
+    virus_name=None,
+    protein_types=None,
+    ligand_filter=None,
+):
+    """Return PDB codes with retained, exportable ligand-centered data.
+
+    ``Virus_Proteins`` is deliberately used only for virus/protein
+    classification.  Eligibility is based on the current occurrence-level
+    population: an included ``ligand_instances`` row with a selected ligand
+    atom.  This is the source population for the occurrence-preserving
+    ``ligand_atoms`` compatibility view used by Protein Query exports.
+    """
+    requested_codes = []
+    for pdb_code in pdb_codes or []:
+        normalized = str(pdb_code or "").strip().upper()
+        if normalized and normalized not in requested_codes:
+            requested_codes.append(normalized)
+
+    normalized_proteins = [
+        str(protein_type).strip()
+        for protein_type in (protein_types or [])
+        if str(protein_type).strip()
+    ]
+    normalized_virus = str(virus_name or "").strip()
+    normalized_ligand = str(ligand_filter or "").strip()
+
+    params = []
+    if normalized_virus or normalized_proteins:
+        if not (normalized_virus and normalized_proteins):
+            return []
+        placeholders = ", ".join(["?"] * len(normalized_proteins))
+        query = f"""
+            SELECT DISTINCT s.entry_id AS pdb_id
+            FROM structures AS s
+            JOIN ligand_instances AS li ON li.structure_id = s.structure_id
+            JOIN ligand_instance_atoms AS lia
+                ON lia.ligand_instance_id = li.ligand_instance_id
+               AND lia.selected_conformer = 1
+            WHERE li.curation_status = 'included'
+              AND s.entry_id IN (
+                  SELECT DISTINCT pdb_id
+                  FROM Virus_Proteins
+                  WHERE virus_name = ? AND protein IN ({placeholders})
+              )
+        """
+        params.extend([normalized_virus, *normalized_proteins])
+    else:
+        query = """
+            SELECT DISTINCT s.entry_id AS pdb_id
+            FROM structures AS s
+            JOIN ligand_instances AS li ON li.structure_id = s.structure_id
+            JOIN ligand_instance_atoms AS lia
+                ON lia.ligand_instance_id = li.ligand_instance_id
+               AND lia.selected_conformer = 1
+            WHERE li.curation_status = 'included'
+        """
+
+    if requested_codes:
+        placeholders = ", ".join(["?"] * len(requested_codes))
+        query += f" AND s.entry_id IN ({placeholders})"
+        params.extend(requested_codes)
+
+    if normalized_ligand:
+        query += """
+            AND (
+                li.label_comp_id = ?
+                OR li.label_comp_id IN (
+                    SELECT synonym FROM Ligand_Synonyms WHERE ligand = ?
+                )
+                OR li.label_comp_id IN (
+                    SELECT ligand FROM Ligand_Synonyms WHERE synonym = ?
+                )
+            )
+        """
+        params.extend([normalized_ligand, normalized_ligand, normalized_ligand])
+
+    query += " ORDER BY pdb_id"
+    return [row[0] for row in conn.execute(query, tuple(params)).fetchall()]
+
+
+def get_exportable_protein_query_pdbs(conn, virus_name, protein_types, ligand_filter=None):
+    """Central Protein Query eligibility API for selector population."""
+    return _protein_query_export_eligible_pdbs(
+        conn,
+        virus_name=virus_name,
+        protein_types=protein_types,
+        ligand_filter=ligand_filter,
+    )
+
+
+def get_protein_query_filter_options(conn, virus_names=None, protein_types=None):
+    """Return cascading Protein Query options from the exportable population.
+
+    Every option is backed by an included ligand instance with a selected
+    conformer atom, exactly as the PDB picker is.  This keeps a user from
+    reaching a filter combination that cannot produce an export.
+    """
+    normalized_viruses = sorted({
+        str(virus_name).strip()
+        for virus_name in (virus_names or [])
+        if str(virus_name).strip()
+    })
+    normalized_proteins = sorted({
+        str(protein_type).strip()
+        for protein_type in (protein_types or [])
+        if str(protein_type).strip()
+    })
+
+    clauses = [
+        "li.curation_status = 'included'",
+        "lia.selected_conformer = 1",
+    ]
+    params = []
+    if normalized_viruses:
+        placeholders = ", ".join(["?"] * len(normalized_viruses))
+        clauses.append(f"vp.virus_name IN ({placeholders})")
+        params.extend(normalized_viruses)
+    if normalized_proteins:
+        placeholders = ", ".join(["?"] * len(normalized_proteins))
+        clauses.append(f"vp.protein IN ({placeholders})")
+        params.extend(normalized_proteins)
+
+    if normalized_viruses:
+        # The PDB eligibility helper has an efficient query plan for a
+        # virus/protein slice.  Use it first, then derive the three option
+        # lists from that small, known-exportable PDB set.  A direct four-way
+        # join is much slower for a selected virus on the production database.
+        protein_scope = {}
+        placeholders = ", ".join(["?"] * len(normalized_viruses))
+        for virus_name, protein_type in conn.execute(
+            f"""
+            SELECT DISTINCT virus_name, protein
+            FROM Virus_Proteins
+            WHERE virus_name IN ({placeholders})
+            """,
+            tuple(normalized_viruses),
+        ):
+            protein_scope.setdefault(virus_name, []).append(protein_type)
+
+        eligible_pdbs = []
+        for virus_name, available_proteins in protein_scope.items():
+            scoped_proteins = normalized_proteins or available_proteins
+            for pdb_code in get_exportable_protein_query_pdbs(
+                conn, virus_name, scoped_proteins
+            ):
+                if pdb_code not in eligible_pdbs:
+                    eligible_pdbs.append(pdb_code)
+
+        if not eligible_pdbs:
+            return {"virus_names": [], "protein_types": [], "ligands": []}
+
+        pdb_placeholders = ", ".join(["?"] * len(eligible_pdbs))
+        classification_clauses = [
+            f"pdb_id IN ({pdb_placeholders})",
+            f"virus_name IN ({placeholders})",
+        ]
+        classification_params = [*eligible_pdbs, *normalized_viruses]
+        if normalized_proteins:
+            protein_placeholders = ", ".join(["?"] * len(normalized_proteins))
+            classification_clauses.append(f"protein IN ({protein_placeholders})")
+            classification_params.extend(normalized_proteins)
+        classification_rows = conn.execute(
+            f"""
+            SELECT DISTINCT virus_name, protein
+            FROM Virus_Proteins
+            WHERE {' AND '.join(classification_clauses)}
+            ORDER BY virus_name, protein
+            """,
+            tuple(classification_params),
+        ).fetchall()
+        ligand_codes = {
+            row[0]
+            for row in conn.execute(
+                f"""
+                SELECT DISTINCT li.label_comp_id
+                FROM structures AS s
+                JOIN ligand_instances AS li ON li.structure_id = s.structure_id
+                JOIN ligand_instance_atoms AS lia
+                    ON lia.ligand_instance_id = li.ligand_instance_id
+                WHERE s.entry_id IN ({pdb_placeholders})
+                  AND li.curation_status = 'included'
+                  AND lia.selected_conformer = 1
+                """,
+                tuple(eligible_pdbs),
+            )
+        }
+        virus_options = sorted({row[0] for row in classification_rows})
+        protein_options = sorted({row[1] for row in classification_rows})
+    else:
+        rows = conn.execute(
+            f"""
+            SELECT DISTINCT vp.virus_name, vp.protein, li.label_comp_id
+            FROM Virus_Proteins AS vp
+            JOIN structures AS s ON s.entry_id = vp.pdb_id
+            JOIN ligand_instances AS li ON li.structure_id = s.structure_id
+            JOIN ligand_instance_atoms AS lia
+                ON lia.ligand_instance_id = li.ligand_instance_id
+            WHERE {' AND '.join(clauses)}
+            ORDER BY vp.virus_name, vp.protein, li.label_comp_id
+            """,
+            tuple(params),
+        ).fetchall()
+        ligand_codes = {row[2] for row in rows}
+        virus_options = sorted({row[0] for row in rows})
+        protein_options = sorted({row[1] for row in rows})
+    synonym_rows = []
+    if ligand_codes:
+        placeholders = ", ".join(["?"] * len(ligand_codes))
+        synonym_rows = conn.execute(
+            f"""
+            SELECT ligand, synonym
+            FROM Ligand_Synonyms
+            WHERE ligand IN ({placeholders}) OR synonym IN ({placeholders})
+            """,
+            tuple(ligand_codes) * 2,
+        ).fetchall()
+
+    canonical_for_code = {ligand_code: ligand_code for ligand_code in ligand_codes}
+    synonyms_by_ligand = {}
+    for ligand, synonym in synonym_rows:
+        if synonym in ligand_codes:
+            canonical_for_code[synonym] = ligand
+        if ligand in ligand_codes:
+            canonical_for_code[ligand] = ligand
+        synonyms_by_ligand.setdefault(ligand, set()).add(synonym)
+
+    available_ligands = {}
+    for ligand_code in ligand_codes:
+        canonical = canonical_for_code[ligand_code]
+        available_ligands.setdefault(canonical, set()).update(
+            synonyms_by_ligand.get(canonical, set())
+        )
+
+    return {
+        "virus_names": virus_options,
+        "protein_types": protein_options,
+        "ligands": [
+            {
+                "ligand_code": ligand_code,
+                "synonyms": sorted(synonym for synonym in synonyms if synonym != ligand_code),
+            }
+            for ligand_code, synonyms in sorted(available_ligands.items())
+        ],
+    }
 
 def connect_db():
     return sqlite3.connect(str(LOCAL_DB_PATH))
@@ -2065,16 +2607,20 @@ PROTACABILITY_REQUIRED_TABLES = (
 PROTACABILITY_OPTIONAL_TABLES = (
     "protacability_warhead_linkability",
     "protacability_degrader_readiness",
-    "protacability_attachment_analysis",
-    "protacability_attachment_atoms",
-    "protacability_attachment_regions",
+    "v2_attachment_site_summary",
+    "v2_attachment_site_candidates",
+    "v2_attachment_site_high_priority",
 )
 
-ATTACHMENT_METHOD_VERSION = "attachment_v1_1"
+ATTACHMENT_METHOD_VERSION = "attachment-sites-cif-v2.6"
+# Website-only presentation cutoff retained from the prior attachment map.
+# It groups nearby atom candidates for human review; it neither changes Stage-13
+# atom scores nor persists a new scientific region model.
+ATTACHMENT_DISPLAY_SITE_DISTANCE_A = 5.0
+PROTACABILITY_METHOD_VERSION = "protacability-cif-v2.8"
 PROTACABILITY_ATTACHMENT_TABLES = (
-    "protacability_attachment_analysis",
-    "protacability_attachment_atoms",
-    "protacability_attachment_regions",
+    "v2_attachment_site_summary",
+    "v2_attachment_site_candidates",
 )
 
 PROTACABILITY_SORT_COLUMNS = {
@@ -2203,7 +2749,7 @@ def protacability_tables_available(conn=None):
 
 def _table_exists(conn, table_name):
     row = conn.execute(
-        "SELECT 1 FROM sqlite_master WHERE type='table' AND name = ?",
+        "SELECT 1 FROM sqlite_master WHERE type IN ('table','view') AND name = ?",
         (table_name,),
     ).fetchone()
     return row is not None
@@ -2247,9 +2793,9 @@ def get_available_export_data_sets():
             data_sets.append("PROTACability Degrader Readiness")
         if PROTACABILITY_ATTACHMENT_TABLES[0] in optional_tables and _attachment_tables_available(conn):
             data_sets.extend([
-                "PROTACability Attachment Analysis",
-                "PROTACability Attachment Atoms",
-                "PROTACability Attachment Regions",
+                "PROTACability Attachment-Site Summary",
+                "PROTACability Candidate Attachment Atoms",
+                "PROTACability High-Priority Attachment Sites",
             ])
     return data_sets
 
@@ -2279,12 +2825,14 @@ def _build_protacability_filters(args):
     filters = {}
     filters["virus_names"] = _normalize_multi_values(args.getlist("virus_name"))
     filters["protein_types"] = _normalize_multi_values(args.getlist("protein_type"))
+    filters["canonical_target_ids"] = _normalize_multi_values(args.getlist("canonical_target_id"))
     filters["tiers"] = _normalize_multi_values(args.getlist("tier"))
     filters["warhead_tiers"] = _normalize_multi_values(args.getlist("warhead_tier"))
     filters["readiness_tiers"] = _normalize_multi_values(args.getlist("readiness_tier"))
     filters["evidence_levels"] = _normalize_multi_values(args.getlist("evidence_level"))
     filters["smiles_sources"] = _normalize_multi_values(args.getlist("smiles_source"))
     filters["ligand"] = (args.get("ligand") or "").strip()
+    filters["ligand_instance_id"] = (args.get("ligand_instance_id") or "").strip()
     filters["ligand_presence"] = (args.get("ligand_presence") or "").strip()
     filters["pdb_code"] = (args.get("pdb_code") or "").strip()
     filters["ligand_context_class"] = (args.get("ligand_context_class") or "").strip()
@@ -2307,12 +2855,14 @@ def _copy_protacability_filters(filters):
     return {
         "virus_names": list(filters.get("virus_names") or []),
         "protein_types": list(filters.get("protein_types") or []),
+        "canonical_target_ids": list(filters.get("canonical_target_ids") or []),
         "tiers": list(filters.get("tiers") or []),
         "warhead_tiers": list(filters.get("warhead_tiers") or []),
         "readiness_tiers": list(filters.get("readiness_tiers") or []),
         "evidence_levels": list(filters.get("evidence_levels") or []),
         "smiles_sources": list(filters.get("smiles_sources") or []),
         "ligand": filters.get("ligand") or "",
+        "ligand_instance_id": filters.get("ligand_instance_id") or "",
         "ligand_presence": filters.get("ligand_presence") or "",
         "pdb_code": filters.get("pdb_code") or "",
         "ligand_context_class": filters.get("ligand_context_class") or "",
@@ -2336,6 +2886,8 @@ def _clear_protacability_filter_dimension(filters, key):
         filters["virus_names"] = []
     elif key == "protein_types":
         filters["protein_types"] = []
+    elif key == "canonical_target_ids":
+        filters["canonical_target_ids"] = []
     elif key == "tiers":
         filters["tiers"] = []
     elif key == "warhead_tiers":
@@ -2693,10 +3245,15 @@ def _choose_best_record(rows, rank_fn):
     return max(rows, key=rank_fn)
 
 
-def _load_optional_table_rows(conn, table_name):
+def _load_optional_table_rows(conn, table_name, method_version=None):
     if not _table_exists(conn, table_name):
         return []
-    return [dict(row) for row in conn.execute(f"SELECT * FROM {table_name}").fetchall()]
+    query = f"SELECT * FROM {table_name}"
+    params = []
+    if method_version is not None and "method_version" in _table_columns(conn, table_name):
+        query += " WHERE method_version = ?"
+        params.append(method_version)
+    return [dict(row) for row in conn.execute(query, tuple(params)).fetchall()]
 
 
 def _build_warhead_indexes(rows):
@@ -2798,6 +3355,13 @@ def _normalize_attachment_key(row):
     if not row:
         return None
 
+    ligand_instance_id = row.get("ligand_instance_id")
+    try:
+        if ligand_instance_id not in (None, ""):
+            return ("ligand_instance_id", int(ligand_instance_id))
+    except (TypeError, ValueError):
+        pass
+
     pdb_code = _normalize_text_key(row.get("pdb_code"))
     ligand_resname = _normalize_text_key(row.get("ligand_resname") or row.get("best_ligand_resname"))
     ligand_chain = _normalize_text_key(row.get("ligand_chain") or row.get("best_ligand_chain"))
@@ -2807,17 +3371,24 @@ def _normalize_attachment_key(row):
     ligand_insertion_code = _normalize_text_key(row.get("ligand_insertion_code"))
     model_id = row.get("model_id")
     try:
-        model_id = int(model_id or 0)
+        model_id = int(model_id or 1)
     except (TypeError, ValueError):
-        model_id = 0
+        model_id = 1
     try:
         ligand_residue_id = int(ligand_residue_id)
     except (TypeError, ValueError):
         return None
     if not (pdb_code and ligand_resname and ligand_chain):
         return None
-    return (pdb_code, model_id, ligand_chain, ligand_residue_id, ligand_insertion_code, ligand_resname)
-
+    return (
+        "legacy_occurrence",
+        pdb_code,
+        model_id,
+        ligand_chain,
+        ligand_residue_id,
+        ligand_insertion_code,
+        ligand_resname,
+    )
 
 def _build_attachment_index(attachment_rows):
     index = {}
@@ -2843,33 +3414,133 @@ def _attachment_defaults():
         "has_candidate_attachment_regions": 0,
         "attachment_instance_resolution_status": None,
         "attachment_instance_ambiguity_flag": 0,
+        "attachment_site_model": "atom-level-v2.6",
+        "attachment_region_semantics_available": False,
+        "attachment_display_site_count": 0,
+        "mapped_atom_count": 0,
+        "attachment_mapped_atom_count": 0,
+        "attachment_exposed_mapped_atom_count": 0,
+        "attachment_outward_supported_candidate_count": 0,
+        "attachment_clear_exit_supported_candidate_count": 0,
+        "attachment_chemically_supported_candidate_count": 0,
+        "attachment_direct_candidate_count": 0,
+        "attachment_conditional_candidate_count": 0,
+        "attachment_conditional_clear_exit_candidate_count": 0,
+        "attachment_high_priority_atom_count": 0,
+        "attachment_high_priority_direct_atom_count": 0,
+        "best_attachment_priority_tier": None,
+        "best_attachment_atom": None,
     }
+
+
+def _short_attachment_tier(value):
+    text_value = str(value or "").strip()
+    if not text_value:
+        return None
+    for prefix in ("High", "Moderate", "Exploratory", "Low"):
+        if text_value.lower().startswith(prefix.lower()):
+            return prefix
+    return text_value
 
 
 def _attachment_summary_from_match(attachment_match):
     summary = _attachment_defaults()
     if not attachment_match:
         return summary
-    region_count = int(_numeric_value(attachment_match.get("attachment_region_count")))
-    candidate_count = int(_numeric_value(attachment_match.get("candidate_atom_count") or attachment_match.get("attachment_candidate_atom_count")))
-    has_evidence = int(_has_positive_value(attachment_match.get("has_attachment_site_evidence")) or region_count > 0 or candidate_count > 0)
+
+    candidate_count = int(_numeric_value(
+        attachment_match.get("candidate_attachment_atom_count")
+        or attachment_match.get("attachment_candidate_atom_count")
+    ))
+    chemically_supported = int(_numeric_value(
+        attachment_match.get("chemically_supported_candidate_count")
+    ))
+    high_count = int(_numeric_value(
+        attachment_match.get("high_priority_attachment_atom_count")
+    ))
+    best_score = attachment_match.get("top_attachment_site_score")
+    if best_score in (None, ""):
+        best_score = attachment_match.get("best_attachment_score")
+
+    best_tier = (
+        attachment_match.get("top_attachment_priority_tier")
+        or attachment_match.get("best_attachment_priority_tier")
+    )
+    short_tier = _short_attachment_tier(best_tier)
+    has_evidence = int(candidate_count > 0)
+
     summary.update({
-        "attachment_analysis_id": attachment_match.get("analysis_id"),
-        "attachment_method_version": attachment_match.get("method_version") or attachment_match.get("attachment_method_version"),
-        "attachment_analysis_status": attachment_match.get("analysis_status"),
-        "attachment_eligibility_status": attachment_match.get("eligibility_status"),
-        "attachment_mapping_status": attachment_match.get("mapping_status"),
-        "attachment_region_count": region_count,
+        "attachment_analysis_id": (
+            attachment_match.get("attachment_summary_id")
+            or attachment_match.get("analysis_id")
+        ),
+        "attachment_method_version": (
+            attachment_match.get("method_version")
+            or attachment_match.get("attachment_method_version")
+        ),
+        "attachment_analysis_status": (
+            attachment_match.get("status")
+            or attachment_match.get("analysis_status")
+        ),
+        "attachment_eligibility_status": (
+            "candidate_atoms_present" if has_evidence else "no_candidate_atoms"
+        ),
+        "attachment_mapping_status": (
+            "mapped_atoms_present"
+            if _has_positive_value(attachment_match.get("mapped_atom_count"))
+            else "no_mapped_atoms"
+        ),
+        "attachment_region_count": 0,
         "attachment_candidate_atom_count": candidate_count,
-        "best_attachment_score": attachment_match.get("best_attachment_score"),
-        "best_attachment_confidence": attachment_match.get("best_attachment_confidence"),
+        "best_attachment_score": best_score,
+        "best_attachment_confidence": short_tier,
         "has_attachment_site_evidence": has_evidence,
-        "has_candidate_attachment_regions": int(has_evidence and region_count > 0),
-        "attachment_instance_resolution_status": attachment_match.get("instance_resolution_status"),
-        "attachment_instance_ambiguity_flag": int(_has_positive_value(attachment_match.get("instance_ambiguity_flag"))),
+        "has_candidate_attachment_regions": 0,
+        "attachment_instance_resolution_status": "ligand_instance_id",
+        "attachment_instance_ambiguity_flag": 0,
+        "attachment_site_model": "atom-level-v2.6",
+        "attachment_region_semantics_available": False,
+        "attachment_display_site_count": int(_numeric_value(
+            attachment_match.get("attachment_display_site_count")
+        )),
+        "attachment_mapped_atom_count": int(_numeric_value(
+            attachment_match.get("mapped_atom_count")
+        )),
+        # Kept as a concise API-facing alias for consumers that render the
+        # attachment summary independently of the parent assessment row.
+        "mapped_atom_count": int(_numeric_value(
+            attachment_match.get("mapped_atom_count")
+        )),
+        "attachment_exposed_mapped_atom_count": int(_numeric_value(
+            attachment_match.get("exposed_mapped_atom_count")
+        )),
+        "attachment_outward_supported_candidate_count": int(_numeric_value(
+            attachment_match.get("outward_supported_candidate_count")
+        )),
+        "attachment_clear_exit_supported_candidate_count": int(_numeric_value(
+            attachment_match.get("clear_exit_supported_candidate_count")
+        )),
+        "attachment_chemically_supported_candidate_count": chemically_supported,
+        "attachment_direct_candidate_count": int(_numeric_value(
+            attachment_match.get("direct_attachment_candidate_count")
+        )),
+        "attachment_conditional_candidate_count": int(_numeric_value(
+            attachment_match.get("conditional_substitution_candidate_count")
+        )),
+        "attachment_conditional_clear_exit_candidate_count": int(_numeric_value(
+            attachment_match.get("conditional_clear_exit_candidate_count")
+        )),
+        "attachment_high_priority_atom_count": high_count,
+        "attachment_high_priority_direct_atom_count": int(_numeric_value(
+            attachment_match.get("high_priority_direct_attachment_atom_count")
+        )),
+        "best_attachment_priority_tier": best_tier,
+        "best_attachment_atom": (
+            attachment_match.get("top_attachment_exact_atom")
+            or attachment_match.get("best_attachment_atom")
+        ),
     })
     return summary
-
 
 def _json_list(value):
     if value in (None, ""):
@@ -2896,19 +3567,189 @@ def _json_dict(value):
 
 
 def _load_attachment_analysis_rows(conn):
-    if not _table_exists(conn, "protacability_attachment_analysis"):
+    # Do not query the v2 compatibility views here.  Each view expands a
+    # correlated latest-run subquery and, when nested in the former per-summary
+    # candidate lookup below, made the initial PROTACability request effectively
+    # quadratic.  The release tables are immutable; this is just a set-based
+    # read of their same latest complete records.
+    if not (
+        _table_exists(conn, "protacability_attachment_site_summary")
+        and _table_exists(conn, "protacability_attachment_sites")
+    ):
         return []
-    return [
+
+    query = """
+        WITH current_summaries AS (
+            SELECT
+                s.*,
+                ROW_NUMBER() OVER (
+                    PARTITION BY s.ligand_instance_id
+                    ORDER BY s.run_id DESC
+                ) AS summary_rank
+            FROM protacability_attachment_site_summary s
+            WHERE s.method_version = ?
+              AND s.status = 'complete'
+        ),
+        current_candidate_tiers AS (
+            SELECT
+                a.ligand_instance_id,
+                a.attachment_priority_tier,
+                ROW_NUMBER() OVER (
+                    PARTITION BY a.ligand_instance_id
+                    ORDER BY
+                        a.run_id DESC,
+                        a.attachment_priority_score DESC,
+                        a.attachment_site_id
+                ) AS candidate_rank
+            FROM protacability_attachment_sites a
+            WHERE a.method_version = ?
+              AND a.candidate_attachment_atom = 1
+        )
+        SELECT
+            s.*,
+            c.attachment_priority_tier AS top_attachment_priority_tier
+        FROM current_summaries s
+        LEFT JOIN current_candidate_tiers c
+          ON c.ligand_instance_id = s.ligand_instance_id
+         AND c.candidate_rank = 1
+        WHERE s.summary_rank = 1
+    """
+    attachment_rows = [
+        dict(row)
+        for row in conn.execute(
+            query,
+            (ATTACHMENT_METHOD_VERSION, ATTACHMENT_METHOD_VERSION),
+        ).fetchall()
+    ]
+    # Compute the retained website display grouping in one batch.  This keeps
+    # summary-table badges responsive without changing the atom-level release
+    # tables or treating the clusters as scientific Stage-13 regions.
+    candidate_rows = [
         dict(row)
         for row in conn.execute(
             """
-            SELECT *
-            FROM protacability_attachment_analysis
-            WHERE method_version=?
+            WITH ranked_candidates AS (
+                SELECT
+                    s.ligand_instance_id,
+                    s.ligand_instance_atom_id,
+                    s.run_id,
+                    s.atom_site_id,
+                    s.exact_atom,
+                    s.smiles_atom_indices,
+                    s.attachment_priority_score,
+                    s.candidate_attachment_atom,
+                    MAX(s.run_id) OVER (
+                        PARTITION BY s.ligand_instance_id
+                    ) AS current_run_id
+                FROM protacability_attachment_sites s
+                WHERE s.method_version = ?
+                  AND s.candidate_attachment_atom = 1
+            )
+            SELECT
+                s.ligand_instance_id,
+                s.atom_site_id,
+                s.exact_atom,
+                s.smiles_atom_indices,
+                s.attachment_priority_score,
+                s.candidate_attachment_atom,
+                a.x, a.y, a.z,
+                l.canonical_smiles
+            FROM ranked_candidates s
+            LEFT JOIN ligand_instance_atoms a
+              ON a.ligand_instance_atom_id = s.ligand_instance_atom_id
+            LEFT JOIN ligand_instances li
+              ON li.ligand_instance_id = s.ligand_instance_id
+            LEFT JOIN ligands l
+              ON l.ligand_id = li.ligand_id
+            WHERE s.run_id = s.current_run_id
             """,
             (ATTACHMENT_METHOD_VERSION,),
         ).fetchall()
     ]
+    candidates_by_instance = defaultdict(list)
+    for candidate in candidate_rows:
+        candidate["pdb_atom_serial"] = candidate.get("atom_site_id")
+        candidate["pdb_atom_name"] = candidate.get("exact_atom")
+        candidate["attachment_score"] = candidate.get("attachment_priority_score")
+        candidate["candidate_attachment_flag"] = candidate.get("candidate_attachment_atom")
+        candidate["smiles_atom_indices_list"] = _parse_smiles_atom_indices(
+            candidate.get("smiles_atom_indices")
+        )
+        candidates_by_instance[candidate["ligand_instance_id"]].append(candidate)
+    for attachment in attachment_rows:
+        attachment["attachment_display_site_count"] = len(
+            _attachment_display_site_clusters(
+                candidates_by_instance.get(attachment["ligand_instance_id"], [])
+            )
+        )
+    return attachment_rows
+
+
+def _local_protacability_raw_export(conn, raw_export):
+    """Return a human-labelled current-release PROTACability raw export.
+
+    Attachment exports deliberately avoid the correlated compatibility views.
+    They expose the same latest Stage-13 records used by the application,
+    without carrying the retired region vocabulary forward.
+    """
+    table_exports = {
+        "PROTACability Assessment": "protacability_assessment",
+        "PROTACability Lysine Proximity": "protacability_lysine_proximity",
+        "PROTACability Ligand Inventory": "protacability_ligand_inventory",
+        "PROTACability Warhead Linkability": "protacability_warhead_linkability",
+        "PROTACability Degrader Readiness": "protacability_degrader_readiness",
+    }
+    if raw_export in table_exports:
+        table_name = table_exports[raw_export]
+        if not _table_exists(conn, table_name):
+            raise KeyError(raw_export)
+        return table_name, pd.read_sql_query(f"SELECT * FROM {table_name}", conn)
+
+    attachment_queries = {
+        "PROTACability Attachment-Site Summary": """
+            WITH ranked AS (
+                SELECT s.*, ROW_NUMBER() OVER (
+                    PARTITION BY s.ligand_instance_id ORDER BY s.run_id DESC
+                ) AS current_rank
+                FROM protacability_attachment_site_summary s
+                WHERE s.method_version = ? AND s.status = 'complete'
+            )
+            SELECT * FROM ranked WHERE current_rank = 1
+        """,
+        "PROTACability Candidate Attachment Atoms": """
+            WITH ranked AS (
+                SELECT a.*, MAX(a.run_id) OVER (
+                    PARTITION BY a.ligand_instance_id
+                ) AS current_run_id
+                FROM protacability_attachment_sites a
+                WHERE a.method_version = ? AND a.candidate_attachment_atom = 1
+            )
+            SELECT * FROM ranked WHERE run_id = current_run_id
+        """,
+        "PROTACability High-Priority Attachment Sites": """
+            WITH ranked AS (
+                SELECT a.*, MAX(a.run_id) OVER (
+                    PARTITION BY a.ligand_instance_id
+                ) AS current_run_id
+                FROM protacability_attachment_sites a
+                WHERE a.method_version = ? AND a.high_priority_attachment_atom = 1
+            )
+            SELECT * FROM ranked WHERE run_id = current_run_id
+        """,
+    }
+    query = attachment_queries.get(raw_export)
+    if query is None:
+        raise KeyError(raw_export)
+    if not (
+        _table_exists(conn, "protacability_attachment_site_summary")
+        and _table_exists(conn, "protacability_attachment_sites")
+    ):
+        raise KeyError(raw_export)
+    return raw_export.replace("PROTACability ", "").lower().replace(" ", "_"), pd.read_sql_query(
+        query,
+        conn,
+        params=(ATTACHMENT_METHOD_VERSION,),
+    )
 
 
 def _empty_attachment_graph_payload():
@@ -2995,133 +3836,556 @@ def _attachment_graph_payload(conn, analysis_dict, atoms):
     return payload
 
 
+def _parse_smiles_atom_indices(value):
+    if value in (None, ""):
+        return []
+    indices = []
+    for token in re.split(r"[;,|\s]+", str(value).strip()):
+        if not token:
+            continue
+        try:
+            idx = int(float(token))
+        except (TypeError, ValueError):
+            continue
+        if idx not in indices:
+            indices.append(idx)
+    return indices
+
+
+def _attachment_display_site_clusters(atoms):
+    """Group nearby v2.6 candidate atoms for website display only.
+
+    Stage 13 remains atom-specific.  This recreates the previous map's useful
+    human-review rule (within 5 Å and within two ligand bonds) without writing
+    ASR rows or substituting a cluster score for any atom score.
+    """
+    candidates = [
+        atom for atom in (atoms or [])
+        if int(_numeric_value(atom.get("candidate_attachment_flag") or atom.get("candidate_attachment_atom")))
+    ]
+    for candidate in candidates:
+        candidate["display_site_id"] = None
+    if not candidates:
+        return []
+
+    parent = list(range(len(candidates)))
+
+    def find(index):
+        while parent[index] != index:
+            parent[index] = parent[parent[index]]
+            index = parent[index]
+        return index
+
+    def union(left, right):
+        left_root, right_root = find(left), find(right)
+        if left_root != right_root:
+            parent[right_root] = left_root
+
+    def coordinates(atom):
+        values = []
+        for axis in ("x", "y", "z"):
+            value = atom.get(axis, atom.get(f"atom_{axis}"))
+            try:
+                values.append(float(value))
+            except (TypeError, ValueError):
+                return None
+        return values
+
+    # The historic display cutoff combined coordinate proximity with a local
+    # ligand-bond neighborhood.  Coordinate proximity alone would join folded
+    # but chemically distant portions of DR7, so retain the bond condition.
+    canonical_smiles = next(
+        (atom.get("canonical_smiles") for atom in candidates if atom.get("canonical_smiles")),
+        None,
+    )
+    molecule = Chem.MolFromSmiles(canonical_smiles) if canonical_smiles else None
+
+    candidate_smiles_indices = [
+        _parse_smiles_atom_indices(candidate.get("smiles_atom_indices"))
+        for candidate in candidates
+    ]
+    bond_neighborhoods = {}
+
+    def nearby_bond_indices(atom_index):
+        """Return indices up to two bonds away without repeated RDKit paths."""
+        if molecule is None or atom_index < 0 or atom_index >= molecule.GetNumAtoms():
+            return set()
+        if atom_index not in bond_neighborhoods:
+            direct = [neighbor.GetIdx() for neighbor in molecule.GetAtomWithIdx(atom_index).GetNeighbors()]
+            bond_neighborhoods[atom_index] = {atom_index, *direct}
+            for neighbor_index in direct:
+                bond_neighborhoods[atom_index].update(
+                    neighbor.GetIdx()
+                    for neighbor in molecule.GetAtomWithIdx(neighbor_index).GetNeighbors()
+                )
+        return bond_neighborhoods[atom_index]
+
+    def close_in_bond_graph(left_index, right_index):
+        if molecule is None:
+            return False
+        right_indices = set(candidate_smiles_indices[right_index])
+        return any(
+            right_indices.intersection(nearby_bond_indices(atom_index))
+            for atom_index in candidate_smiles_indices[left_index]
+        )
+
+    candidate_coordinates = [coordinates(atom) for atom in candidates]
+    for left, left_coordinates in enumerate(candidate_coordinates):
+        if left_coordinates is None:
+            continue
+        for right in range(left + 1, len(candidates)):
+            right_coordinates = candidate_coordinates[right]
+            if right_coordinates is None:
+                continue
+            distance_squared = sum(
+                (left_coordinates[axis] - right_coordinates[axis]) ** 2
+                for axis in range(3)
+            )
+            if (
+                distance_squared <= ATTACHMENT_DISPLAY_SITE_DISTANCE_A ** 2
+                and close_in_bond_graph(left, right)
+            ):
+                union(left, right)
+
+    grouped = defaultdict(list)
+    for index, atom in enumerate(candidates):
+        grouped[find(index)].append(atom)
+
+    # A display *site* has to be a bonded local group.  Retain isolated v2.6
+    # candidate atoms in the raw atom table/map, but do not relabel them as a
+    # legacy-style site cluster.
+    clusters = [members for members in grouped.values() if len(members) > 1]
+    clusters.sort(key=lambda members: (
+        -max(_numeric_value(member.get("attachment_score") or member.get("attachment_priority_score")) for member in members),
+        min(_numeric_value(member.get("pdb_atom_serial") or member.get("atom_site_id")) for member in members),
+        sorted(str(member.get("pdb_atom_name") or member.get("exact_atom") or "") for member in members),
+    ))
+
+    display_clusters = []
+    for number, members in enumerate(clusters, start=1):
+        ordered_members = sorted(
+            members,
+            key=lambda member: (
+                -_numeric_value(member.get("attachment_score") or member.get("attachment_priority_score")),
+                str(member.get("pdb_atom_name") or member.get("exact_atom") or ""),
+            ),
+        )
+        site_id = f"Site {number}"
+        for member in ordered_members:
+            member["display_site_id"] = site_id
+        best = ordered_members[0]
+        display_clusters.append({
+            "display_site_id": site_id,
+            "candidate_atom_serials": [
+                int(member["pdb_atom_serial"])
+                for member in ordered_members
+                if member.get("pdb_atom_serial") not in (None, "")
+            ],
+            "candidate_atom_names": [
+                member.get("pdb_atom_name") or member.get("exact_atom")
+                for member in ordered_members
+                if member.get("pdb_atom_name") or member.get("exact_atom")
+            ],
+            "surface_atom_serials": [
+                int(member["pdb_atom_serial"])
+                for member in ordered_members
+                if member.get("pdb_atom_serial") not in (None, "")
+                and int(_numeric_value(member.get("surface_defining_flag") or member.get("solvent_exposed")))
+            ],
+            "chemically_supported_candidate_count": sum(
+                int(bool(member.get("chemically_supported"))) for member in ordered_members
+            ),
+            "high_priority_atom_count": sum(
+                int(bool(member.get("high_priority_attachment_atom"))) for member in ordered_members
+            ),
+            "best_attachment_score": best.get("attachment_score") or best.get("attachment_priority_score"),
+            "best_attachment_priority_tier": best.get("priority_tier_short") or _short_attachment_tier(best.get("attachment_priority_tier")),
+        })
+    return display_clusters
+
+
+def _attachment_graph_from_canonical_smiles(ligand_instance_id, atoms):
+    """Build the complete ligand graph used by the attachment-site display.
+
+    The release tables map only attachment candidates.  The map must still
+    include every atom and bond in the canonical ligand structure so reviewers
+    can see candidate clusters in their actual chemical context.
+    """
+    canonical_smiles = next(
+        (atom.get("canonical_smiles") for atom in (atoms or []) if atom.get("canonical_smiles")),
+        None,
+    )
+    molecule = Chem.MolFromSmiles(canonical_smiles) if canonical_smiles else None
+    payload = {
+        "graph_id": f"ligand_instance:{ligand_instance_id}",
+        "nodes": [],
+        "bonds": [],
+        "site_model": "atom-level-v2.6",
+        "region_semantics_available": False,
+    }
+    if molecule is None:
+        return payload
+
+    details_by_index = {}
+    for atom in atoms or []:
+        for smiles_index in atom.get("smiles_atom_indices_list") or _parse_smiles_atom_indices(atom.get("smiles_atom_indices")):
+            existing = details_by_index.get(smiles_index)
+            if existing is None or _numeric_value(atom.get("attachment_score")) > _numeric_value(existing.get("attachment_score")):
+                details_by_index[smiles_index] = atom
+
+    for rdkit_atom in molecule.GetAtoms():
+        smiles_index = rdkit_atom.GetIdx()
+        detail = details_by_index.get(smiles_index, {})
+        payload["nodes"].append({
+            "smiles_atom_index": smiles_index,
+            "element": rdkit_atom.GetSymbol(),
+            "atomic_number": rdkit_atom.GetAtomicNum(),
+            "is_aromatic": int(rdkit_atom.GetIsAromatic()),
+            "is_in_ring": int(rdkit_atom.IsInRing()),
+            "pdb_atom_serial": detail.get("pdb_atom_serial"),
+            "pdb_atom_name": detail.get("pdb_atom_name"),
+            "display_site_id": detail.get("display_site_id"),
+            "candidate_attachment_flag": int(bool(detail.get("candidate_attachment_flag"))),
+            "surface_defining_flag": int(bool(detail.get("surface_defining_flag"))),
+            "attachment_score": detail.get("attachment_score"),
+            "confidence": detail.get("confidence"),
+            "priority_tier_short": detail.get("priority_tier_short"),
+            "atom_chemical_role": detail.get("atom_chemical_role"),
+            "direct_attachment_support": detail.get("direct_attachment_support"),
+            "conditional_substitution_support": detail.get("conditional_substitution_support"),
+            "chemically_supported": detail.get("chemically_supported"),
+        })
+
+    for bond_index, bond in enumerate(molecule.GetBonds()):
+        payload["bonds"].append({
+            "smiles_bond_index": bond_index,
+            "begin_atom_index": bond.GetBeginAtomIdx(),
+            "end_atom_index": bond.GetEndAtomIdx(),
+            "bond_type": str(bond.GetBondType()),
+            "bond_order": bond.GetBondTypeAsDouble(),
+            "is_aromatic": int(bond.GetIsAromatic()),
+            "is_in_ring": int(bond.IsInRing()),
+        })
+    return payload
+
+
+def _resolve_attachment_ligand_instance_id(conn, row):
+    if not row:
+        return None
+
+    try:
+        ligand_instance_id = row.get("ligand_instance_id")
+        if ligand_instance_id not in (None, ""):
+            return int(ligand_instance_id)
+    except (TypeError, ValueError):
+        pass
+
+    pdb_code = _normalize_text_key(row.get("pdb_code"))
+    ligand_resname = _normalize_text_key(
+        row.get("ligand_resname") or row.get("best_ligand_resname")
+    )
+    ligand_chain = _normalize_text_key(
+        row.get("ligand_chain") or row.get("best_ligand_chain")
+    )
+    ligand_residue_id = row.get("ligand_residue_id")
+    if ligand_residue_id in (None, ""):
+        ligand_residue_id = row.get("best_ligand_residue_id")
+    ligand_insertion_code = _normalize_text_key(row.get("ligand_insertion_code"))
+    model_id = row.get("model_id")
+
+    if not (pdb_code and ligand_resname and ligand_chain and ligand_residue_id not in (None, "")):
+        return None
+
+    params = [pdb_code, ligand_resname, ligand_chain, str(ligand_residue_id)]
+    query = """
+        SELECT ligand_instance_id
+        FROM protacability_ligand_inventory
+        WHERE UPPER(TRIM(pdb_code)) = ?
+          AND UPPER(TRIM(ligand_resname)) = ?
+          AND UPPER(TRIM(ligand_chain)) = ?
+          AND CAST(ligand_residue_id AS TEXT) = ?
+    """
+
+    if ligand_insertion_code:
+        query += " AND UPPER(COALESCE(TRIM(ligand_insertion_code), '')) = ?"
+        params.append(ligand_insertion_code)
+
+    if model_id not in (None, "", 0, "0"):
+        query += " AND CAST(model_id AS TEXT) = ?"
+        params.append(str(model_id))
+
+    query += " ORDER BY ligand_instance_id LIMIT 2"
+    matches = conn.execute(query, tuple(params)).fetchall()
+    if len(matches) == 1:
+        return int(matches[0][0])
+
+    if not matches and (model_id not in (None, "", 0, "0") or ligand_insertion_code):
+        fallback = conn.execute(
+            """
+            SELECT ligand_instance_id
+            FROM protacability_ligand_inventory
+            WHERE UPPER(TRIM(pdb_code)) = ?
+              AND UPPER(TRIM(ligand_resname)) = ?
+              AND UPPER(TRIM(ligand_chain)) = ?
+              AND CAST(ligand_residue_id AS TEXT) = ?
+            ORDER BY ligand_instance_id
+            LIMIT 2
+            """,
+            (pdb_code, ligand_resname, ligand_chain, str(ligand_residue_id)),
+        ).fetchall()
+        if len(fallback) == 1:
+            return int(fallback[0][0])
+
+    return None
+
+
 def _attachment_detail_payload(conn, row):
     if not _attachment_tables_available(conn):
         return {
             "data_available": False,
             "summary": _attachment_defaults(),
             "regions": [],
+            "display_site_clusters": [],
             "atoms": [],
             "candidate_atom_serials": [],
+            "chemically_supported_atom_serials": [],
+            "priority_atom_serials": [],
+            "high_priority_atom_serials": [],
             "surface_atom_serials": [],
             "graph": _empty_attachment_graph_payload(),
-        }
-    key = _normalize_attachment_key(row)
-    if not key:
-        return {
-            "data_available": True,
-            "summary": _attachment_defaults(),
-            "regions": [],
-            "atoms": [],
-            "candidate_atom_serials": [],
-            "surface_atom_serials": [],
-            "graph": _empty_attachment_graph_payload(),
-        }
-    analysis = conn.execute(
-        """
-        SELECT *
-        FROM protacability_attachment_analysis
-        WHERE pdb_code=?
-          AND model_id=?
-          AND ligand_chain=?
-          AND ligand_residue_id=?
-          AND ligand_insertion_code=?
-          AND ligand_resname=?
-          AND method_version=?
-        """,
-        (*key, ATTACHMENT_METHOD_VERSION),
-    ).fetchone()
-    if not analysis:
-        return {
-            "data_available": True,
-            "summary": _attachment_defaults(),
-            "regions": [],
-            "atoms": [],
-            "candidate_atom_serials": [],
-            "surface_atom_serials": [],
-            "graph": _empty_attachment_graph_payload(),
+            "site_model": "atom-level-v2.6",
+            "region_semantics_available": False,
         }
 
-    analysis_dict = dict(analysis)
-    analysis_id = analysis_dict["analysis_id"]
-    atoms = [
-        {
-            **dict(atom),
-            "interaction_types": _json_list(atom["interaction_types_json"]),
-            "functional_group_annotations": _json_list(atom["functional_group_annotations_json"]),
-            "reasons": _json_list(atom["reasons_json"]),
-            "cautions": _json_list(atom["cautions_json"]),
+    ligand_instance_id = _resolve_attachment_ligand_instance_id(conn, row)
+    if ligand_instance_id is None:
+        return {
+            "data_available": True,
+            "summary": _attachment_defaults(),
+            "regions": [],
+            "display_site_clusters": [],
+            "atoms": [],
+            "candidate_atom_serials": [],
+            "chemically_supported_atom_serials": [],
+            "priority_atom_serials": [],
+            "high_priority_atom_serials": [],
+            "surface_atom_serials": [],
+            "graph": _empty_attachment_graph_payload(),
+            "site_model": "atom-level-v2.6",
+            "region_semantics_available": False,
+            "message": "No unique ligand occurrence could be resolved for attachment-site lookup.",
         }
-        for atom in conn.execute(
+
+    summary_row = conn.execute(
+        """
+        SELECT *
+        FROM protacability_attachment_site_summary
+        WHERE ligand_instance_id = ?
+          AND method_version = ?
+          AND status = 'complete'
+        ORDER BY run_id DESC
+        LIMIT 1
+        """,
+        (ligand_instance_id, ATTACHMENT_METHOD_VERSION),
+    ).fetchone()
+
+    if not summary_row:
+        return {
+            "data_available": True,
+            "summary": _attachment_defaults(),
+            "regions": [],
+            "display_site_clusters": [],
+            "atoms": [],
+            "candidate_atom_serials": [],
+            "chemically_supported_atom_serials": [],
+            "priority_atom_serials": [],
+            "high_priority_atom_serials": [],
+            "surface_atom_serials": [],
+            "graph": _empty_attachment_graph_payload(),
+            "site_model": "atom-level-v2.6",
+            "region_semantics_available": False,
+            "ligand_instance_id": ligand_instance_id,
+        }
+
+    summary_dict = dict(summary_row)
+
+    site_rows = [
+        dict(site)
+        for site in conn.execute(
             """
-            SELECT *
-            FROM protacability_attachment_atoms
-            WHERE analysis_id=?
-            ORDER BY candidate_attachment_flag DESC, attachment_score DESC, pdb_atom_name
+            SELECT s.*, a.x, a.y, a.z, l.canonical_smiles
+            FROM protacability_attachment_sites s
+            LEFT JOIN ligand_instance_atoms a
+              ON a.ligand_instance_atom_id = s.ligand_instance_atom_id
+            LEFT JOIN ligand_instances li
+              ON li.ligand_instance_id = s.ligand_instance_id
+            LEFT JOIN ligands l
+              ON l.ligand_id = li.ligand_id
+            WHERE s.ligand_instance_id = ?
+              AND s.method_version = ?
+              AND s.run_id = ?
+              AND s.candidate_attachment_atom = 1
+            ORDER BY
+                s.attachment_priority_score DESC,
+                s.chemical_support DESC,
+                s.exact_atom,
+                s.attachment_site_id
             """,
-            (analysis_id,),
+            (
+                ligand_instance_id,
+                ATTACHMENT_METHOD_VERSION,
+                summary_dict["run_id"],
+            ),
         ).fetchall()
     ]
-    candidate_atom_serials = [
-        atom.get("pdb_atom_serial")
-        for atom in atoms
-        if atom.get("candidate_attachment_flag") and atom.get("pdb_atom_serial") is not None
-    ]
-    surface_atom_serials = [
-        atom.get("pdb_atom_serial")
-        for atom in atoms
-        if atom.get("surface_defining_flag") and atom.get("pdb_atom_serial") is not None
-    ]
-    region_rows = conn.execute(
-        """
-        SELECT *
-        FROM protacability_attachment_regions
-        WHERE analysis_id=?
-        ORDER BY region_score DESC, region_id
-        """,
-        (analysis_id,),
-    ).fetchall()
-    regions = []
-    for region in region_rows:
-        region_dict = dict(region)
-        region_id = str(region_dict.get("region_id") or "")
-        region_atoms = [atom for atom in atoms if str(atom.get("region_id") or "") == region_id]
-        region_dict.update(
-            {
-                "member_atom_ids": _json_list(region["member_atom_ids_json"]),
-                "member_smiles_indices": _json_list(region["member_smiles_indices_json"]),
-                "candidate_atom_ids": _json_list(region["candidate_atom_ids_json"]),
-                "interaction_summary": _json_dict(region["interaction_summary_json"]),
-                "reasons": _json_list(region["reasons_json"]),
-                "cautions": _json_list(region["cautions_json"]),
-                "candidate_atom_serials": [
-                    atom.get("pdb_atom_serial")
-                    for atom in region_atoms
-                    if atom.get("candidate_attachment_flag") and atom.get("pdb_atom_serial") is not None
-                ],
-                "surface_atom_serials": [
-                    atom.get("pdb_atom_serial")
-                    for atom in region_atoms
-                    if atom.get("surface_defining_flag") and atom.get("pdb_atom_serial") is not None
-                ],
-                "member_atom_serials": [
-                    atom.get("pdb_atom_serial")
-                    for atom in region_atoms
-                    if atom.get("pdb_atom_serial") is not None
-                ],
-            }
+
+    # The best tier is a presentation label for the current atom-specific
+    # candidates.  It is derived from the same run as the authoritative summary
+    # instead of re-entering the expensive compatibility view.
+    summary_dict["top_attachment_priority_tier"] = (
+        site_rows[0].get("attachment_priority_tier") if site_rows else None
+    )
+    summary = _attachment_summary_from_match(summary_dict)
+
+    atoms = []
+    candidate_atom_serials = []
+    chemically_supported_atom_serials = []
+    priority_atom_serials = []
+    high_priority_atom_serials = []
+    surface_atom_serials = []
+    graph_nodes_by_index = {}
+
+    for site in site_rows:
+        serial = site.get("atom_site_id")
+        try:
+            serial_int = int(serial) if serial not in (None, "") else None
+        except (TypeError, ValueError):
+            serial_int = None
+
+        smiles_indices = _parse_smiles_atom_indices(site.get("smiles_atom_indices"))
+        tier_short = _short_attachment_tier(site.get("attachment_priority_tier"))
+        chemically_supported = bool(
+            site.get("direct_attachment_support")
+            or site.get("conditional_substitution_support")
+            or site.get("chemical_support")
         )
-        regions.append(region_dict)
+
+        atom = {
+            **site,
+            "pdb_atom_serial": serial_int,
+            "pdb_atom_name": site.get("exact_atom"),
+            "smiles_atom_index": smiles_indices[0] if smiles_indices else None,
+            "smiles_atom_indices_list": smiles_indices,
+            "candidate_attachment_flag": int(bool(site.get("candidate_attachment_atom"))),
+            "surface_defining_flag": int(bool(site.get("solvent_exposed"))),
+            "attachment_score": site.get("attachment_priority_score"),
+            "confidence": tier_short,
+            "region_id": None,
+            "priority_tier_short": tier_short,
+            "chemically_supported": int(chemically_supported),
+            "interaction_types": [
+                part.strip()
+                for part in str(site.get("contact_labels") or "").split(";")
+                if part.strip()
+            ],
+            "functional_group_annotations": [
+                part.strip()
+                for part in str(site.get("functional_groups") or "").split(";")
+                if part.strip()
+            ],
+            "reasons": [
+                value for value in [
+                    site.get("chemical_rationale"),
+                    "Mapped" if site.get("mapped") else None,
+                    "Solvent exposed" if site.get("solvent_exposed") else None,
+                    "Points away from pocket" if site.get("points_away_from_pocket") else None,
+                    "Local corridor clear" if site.get("local_corridor_clear") else None,
+                ] if value
+            ],
+            "cautions": [
+                value for value in [
+                    "Strong protein contact present"
+                    if _numeric_value(site.get("strong_contact_count")) > 0 else None,
+                    "Chemical context only"
+                    if site.get("atom_chemical_role") == "functional_group_context_only" else None,
+                    "No direct or conditional attachment chemistry"
+                    if not chemically_supported else None,
+                ] if value
+            ],
+        }
+        atoms.append(atom)
+
+        if serial_int is not None and site.get("candidate_attachment_atom"):
+            candidate_atom_serials.append(serial_int)
+        if serial_int is not None and chemically_supported:
+            chemically_supported_atom_serials.append(serial_int)
+        if serial_int is not None and tier_short in {"High", "Moderate"}:
+            priority_atom_serials.append(serial_int)
+        if serial_int is not None and site.get("high_priority_attachment_atom"):
+            high_priority_atom_serials.append(serial_int)
+        if serial_int is not None and site.get("solvent_exposed"):
+            surface_atom_serials.append(serial_int)
+
+        for smiles_index in smiles_indices:
+            existing = graph_nodes_by_index.get(smiles_index)
+            candidate = {
+                "smiles_atom_index": smiles_index,
+                "element": site.get("element"),
+                "pdb_atom_serial": serial_int,
+                "pdb_atom_name": site.get("exact_atom"),
+                "region_id": None,
+                "candidate_attachment_flag": int(bool(site.get("candidate_attachment_atom"))),
+                "surface_defining_flag": int(bool(site.get("solvent_exposed"))),
+                "attachment_score": site.get("attachment_priority_score"),
+                "confidence": tier_short,
+                "atom_chemical_role": site.get("atom_chemical_role"),
+                "direct_attachment_support": site.get("direct_attachment_support"),
+                "conditional_substitution_support": site.get("conditional_substitution_support"),
+            }
+            if existing is None or _numeric_value(candidate.get("attachment_score")) > _numeric_value(existing.get("attachment_score")):
+                graph_nodes_by_index[smiles_index] = candidate
+
+    # Display-site grouping is intentionally performed after the atom payload
+    # is built.  It assigns a presentation-only label to each candidate atom;
+    # the underlying Stage 13 values and the empty legacy-region payload stay
+    # unchanged.
+    display_site_clusters = _attachment_display_site_clusters(atoms)
+    summary["attachment_display_site_count"] = len(display_site_clusters)
+    graph = _attachment_graph_from_canonical_smiles(ligand_instance_id, atoms)
+
+    logging.info(
+        "[attachment-v2.6] ligand_instance_id=%s pdb=%s ligand=%s candidates=%s chemically_supported=%s priority=%s high=%s",
+        ligand_instance_id,
+        summary_dict.get("pdb_code"),
+        summary_dict.get("ligand_resname"),
+        len(candidate_atom_serials),
+        len(chemically_supported_atom_serials),
+        len(priority_atom_serials),
+        len(high_priority_atom_serials),
+    )
+
     return {
         "data_available": True,
-        "summary": _attachment_summary_from_match(analysis_dict),
-        "regions": regions,
+        "summary": summary,
+        "regions": [],
+        "display_site_clusters": display_site_clusters,
+        "display_site_grouping": {
+            "method": "candidate-coordinate-neighborhood",
+            "distance_cutoff_a": ATTACHMENT_DISPLAY_SITE_DISTANCE_A,
+            "presentation_only": True,
+        },
         "atoms": atoms,
-        "candidate_atom_serials": candidate_atom_serials,
-        "surface_atom_serials": surface_atom_serials,
-        "graph": _attachment_graph_payload(conn, analysis_dict, atoms),
+        "candidate_atom_serials": sorted(set(candidate_atom_serials)),
+        "chemically_supported_atom_serials": sorted(set(chemically_supported_atom_serials)),
+        "priority_atom_serials": sorted(set(priority_atom_serials)),
+        "high_priority_atom_serials": sorted(set(high_priority_atom_serials)),
+        "surface_atom_serials": sorted(set(surface_atom_serials)),
+        "graph": graph,
+        "site_model": "atom-level-v2.6",
+        "region_semantics_available": False,
+        "ligand_instance_id": ligand_instance_id,
+        "method_version": ATTACHMENT_METHOD_VERSION,
     }
-
 
 def _merge_optional_protacability_data(rows, readiness_rows=None, warhead_rows=None, attachment_rows=None):
     readiness_indexes = _build_readiness_indexes(readiness_rows or []) if readiness_rows else None
@@ -3333,19 +4597,25 @@ def _filter_protacability_rows(rows, filters, collapse_labels=True):
     protein_field = "display_protein_type" if collapse_labels else "protein_type"
     virus_filter = set(filters["virus_names"])
     protein_filter = set(filters["protein_types"])
+    canonical_target_filter = set(filters.get("canonical_target_ids") or [])
     tier_filter = set(filters["tiers"])
     warhead_tier_filter = set(filters["warhead_tiers"])
     readiness_tier_filter = set(filters["readiness_tiers"])
     evidence_level_filter = set(filters["evidence_levels"])
     smiles_source_filter = set(filters["smiles_sources"])
     ligand_query = (filters["ligand"] or "").strip().upper()
+    ligand_instance_query = (filters.get("ligand_instance_id") or "").strip()
     pdb_query = (filters["pdb_code"] or "").strip().upper()
 
     filtered = []
     for row in rows:
+        if ligand_instance_query and str(row.get("ligand_instance_id") or "") != ligand_instance_query:
+            continue
         if virus_filter and row.get("virus_name") not in virus_filter:
             continue
         if protein_filter and row.get(protein_field) not in protein_filter:
+            continue
+        if canonical_target_filter and row.get("canonical_target_id") not in canonical_target_filter:
             continue
         if tier_filter and row.get("protacability_tier") not in tier_filter:
             continue
@@ -3508,10 +4778,24 @@ def _protacability_enrichment_snapshot(row):
         "attachment_mapping_status",
         "attachment_region_count",
         "attachment_candidate_atom_count",
+        "attachment_display_site_count",
         "best_attachment_score",
         "best_attachment_confidence",
         "attachment_instance_resolution_status",
         "attachment_instance_ambiguity_flag",
+        "attachment_site_model",
+        "attachment_region_semantics_available",
+        "attachment_exposed_mapped_atom_count",
+        "attachment_outward_supported_candidate_count",
+        "attachment_clear_exit_supported_candidate_count",
+        "attachment_chemically_supported_candidate_count",
+        "attachment_direct_candidate_count",
+        "attachment_conditional_candidate_count",
+        "attachment_conditional_clear_exit_candidate_count",
+        "attachment_high_priority_atom_count",
+        "attachment_high_priority_direct_atom_count",
+        "best_attachment_priority_tier",
+        "best_attachment_atom",
         "warhead_evidence_score",
         "readiness_rank_score",
     ]
@@ -3660,8 +4944,39 @@ def _target_interpretation(row):
 
 
 def _group_target_rows(rows):
-    protein_rows = _group_protein_rows(rows)
-    structure_rows = _group_structure_rows(rows)
+    # Target Browser identity is the canonical target ID scoped to the virus.
+    # The display name is deliberately kept separate: legacy source labels and
+    # canonical names are not safe grouping keys.
+    canonical_mode = any(row.get("canonical_target_id") for row in rows)
+    canonical_metadata = {}
+    grouping_rows = rows
+    if canonical_mode:
+        grouping_rows = []
+        for source_row in rows:
+            row = dict(source_row)
+            canonical_target_id = row.get("canonical_target_id")
+            if not canonical_target_id:
+                # A canonical Target Browser response must never quietly fall
+                # back to a legacy protein label.
+                continue
+            key = (row.get("virus_name"), canonical_target_id)
+            metadata = canonical_metadata.setdefault(key, {
+                "canonical_target_id": canonical_target_id,
+                "canonical_target_name": row.get("canonical_target_name") or row.get("protein_type"),
+                "target_family": row.get("target_family"),
+                "entity_role": row.get("entity_role"),
+                "source_protein_types": set(),
+            })
+            if row.get("source_protein_type"):
+                metadata["source_protein_types"].add(row["source_protein_type"])
+            # Reuse the established structure/protein aggregation with the
+            # stable identifier, then restore the human-facing name below.
+            row["protein_type"] = canonical_target_id
+            row["display_protein_type"] = canonical_target_id
+            grouping_rows.append(row)
+
+    protein_rows = _group_protein_rows(grouping_rows)
+    structure_rows = _group_structure_rows(grouping_rows)
     grouped = defaultdict(list)
     structures_by_target = defaultdict(list)
     for row in protein_rows:
@@ -3684,11 +4999,19 @@ def _group_target_rows(rows):
             if srow.get("best_exposed_lys_fraction") is not None:
                 exposed_fracs.append(_numeric_value(srow.get("best_exposed_lys_fraction")))
 
+        metadata = canonical_metadata.get((virus_name, protein_type), {}) if canonical_mode else {}
+        display_protein_type = metadata.get("canonical_target_name") or protein_type
         row = {
             "view_type": "targets",
             "virus_name": virus_name,
-            "protein_type": protein_type,
-            "target_key": f"{virus_name}::{protein_type}",
+            "protein_type": display_protein_type,
+            "canonical_target_id": metadata.get("canonical_target_id"),
+            "canonical_target_name": metadata.get("canonical_target_name"),
+            "target_family": metadata.get("target_family"),
+            "entity_role": metadata.get("entity_role"),
+            "source_protein_types": sorted(metadata.get("source_protein_types") or []),
+            "source_protein_type": "; ".join(sorted(metadata.get("source_protein_types") or [])),
+            "target_key": f"{virus_name}::{metadata.get('canonical_target_id') or protein_type}",
             "pdb_count": int(sum(_numeric_value(r.get("pdb_count")) for r in group_rows)),
             "chain_count": int(sum(_numeric_value(r.get("chain_count")) for r in group_rows)),
             "best_score": representative.get("best_score"),
@@ -3846,20 +5169,94 @@ def _build_summary_cards(view, rows):
     }
 
 
-def _load_protacability_assessment_rows(conn, pdb_code=None):
-    query = f"SELECT {', '.join(PROTACABILITY_CHAIN_COLUMNS)} FROM protacability_assessment"
-    params = []
+def _load_protacability_assessment_rows(conn, pdb_code=None, virus_name=None, protein_type=None, ligand=None, ligand_instance_id=None):
+    # The table retains older releases for provenance.  Browser ranking must
+    # read the final v2.8 release only, not decorate every historical row.
+    query = "SELECT * FROM protacability_assessment WHERE method_version = ?"
+    params = [PROTACABILITY_METHOD_VERSION]
     if pdb_code:
-        query += " WHERE pdb_code = ?"
+        query += " AND pdb_code = ?"
         params.append(pdb_code)
+    if virus_name:
+        query += " AND virus_name = ?"
+        params.append(virus_name)
+    if protein_type:
+        query += " AND protein_type = ?"
+        params.append(protein_type)
+    if ligand:
+        query += """
+            AND EXISTS (
+                SELECT 1
+                FROM protacability_ligand_inventory AS inventory
+                WHERE inventory.ligand_instance_id = protacability_assessment.ligand_instance_id
+                  AND UPPER(inventory.ligand_resname) = UPPER(?)
+            )
+        """
+        params.append(ligand)
+    if ligand_instance_id is not None:
+        query += " AND ligand_instance_id = ?"
+        params.append(ligand_instance_id)
     return conn.execute(query, params).fetchall()
+
+
+def _resolve_protacability_occurrence_context(conn, args):
+    """Resolve and validate an occurrence deep link before searching assessment rows."""
+    raw_occurrence_id = (args.get("ligand_instance_id") or "").strip()
+    if not raw_occurrence_id:
+        return None, None
+    try:
+        occurrence_id = int(raw_occurrence_id)
+    except ValueError:
+        return None, "The requested ligand occurrence could not be found."
+
+    occurrence = conn.execute(
+        """
+        SELECT ligand_instance_id, pdb_code, model_id, ligand_resname,
+               ligand_chain, ligand_residue_id, ligand_insertion_code
+        FROM protacability_ligand_inventory
+        WHERE ligand_instance_id = ?
+        ORDER BY inventory_id DESC
+        LIMIT 1
+        """,
+        (occurrence_id,),
+    ).fetchone()
+    if occurrence is None:
+        return None, "The requested ligand occurrence could not be found."
+
+    context = dict(occurrence)
+    supplied_values = {
+        "ligand": (args.get("ligand") or "").strip().upper(),
+        "pdb_code": (args.get("pdb_code") or "").strip().upper(),
+        "ligand_chain": (args.get("ligand_chain") or "").strip(),
+        "ligand_residue_id": (args.get("ligand_residue_id") or "").strip(),
+        "model_id": (args.get("model_id") or "").strip(),
+    }
+    canonical_values = {
+        "ligand": str(context["ligand_resname"] or "").upper(),
+        "pdb_code": str(context["pdb_code"] or "").upper(),
+        "ligand_chain": str(context["ligand_chain"] or ""),
+        "ligand_residue_id": str(context["ligand_residue_id"] or ""),
+        "model_id": str(context["model_id"] or ""),
+    }
+    for key, supplied_value in supplied_values.items():
+        if supplied_value and supplied_value != canonical_values[key]:
+            return None, "The supplied ligand occurrence details do not match the current database record."
+    return context, None
 
 
 def _load_protacability_enrichment_tables(conn):
     optional_tables = _protacability_optional_table_names(conn)
-    readiness_rows = _load_optional_table_rows(conn, "protacability_degrader_readiness") if "protacability_degrader_readiness" in optional_tables else []
-    warhead_rows = _load_optional_table_rows(conn, "protacability_warhead_linkability") if "protacability_warhead_linkability" in optional_tables else []
-    attachment_rows = _load_attachment_analysis_rows(conn) if "protacability_attachment_analysis" in optional_tables else []
+    readiness_rows = _load_optional_table_rows(
+        conn,
+        "protacability_degrader_readiness",
+        PROTACABILITY_METHOD_VERSION,
+    ) if "protacability_degrader_readiness" in optional_tables else []
+    warhead_rows = _load_optional_table_rows(
+        conn,
+        "protacability_warhead_linkability",
+        PROTACABILITY_METHOD_VERSION,
+    ) if "protacability_warhead_linkability" in optional_tables else []
+    attachment_rows = _load_attachment_analysis_rows(conn) if "v2_attachment_site_summary" in optional_tables else []
     return readiness_rows, warhead_rows, attachment_rows
 
 
@@ -3876,8 +5273,11 @@ def _prepare_protacability_result_set(conn, args, export_all=False):
     filters = _build_protacability_filters(args)
 
     readiness_rows, warhead_rows, attachment_rows = _load_protacability_enrichment_tables(conn)
+    assessment_rows = _load_protacability_assessment_rows(conn)
+    if view == "targets":
+        assessment_rows = _load_canonical_target_browser_assessment_rows(conn)
     rows = _decorate_protacability_rows(
-        _load_protacability_assessment_rows(conn),
+        assessment_rows,
         collapse_labels=collapse_labels,
         readiness_rows=readiness_rows,
         warhead_rows=warhead_rows,
@@ -3924,9 +5324,75 @@ def _prepare_protacability_result_set(conn, args, export_all=False):
     }
 
 
+def _load_canonical_target_browser_assessment_rows(conn):
+    """One current assessment per canonical, public ligand occurrence.
+
+    Canonical target views own public target eligibility and identity.  The
+    selected assessment remains scientific provenance and is not altered.
+    """
+    rows = conn.execute(
+        """
+        SELECT a.*, v.canonical_target_id, v.canonical_target_name,
+               v.source_protein_type, v.target_family, v.entity_role
+        FROM protacability_assessment AS a
+        JOIN v2_target_browser_ligand_context AS v
+          ON v.ligand_instance_id = a.ligand_instance_id
+        WHERE a.method_version = ?
+        ORDER BY a.ligand_instance_id,
+                 a.protacability_proxy_score DESC,
+                 a.assessment_id ASC
+        """,
+        (PROTACABILITY_METHOD_VERSION,),
+    ).fetchall()
+    selected = []
+    seen_occurrences = set()
+    for raw_row in rows:
+        row = dict(raw_row)
+        occurrence_id = row["ligand_instance_id"]
+        if occurrence_id in seen_occurrences:
+            continue
+        seen_occurrences.add(occurrence_id)
+        row["protein_type"] = row["canonical_target_name"]
+        row["canonical_target_id"] = row["canonical_target_id"]
+        row["source_protein_type"] = row["source_protein_type"]
+        selected.append(row)
+    return selected
+
+
+def _canonical_target_browser_rows_from_assessments(assessment_rows):
+    conn = connect_db_row()
+    try:
+        authority_rows = conn.execute(
+            """
+            SELECT ligand_instance_id, canonical_target_id, canonical_target_name,
+                   source_protein_type, target_family, entity_role
+            FROM v2_target_browser_ligand_context
+            """
+        ).fetchall()
+    finally:
+        conn.close()
+    authority = {row["ligand_instance_id"]: dict(row) for row in authority_rows}
+    selected = {}
+    for raw_row in assessment_rows or []:
+        row = dict(raw_row)
+        occurrence_id = row.get("ligand_instance_id")
+        canonical = authority.get(occurrence_id)
+        if not canonical:
+            continue
+        prior = selected.get(occurrence_id)
+        if prior and _numeric_value(prior.get("protacability_proxy_score")) >= _numeric_value(row.get("protacability_proxy_score")):
+            continue
+        row.update(canonical)
+        row["protein_type"] = canonical["canonical_target_name"]
+        selected[occurrence_id] = row
+    return list(selected.values())
+
+
 def _build_protacability_filter_options_payload_from_rows(assessment_rows, readiness_rows, warhead_rows, args, attachment_rows=None):
     collapse_labels = _protacability_collapse_labels(args.get("collapse_labels"))
     filters = _build_protacability_filters(args)
+    if _protacability_view_mode(args.get("view")) == "targets":
+        assessment_rows = _canonical_target_browser_rows_from_assessments(assessment_rows)
     rows = _decorate_protacability_rows(
         assessment_rows,
         collapse_labels=collapse_labels,
@@ -3981,6 +5447,8 @@ def _prepare_protacability_result_set_from_rows(assessment_rows, readiness_rows,
         offset = max(args.get("offset", type=int) or 0, 0)
     filters = _build_protacability_filters(args)
 
+    if view == "targets":
+        assessment_rows = _canonical_target_browser_rows_from_assessments(assessment_rows)
     rows = _decorate_protacability_rows(
         assessment_rows,
         collapse_labels=collapse_labels,
@@ -4029,7 +5497,7 @@ def _prepare_protacability_result_set_from_rows(assessment_rows, readiness_rows,
     }
 
 
-def _local_protacability_source_payload(*, pdb_code=None, virus_name=None, protein_type=None, include_lysine=False, include_inventory=False):
+def _local_protacability_source_payload(*, pdb_code=None, virus_name=None, protein_type=None, ligand=None, ligand_instance_id=None, include_lysine=False, include_inventory=False, request_args=None):
     tables_ok, error_message = local_tables_available(PROTACABILITY_REQUIRED_TABLES)
     if not tables_ok:
         raise RandyBackendError(error_message)
@@ -4046,22 +5514,34 @@ def _local_protacability_source_payload(*, pdb_code=None, virus_name=None, prote
                 "ligand_inventory": [],
             }
 
-        clauses = []
-        params = []
-        if pdb_code:
-            clauses.append("pdb_code = ?")
-            params.append(pdb_code)
-        if virus_name:
-            clauses.append("virus_name = ?")
-            params.append(virus_name)
-        if protein_type:
-            clauses.append("protein_type = ?")
-            params.append(protein_type)
-        where_sql = f" WHERE {' AND '.join(clauses)}" if clauses else ""
+        occurrence_context = None
+        if ligand_instance_id not in (None, ""):
+            occurrence_context, deep_link_error = _resolve_protacability_occurrence_context(conn, request_args or {})
+            if deep_link_error:
+                return {
+                    "data_available": True,
+                    "assessment_rows": [],
+                    "readiness_rows": [],
+                    "warhead_rows": [],
+                    "attachment_rows": [],
+                    "lysine_rows": [],
+                    "ligand_inventory": [],
+                    "deep_link_error": deep_link_error,
+                }
+            ligand_instance_id = occurrence_context["ligand_instance_id"]
+            ligand = occurrence_context["ligand_resname"]
+            pdb_code = occurrence_context["pdb_code"]
 
         assessment_rows = [
             dict(row)
-            for row in conn.execute(f"SELECT * FROM protacability_assessment{where_sql}", tuple(params)).fetchall()
+            for row in _load_protacability_assessment_rows(
+                conn,
+                pdb_code=pdb_code,
+                virus_name=virus_name,
+                protein_type=protein_type,
+                ligand=ligand,
+                ligand_instance_id=ligand_instance_id,
+            )
         ]
         readiness_rows, warhead_rows, attachment_rows = _load_protacability_enrichment_tables(conn)
         lysine_rows = []
@@ -4085,15 +5565,18 @@ def _local_protacability_source_payload(*, pdb_code=None, virus_name=None, prote
         "attachment_rows": attachment_rows,
         "lysine_rows": lysine_rows,
         "ligand_inventory": ligand_inventory,
+        "deep_link_context": occurrence_context,
     }
 
 
-def _load_protacability_source_payload(*, pdb_code=None, virus_name=None, protein_type=None, include_lysine=False, include_inventory=False):
+def _load_protacability_source_payload(*, pdb_code=None, virus_name=None, protein_type=None, ligand=None, ligand_instance_id=None, include_lysine=False, include_inventory=False, request_args=None):
     mode = _normalized_backend_mode()
     params = {
         "pdb_code": pdb_code or "",
         "virus_name": virus_name or "",
         "protein_type": protein_type or "",
+        "ligand": ligand or "",
+        "ligand_instance_id": ligand_instance_id or "",
         "include_lysine": str(bool(include_lysine)).lower(),
         "include_inventory": str(bool(include_inventory)).lower(),
     }
@@ -4111,8 +5594,11 @@ def _load_protacability_source_payload(*, pdb_code=None, virus_name=None, protei
         pdb_code=pdb_code,
         virus_name=virus_name,
         protein_type=protein_type,
+        ligand=ligand,
+        ligand_instance_id=ligand_instance_id,
         include_lysine=include_lysine,
         include_inventory=include_inventory,
+        request_args=request_args,
     )
 
 
@@ -4160,6 +5646,28 @@ def _pick_representative_ligand_record(ligand_inventory, preferred_ligands=None,
     )[0]
 
 
+def _attach_ligand_label_asym_ids(ligand_inventory):
+    """Attach stored occurrence metadata for browser-only RCSB ligand retrieval."""
+    records = [dict(record) for record in (ligand_inventory or [])]
+    instance_ids = [record.get("ligand_instance_id") for record in records if record.get("ligand_instance_id") not in (None, "")]
+    if not instance_ids:
+        return records
+    try:
+        with connect_db_row() as conn:
+            placeholders = ",".join("?" for _ in instance_ids)
+            rows = conn.execute(
+                f"SELECT ligand_instance_id, label_asym_id FROM ligand_instances WHERE ligand_instance_id IN ({placeholders})",
+                instance_ids,
+            ).fetchall()
+        labels = {str(row["ligand_instance_id"]): row["label_asym_id"] for row in rows}
+        for record in records:
+            record["label_asym_id"] = labels.get(str(record.get("ligand_instance_id")), "")
+    except Exception:
+        # Viewer-only metadata must never block stored analysis results.
+        pass
+    return records
+
+
 def _serialize_ligand_contexts(ligand_inventory):
     contexts = []
     for row in ligand_inventory or []:
@@ -4193,7 +5701,7 @@ def make_ligand_code_aliases(code):
 
 def _table_exists(conn, table_name):
     row = conn.execute(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name = ?",
+        "SELECT name FROM sqlite_master WHERE type IN ('table','view') AND name = ?",
         (table_name,)
     ).fetchone()
     return row is not None
@@ -5067,10 +6575,42 @@ def get_protein_types_list_distinct():
 
 
 
+@app.route('/get_protein_query_filter_options', methods=['GET'])
+def get_protein_query_filter_options_route():
+    """Provide the dependent options for the Protein Query filter cascade."""
+    virus_names = request.args.getlist('virus_name')
+    protein_types = request.args.getlist('protein_type')
+    mode = _normalized_backend_mode()
+    remote_params = [
+        *(('virus_name', virus_name) for virus_name in virus_names),
+        *(('protein_type', protein_type) for protein_type in protein_types),
+    ]
+    if mode == "randy":
+        try:
+            return jsonify(randy_get('virus-proteins/filter-options', params=remote_params))
+        except RandyBackendError as exc:
+            return jsonify({"error": str(exc)}), exc.status_code
+    if mode == "auto" and randy_available():
+        try:
+            return jsonify(randy_get('virus-proteins/filter-options', params=remote_params))
+        except RandyBackendError:
+            logging.warning("Falling back to local Protein Query filter options")
+    try:
+        with _connect_local_db(QUERY_PROTEIN_REQUIRED_TABLES) as conn:
+            return jsonify(get_protein_query_filter_options(
+                conn,
+                virus_names=virus_names,
+                protein_types=protein_types,
+            ))
+    except RandyBackendError as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+
 
 @app.route('/get_pdbs_for_virus_protein', methods=['POST'])
 def get_pdbs_for_virus_protein():
-    data = request.json
+    data = request.get_json(silent=True) or {}
     mode = _normalized_backend_mode()
     if mode == "randy":
         try:
@@ -5083,26 +6623,16 @@ def get_pdbs_for_virus_protein():
         except RandyBackendError:
             logging.warning("Falling back to local pdb lookup for virus/protein query")
 
-    virus_name = data['virus_name']
-    protein_types = data['protein_types']
+    virus_name = str(data.get('virus_name') or '').strip()
+    protein_types = data.get('protein_types') or []
     ligand_filter = data.get('ligand', None)
+    if not virus_name or not protein_types:
+        return jsonify({'error': 'virus_name and protein_types are required.'}), 400
     try:
         with _connect_local_db(QUERY_PROTEIN_REQUIRED_TABLES) as conn:
-            cursor = conn.cursor()
-            placeholders = ', '.join(['?'] * len(protein_types))
-            query = f"SELECT DISTINCT pdb_id FROM Virus_Proteins WHERE virus_name = ? AND protein IN ({placeholders})"
-            params = [virus_name] + protein_types
-            if ligand_filter:
-                query += '''
-                    AND pdb_id IN (
-                        SELECT pdb_id FROM Ligand_Arp_Diagram WHERE ligand = ? OR ligand IN (
-                            SELECT synonym FROM Ligand_Synonyms WHERE ligand = ?
-                        )
-                    )
-                '''
-                params += [ligand_filter, ligand_filter]
-            cursor.execute(query, params)
-            pdb_codes = [row[0] for row in cursor.fetchall()]
+            pdb_codes = get_exportable_protein_query_pdbs(
+                conn, virus_name, protein_types, ligand_filter
+            )
         return jsonify({'pdb_codes': pdb_codes})
     except RandyBackendError as exc:
         return jsonify({"error": str(exc)}), 500
@@ -5113,13 +6643,14 @@ def get_pdbs_for_virus_protein():
 
 @app.route('/export_data_to_excel', methods=['POST'])
 def export_data_to_excel():
-    data = request.json
-    pdb_codes = data.get('pdb_codes', [])
+    data = request.get_json(silent=True) or {}
+    requested_pdb_codes = []
+    for pdb_code in data.get('pdb_codes', []):
+        normalized = str(pdb_code or '').strip().upper()
+        if normalized and normalized not in requested_pdb_codes:
+            requested_pdb_codes.append(normalized)
+    pdb_codes = requested_pdb_codes
     data_sets = data.get('data_sets', [])
-    output_dir = 'output_files'  # Directory where CSV files will be saved
-
-    # Ensure the output directory exists
-    os.makedirs(output_dir, exist_ok=True)
 
     if not pdb_codes or not data_sets:
         return jsonify({'success': False, 'error': 'No PDB codes or datasets provided.'}), 400
@@ -5143,9 +6674,6 @@ def export_data_to_excel():
     invalid_data_sets = [data_set for data_set in data_sets if data_set not in allowed_data_sets]
     if invalid_data_sets:
         return jsonify({'success': False, 'error': f'Unsupported data sets requested: {invalid_data_sets}'}), 400
-    response = {}
-    excel_file_path = os.path.join(output_dir, "combined_data.xlsx")
-
     try:
         remote_payload = None
         if mode == "randy":
@@ -5156,47 +6684,84 @@ def export_data_to_excel():
             except RandyBackendError:
                 logging.warning("Falling back to local export data generation")
 
-        # Create an ExcelWriter object to write multiple sheets
-        with pd.ExcelWriter(excel_file_path, engine='xlsxwriter') as writer:
-            for data_set in data_sets:
-                try:
-                    if remote_payload is not None:
-                        dataset_rows = (remote_payload.get("data_sets") or {}).get(data_set, [])
-                        df = pd.DataFrame(dataset_rows)
-                    else:
-                        with _connect_local_db(_required_tables_for_datasets([data_set])) as conn:
-                            placeholders = ', '.join(['?'] * len(pdb_codes))
-                            query = data_set_queries[data_set].format(placeholders=placeholders)
-                            df = pd.read_sql(query, conn, params=pdb_codes)
-                    if not df.empty:
-                        csv_file_path = os.path.join(output_dir, f"{data_set.replace(' ', '_')}.csv")
-                        df.to_csv(csv_file_path, index=False)
-                        response[data_set] = f"File saved: {csv_file_path}"
-                        df.to_excel(writer, sheet_name=data_set[:30], index=False)
-                    else:
-                        response[data_set] = "No data to save."
-                except RandyBackendError as e:
-                    return jsonify({'success': False, 'error': str(e)}), e.status_code
-                except Exception as e:
-                    response[data_set] = f"Error querying database: {str(e)}"
-                    logging.error("Error querying database: %s", e)
-        
-        # Create a ZIP archive that includes the CSV files and the combined Excel file
-        zip_buffer = BytesIO()  # Use an in-memory buffer to store the ZIP
-        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zipf:
-            # Add each CSV file to the ZIP
-            for data_set in data_sets:
-                csv_file_path = os.path.join(output_dir, f"{data_set.replace(' ', '_')}.csv")
-                if os.path.exists(csv_file_path):
-                    zipf.write(csv_file_path, os.path.basename(csv_file_path))
+        non_exportable_pdb_codes = []
+        if remote_payload is None:
+            eligibility_tables = (
+                "structures",
+                "ligand_instances",
+                "ligand_instance_atoms",
+            )
+            with _connect_local_db(eligibility_tables) as conn:
+                eligible_pdb_codes = _protein_query_export_eligible_pdbs(
+                    conn, pdb_codes=pdb_codes
+                )
+        else:
+            # The remote API returns the datasets themselves, so the same
+            # no-data guard below remains authoritative for RANDY responses.
+            eligible_pdb_codes = list(pdb_codes)
 
-            # Add the combined Excel file to the ZIP
-            zipf.write(excel_file_path, os.path.basename(excel_file_path))
+        eligible_code_set = set(eligible_pdb_codes)
+        non_exportable_pdb_codes = [
+            code for code in pdb_codes if code not in eligible_code_set
+        ]
+        if not eligible_pdb_codes:
+            return jsonify({
+                'success': False,
+                'error': 'no_exportable_data',
+                'message': 'No retained V-LiSEMOD ligand data are available for the selected structure(s).',
+                'requested_pdb_codes': pdb_codes,
+                'non_exportable_pdb_codes': non_exportable_pdb_codes,
+            }), 422
+
+        populated_data_sets = {}
+        dataset_row_counts = {}
+        for data_set in data_sets:
+            try:
+                if remote_payload is not None:
+                    dataset_rows = (remote_payload.get("data_sets") or {}).get(data_set, [])
+                    df = pd.DataFrame(dataset_rows)
+                else:
+                    with _connect_local_db(_required_tables_for_datasets([data_set])) as conn:
+                        placeholders = ', '.join(['?'] * len(eligible_pdb_codes))
+                        query = data_set_queries[data_set].format(placeholders=placeholders)
+                        df = pd.read_sql(query, conn, params=eligible_pdb_codes)
+                dataset_row_counts[data_set] = int(len(df.index))
+                if not df.empty:
+                    populated_data_sets[data_set] = df
+            except RandyBackendError as exc:
+                return jsonify({'success': False, 'error': str(exc)}), exc.status_code
+
+        if not populated_data_sets:
+            return jsonify({
+                'success': False,
+                'error': 'no_exportable_data',
+                'message': 'No rows are available for the selected data set(s) and retained structure(s).',
+                'requested_pdb_codes': pdb_codes,
+                'exportable_pdb_codes': eligible_pdb_codes,
+                'non_exportable_pdb_codes': non_exportable_pdb_codes,
+            }), 422
+
+        excel_buffer = BytesIO()
+        with pd.ExcelWriter(excel_buffer, engine='xlsxwriter') as writer:
+            for data_set, df in populated_data_sets.items():
+                df.to_excel(writer, sheet_name=data_set[:30], index=False)
+
+        export_summary = {
+            'requested_pdb_codes': pdb_codes,
+            'exportable_pdb_codes': eligible_pdb_codes,
+            'non_exportable_pdb_codes': non_exportable_pdb_codes,
+            'dataset_row_counts': dataset_row_counts,
+        }
+        zip_buffer = BytesIO()
+        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            for data_set, df in populated_data_sets.items():
+                csv_buffer = io.StringIO()
+                df.to_csv(csv_buffer, index=False)
+                zipf.writestr(f"{data_set.replace(' ', '_')}.csv", csv_buffer.getvalue())
+            zipf.writestr('export_summary.json', json.dumps(export_summary, indent=2))
+            zipf.writestr('combined_data.xlsx', excel_buffer.getvalue())
 
         zip_buffer.seek(0)  # Move back to the start of the BytesIO buffer
-
-        # Clean up temporary files
-        shutil.rmtree(output_dir)
 
         # Send the ZIP archive as a downloadable file
         return send_file(zip_buffer, as_attachment=True, download_name='data_sets.zip', mimetype='application/zip')
@@ -5499,7 +7064,8 @@ def protacability_filters():
 def protacability_filter_options():
     mode = _normalized_backend_mode()
     started_at = time.perf_counter()
-    if mode == "randy":
+    target_browser = _protacability_view_mode(request.args.get("view")) == "targets"
+    if not target_browser and mode == "randy":
         try:
             payload = _remote_protacability_get("protacability/filter-options", params=request.args, max_bytes=2 * 1024 * 1024)
             logging.info(
@@ -5513,7 +7079,7 @@ def protacability_filter_options():
             return jsonify(payload)
         except RandyBackendError as exc:
             return jsonify({"data_available": False, "message": str(exc)}), exc.status_code
-    if mode == "auto" and randy_available():
+    if not target_browser and mode == "auto" and randy_available():
         try:
             payload = _remote_protacability_get("protacability/filter-options", params=request.args, max_bytes=2 * 1024 * 1024)
             logging.info(
@@ -5568,6 +7134,37 @@ def protacability_filter_options():
 def protacability_search():
     mode = _normalized_backend_mode()
     started_at = time.perf_counter()
+    target_browser = _protacability_view_mode(request.args.get("view")) == "targets"
+    if target_browser:
+        # The public Target Browser is an authority-view product, not a proxy
+        # for the legacy remote raw-protein endpoint.
+        try:
+            conn = connect_db_row()
+            try:
+                prepared = _prepare_protacability_result_set(conn, request.args)
+            finally:
+                conn.close()
+        except sqlite3.Error as exc:
+            return jsonify({"data_available": False, "message": str(exc), "rows": [], "summary": {}}), 500
+        response_payload = {
+            "data_available": True,
+            "view": prepared["view"],
+            "collapse_labels": prepared["collapse_labels"],
+            "rows": prepared["rows"],
+            "summary": prepared["summary"],
+            "limit": prepared["limit"],
+            "offset": prepared["offset"],
+            "total_rows": prepared["total_rows"],
+            "has_more": prepared["has_more"],
+            "sort": prepared["sort"],
+            "deep_link_context": None,
+        }
+        logging.info(
+            "PROTAC search backend=local-canonical-targets offset=%s limit=%s total_rows=%s elapsed_ms=%.1f",
+            response_payload["offset"], response_payload["limit"], response_payload["total_rows"],
+            (time.perf_counter() - started_at) * 1000,
+        )
+        return jsonify(response_payload)
     if mode == "randy":
         try:
             payload = _remote_protacability_get("protacability/search", params=request.args)
@@ -5600,8 +7197,13 @@ def protacability_search():
             return jsonify(payload)
         except RandyBackendError:
             logging.warning("Falling back to local PROTACability search payload")
+    filters = _build_protacability_filters(request.args)
     try:
-        source_payload = _load_protacability_source_payload()
+        source_payload = _load_protacability_source_payload(
+            ligand=filters.get("ligand") or None,
+            ligand_instance_id=filters.get("ligand_instance_id") or None,
+            request_args=request.args,
+        )
     except RandyBackendError as exc:
         return jsonify({"data_available": False, "message": str(exc), "rows": [], "summary": {}}), exc.status_code
 
@@ -5612,6 +7214,14 @@ def protacability_search():
             "rows": [],
             "summary": {}
         })
+
+    if source_payload.get("deep_link_error"):
+        return jsonify({
+            "data_available": False,
+            "message": source_payload["deep_link_error"],
+            "rows": [],
+            "summary": {},
+        }), 400
 
     payload = _prepare_protacability_result_set_from_rows(
         source_payload.get("assessment_rows", []),
@@ -5631,6 +7241,7 @@ def protacability_search():
         "total_rows": payload["total_rows"],
         "has_more": payload["has_more"],
         "sort": payload["sort"],
+        "deep_link_context": source_payload.get("deep_link_context"),
     }
     logging.info(
         "PROTAC search backend=local view=%s offset=%s limit=%s total_rows=%s mapped_exposed=%s elapsed_ms=%.1f payload_bytes=%s",
@@ -5704,9 +7315,12 @@ def protacability_detail(pdb_code, chain_id):
 
     ligand_inventory = [
         {
+            "ligand_instance_id": row.get("ligand_instance_id"),
+            "model_id": row.get("model_id"),
             "ligand_resname": row.get("ligand_resname"),
             "ligand_chain": row.get("ligand_chain"),
             "ligand_residue_id": row.get("ligand_residue_id"),
+            "ligand_insertion_code": row.get("ligand_insertion_code"),
             "ligand_atom_count": row.get("ligand_atom_count"),
             "ligand_heavy_atom_count": row.get("ligand_heavy_atom_count"),
             "centroid_x": row.get("centroid_x"),
@@ -5716,6 +7330,7 @@ def protacability_detail(pdb_code, chain_id):
         for row in source_payload.get("ligand_inventory", [])
         if row.get("pdb_code") == pdb_code
     ]
+    ligand_inventory = _attach_ligand_label_asym_ids(ligand_inventory)
 
     related_chains = [
         {
@@ -5769,6 +7384,7 @@ def protacability_structure_detail(pdb_code):
     collapse_labels = _protacability_collapse_labels(request.args.get("collapse_labels"))
     virus_name = (request.args.get("virus_name") or "").strip()
     protein_type = (request.args.get("protein_type") or "").strip()
+    requested_ligand_instance_id = str(request.args.get("ligand_instance_id") or "").strip()
 
     readiness_rows = source_payload.get("readiness_rows", [])
     warhead_rows = source_payload.get("warhead_rows", [])
@@ -5809,9 +7425,12 @@ def protacability_structure_detail(pdb_code):
 
     ligand_inventory = [
         {
+            "ligand_instance_id": row.get("ligand_instance_id"),
+            "model_id": row.get("model_id"),
             "ligand_resname": row.get("ligand_resname"),
             "ligand_chain": row.get("ligand_chain"),
             "ligand_residue_id": row.get("ligand_residue_id"),
+            "ligand_insertion_code": row.get("ligand_insertion_code"),
             "ligand_atom_count": row.get("ligand_atom_count"),
             "ligand_heavy_atom_count": row.get("ligand_heavy_atom_count"),
             "centroid_x": row.get("centroid_x"),
@@ -5821,8 +7440,20 @@ def protacability_structure_detail(pdb_code):
         for row in source_payload.get("ligand_inventory", [])
         if row.get("pdb_code") == pdb_code
     ]
+    ligand_inventory = _attach_ligand_label_asym_ids(ligand_inventory)
+    selected_ligand_instance = None
+    if requested_ligand_instance_id:
+        selected_ligand_instance = next(
+            (
+                record for record in ligand_inventory
+                if str(record.get("ligand_instance_id") or "") == requested_ligand_instance_id
+            ),
+            None,
+        )
+        if selected_ligand_instance is None:
+            return jsonify({"error": "Ligand occurrence was not found for this structure"}), 404
     preferred_ligands = _split_candidate_ligands(summary_row.get("candidate_ligand_resnames_full"))
-    representative_ligand = _pick_representative_ligand_record(
+    representative_ligand = selected_ligand_instance or _pick_representative_ligand_record(
         ligand_inventory,
         preferred_ligands=preferred_ligands,
         allow_glycan=summary_row.get("ligand_context_class") == "glycan_only",
@@ -5842,6 +7473,7 @@ def protacability_structure_detail(pdb_code):
         "chain_rows": chain_rows,
         "representative_chain_id": representative_chain,
         "representative_ligand": representative_ligand,
+        "selected_ligand_instance": selected_ligand_instance,
         "representative_ligand_resname": (representative_ligand or {}).get("ligand_resname"),
         "representative_ligand_chain": (representative_ligand or {}).get("ligand_chain"),
         "representative_ligand_residue_id": (representative_ligand or {}).get("ligand_residue_id"),
@@ -5926,42 +7558,69 @@ def protacability_target_detail():
     collapse_labels = _protacability_collapse_labels(request.args.get("collapse_labels"))
     virus_name = (request.args.get("virus_name") or "").strip()
     protein_type = (request.args.get("protein_type") or "").strip()
+    canonical_target_id = (request.args.get("canonical_target_id") or "").strip()
     ligand_context_class = (request.args.get("ligand_context_class") or "").strip()
     min_score = request.args.get("min_score", type=float)
 
-    if not virus_name or not protein_type:
-        return jsonify({"error": "virus_name and protein_type are required"}), 400
+    if not virus_name or not (canonical_target_id or protein_type):
+        return jsonify({"error": "virus_name and canonical_target_id or protein_type are required"}), 400
 
     mode = _normalized_backend_mode()
-    if mode == "randy":
+    # Canonical Target Browser detail must be derived from the local authority
+    # views.  Remote/legacy endpoints accept raw protein_type and can silently
+    # reintroduce historical classification labels.
+    if not canonical_target_id and mode == "randy":
         try:
             return jsonify(_remote_protacability_get("protacability/target-detail", params=request.args, max_bytes=2 * 1024 * 1024))
         except RandyBackendError as exc:
             return jsonify({"data_available": False, "message": str(exc)}), exc.status_code
-    if mode == "auto" and randy_available():
+    if not canonical_target_id and mode == "auto" and randy_available():
         try:
             return jsonify(_remote_protacability_get("protacability/target-detail", params=request.args, max_bytes=2 * 1024 * 1024))
         except RandyBackendError:
             logging.warning("Falling back to local PROTACability target detail payload for %s / %s", virus_name, protein_type)
 
-    try:
-        source_payload = _load_protacability_source_payload(virus_name=virus_name, protein_type=protein_type)
-    except RandyBackendError as exc:
-        return jsonify({"data_available": False, "message": str(exc)}), exc.status_code
+    if canonical_target_id:
+        try:
+            conn = connect_db_row()
+            try:
+                assessment_rows = _load_canonical_target_browser_assessment_rows(conn)
+                readiness_rows, warhead_rows, attachment_rows = _load_protacability_enrichment_tables(conn)
+            finally:
+                conn.close()
+        except sqlite3.Error as exc:
+            return jsonify({"data_available": False, "message": str(exc)}), 500
+        rows = _decorate_protacability_rows(
+            assessment_rows,
+            collapse_labels=collapse_labels,
+            readiness_rows=readiness_rows,
+            warhead_rows=warhead_rows,
+            attachment_rows=attachment_rows,
+        )
+        rows = [
+            row for row in rows
+            if row.get("virus_name") == virus_name
+            and row.get("canonical_target_id") == canonical_target_id
+        ]
+    else:
+        try:
+            source_payload = _load_protacability_source_payload(virus_name=virus_name, protein_type=protein_type)
+        except RandyBackendError as exc:
+            return jsonify({"data_available": False, "message": str(exc)}), exc.status_code
 
-    if not source_payload.get("data_available"):
-        return jsonify({"data_available": False, "message": "PROTACability data is not available."}), 404
+        if not source_payload.get("data_available"):
+            return jsonify({"data_available": False, "message": "PROTACability data is not available."}), 404
 
-    readiness_rows = source_payload.get("readiness_rows", [])
-    warhead_rows = source_payload.get("warhead_rows", [])
-    rows = _decorate_protacability_rows(
-        source_payload.get("assessment_rows", []),
-        collapse_labels=collapse_labels,
-        readiness_rows=readiness_rows,
-        warhead_rows=warhead_rows,
-        attachment_rows=source_payload.get("attachment_rows", []),
-    )
-    rows = [row for row in rows if row.get("virus_name") == virus_name and (row.get("display_protein_type") or row.get("protein_type")) == protein_type]
+        readiness_rows = source_payload.get("readiness_rows", [])
+        warhead_rows = source_payload.get("warhead_rows", [])
+        rows = _decorate_protacability_rows(
+            source_payload.get("assessment_rows", []),
+            collapse_labels=collapse_labels,
+            readiness_rows=readiness_rows,
+            warhead_rows=warhead_rows,
+            attachment_rows=source_payload.get("attachment_rows", []),
+        )
+        rows = [row for row in rows if row.get("virus_name") == virus_name and (row.get("display_protein_type") or row.get("protein_type")) == protein_type]
     if min_score is not None:
         rows = [row for row in rows if _numeric_value(row.get("protacability_proxy_score"), -1) >= min_score]
     if ligand_context_class:
@@ -6082,35 +7741,17 @@ def protacability_export():
                 table_name = raw_payload.get("table_name")
                 df = pd.DataFrame(raw_payload.get("rows", []))
             except RandyBackendError:
-                table_name = {
-                    "PROTACability Assessment": "protacability_assessment",
-                    "PROTACability Lysine Proximity": "protacability_lysine_proximity",
-                    "PROTACability Ligand Inventory": "protacability_ligand_inventory",
-                    "PROTACability Warhead Linkability": "protacability_warhead_linkability",
-                    "PROTACability Degrader Readiness": "protacability_degrader_readiness",
-                    "PROTACability Attachment Analysis": "protacability_attachment_analysis",
-                    "PROTACability Attachment Atoms": "protacability_attachment_atoms",
-                    "PROTACability Attachment Regions": "protacability_attachment_regions",
-                }.get(raw_export)
                 with connect_db_row() as conn:
-                    if table_name and not _table_exists(conn, table_name):
+                    try:
+                        table_name, df = _local_protacability_raw_export(conn, raw_export)
+                    except KeyError:
                         return jsonify({"success": False, "message": f"{raw_export} has not been imported yet."}), 404
-                    df = pd.read_sql_query(f"SELECT * FROM {table_name}", conn)
         else:
-            table_name = {
-                "PROTACability Assessment": "protacability_assessment",
-                "PROTACability Lysine Proximity": "protacability_lysine_proximity",
-                "PROTACability Ligand Inventory": "protacability_ligand_inventory",
-                "PROTACability Warhead Linkability": "protacability_warhead_linkability",
-                "PROTACability Degrader Readiness": "protacability_degrader_readiness",
-                "PROTACability Attachment Analysis": "protacability_attachment_analysis",
-                "PROTACability Attachment Atoms": "protacability_attachment_atoms",
-                "PROTACability Attachment Regions": "protacability_attachment_regions",
-            }.get(raw_export)
             with connect_db_row() as conn:
-                if table_name and not _table_exists(conn, table_name):
+                try:
+                    table_name, df = _local_protacability_raw_export(conn, raw_export)
+                except KeyError:
                     return jsonify({"success": False, "message": f"{raw_export} has not been imported yet."}), 404
-                df = pd.read_sql_query(f"SELECT * FROM {table_name}", conn)
         csv_buffer = io.StringIO()
         df.to_csv(csv_buffer, index=False)
         byte_buffer = BytesIO(csv_buffer.getvalue().encode("utf-8"))
@@ -6169,115 +7810,20 @@ def protacability_export():
     )
 
 
-@app.route('/api/coordinates/<pdb_code>.pdb')
-def serve_coordinate_for_viewer(pdb_code):
-    ligand_code = str(request.args.get("ligand_code", "") or "").strip().upper()
-    chain = str(request.args.get("chain", "") or "").strip().upper()
-    residue_id = str(request.args.get("residue_id", "") or "").strip().upper()
-    protein_only = str(request.args.get("protein_only", "0") or "0").strip() == "1"
-    pdb_upper = str(pdb_code or "").strip().upper()
-    if not re.match(r"^[A-Z0-9]{4}$", pdb_upper):
-        return jsonify({"error": "Invalid PDB code"}), 400
-    diagnostics = _resolve_coordinate_pdb(
-        pdb_upper,
-        ligand_code="" if protein_only else ligand_code,
-        chain=chain,
-        residue_id=residue_id
-    )
-    diagnostics["served_pdb_url"] = request.url
-    app.logger.info("[coordinates] requested pdb=%s ligand=%s chain=%s residue=%s", pdb_upper, ligand_code or "(none)", chain or "(none)", residue_id or "(none)")
-    app.logger.info("[coordinates] selected source=%s", diagnostics.get("selected_source"))
-    app.logger.info("[coordinates] selected source format=%s", diagnostics.get("selected_source_format"))
-    app.logger.info("[coordinates] converted_to_pdb=%s", diagnostics.get("converted_to_pdb") or "none")
-    app.logger.info("[coordinates] FINAL_SERVED_FILE=%s", diagnostics.get("served_pdb_path"))
-    app.logger.info("[coordinates] has_ATOM_records=%s", diagnostics.get("has_protein_atoms"))
-    app.logger.info("[coordinates] requested_ligand=%s", ligand_code or "(none)")
-    app.logger.info("[coordinates] requested_chain=%s", chain or "(none)")
-    app.logger.info("[coordinates] requested_residue=%s", residue_id or "(none)")
-    app.logger.info("[coordinates] contains_requested_ligand_hetatm=%s", diagnostics.get("contains_ligand"))
-    app.logger.info("[coordinates] requested_ligand_hetatm_count=%s", diagnostics.get("requested_ligand_hetatm_count", 0))
-    app.logger.info("[coordinates] hetatm_summary=%s", diagnostics.get("hetatm_summary"))
-
-    served_pdb_path = diagnostics.get("served_pdb_path")
-    if not served_pdb_path or not os.path.isfile(served_pdb_path):
-        return jsonify({
-            "error": "Unable to resolve a valid PDB coordinate source",
-            "viewer_served_format": "pdb",
-            "diagnostics": diagnostics
-        }), 404
-    if (not protein_only) and ligand_code and not diagnostics.get("contains_ligand"):
-        return jsonify({
-            "error": "No coordinate source contains the requested ligand context in served PDB",
-            "viewer_served_format": "pdb",
-            "diagnostics": diagnostics
-        }), 404
-    final_path = served_pdb_path
-    if protein_only:
-        source_text = open(served_pdb_path, "r", encoding="utf-8", errors="ignore").read()
-        protein_only_path = _cache_pdb_path(pdb_upper, "PROTEINONLY")
-        with open(protein_only_path, "w", encoding="utf-8") as handle:
-            handle.write(_protein_only_pdb_text(source_text))
-        final_path = protein_only_path
-    response = send_file(final_path, mimetype="chemical/x-pdb", as_attachment=False)
-    response.headers["Cache-Control"] = "no-store"
-    return response
-
-
 @app.route('/api/debug/coordinate_ligand_presence/<pdb_code>/<ligand_code>')
 def debug_coordinate_ligand_presence(pdb_code, ligand_code):
     pdb_upper = str(pdb_code or "").strip().upper()
     ligand_upper = str(ligand_code or "").strip().upper()
     chain = str(request.args.get("chain", "") or "").strip().upper()
     residue_id = str(request.args.get("residue_id", "") or "").strip()
-    aliases = make_ligand_code_aliases(ligand_upper)
-
-    local_pdb_candidates = _candidate_coordinate_files(pdb_upper, extensions=[".pdb"])
-    local_cif_candidates = _candidate_coordinate_files(pdb_upper, extensions=[".cif", ".mmcif"])
-    coordinate_sources = []
-    for path in (local_pdb_candidates + local_cif_candidates):
-        entry = {"source": path, "exists": os.path.isfile(path)}
-        if not entry["exists"]:
-            coordinate_sources.append(entry)
-            continue
-        try:
-            with open(path, "r", encoding="utf-8", errors="ignore") as handle:
-                text = handle.read()
-            parsed = _scan_coordinate_source(path, text, aliases, chain=chain, residue_id=residue_id)
-            parsed["source_format"] = "cif" if path.lower().endswith((".cif", ".mmcif")) else "pdb"
-            coordinate_sources.append(parsed)
-        except Exception as exc:
-            entry["error"] = str(exc)
-            coordinate_sources.append(entry)
-
-    resolved = _resolve_coordinate_pdb(
-        pdb_upper,
-        ligand_code=ligand_upper,
-        chain=chain,
-        residue_id=residue_id
-    )
-    served_url = url_for("serve_coordinate_for_viewer", pdb_code=pdb_upper, ligand_code=ligand_upper, chain=chain, residue_id=residue_id)
-    resolved["served_pdb_url"] = served_url
-
     return jsonify({
         "pdb_code": pdb_upper,
         "requested_ligand": ligand_upper,
-        "requested_aliases": aliases,
         "chain": chain,
         "residue_id": residue_id,
-        "viewer_served_format": "pdb",
-        "searched_files": local_pdb_candidates + local_cif_candidates,
-        "local_pdb_candidates": local_pdb_candidates,
-        "local_cif_candidates": local_cif_candidates,
-        "coordinate_sources": coordinate_sources,
-        "selected_source": resolved.get("selected_source"),
-        "selected_source_format": resolved.get("selected_source_format"),
-        "converted_to_pdb": resolved.get("converted_to_pdb"),
-        "final_served_pdb_path": resolved.get("served_pdb_path"),
-        "final_served_pdb_url": served_url,
-        "final_pdb_has_protein_atoms": resolved.get("has_protein_atoms"),
-        "final_pdb_contains_ligand": resolved.get("contains_ligand"),
-        "final_pdb_hetatm_summary": resolved.get("hetatm_summary"),
-        "resolution_diagnostics": resolved,
+        "viewer_source": "direct_rcsb_mmcif",
+        "viewer_coordinate_url": f"https://files.rcsb.org/download/{pdb_upper}.cif",
+        "note": "Viewer coordinates are retrieved client-side and are not converted or cached by V-LiSEMOD.",
     })
 
 
@@ -6288,134 +7834,53 @@ def debug_served_coordinate(pdb_code, ligand_code):
     chain = str(request.args.get("chain", "") or "").strip().upper()
     residue_id = str(request.args.get("residue_id", "") or "").strip().upper()
 
-    resolved = _resolve_coordinate_pdb(
-        pdb_upper,
-        ligand_code=ligand_upper,
-        chain=chain,
-        residue_id=residue_id
-    )
-    served_path = resolved.get("served_pdb_path")
-    served_url = url_for(
-        "serve_coordinate_for_viewer",
-        pdb_code=pdb_upper,
-        ligand_code=ligand_upper,
-        chain=chain,
-        residue_id=residue_id
-    )
-    if not served_path or not os.path.isfile(served_path):
-        return jsonify({
-            "error": "No served coordinate file could be resolved",
-            "resolution_diagnostics": resolved,
-            "final_served_url": served_url
-        }), 404
-
-    text = open(served_path, "r", encoding="utf-8", errors="ignore").read()
-    requested_ligand_present = pdb_contains_ligand(text, ligand_upper, chain=chain, residue_id=residue_id)
-    requested_ligand_atom_count = pdb_ligand_hetatm_count(text, ligand_upper, chain=chain, residue_id=residue_id)
     return jsonify({
-        "final_served_file": served_path,
-        "final_served_url": served_url,
-        "source_file_before_conversion": resolved.get("selected_source"),
-        "source_format": resolved.get("selected_source_format"),
-        "converted": bool(resolved.get("converted_to_pdb")),
-        "converted_to_pdb": resolved.get("converted_to_pdb"),
-        "has_atom_records": pdb_has_protein_atoms(text),
-        "requested_ligand_present": requested_ligand_present,
-        "requested_ligand_atom_count": requested_ligand_atom_count,
-        "hetatm_summary": summarize_pdb_hetatm(text),
-        "first_20_hetatm_lines": pdb_first_hetatm_lines(text, limit=20),
-        "matching_ligand_lines": pdb_matching_ligand_lines(text, ligand_upper, chain=chain, residue_id=residue_id, limit=50),
-        "resolution_diagnostics": resolved
+        "pdb_code": pdb_upper,
+        "ligand_code": ligand_upper,
+        "chain": chain,
+        "residue_id": residue_id,
+        "viewer_source": "direct_rcsb_mmcif",
+        "viewer_coordinate_url": f"https://files.rcsb.org/download/{pdb_upper}.cif",
+        "note": "No coordinate file is served, converted, or retained by V-LiSEMOD.",
     })
 
 
-@app.route('/api/ligand_instance_sdf_url/<pdb_code>/<ligand_code>')
-def ligand_instance_sdf_url(pdb_code, ligand_code):
+@app.route('/api/ligand_instance_metadata/<pdb_code>/<ligand_code>')
+def ligand_instance_metadata(pdb_code, ligand_code):
+    """Return stored occurrence metadata only; never retrieve or cache coordinates."""
+    pdb_upper = str(pdb_code or "").strip().upper()
+    ligand_upper = str(ligand_code or "").strip().upper()
     auth_chain = str(request.args.get("auth_chain", "") or "").strip().upper()
     auth_seq_id = str(request.args.get("auth_seq_id", "") or "").strip()
-    mapping = _resolve_ligand_instance_mapping(
-        pdb_code,
-        ligand_code,
-        auth_chain=auth_chain,
-        auth_seq_id=auth_seq_id
-    )
-    if not mapping.get("success"):
-        return jsonify(mapping), 404
-    return jsonify({
-        "success": True,
-        "pdb_code": mapping.get("pdb_code"),
-        "ligand_code": mapping.get("ligand_code"),
-        "auth_chain": mapping.get("auth_chain"),
-        "auth_seq_id": mapping.get("auth_seq_id"),
-        "label_asym_id": mapping.get("chosen_label_asym_id"),
-        "sdf_url": mapping.get("sdf_url"),
-        "source": "rcsb_model_server",
-        "mapping_source": mapping.get("source"),
-    })
-
-
-@app.route('/api/debug/ligand_instance_mapping/<pdb_code>/<ligand_code>')
-def debug_ligand_instance_mapping(pdb_code, ligand_code):
-    auth_chain = str(request.args.get("auth_chain", "") or "").strip().upper()
-    auth_seq_id = str(request.args.get("auth_seq_id", "") or "").strip()
-    mapping = _resolve_ligand_instance_mapping(
-        pdb_code,
-        ligand_code,
-        auth_chain=auth_chain,
-        auth_seq_id=auth_seq_id
-    )
-    return jsonify(mapping), (200 if mapping.get("success") else 404)
-
-
-@app.route('/api/ligand_instance_sdf/<pdb_code>/<ligand_code>.sdf')
-def ligand_instance_sdf_proxy(pdb_code, ligand_code):
-    auth_chain = str(request.args.get("auth_chain", "") or "").strip().upper()
-    auth_seq_id = str(request.args.get("auth_seq_id", "") or "").strip()
-    mapping = _resolve_ligand_instance_mapping(
-        pdb_code,
-        ligand_code,
-        auth_chain=auth_chain,
-        auth_seq_id=auth_seq_id
-    )
-    app.logger.info(
-        "[ligand-sdf] requested pdb=%s ligand=%s auth_chain=%s auth_seq_id=%s",
-        str(pdb_code or "").strip().upper(),
-        str(ligand_code or "").strip().upper(),
-        auth_chain or "(none)",
-        auth_seq_id or "(none)",
-    )
-    if not mapping.get("success") or not mapping.get("sdf_url"):
-        return jsonify({
-            "success": False,
-            "error": "Unable to resolve ligand instance SDF URL",
-            "mapping": mapping
-        }), 404
-
-    label_asym_id = mapping.get("chosen_label_asym_id")
-    sdf_url = mapping.get("sdf_url")
-    app.logger.info("[ligand-sdf] resolved label_asym_id=%s", label_asym_id)
-    app.logger.info("[ligand-sdf] sdf_url=%s", sdf_url)
-
+    if not re.fullmatch(r"[A-Z0-9]{4}", pdb_upper):
+        return jsonify({"error": "Invalid PDB code"}), 400
     try:
-        sdf_bytes = _fetch_url_bytes(sdf_url)
-        sdf_text = sdf_bytes.decode("utf-8", errors="ignore")
-        atom_count = _count_sdf_atoms(sdf_text)
-        app.logger.info("[ligand-sdf] fetched bytes=%s", len(sdf_bytes))
-        app.logger.info("[ligand-sdf] atom_count=%s", atom_count)
-
-        cache_path = _cache_sdf_path(pdb_code, ligand_code, auth_chain, auth_seq_id, label_asym_id)
-        with open(cache_path, "wb") as handle:
-            handle.write(sdf_bytes)
-    except Exception as exc:
-        return jsonify({
-            "success": False,
-            "error": f"Failed to fetch ligand SDF: {exc}",
-            "mapping": mapping
-        }), 502
-
-    response = send_file(cache_path, mimetype="chemical/x-mdl-sdfile", as_attachment=False)
-    response.headers["Cache-Control"] = "no-store"
-    return response
+        with connect_db_row() as conn:
+            row = conn.execute(
+                """
+                SELECT i.label_asym_id, i.auth_asym_id, i.auth_seq_id, i.deposited_model_num
+                FROM ligand_instances AS i
+                JOIN structures AS s ON s.structure_id = i.structure_id
+                WHERE UPPER(s.entry_id) = ?
+                  AND UPPER(COALESCE(i.auth_comp_id, i.label_comp_id)) = ?
+                  AND (? = '' OR UPPER(i.auth_asym_id) = ?)
+                  AND (? = '' OR CAST(i.auth_seq_id AS TEXT) = ?)
+                ORDER BY i.deposited_model_num, i.label_asym_id
+                LIMIT 1
+                """,
+                (pdb_upper, ligand_upper, auth_chain, auth_chain, auth_seq_id, auth_seq_id),
+            ).fetchone()
+    except Exception:
+        row = None
+    if not row:
+        return jsonify({"found": False}), 404
+    return jsonify({
+        "found": True,
+        "label_asym_id": row["label_asym_id"],
+        "auth_chain": row["auth_asym_id"],
+        "auth_seq_id": row["auth_seq_id"],
+        "model_id": row["deposited_model_num"],
+    })
 
 
 @app.route('/api/debug/ligand_context/<pdb_code>/<ligand_code>')
@@ -6452,11 +7917,15 @@ def debug_ligand_context(pdb_code, ligand_code):
         "Ligand_Atoms_Smiles",
         "ligand_atoms",
         "SMILES_MAP_PDB",
+        "solvent_exposed_atoms",
         "RUPLEY_SASA_DATA",
         "Arpeggio_Contacts_Data",
         "protacability_assessment",
         "protacability_ligand_inventory",
         "protacability_lysine_proximity",
+        "v2_attachment_site_summary",
+        "v2_attachment_site_candidates",
+        "v2_attachment_site_high_priority",
     ]
     tables = []
     for table_name in table_names:
@@ -6541,11 +8010,14 @@ def debug_protacability_detail_payload(pdb_code):
         dict(row) for row in conn.execute(
             """
             SELECT
+                ligand_instance_id,
+                model_id,
                 ligand_resname,
                 ligand_chain,
                 ligand_residue_id,
+                ligand_insertion_code,
                 ligand_atom_count,
-                NULL AS ligand_heavy_atom_count,
+                ligand_heavy_atom_count,
                 centroid_x,
                 centroid_y,
                 centroid_z

@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-
 {% block title %}V-LiSEMOD | Ligand Comparison{% endblock %}
 
 {% block body_class %}app-shell comparison-page{% endblock %}
@@ -35,6 +34,7 @@
             </div>
 
             <button type="button" id="showComparisonButton" disabled>Generate comparison charts</button>
+            <p id="comparisonStatus" role="status" aria-live="polite" style="display: none;"></p>
         </form>
 
         <div class="action-row centered-row">
@@ -68,11 +68,11 @@
 
             <div class="results-summary-actions">
                 <span id="selected-ligand-pill" class="selected-ligand-pill">Ligand</span>
+                <a id="comparison-protacability-all" class="button-secondary" target="_blank" rel="noopener noreferrer">Explore ligand across PROTACability ↗</a>
                 <button id="prevChart" type="button">Previous</button>
                 <button id="nextChart" type="button">Next</button>
             </div>
         </div>
-
         <div class="comparison-results-grid">
             <div class="ligand-stage-panel">
                 <div class="ligand-stage-header">
@@ -88,6 +88,11 @@
                 </div>
 
                 <div id="molecule_container" class="ligand-structure-viewer"></div>
+
+                <section id="comparison-rail" class="comparison-rail" aria-live="polite">
+                    <div id="comparison-rail-content"></div>
+                    <div id="comparison-workspace-region" class="workspace-region hidden"></div>
+                </section>
             </div>
 
             <div class="carousel-container chart-stage-panel">
@@ -161,8 +166,6 @@
    
                if (response.ok) {
                    isDrugAppAvailable = true; // ✅ DrugApp is available
-               } else {
-                   console.warn("DrugApp is not available.");
                }
            } catch (error) {
                console.warn("Error checking DrugApp availability:", error);
@@ -207,6 +210,7 @@
         let originalSVG = ''; // Store the original SVG for resetting the molecule container
         let tooltipVisible = false; // Global flag to prevent multiple tooltips
         let hoverTimeout;  // Global variable to store hover timeout
+        let activeComparisonController = null;
 
         $(document).ready(function() {
             // Initialize Select2 for searchable dropdowns
@@ -218,7 +222,13 @@
             // Event handler for ligand selection
             $('#ligand').change(function() {
                 const ligand_id = $(this).val();
+                if (activeComparisonController) {
+                    activeComparisonController.abort();
+                    activeComparisonController = null;
+                }
                 hideCarousel();
+                setComparisonStatus('');
+                $('#showComparisonButton').prop('disabled', true);
                 if (ligand_id) {
                     fetchMoleculeAndShowModal(ligand_id);
                     fetchPDBMappings(ligand_id);
@@ -270,14 +280,17 @@
             // Event handler for comparison button click
             $('#showComparisonButton').on('click', function() {
                 const selectedLigand = $('#ligand').val();
-                const selectedPdbs = $('input[name="pdb_residues"]:checked').map(function() {
+                const selectedOccurrenceIds = $('input[name="pdb_residues"]:checked').map(function() {
                     return this.value;
                 }).get();
+                const selectedPdbs = $('input[name="pdb_residues"]:checked').map(function() {
+                    return this.dataset.legacyKey;
+                }).get();
 
-                if (selectedLigand && selectedPdbs.length > 0) {
-                    compareLigandInteractions(selectedLigand, selectedPdbs);
+                if (selectedLigand && selectedOccurrenceIds.length > 0) {
+                    compareLigandInteractions(selectedLigand, selectedOccurrenceIds, selectedPdbs);
                 } else {
-                    alert('Please select a ligand and PDB files.');
+                    setComparisonStatus('Please select a ligand and one or more structural occurrences.', true);
                 }
             });
 
@@ -303,6 +316,13 @@
                         });
                     })
                     .catch(error => console.error('Error fetching ligands with synonyms:', error));
+            }
+
+            function setComparisonStatus(message, isError) {
+                $('#comparisonStatus')
+                    .text(message)
+                    .css('color', isError ? '#a32626' : '')
+                    .toggle(Boolean(message));
             }
 
             // Generate green shades dynamically based on number of unique viruses
@@ -346,12 +366,14 @@
                             const safeId = `pdb_${uniqueKey.replace(/[^a-zA-Z0-9_-]/g, '_')}`;
                             const virusColor = virusColorMap[pdbInfo.virus_name] || '#005030';  // Default green
 
+                            const insertion = pdbInfo.insertion_code ? ` · Ins ${pdbInfo.insertion_code}` : '';
+                            const model = pdbInfo.model_id ? ` · Model ${pdbInfo.model_id}` : '';
                             const checkbox = `
                                 <div class="checkbox-item tooltip-container" style="background-color: ${virusColor};">
-                                    <input type="checkbox" name="pdb_residues" value="${uniqueKey}" id="${safeId}" />
+                                    <input type="checkbox" name="pdb_residues" value="${pdbInfo.ligand_instance_id}" data-legacy-key="${pdbInfo.legacy_key}" id="${safeId}" />
                                     <label for="${safeId}">
                                         <span class="structure-code">${pdbInfo.pdb_id}</span>
-                                        <span class="structure-meta">Res ${pdbInfo.ligand_id} · Chain ${pdbInfo.chain}</span>
+                                        <span class="structure-meta">Res ${pdbInfo.ligand_id} · Chain ${pdbInfo.chain}${insertion}${model}</span>
                                         <span class="structure-virus">${pdbInfo.virus_name}</span>
                                     </label>
                                     <span class="tooltip-text">Virus: ${pdbInfo.virus_name}</span>
@@ -380,8 +402,11 @@
                         });
 
                         selectionCount.text(`${Object.keys(data.pdb_mapping).length} structures available · select one or more`);
+                        const requestedInstances = (new URLSearchParams(window.location.search).get('instances') || '').split(',').filter(Boolean);
+                        requestedInstances.forEach(id => checkboxContainer.find(`input[value="${CSS.escape(id)}"]`).prop('checked', true));
                         updateSelectedStructureState();
-                        $('#showComparisonButton').prop('disabled', false); // Enable the button
+                        $('#showComparisonButton').prop('disabled', !requestedInstances.length);
+                        if (requestedInstances.length) $('#showComparisonButton').trigger('click');
                     })
                     .catch(error => console.error('Error fetching PDB mappings:', error));
             }
@@ -402,7 +427,6 @@
                                 
                             };
 
-                            console.log("✅ Stored Ligand Data:", selectedLigandData);
                             showModal();
                         } else {
                             console.error('SVG not available:', data.error);
@@ -431,21 +455,46 @@
             // Compare ligand interactions and generate charts
             const MANY_SELECTED_THRESHOLD = 4;
 
-            function compareLigandInteractions(ligand_id, pdb_ids) {
-                const selectedCount = pdb_ids.length;
+            async function compareLigandInteractions(ligand_id, occurrenceIds, legacyPdbIds) {
+                const selectedCount = occurrenceIds.length;
                 const manySelected = selectedCount > MANY_SELECTED_THRESHOLD;
                 $('#results-container').toggleClass('many-selected', manySelected);
-                fetch('/compare_ligand_interactions', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ ligand: ligand_id, pdb_ids: pdb_ids })
-                })
-                .then(response => response.json())
-                .then(data => {
+                if (activeComparisonController) activeComparisonController.abort();
+                activeComparisonController = new AbortController();
+                const controller = activeComparisonController;
+                const button = $('#showComparisonButton');
+                button.prop('disabled', true).text('Generating comparison…');
+                setComparisonStatus('Loading occurrence-resolved Stage-07/09 evidence…');
+                try {
+                    const response = await fetch('/compare_ligand_interactions', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ ligand: ligand_id, occurrence_ids: occurrenceIds, pdb_ids: legacyPdbIds }),
+                        signal: controller.signal
+                    });
+                    let data = {};
+                    try {
+                        data = await response.json();
+                    } catch (_) {
+                        // The error below deliberately remains a retrieval error rather
+                        // than being mistaken for a scientific zero-result.
+                    }
+                    if (!response.ok) {
+                        throw new Error('Unable to retrieve interaction data for the selected ligand occurrences.');
+                    }
+                    if (data.status === 'no_data' || !Array.isArray(data.interactions_data) || !data.interactions_data.length) {
+                        const message = data.message || 'No recorded non-proximal protein–ligand interactions are available for the selected ligand occurrence(s).';
+                        hideCarousel();
+                        setComparisonStatus(message);
+                        VLiSEMODWorkspace.noData('comparison-workspace-region', 'Comparison evidence unavailable', message, { label: 'Return to ligand selection', href: `/compare_ligands?ligand=${encodeURIComponent(ligand_id)}` });
+                        $('#results-container').removeClass('hidden');
+                        return;
+                    }
                     generateDonutChart(data.interactions_data, selectedCount);
                     generateScatterPlot(data.interactions_data, selectedCount);
                     generateStackedBarChart(data.interactions_data, selectedCount);
                     generateAtomBarChart(data.smiles_interactions_data, selectedCount);
+                    renderComparisonWorkspace(ligand_id, data.interactions_data);
 
                     currentChartIndex = 0;
                     displayCarousel(0);
@@ -464,8 +513,20 @@
                         resizeActivePlot();
                         setTimeout(resizeActivePlot, 200);
                     });
-                })
-                .catch(error => console.error('Error comparing ligand interactions:', error));
+                    setComparisonStatus(`Compared ${data.interactions_data.length} occurrence${data.interactions_data.length === 1 ? '' : 's'} using current mapped contact evidence.`);
+                } catch (error) {
+                    if (error.name !== 'AbortError') {
+                        hideCarousel();
+                        const message = error.message || 'Unable to retrieve interaction data for the selected ligand occurrences.';
+                        setComparisonStatus(message, true);
+                        VLiSEMODWorkspace.noData('comparison-workspace-region', 'Interaction retrieval failed', message, { label: 'Return to ligand selection', href: `/compare_ligands?ligand=${encodeURIComponent(ligand_id)}` });
+                        $('#results-container').removeClass('hidden');
+                    }
+                } finally {
+                    if (activeComparisonController === controller) activeComparisonController = null;
+                    button.text('Generate comparison charts');
+                    button.prop('disabled', !$('input[name="pdb_residues"]:checked').length);
+                }
             }
 
             // Hide carousel
@@ -478,7 +539,67 @@
                     .removeClass('many-selected is-revealed');
 
                 $('#atom-hover-copy').removeClass('is-visible');
+                $('#comparison-protacability-all').removeAttr('href aria-label').text('Explore ligand across PROTACability ↗');
+                $('#comparison-rail-content').empty();
+                VLiSEMODWorkspace.render('comparison-workspace-region', null);
             }
+
+            function renderComparisonWorkspace(ligand, occurrences) {
+                const ids = occurrences.map(item => item.ligand_instance_id);
+                const interactionLabels = occurrences.reduce((total, item) => total + Number(item.interaction_count || item.interaction_label_count || (item.interactions || []).length || 0), 0);
+                const mappedAtoms = occurrences.reduce((total, item) => total + Number(item.mapped_atom_count || 0), 0);
+                const canonicalUrl = VLiSEMODWorkspace.paramsUrl('/compare_ligands', { ligand, instances: ids.join(',') });
+                history.replaceState({}, '', canonicalUrl);
+                $('#comparison-protacability-all')
+                    .attr('href', buildProtacabilityUrl({ ligand }))
+                    .attr('aria-label', `Explore all ${ligand} structures in PROTACability`)
+                    .text(`Explore ${ligand} across PROTACability ↗`);
+                VLiSEMODWorkspace.render('comparison-workspace-region', null);
+
+                const escapeHtml = value => String(value == null ? '' : value).replace(/[&<>'"]/g, character => ({
+                    '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+                }[character]));
+                const occurrenceCards = occurrences.map(occurrence => {
+                    const occurrenceUrl = buildProtacabilityUrl({
+                        ligand,
+                        pdb_code: occurrence.pdb_id,
+                        ligand_instance_id: occurrence.ligand_instance_id,
+                        ligand_chain: occurrence.chain,
+                        ligand_residue_id: occurrence.ligand_id,
+                        model_id: occurrence.model_id,
+                    });
+                    const modelLabel = occurrence.model_id ? `model ${occurrence.model_id} · ` : '';
+                    return `<article class="comparison-occurrence-card" data-ligand-instance-id="${escapeHtml(occurrence.ligand_instance_id)}">
+                        <div><strong>${escapeHtml(occurrence.pdb_id)}</strong><span>${escapeHtml(`${modelLabel}Chain ${occurrence.chain} · Residue ${occurrence.ligand_id}`)}</span></div>
+                        <small>${escapeHtml(`${occurrence.mapped_atom_count || 0} mapped atoms · ${occurrence.solvent_exposed_atom_count || 0} solvent-exposed atoms`)}</small>
+                        <a class="button-secondary" target="_blank" rel="noopener noreferrer" href="${escapeHtml(occurrenceUrl)}" aria-label="Assess ${escapeHtml(ligand)} occurrence ${escapeHtml(occurrence.ligand_instance_id)} in PROTACability">Assess in PROTACability ↗</a>
+                    </article>`;
+                }).join('');
+                const rail = document.getElementById('comparison-rail-content');
+                if (!rail) return;
+                rail.innerHTML = `<section class="comparison-rail-overview">
+                    <div class="comparison-rail-metrics">
+                        <span><strong>${escapeHtml(occurrences.length)}</strong> occurrences</span>
+                        <span><strong>${escapeHtml(mappedAtoms || '—')}</strong> mapped atoms</span>
+                        <span><strong>${escapeHtml(interactionLabels)}</strong> interaction labels</span>
+                    </div>
+                    <div class="comparison-rail-actions">
+                        <a class="button-secondary" href="${escapeHtml(VLiSEMODWorkspace.paramsUrl('/ligand_indexer', { ligand }))}">Open Ligand Indexer</a>
+                        <button type="button" class="button-secondary workspace-copy-link" data-url="${escapeHtml(canonicalUrl)}">Copy link</button>
+                        <a class="button-secondary" href="/compare_ligands">Clear</a>
+                    </div>
+                </section>
+                <section class="comparison-occurrence-section">
+                    <div class="comparison-occurrence-heading"><h3>Selected occurrences</h3><span>${escapeHtml(ligand)}</span></div>
+                    <div class="comparison-occurrence-grid">${occurrenceCards}</div>
+                </section>
+                <details class="comparison-methods"><summary>Analysis details</summary><p>Occurrence-resolved CIF-to-SMILES mapping and PDBe Arpeggio contact analysis.</p></details>`;
+            }
+
+            function buildProtacabilityUrl(params) {
+                return `/protacability_page?${new URLSearchParams(params).toString()}`;
+            }
+
             // Generate carousel navigation
             let currentChartIndex = 0;
             const charts = ['donutChart', 'scatterPlot', 'barChart', 'atomBarChart'];
@@ -589,6 +710,7 @@
                 $('#pdb_residues_grid .checkbox-item').removeClass('is-selected');
                 $('input[name="pdb_residues"]:checked').closest('.checkbox-item').addClass('is-selected');
                 $('#results-container').toggleClass('many-selected', selectedCount > MANY_SELECTED_THRESHOLD);
+                $('#showComparisonButton').prop('disabled', selectedCount === 0);
             }
 
             $(document).on('change', 'input[name="pdb_residues"]', function() {
@@ -630,7 +752,7 @@
                     insidetextorientation: 'radial'
                 }];
 
-                const dynamicHeight = Math.min(820, Math.max(560, 460 + selectedCount * 24));
+                const dynamicHeight = Math.min(680, Math.max(460, 390 + selectedCount * 20));
                 const layout = getPlotLayout('Interaction Types Distribution', selectedCount, {
                     height: dynamicHeight,
                     margin: { l: 24, r: 24, t: 68, b: selectedCount > 6 ? 132 : 96 }
@@ -659,7 +781,7 @@
                 };
 
                 interactions_data.forEach(pdbData => {
-                    let pdb_id = pdbData.pdb_id;
+                    let pdb_id = pdbData.occurrence_label || pdbData.pdb_id;
                     let interactionMap = {};
 
                     pdbData.interactions.forEach(interaction => {
@@ -689,7 +811,7 @@
                     }
                 });
 
-                const dynamicHeight = Math.min(1000, Math.max(680, 520 + selectedCount * 42));
+                const dynamicHeight = Math.min(820, Math.max(560, 450 + selectedCount * 32));
                 const layout = getPlotLayout('Interaction Type vs Distance', selectedCount, {
                     xaxis: { title: 'Distance', automargin: true },
                     yaxis: { title: 'Interaction Type', type: 'category', automargin: true },
@@ -713,7 +835,7 @@
                 };
 
                 interactions_data.forEach(pdbData => {
-                    let pdb_id = pdbData.pdb_id;
+                    let pdb_id = pdbData.occurrence_label || pdbData.pdb_id;
                     pdbInteractionMap[pdb_id] = {};
 
                     pdbData.interactions.forEach(interaction => {
@@ -752,7 +874,7 @@
                     });
                 });
 
-                const dynamicHeight = Math.min(980, Math.max(680, 520 + selectedCount * 38));
+                const dynamicHeight = Math.min(800, Math.max(540, 440 + selectedCount * 32));
                 const layout = getPlotLayout('Stacked Interaction Counts per PDB', selectedCount, {
                     barmode: 'stack',
                     height: dynamicHeight,
@@ -804,7 +926,7 @@
                 const maxHoverEntries = 10;
     
                 smiles_interactions_data.forEach(pdbData => {
-                    let pdb_id = pdbData.pdb_id;
+                    let pdb_id = pdbData.occurrence_label || pdbData.pdb_id;
     
                     pdbData.interactions.forEach(interaction => {
                         let atom = interaction.smiles_atom_index;
@@ -853,7 +975,7 @@
                     });
                 });
     
-                const dynamicHeight = Math.min(1050, Math.max(720, 540 + selectedCount * 42));
+                const dynamicHeight = Math.min(860, Math.max(600, 480 + selectedCount * 36));
                 const layout = getPlotLayout('Interactions per Atom (SMILES Atom Index)', selectedCount, {
                     barmode: 'stack',
                     xaxis: {

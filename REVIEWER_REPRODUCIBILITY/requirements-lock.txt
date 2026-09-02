@@ -1,0 +1,9 @@
+# Conda environment lock companion. Install with: conda env create -f environment.yml
+# OpenBabel is supplied by conda-forge because pdbe-arpeggio requires its executable.
+gemmi==0.7.5
+biopython==1.88
+numpy==2.4.4
+scipy==1.18.0
+pandas==3.0.3
+rdkit==2026.3.1
+pdbe-arpeggio==1.4.4

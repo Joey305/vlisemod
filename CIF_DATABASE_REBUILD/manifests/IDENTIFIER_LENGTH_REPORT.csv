@@ -1,0 +1,17 @@
+field,length,count,examples
+_entry.id,4,11533,1A1N | 1A1O | 1A1T | 1A30 | 1A43 | 1A7G | 1A8G | 1A8K | 1A8O | 1A94
+_atom_site.label_comp_id,1,2328495,A | C | F | G | K | N | U
+_atom_site.label_comp_id,2,493963,AI | AU | BR | CA | CD | CL | CO | DA | DC | DG
+_atom_site.label_comp_id,3,120161724,006 | 010 | 016 | 017 | 02J | 031 | 03G | 04R | 05R | 065
+_atom_site.label_comp_id,5,13076,A1AA0 | A1AAD | A1AD0 | A1ADM | A1ADS | A1AGA | A1AGB | A1AGE | A1AGF | A1AGG
+_atom_site.auth_comp_id,1,2328495,A | C | F | G | K | N | U
+_atom_site.auth_comp_id,2,493963,AI | AU | BR | CA | CD | CL | CO | DA | DC | DG
+_atom_site.auth_comp_id,3,120161724,006 | 010 | 016 | 017 | 02J | 031 | 03G | 04R | 05R | 065
+_atom_site.auth_comp_id,5,13076,A1AA0 | A1AAD | A1AD0 | A1ADM | A1ADS | A1AGA | A1AGB | A1AGE | A1AGF | A1AGG
+_atom_site.auth_asym_id,1,110983948,0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
+_atom_site.auth_asym_id,2,11692111,0A | 0B | 0C | 0D | 0E | 10 | 11 | 12 | 13 | 14
+_atom_site.auth_asym_id,3,321055,AAA | AaA | BBB | CCC | DDD | DbD | EEE | FFF | GGG | HHH
+_atom_site.auth_asym_id,4,144,D000
+_atom_site.label_asym_id,1,109976170,A | B | C | D | E | F | G | H | I | J
+_atom_site.label_asym_id,2,8942829,AA | AB | AC | AD | AE | AF | AG | AH | AI | AJ
+_atom_site.label_asym_id,3,4078259,AAA | ABA | ACA | ADA | AEA | AFA | AGA | AHA | AIA | AJA

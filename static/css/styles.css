@@ -2141,6 +2141,30 @@ body.protacability-page .status-card.status-warning.protacability-callout strong
     letter-spacing: 0.01em;
 }
 
+.protacability-page .attachment-region-cell {
+    width: 205px;
+    min-width: 205px;
+    max-width: none !important;
+}
+
+.protacability-page .attachment-region-badge {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-start;
+    min-width: 170px;
+    max-width: 100%;
+    overflow-wrap: normal;
+    word-break: normal;
+}
+
+.protacability-page .attachment-region-label {
+    white-space: nowrap;
+}
+
+.protacability-page .attachment-region-value {
+    white-space: normal;
+}
+
 .protacability-page .context-candidate_small_molecule {
     background: rgba(11, 83, 53, 0.12);
     color: #0b5335;
@@ -2172,10 +2196,61 @@ body.protacability-page .status-card.status-warning.protacability-callout strong
 }
 
 .protacability-page .protacability-detail-modal {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
     width: min(1200px, calc(100vw - 32px));
-    max-height: calc(100vh - 32px);
-    overflow-y: auto;
+    max-height: calc(100dvh - 32px);
+    margin: 16px auto;
+    padding: 22px;
+    overflow: hidden;
     overflow-x: hidden;
+}
+
+.protacability-page #protacability-detail-modal {
+    padding: 16px;
+    overflow-y: auto;
+}
+
+.protacability-page #protac-detail-content {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-right: 8px;
+}
+
+.protacability-page .protac-detail-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-shrink: 0;
+    margin-top: 16px;
+    padding: 14px 16px;
+    border: 1px solid var(--border-soft);
+    border-radius: 16px;
+    background: var(--card-bg);
+    box-shadow: 0 -10px 24px rgba(8, 58, 37, 0.08);
+}
+
+.protacability-page .protac-detail-footer.hidden {
+    display: none;
+}
+
+.protacability-page .protac-detail-footer-copy {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+}
+
+.protacability-page .protac-detail-footer-copy span {
+    overflow-wrap: anywhere;
+}
+
+.protacability-page .protac-detail-footer .action-row {
+    justify-content: flex-end;
+    margin: 0;
 }
 
 .protacability-page .protac-target-browser {
@@ -2446,7 +2521,7 @@ html[data-theme="dark"] .protacability-page .attachment-atom-pill.surface:not(.c
 
 .protacability-page #protacability-table {
     width: 100%;
-    min-width: 980px;
+    min-width: 0;
     table-layout: fixed;
 }
 
@@ -2462,6 +2537,8 @@ html[data-theme="dark"] .protacability-page .attachment-atom-pill.surface:not(.c
 
 .protacability-page #protacability-table td:last-child,
 .protacability-page #protacability-table th:last-child {
+    width: 98px;
+    min-width: 98px;
     white-space: nowrap;
 }
 
@@ -2537,6 +2614,79 @@ html[data-theme="dark"] .protacability-page .attachment-atom-pill.surface:not(.c
 .protacability-page .compact-detail-button {
     padding: 8px 12px;
     font-size: 0.9rem;
+}
+
+/* Keep the assessment summary actionable without requiring horizontal scrolling. */
+.protacability-page #protacability-table th,
+.protacability-page #protacability-table td {
+    padding: 10px 8px;
+}
+
+.protacability-page #protacability-table .attachment-region-cell {
+    width: auto;
+    min-width: 0;
+}
+
+.protacability-page #protacability-table .attachment-region-badge {
+    min-width: 0;
+    padding: 5px 8px;
+    font-size: 0.76rem;
+}
+
+.protacability-page #protacability-table .attachment-region-label {
+    white-space: normal;
+}
+
+.protacability-page #protacability-table .compact-detail-button {
+    width: 100%;
+    padding: 7px 6px;
+    font-size: 0.82rem;
+}
+
+.protacability-page #protacability-table[data-view="summary"] th:nth-child(1),
+.protacability-page #protacability-table[data-view="summary"] td:nth-child(1) { width: 9%; }
+.protacability-page #protacability-table[data-view="summary"] th:nth-child(2),
+.protacability-page #protacability-table[data-view="summary"] td:nth-child(2) { width: 8.5%; }
+.protacability-page #protacability-table[data-view="summary"] th:nth-child(3),
+.protacability-page #protacability-table[data-view="summary"] td:nth-child(3) { width: 9.5%; }
+.protacability-page #protacability-table[data-view="summary"] th:nth-child(4),
+.protacability-page #protacability-table[data-view="summary"] td:nth-child(4) { width: 11.5%; }
+.protacability-page #protacability-table[data-view="summary"] th:nth-child(5),
+.protacability-page #protacability-table[data-view="summary"] td:nth-child(5) { width: 8%; }
+.protacability-page #protacability-table[data-view="summary"] th:nth-child(6),
+.protacability-page #protacability-table[data-view="summary"] td:nth-child(6) { width: 9.5%; }
+.protacability-page #protacability-table[data-view="summary"] th:nth-child(7),
+.protacability-page #protacability-table[data-view="summary"] td:nth-child(7) { width: 5.5%; }
+.protacability-page #protacability-table[data-view="summary"] th:nth-child(8),
+.protacability-page #protacability-table[data-view="summary"] td:nth-child(8) { width: 5.5%; }
+.protacability-page #protacability-table[data-view="summary"] th:nth-child(9),
+.protacability-page #protacability-table[data-view="summary"] td:nth-child(9) { width: 15%; }
+.protacability-page #protacability-table[data-view="summary"] th:nth-child(10),
+.protacability-page #protacability-table[data-view="summary"] td:nth-child(10) {
+    width: 8.5%;
+    min-width: 0;
+    white-space: normal;
+}
+
+.protacability-page .protac-result-row {
+    cursor: pointer;
+    transition: background-color 160ms ease, box-shadow 160ms ease;
+}
+
+.protacability-page .protac-result-row:hover {
+    background: rgba(11, 83, 53, 0.07);
+}
+
+.protacability-page .protac-result-row:focus {
+    outline: 3px solid rgba(244, 115, 33, 0.58);
+    outline-offset: -3px;
+    background: rgba(244, 115, 33, 0.08);
+}
+
+@media (max-width: 760px) {
+    .protacability-page #protacability-table {
+        min-width: 760px;
+    }
 }
 
 .protacability-page .protacability-pagination {
@@ -3956,6 +4106,35 @@ html[data-theme="dark"] .about-page .about-warning-strip {
         width: 100%;
     }
 }
+
+/* Shared research-workspace components (Phase 1). */
+.workspace-region { display: grid; gap: 1rem; margin: 1.25rem 0; }
+.workspace-region.hidden { display: none; }
+.workspace-context, .workspace-summary, .workspace-next, .workspace-provenance, .workspace-occurrence-card, .workspace-no-data { border: 1px solid var(--border-soft); background: var(--card-bg); border-radius: 16px; padding: 1rem 1.1rem; box-shadow: var(--card-shadow); }
+.workspace-context { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.workspace-eyebrow { display: block; color: var(--text-muted); font-size: .74rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; margin-bottom: .38rem; }
+.workspace-chips, .workspace-utility { display: flex; flex-wrap: wrap; gap: .45rem; align-items: center; }
+.workspace-chip { border-radius: 999px; background: rgba(11,83,53,.1); color: var(--heading-color); font-weight: 750; padding: .34rem .65rem; }
+.workspace-occurrence-card { display: grid; gap: .2rem; border-left: 4px solid var(--accent-color); }
+.workspace-occurrence-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: .75rem; }
+.workspace-occurrence-card strong { color: var(--heading-color); font-size: 1.08rem; }
+.workspace-occurrence-card span, .workspace-occurrence-card small { color: var(--text-muted); }
+.workspace-summary h2, .workspace-no-data h2 { margin: 0 0 .55rem; font-size: 1.1rem; color: var(--heading-color); }
+.workspace-summary p, .workspace-no-data p { margin: .65rem 0 0; }
+.workspace-metrics { display: flex; flex-wrap: wrap; gap: .7rem; }
+.workspace-metrics > div { min-width: 130px; padding: .5rem .7rem; border-radius: 10px; background: rgba(11,83,53,.06); }
+.workspace-metrics strong, .workspace-metrics span { display: block; }
+.workspace-metrics strong { color: var(--heading-color); font-size: 1.12rem; }
+.workspace-metrics span { color: var(--text-muted); font-size: .82rem; }
+.workspace-provenance summary { cursor: pointer; color: var(--heading-color); font-weight: 800; }
+.workspace-provenance ul { display: grid; gap: .7rem; padding: .85rem 0 0; margin: 0; list-style: none; }
+.workspace-provenance li { display: grid; gap: .08rem; }
+.workspace-provenance li span, .workspace-provenance li small { color: var(--text-muted); }
+.workspace-provenance li small { font-family: monospace; font-size: .76rem; }
+.workspace-no-data { border-left: 4px solid var(--accent-color); }
+.workspace-next .action-row { display: flex; width: 100%; min-width: 0; flex-wrap: wrap; }
+.workspace-next .action-row a { flex: 1 1 180px; min-width: 0; max-width: 100%; white-space: normal; overflow-wrap: anywhere; text-align: center; }
+@media (max-width: 760px) { .workspace-context { align-items: stretch; flex-direction: column; } .workspace-utility .button-secondary { flex: 1 1 auto; } }
 
 @media (prefers-reduced-motion: reduce) {
     .about-page .about-reveal,
@@ -6953,6 +7132,178 @@ body.dark-mode .ligand-structure-viewer {
 .comparison-page #molecule_container svg,
 .comparison-page #molecule_container img {
     max-height: 420px !important;
+}
+
+/* Compact comparison rail: keeps occurrence identity and downstream actions
+   in the unused map-column space instead of creating implicit grid rows. */
+.comparison-page .comparison-rail {
+    display: grid;
+    gap: 0.85rem;
+    margin-top: 1rem;
+}
+
+.comparison-page .comparison-rail-overview,
+.comparison-page .comparison-occurrence-section,
+.comparison-page .comparison-methods {
+    border: 1px solid rgba(8, 58, 37, 0.1);
+    border-radius: 16px;
+    background: rgba(247, 251, 248, 0.82);
+}
+
+.comparison-page .comparison-rail-overview {
+    display: grid;
+    gap: 0.7rem;
+    padding: 0.85rem;
+}
+
+.comparison-page .comparison-rail-metrics {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.45rem;
+}
+
+.comparison-page .comparison-rail-metrics span {
+    display: grid;
+    gap: 0.12rem;
+    color: var(--text-muted);
+    font-size: 0.74rem;
+    line-height: 1.25;
+}
+
+.comparison-page .comparison-rail-metrics strong {
+    color: var(--heading-color);
+    font-size: 1rem;
+}
+
+.comparison-page .comparison-rail-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.45rem;
+}
+
+.comparison-page .comparison-rail-actions > * {
+    width: 100%;
+    min-height: auto;
+    padding: 0.5rem 0.55rem;
+    font-size: 0.78rem;
+    line-height: 1.25;
+    text-align: center;
+}
+
+.comparison-page .comparison-rail-actions > :first-child {
+    grid-column: 1 / -1;
+}
+
+.comparison-page .comparison-occurrence-section {
+    padding: 0.85rem;
+}
+
+.comparison-page .comparison-occurrence-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.65rem;
+    margin-bottom: 0.65rem;
+}
+
+.comparison-page .comparison-occurrence-heading h3 {
+    margin: 0;
+    color: var(--heading-color);
+    font-size: 0.94rem;
+}
+
+.comparison-page .comparison-occurrence-heading span {
+    padding: 0.25rem 0.55rem;
+    border-radius: 999px;
+    background: rgba(11, 83, 53, 0.08);
+    color: var(--heading-color);
+    font-size: 0.74rem;
+    font-weight: 800;
+}
+
+.comparison-page .comparison-occurrence-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.55rem;
+}
+
+.comparison-page .comparison-occurrence-card {
+    display: grid;
+    gap: 0.3rem;
+    align-content: start;
+    min-width: 0;
+    padding: 0.7rem;
+    border: 1px solid rgba(8, 58, 37, 0.1);
+    border-left: 3px solid var(--accent-color);
+    border-radius: 12px;
+    background: var(--card-bg);
+}
+
+.comparison-page .comparison-occurrence-card strong,
+.comparison-page .comparison-occurrence-card span,
+.comparison-page .comparison-occurrence-card small {
+    overflow-wrap: anywhere;
+}
+
+.comparison-page .comparison-occurrence-card strong {
+    display: block;
+    color: var(--heading-color);
+    font-size: 0.94rem;
+}
+
+.comparison-page .comparison-occurrence-card span,
+.comparison-page .comparison-occurrence-card small {
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    line-height: 1.3;
+}
+
+.comparison-page .comparison-occurrence-card .button-secondary {
+    width: 100%;
+    min-height: auto;
+    margin-top: 0.2rem;
+    padding: 0.45rem 0.5rem;
+    font-size: 0.73rem;
+    line-height: 1.25;
+    text-align: center;
+}
+
+.comparison-page .comparison-methods {
+    padding: 0.65rem 0.85rem;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+}
+
+.comparison-page .comparison-methods summary {
+    color: var(--heading-color);
+    font-weight: 750;
+    cursor: pointer;
+}
+
+.comparison-page .comparison-methods p {
+    margin: 0.55rem 0 0;
+    line-height: 1.4;
+}
+
+/* Let the active Plotly chart set its own height; prior minimums left a large
+   blank panel beneath compact charts such as the four-occurrence donut. */
+.comparison-page .chart-frame,
+.comparison-page .carousel-graph {
+    min-height: 0;
+    height: auto;
+}
+
+@media (max-width: 1180px) {
+    .comparison-page .comparison-occurrence-grid {
+        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    }
+}
+
+@media (max-width: 480px) {
+    .comparison-page .comparison-rail-metrics,
+    .comparison-page .comparison-occurrence-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 /* Dark mode support */

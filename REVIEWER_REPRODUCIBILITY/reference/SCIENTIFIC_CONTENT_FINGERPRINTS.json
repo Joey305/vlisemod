@@ -1,0 +1,33 @@
+{
+  "components": {
+    "attachment_sites": {
+      "rows": 227080,
+      "sha256": "65f864fa1c188df9ed51270c7543f9d0a05f98d0bf68bd11f5646c409b0560f8"
+    },
+    "functional_groups": {
+      "rows": 7335,
+      "sha256": "6da4387abf64f0244c2761ebcc6dac53ce137687d095b5fa05654d0bf81bc275"
+    },
+    "ligand_instances": {
+      "rows": 7355,
+      "sha256": "17c6c53f4d7042c2f12943ffd82002a536981864c1543db4985411d2fb78367c"
+    },
+    "mapping": {
+      "rows": 7335,
+      "sha256": "f730a5e76f70edc29968e03f443f500a7ea200c24d6b22a3f11594e5116a93c4"
+    },
+    "protacability": {
+      "rows": 9462,
+      "sha256": "86f07d55ec7dd112412ec36df2b56453e0a5dff36ae30d4081b0a1b2e6a9bc8c"
+    },
+    "sasa": {
+      "rows": 227080,
+      "sha256": "b70c5b215993ab0b4e7c56e1bccc69bd0e2e81a88d92f3c5c9f21a283f4b5923"
+    },
+    "target_context": {
+      "rows": 7355,
+      "sha256": "3cd847a42692e93e0c010336c9e7ecbf0420a31d897f5131007bb1e36786b76c"
+    }
+  },
+  "version": "scientific-content-fingerprint-v1"
+}

@@ -1,0 +1,1241 @@
+{
+  "checks": [
+    {
+      "detail": "",
+      "expected": 1,
+      "name": "table exists: structures",
+      "observed": 1,
+      "section": "Schema",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 1,
+      "name": "table exists: ligands",
+      "observed": 1,
+      "section": "Schema",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 1,
+      "name": "table exists: ligand_instances",
+      "observed": 1,
+      "section": "Schema",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 1,
+      "name": "table exists: ligand_instance_atoms",
+      "observed": 1,
+      "section": "Schema",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 1,
+      "name": "table exists: analysis_runs",
+      "observed": 1,
+      "section": "Schema",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 1,
+      "name": "table exists: pipeline_failures",
+      "observed": 1,
+      "section": "Schema",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 1,
+      "name": "table exists: mapping_remediation_queue",
+      "observed": 1,
+      "section": "Schema",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 1,
+      "name": "table exists: ligand_mapping_runs",
+      "observed": 1,
+      "section": "Schema",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 1,
+      "name": "table exists: ligand_smiles_atom_mapping",
+      "observed": 1,
+      "section": "Schema",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 1,
+      "name": "table exists: ligand_sasa_atoms",
+      "observed": 1,
+      "section": "Schema",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 1,
+      "name": "table exists: ligand_arpeggio_runs",
+      "observed": 1,
+      "section": "Schema",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 1,
+      "name": "table exists: arpeggio_raw_contact_labels",
+      "observed": 1,
+      "section": "Schema",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 1,
+      "name": "table exists: arpeggio_unique_atom_pairs",
+      "observed": 1,
+      "section": "Schema",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 1,
+      "name": "table exists: protacability_ligand_inventory",
+      "observed": 1,
+      "section": "Schema",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 1,
+      "name": "table exists: ligand_atom_geometry",
+      "observed": 1,
+      "section": "Schema",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 1,
+      "name": "table exists: target_chain_geometry",
+      "observed": 1,
+      "section": "Schema",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 1,
+      "name": "table exists: target_surface_lysines",
+      "observed": 1,
+      "section": "Schema",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 1,
+      "name": "table exists: ligand_functional_group_matches",
+      "observed": 1,
+      "section": "Schema",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 1,
+      "name": "table exists: ligand_functional_group_atoms",
+      "observed": 1,
+      "section": "Schema",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 1,
+      "name": "table exists: ligand_functional_group_summary",
+      "observed": 1,
+      "section": "Schema",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 1,
+      "name": "table exists: protacability_warhead_linkability",
+      "observed": 1,
+      "section": "Schema",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 1,
+      "name": "table exists: protacability_target_context",
+      "observed": 1,
+      "section": "Schema",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 1,
+      "name": "table exists: protacability_assessment",
+      "observed": 1,
+      "section": "Schema",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 1,
+      "name": "table exists: protacability_degrader_readiness",
+      "observed": 1,
+      "section": "Schema",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 1,
+      "name": "table exists: protacability_attachment_sites",
+      "observed": 1,
+      "section": "Schema",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 1,
+      "name": "table exists: protacability_attachment_site_summary",
+      "observed": 1,
+      "section": "Schema",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 1,
+      "name": "view exists: v2_structure_context",
+      "observed": 1,
+      "section": "Compatibility",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 1,
+      "name": "view exists: v2_ligand_context",
+      "observed": 1,
+      "section": "Compatibility",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 1,
+      "name": "view exists: v2_ligand_atom_evidence",
+      "observed": 1,
+      "section": "Compatibility",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 1,
+      "name": "view exists: v2_ligand_comparison_atom_contacts",
+      "observed": 1,
+      "section": "Compatibility",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 1,
+      "name": "view exists: v2_all_chain_lysine_geometry",
+      "observed": 1,
+      "section": "Compatibility",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 1,
+      "name": "view exists: v2_target_lysine_accessibility",
+      "observed": 1,
+      "section": "Compatibility",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 1,
+      "name": "view exists: v2_protacability_target_context",
+      "observed": 1,
+      "section": "Compatibility",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 1,
+      "name": "view exists: v2_protacability_best",
+      "observed": 1,
+      "section": "Compatibility",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 1,
+      "name": "view exists: v2_attachment_site_candidates",
+      "observed": 1,
+      "section": "Compatibility",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 1,
+      "name": "view exists: v2_attachment_site_high_priority",
+      "observed": 1,
+      "section": "Compatibility",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 1,
+      "name": "view exists: v2_attachment_site_summary",
+      "observed": 1,
+      "section": "Compatibility",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 1,
+      "name": "view exists: Virus_Proteins",
+      "observed": 1,
+      "section": "Compatibility",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 1,
+      "name": "view exists: Ligand_Atoms_Smiles",
+      "observed": 1,
+      "section": "Compatibility",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 1,
+      "name": "view exists: Functional_GROUPED",
+      "observed": 1,
+      "section": "Compatibility",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 1,
+      "name": "view exists: ligand_atoms",
+      "observed": 1,
+      "section": "Compatibility",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 1,
+      "name": "view exists: solvent_exposed_atoms",
+      "observed": 1,
+      "section": "Compatibility",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 1,
+      "name": "view exists: RUPLEY_SASA_DATA",
+      "observed": 1,
+      "section": "Compatibility",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 1,
+      "name": "view exists: SMILES_MAP_PDB",
+      "observed": 1,
+      "section": "Compatibility",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 1,
+      "name": "view exists: Functional_Group_Atoms",
+      "observed": 1,
+      "section": "Compatibility",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 1,
+      "name": "view exists: Arpeggio_Contacts_Data",
+      "observed": 1,
+      "section": "Compatibility",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 1,
+      "name": "view exists: receptor_binding_pocket",
+      "observed": 1,
+      "section": "Compatibility",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 1,
+      "name": "view exists: Covalent_Noncovalent",
+      "observed": 1,
+      "section": "Compatibility",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 1,
+      "name": "view exists: distal_atoms",
+      "observed": 1,
+      "section": "Compatibility",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 23,
+      "name": "all expected compatibility views present",
+      "observed": 23,
+      "section": "Compatibility",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": "legacy_mcs_etkdg_uff_cif_v2.5",
+      "name": "07_map_cif_atoms_to_smiles.py VERSION",
+      "observed": "legacy_mcs_etkdg_uff_cif_v2.5",
+      "section": "Code freeze",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": "biopython-shrake_rupley-1.40-cif-v2.1",
+      "name": "08_calculate_ligand_sasa.py VERSION",
+      "observed": "biopython-shrake_rupley-1.40-cif-v2.1",
+      "section": "Code freeze",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": "arpeggio-cif-v2.2",
+      "name": "09_run_arpeggio.py VERSION",
+      "observed": "arpeggio-cif-v2.2",
+      "section": "Code freeze",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": "cif-ligand-geometry-v2.4",
+      "name": "10_calculate_ligand_geometry.py VERSION",
+      "observed": "cif-ligand-geometry-v2.4",
+      "section": "Code freeze",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": "rdkit-smarts-functional-groups-v2.3",
+      "name": "11_assign_functional_groups.py VERSION",
+      "observed": "rdkit-smarts-functional-groups-v2.3",
+      "section": "Code freeze",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": "protacability-cif-v2.8",
+      "name": "12_build_protacability.py VERSION",
+      "observed": "protacability-cif-v2.8",
+      "section": "Code freeze",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": "attachment-sites-cif-v2.6",
+      "name": "13_build_attachment_sites.py VERSION",
+      "observed": "attachment-sites-cif-v2.6",
+      "section": "Code freeze",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": "compatibility-views-cif-v2.7",
+      "name": "14_build_compatibility_views.py VERSION",
+      "observed": "compatibility-views-cif-v2.7",
+      "section": "Code freeze",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 11533,
+      "name": "frozen mmCIF manifest rows",
+      "observed": 11533,
+      "section": "Foundation",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 7610,
+      "name": "structure rows",
+      "observed": 7610,
+      "section": "Foundation",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 7610,
+      "name": "unique PDB entries",
+      "observed": 7610,
+      "section": "Foundation",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 7355,
+      "name": "retained ligand instances",
+      "observed": 7355,
+      "section": "Foundation",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 7335,
+      "name": "resolved-chemistry denominator",
+      "observed": 7335,
+      "section": "Foundation",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 20,
+      "name": "included instances without resolved chemistry",
+      "observed": 20,
+      "section": "Foundation",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 7335,
+      "name": "mapping population",
+      "observed": 7335,
+      "section": "Stage 07 mapping",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": {
+        "complete": 3864,
+        "complete_altloc_resolved": 570,
+        "partial_ccd_difference": 2182,
+        "skipped_pending_remediation": 719
+      },
+      "name": "mapping status distribution",
+      "observed": {
+        "complete": 3864,
+        "complete_altloc_resolved": 570,
+        "partial_ccd_difference": 2182,
+        "skipped_pending_remediation": 719
+      },
+      "section": "Stage 07 mapping",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 6616,
+      "name": "downstream-eligible mappings",
+      "observed": 6616,
+      "section": "Stage 07 mapping",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 719,
+      "name": "pending remediation population",
+      "observed": 719,
+      "section": "Stage 07 mapping",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 0,
+      "name": "failed/time-out mappings",
+      "observed": 0,
+      "section": "Stage 07 mapping",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 0,
+      "name": "unique SMILES index per occurrence",
+      "observed": 0,
+      "section": "Stage 07 mapping",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 7355,
+      "name": "instance coverage",
+      "observed": 7355,
+      "section": "Stage 08 SASA",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 0,
+      "name": "1.40 A / 100-point / HOH-removed parameter consistency",
+      "observed": 0,
+      "section": "Stage 08 SASA",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 0,
+      "name": "selected ligand atoms missing SASA",
+      "observed": 0,
+      "section": "Stage 08 SASA",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 7355,
+      "name": "latest completed outcomes in included release population",
+      "observed": 7355,
+      "section": "Stage 09 Arpeggio",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 0,
+      "name": "latest unresolved outcomes in included release population",
+      "observed": 0,
+      "section": "Stage 09 Arpeggio",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 0,
+      "name": "duplicate latest outcome keys in included release population",
+      "observed": 0,
+      "section": "Stage 09 Arpeggio",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 0,
+      "name": "included instances without Arpeggio outcome",
+      "observed": 0,
+      "section": "Stage 09 Arpeggio",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 7355,
+      "name": "inventory coverage",
+      "observed": 7355,
+      "section": "Stage 10 geometry",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 7308,
+      "name": "protein-applicable instances",
+      "observed": 7308,
+      "section": "Stage 10 geometry",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 47,
+      "name": "no-protein not-applicable instances",
+      "observed": 47,
+      "section": "Stage 10 geometry",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 0,
+      "name": "unexpected geometry statuses",
+      "observed": 0,
+      "section": "Stage 10 geometry",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 7335,
+      "name": "complete summaries",
+      "observed": 7335,
+      "section": "Stage 11 functional groups",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 53224,
+      "name": "SMARTS match count",
+      "observed": 53224,
+      "section": "Stage 11 functional groups",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 134419,
+      "name": "mapped functional-group atom occurrences",
+      "observed": 134419,
+      "section": "Stage 11 functional groups",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 24472,
+      "name": "unmapped functional-group atom occurrences",
+      "observed": 24472,
+      "section": "Stage 11 functional groups",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 0,
+      "name": "unmapped FG atoms on complete/altloc-complete mappings",
+      "observed": 0,
+      "section": "Stage 11 functional groups",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 0,
+      "name": "mapped FG atoms lacking element validation",
+      "observed": 0,
+      "section": "Stage 11 functional groups",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 7355,
+      "name": "warhead/linkability coverage",
+      "observed": 7355,
+      "section": "Stage 12 PROTACability",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": {
+        "applicable_contacting_protein_chain": 6784,
+        "not_applicable_no_contacting_protein_chain": 524,
+        "not_applicable_no_protein_atoms": 47
+      },
+      "name": "target-context distribution",
+      "observed": {
+        "applicable_contacting_protein_chain": 6784,
+        "not_applicable_no_contacting_protein_chain": 524,
+        "not_applicable_no_protein_atoms": 47
+      },
+      "section": "Stage 12 PROTACability",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 6784,
+      "name": "assessed ligand instances",
+      "observed": 6784,
+      "section": "Stage 12 PROTACability",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 9462,
+      "name": "target-chain assessment rows",
+      "observed": 9462,
+      "section": "Stage 12 PROTACability",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 6784,
+      "name": "readiness instance coverage",
+      "observed": 6784,
+      "section": "Stage 12 PROTACability",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 9462,
+      "name": "readiness row count",
+      "observed": 9462,
+      "section": "Stage 12 PROTACability",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": {
+        "Exploratory degrader-design readiness": 173,
+        "High degrader-design readiness": 6579,
+        "Moderate degrader-design readiness": 2289,
+        "Weak degrader-design readiness": 421
+      },
+      "name": "readiness tier distribution",
+      "observed": {
+        "Exploratory degrader-design readiness": 173,
+        "High degrader-design readiness": 6579,
+        "Moderate degrader-design readiness": 2289,
+        "Weak degrader-design readiness": 421
+      },
+      "section": "Stage 12 PROTACability",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 0,
+      "name": "all target rows supported by direct Stage-09 protein contact",
+      "observed": 0,
+      "section": "Stage 12 PROTACability",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 0,
+      "name": "surface-lysine score recomputes from NZ coverage/SASA only",
+      "observed": 0,
+      "section": "Stage 12 PROTACability",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 0,
+      "name": "readiness score recomputes from warhead + surface lysines only",
+      "observed": 0,
+      "section": "Stage 12 PROTACability",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 0,
+      "name": "ligand-to-lysine proximity disabled in readiness rows",
+      "observed": 0,
+      "section": "Stage 12 PROTACability",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 0,
+      "name": "zero accessible NZ cannot be Moderate/High",
+      "observed": 0,
+      "section": "Stage 12 PROTACability",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 0,
+      "name": "exactly one best target chain per assessed ligand",
+      "observed": 0,
+      "section": "Stage 12 PROTACability",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 7355,
+      "name": "complete instance summaries",
+      "observed": 7355,
+      "section": "Stage 13 attachment sites",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 227080,
+      "name": "atom rows",
+      "observed": 227080,
+      "section": "Stage 13 attachment sites",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 62392,
+      "name": "candidate atoms",
+      "observed": 62392,
+      "section": "Stage 13 attachment sites",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 1544,
+      "name": "High-priority atoms",
+      "observed": 1544,
+      "section": "Stage 13 attachment sites",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 5814,
+      "name": "instances with candidates",
+      "observed": 5814,
+      "section": "Stage 13 attachment sites",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 1120,
+      "name": "instances with High sites",
+      "observed": 1120,
+      "section": "Stage 13 attachment sites",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": {
+        "Exploratory attachment-site priority": 53606,
+        "High attachment-site priority": 1544,
+        "Low attachment-site priority": 164688,
+        "Moderate attachment-site priority": 7242
+      },
+      "name": "priority tier distribution",
+      "observed": {
+        "Exploratory attachment-site priority": 53606,
+        "High attachment-site priority": 1544,
+        "Low attachment-site priority": 164688,
+        "Moderate attachment-site priority": 7242
+      },
+      "section": "Stage 13 attachment sites",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": {
+        "conditional_substitution_site": 18530,
+        "direct_attachment_atom": 9072,
+        "functional_group_context_only": 83144,
+        "unclassified_atom_context": 116334
+      },
+      "name": "atom chemical-role distribution",
+      "observed": {
+        "conditional_substitution_site": 18530,
+        "direct_attachment_atom": 9072,
+        "functional_group_context_only": 83144,
+        "unclassified_atom_context": 116334
+      },
+      "section": "Stage 13 attachment sites",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 0,
+      "name": "candidate-core rule equivalence",
+      "observed": 0,
+      "section": "Stage 13 attachment sites",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 0,
+      "name": "High-rule violations",
+      "observed": 0,
+      "section": "Stage 13 attachment sites",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 0,
+      "name": "High tier/flag consistency",
+      "observed": 0,
+      "section": "Stage 13 attachment sites",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 0,
+      "name": "cross-instance mapping atom joins",
+      "observed": 0,
+      "section": "Occurrence traceability",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 0,
+      "name": "cross-instance SASA atom joins",
+      "observed": 0,
+      "section": "Occurrence traceability",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 0,
+      "name": "cross-instance geometry atom joins",
+      "observed": 0,
+      "section": "Occurrence traceability",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 0,
+      "name": "cross-instance functional-group atom joins",
+      "observed": 0,
+      "section": "Occurrence traceability",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 0,
+      "name": "cross-instance attachment-site atom joins",
+      "observed": 0,
+      "section": "Occurrence traceability",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 0,
+      "name": "cross-instance Arpeggio ligand-atom joins",
+      "observed": 0,
+      "section": "Occurrence traceability",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": [
+        "completed",
+        23,
+        23,
+        0
+      ],
+      "name": "latest build completed 23/23/0",
+      "observed": [
+        "completed",
+        23,
+        23,
+        0
+      ],
+      "section": "Stage 14 compatibility",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": "all tokens present",
+      "name": "v2_target_lysine_accessibility pinned to current evidence",
+      "observed": "all tokens present",
+      "section": "Stage 14 compatibility",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": "all tokens present",
+      "name": "v2_protacability_target_context pinned to current evidence",
+      "observed": "all tokens present",
+      "section": "Stage 14 compatibility",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": "all tokens present",
+      "name": "v2_protacability_best pinned to current evidence",
+      "observed": "all tokens present",
+      "section": "Stage 14 compatibility",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": "all tokens present",
+      "name": "v2_attachment_site_candidates pinned to current evidence",
+      "observed": "all tokens present",
+      "section": "Stage 14 compatibility",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": "all tokens present",
+      "name": "v2_attachment_site_high_priority pinned to current evidence",
+      "observed": "all tokens present",
+      "section": "Stage 14 compatibility",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": "all tokens present",
+      "name": "v2_attachment_site_summary pinned to current evidence",
+      "observed": "all tokens present",
+      "section": "Stage 14 compatibility",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 1,
+      "name": "unique included DR7 occurrence",
+      "observed": 1,
+      "section": "3EKY/DR7 regression",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": [
+        "complete",
+        51,
+        51,
+        51,
+        1.0,
+        1
+      ],
+      "name": "51/51 authoritative mapping",
+      "observed": [
+        "complete",
+        51,
+        51,
+        51,
+        1.0,
+        1
+      ],
+      "section": "3EKY/DR7 regression",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 0,
+      "name": "functional-group mapped atoms element-validated",
+      "observed": 0,
+      "section": "3EKY/DR7 regression",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": {
+        "chains": "A;B",
+        "count": 2,
+        "status": "applicable_contacting_protein_chain"
+      },
+      "name": "direct target chains A;B",
+      "observed": {
+        "contacting_protein_chain_count": 2,
+        "contacting_protein_chain_ids": "A;B",
+        "target_chain_selection_basis": "stage09_arpeggio_direct_protein_contact",
+        "target_context_status": "applicable_contacting_protein_chain"
+      },
+      "section": "3EKY/DR7 regression",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": {
+        "A": 52.86,
+        "B": 81.43
+      },
+      "name": "surface-lysine scores A=52.86, B=81.43",
+      "observed": {
+        "A": 52.86,
+        "B": 81.43
+      },
+      "section": "3EKY/DR7 regression",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 0,
+      "name": "no forced High direct-attachment site",
+      "observed": 0,
+      "section": "3EKY/DR7 regression",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": [
+        "CAO",
+        "CAR",
+        "CAS",
+        "NBD"
+      ],
+      "name": "conditional Moderate sites",
+      "observed": [
+        "CAO",
+        "CAR",
+        "CAS",
+        "NBD"
+      ],
+      "section": "3EKY/DR7 regression",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": "ok",
+      "name": "PRAGMA integrity_check",
+      "observed": "ok",
+      "section": "Database health",
+      "status": "PASS"
+    },
+    {
+      "detail": "",
+      "expected": 0,
+      "name": "PRAGMA foreign_key_check",
+      "observed": 0,
+      "section": "Database health",
+      "status": "PASS"
+    }
+  ],
+  "database": "<author-build-directory>/viral_data_cif_v2.db",
+  "failure_count": 0,
+  "metrics": {
+    "3EKY_DR7_ligand_instance_id": 59418,
+    "arpeggio_excluded_latest_completed": 4,
+    "arpeggio_latest_completed": 7355,
+    "arpeggio_latest_duplicate_keys": 0,
+    "arpeggio_latest_noncomplete": 0,
+    "arpeggio_missing": 0,
+    "attachment_atom_rows": 227080,
+    "attachment_candidate_atoms": 62392,
+    "attachment_chemical_roles": {
+      "conditional_substitution_site": 18530,
+      "direct_attachment_atom": 9072,
+      "functional_group_context_only": 83144,
+      "unclassified_atom_context": 116334
+    },
+    "attachment_high_atoms": 1544,
+    "attachment_instances_with_candidates": 5814,
+    "attachment_instances_with_high": 1120,
+    "attachment_summary_instances": 7355,
+    "attachment_tiers": {
+      "Exploratory attachment-site priority": 53606,
+      "High attachment-site priority": 1544,
+      "Low attachment-site priority": 164688,
+      "Moderate attachment-site priority": 7242
+    },
+    "compatibility_views_present": 23,
+    "foreign_key_errors": 0,
+    "functional_group_complete": 7335,
+    "functional_group_mapped_atoms": 134419,
+    "functional_group_matches": 53224,
+    "functional_group_unmapped_atoms": 24472,
+    "geometry_statuses": {
+      "complete": 7308,
+      "not_applicable_no_protein_atoms": 47
+    },
+    "geometry_total": 7355,
+    "included_ligand_instances": 7355,
+    "integrity_check": "ok",
+    "manifest_cif_files": 11533,
+    "mapping_downstream_eligible": 6616,
+    "mapping_pending_remediation": 719,
+    "mapping_statuses": {
+      "complete": 3864,
+      "complete_altloc_resolved": 570,
+      "partial_ccd_difference": 2182,
+      "skipped_pending_remediation": 719
+    },
+    "mapping_total": 7335,
+    "readiness_instances": 6784,
+    "readiness_rows": 9462,
+    "readiness_tiers": {
+      "Exploratory degrader-design readiness": 173,
+      "High degrader-design readiness": 6579,
+      "Moderate degrader-design readiness": 2289,
+      "Weak degrader-design readiness": 421
+    },
+    "resolved_chemistry_instances": 7335,
+    "sasa_atom_rows": 227080,
+    "sasa_instances": 7355,
+    "structures": 7610,
+    "target_assessed_instances": 6784,
+    "target_chain_rows": 9462,
+    "target_context": {
+      "applicable_contacting_protein_chain": 6784,
+      "not_applicable_no_contacting_protein_chain": 524,
+      "not_applicable_no_protein_atoms": 47
+    },
+    "unique_pdb_entries": 7610,
+    "unresolved_chemistry_instances": 20,
+    "warhead_rows": 7355
+  },
+  "passed": true,
+  "validator_version": "final-release-validation-cif-v2.4",
+  "warning_count": 0
+}

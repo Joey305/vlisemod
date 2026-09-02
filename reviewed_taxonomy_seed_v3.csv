@@ -1,0 +1,86 @@
+virus_name,entity_description,canonical_target_id,canonical_target_name,target_family,entity_role,note
+SARS_CoV_2,3C-like proteinase,sars_cov_2_nsp5,Main protease (nsp5),protease,VIRAL_TARGET,Curated exact: SARS-CoV-2 3CLpro/Mpro = nsp5
+SARS_CoV_2,Spike glycoprotein,sars_cov_2_spike,Spike glycoprotein,spike_protein,VIRAL_TARGET,Curated exact
+SARS_CoV_2,Spike glycoprotein;Fibritin,sars_cov_2_spike,Spike glycoprotein,spike_protein,VIRAL_TARGET_CHIMERIC_ENGINEERED,Spike-fibritin chimeric construct; viral target remains Spike
+SARS_CoV_2,Uridylate-specific endoribonuclease,sars_cov_2_nsp15,Uridylate-specific endoribonuclease (nsp15),nsp_proteins,VIRAL_TARGET,Curated exact: NendoU/nsp15
+SARS_CoV_2,Non-structural protein 8,sars_cov_2_nsp8,Non-structural protein 8 (nsp8),nsp_proteins,VIRAL_TARGET,Curated exact
+SARS_CoV_2,RNA-directed RNA polymerase,sars_cov_2_nsp12,RNA-dependent RNA polymerase (nsp12),polymerase,VIRAL_TARGET,Curated exact
+SARS_CoV_2,Helicase,sars_cov_2_nsp13,Helicase (nsp13),helicase,VIRAL_TARGET,Curated exact
+SARS_CoV_2,ORF3a protein,sars_cov_2_orf3a,ORF3a protein,accessory_proteins,VIRAL_TARGET,Curated exact
+SARS_CoV_2,Replicase polyprotein 1ab,,,,POLYPROTEIN_AMBIGUOUS,"Resolve by aligned mature-product residue range, not description alone"
+SARS_CoV_2,Replicase polyprotein 1a,,,,POLYPROTEIN_AMBIGUOUS,"Resolve by aligned mature-product residue range, not description alone"
+SARS_CoV_2,Fibritin,,Fibritin,,ENGINEERED_COMPONENT,"T4 fibritin/foldon component, not SARS-CoV-2 target"
+SARS_CoV_2,Collagen alpha-1(I) chain,,Collagen alpha-1(I) chain,,HOST_PARTNER,Nonviral protein partner
+SARS_CoV_2,Eukaryotic peptide chain release factor subunit 1,,Eukaryotic peptide chain release factor subunit 1,,HOST_PARTNER,Host translation factor
+SARS_CoV_2,Z-VAD(OMe)-FMK,,Z-VAD(OMe)-FMK,,NONPOLYMER_ARTIFACT,Small molecule; must not be treated as protein target entity
+HIV_1,HIV-1 Tat Peptide,hiv_1_tat,Tat,accessory_proteins,VIRAL_TARGET,Curated exact
+HIV_1,Protein Tat,hiv_1_tat,Tat,accessory_proteins,VIRAL_TARGET,Curated exact
+HIV_1,HIV-1 matrix,hiv_1_matrix,Matrix (p17),matrix_protein,VIRAL_TARGET,Curated exact
+HIV_1,clade A/E 93TH057 HIV-1 gp120 core,hiv_1_gp120,gp120,envelope_glycoprotein,VIRAL_TARGET,Curated exact
+HIV_1,HIV-1 gp120 Clade C1086,hiv_1_gp120,gp120,envelope_glycoprotein,VIRAL_TARGET,Curated exact
+HIV_1,HIV-1 gp120 core,hiv_1_gp120,gp120,envelope_glycoprotein,VIRAL_TARGET,Curated exact
+HIV_1,HIV-1 LM/HT Clade A/E CRF01 gp120 core,hiv_1_gp120,gp120,envelope_glycoprotein,VIRAL_TARGET,Curated exact
+HIV_1,HIV-1 LM/HS clade A/E CRF01 gp120 core,hiv_1_gp120,gp120,envelope_glycoprotein,VIRAL_TARGET,Curated exact
+HIV_1,HIV-1 LM/HT Clade A/E CRF01 gp120,hiv_1_gp120,gp120,envelope_glycoprotein,VIRAL_TARGET,Curated exact
+HIV_1,HIV-1 CA protein,hiv_1_capsid,Capsid (p24),capsid_protein,VIRAL_TARGET,Curated exact
+HIV_1,RETROPEPSIN,hiv_1_protease,Protease,protease,VIRAL_TARGET,Curated exact
+HIV_1,HIV-1 RT A-chain,hiv_1_reverse_transcriptase,Reverse transcriptase,reverse_transcriptase,VIRAL_TARGET,Curated exact
+HIV_1,HIV-1 RT B-chain,hiv_1_reverse_transcriptase,Reverse transcriptase,reverse_transcriptase,VIRAL_TARGET,Curated exact
+HIV_1,HIV-1 RT;A-CHAIN,hiv_1_reverse_transcriptase,Reverse transcriptase,reverse_transcriptase,VIRAL_TARGET,Legacy exact description
+HIV_1,B-CHAIN,hiv_1_reverse_transcriptase,Reverse transcriptase,reverse_transcriptase,VIRAL_TARGET,Legacy paired RT description; use only in HIV RT context
+HIV_1,Gag polyprotein,,,,POLYPROTEIN_AMBIGUOUS,"Resolve MA/CA/NC/p6 by aligned sequence/domain, not folder label"
+HIV_1,Gag protein,,,,POLYPROTEIN_AMBIGUOUS,Description too broad for mature target
+HIV_1,POL PROTEIN,,,,POLYPROTEIN_AMBIGUOUS,Resolve PR/RT/RNase H/IN by aligned sequence/domain
+HIV_1,Pol protein,,,,POLYPROTEIN_AMBIGUOUS,Resolve PR/RT/RNase H/IN by aligned sequence/domain
+HIV_1,Gag-Pol polyprotein (Pr160Gag-Pol),,,,POLYPROTEIN_AMBIGUOUS,Resolve mature product by aligned sequence/domain
+HIV_1,ADP-ribosylation factor 1,,ADP-ribosylation factor 1,,HOST_PARTNER,"Human ARF1, not HIV protein"
+HIV_1,ADP ribosylation factor 1,,ADP-ribosylation factor 1,,HOST_PARTNER,"Human ARF1, spelling variant"
+HIV_1,P300/CBP-associated Factor,,P300/CBP-associated factor,,HOST_PARTNER,Human PCAF
+HIV_1,Cyclin-dependent kinase 9,,Cyclin-dependent kinase 9,,HOST_PARTNER,Human CDK9
+HIV_1,Cyclin-T1,,Cyclin-T1,,HOST_PARTNER,Human CCNT1
+HIV_1,AF4/FMR2 family member 4,,AFF4,,HOST_PARTNER,Human AFF4
+HIV_1,4E10 Fab heavy chain,,4E10 Fab heavy chain,,EXTERNAL_BINDER,"Human antibody chain, not HIV target"
+SARS_CoV_2,Ribosomal protein L3,,Ribosomal protein L3,,HOST_PARTNER,Host ribosomal protein in SARS-CoV-2 translation/ribosome complex; not viral target
+SARS_CoV_2,40S ribosomal protein S23,,40S ribosomal protein S23,,HOST_PARTNER,Host ribosomal protein in SARS-CoV-2 translation/ribosome complex; not viral target
+SARS_CoV_2,Ribosomal protein L23,,Ribosomal protein L23,,HOST_PARTNER,Host ribosomal protein in SARS-CoV-2 translation/ribosome complex; not viral target
+SARS_CoV_2,Ribosomal protein uL2,,Ribosomal protein uL2,,HOST_PARTNER,Host ribosomal protein in SARS-CoV-2 translation/ribosome complex; not viral target
+SARS_CoV_2,eL42,,eL42,,HOST_PARTNER,Host ribosomal protein in SARS-CoV-2 translation/ribosome complex; not viral target
+SARS_CoV_2,60S ribosomal protein L10,,60S ribosomal protein L10,,HOST_PARTNER,Host ribosomal protein in SARS-CoV-2 translation/ribosome complex; not viral target
+SARS_CoV_2,Ribosomal protein eS4,,Ribosomal protein eS4,,HOST_PARTNER,Host ribosomal protein in SARS-CoV-2 translation/ribosome complex; not viral target
+SARS_CoV_2,60s ribosomal protein l41,,60s ribosomal protein l41,,HOST_PARTNER,Host ribosomal protein in SARS-CoV-2 translation/ribosome complex; not viral target
+SARS_CoV_2,60S ribosomal protein L27a,,60S ribosomal protein L27a,,HOST_PARTNER,Host ribosomal protein in SARS-CoV-2 translation/ribosome complex; not viral target
+SARS_CoV_2,Ribosomal protein S9 (Predicted),,Ribosomal protein S9 (Predicted),,HOST_PARTNER,Host ribosomal protein in SARS-CoV-2 translation/ribosome complex; not viral target
+SARS_CoV_2,uL22,,uL22,,HOST_PARTNER,Host ribosomal protein in SARS-CoV-2 translation/ribosome complex; not viral target
+SARS_CoV_2,60S ribosomal protein L4,,60S ribosomal protein L4,,HOST_PARTNER,Host ribosomal protein in SARS-CoV-2 translation/ribosome complex; not viral target
+SARS_CoV_2,eL21,,eL21,,HOST_PARTNER,Host ribosomal protein in SARS-CoV-2 translation/ribosome complex; not viral target
+SARS_CoV_2,60S ribosomal protein L29,,60S ribosomal protein L29,,HOST_PARTNER,Host ribosomal protein in SARS-CoV-2 translation/ribosome complex; not viral target
+SARS_CoV_2,40S ribosomal protein S11,,40S ribosomal protein S11,,HOST_PARTNER,Host ribosomal protein in SARS-CoV-2 translation/ribosome complex; not viral target
+SARS_CoV_2,40S ribosomal protein uS10,,40S ribosomal protein uS10,,HOST_PARTNER,Host ribosomal protein in SARS-CoV-2 translation/ribosome complex; not viral target
+SARS_CoV_2,Ribosomal protein L15,,Ribosomal protein L15,,HOST_PARTNER,Host ribosomal protein in SARS-CoV-2 translation/ribosome complex; not viral target
+SARS_CoV_2,Ribosomal_L18_c domain-containing protein,,Ribosomal_L18_c domain-containing protein,,HOST_PARTNER,Host ribosomal protein in SARS-CoV-2 translation/ribosome complex; not viral target
+SARS_CoV_2,40S ribosomal protein S6,,40S ribosomal protein S6,,HOST_PARTNER,Host ribosomal protein in SARS-CoV-2 translation/ribosome complex; not viral target
+SARS_CoV_2,40S ribosomal protein S8,,40S ribosomal protein S8,,HOST_PARTNER,Host ribosomal protein in SARS-CoV-2 translation/ribosome complex; not viral target
+SARS_CoV_2,40S ribosomal protein S18,,40S ribosomal protein S18,,HOST_PARTNER,Host ribosomal protein in SARS-CoV-2 translation/ribosome complex; not viral target
+SARS_CoV_2,40S ribosomal protein S7,,40S ribosomal protein S7,,HOST_PARTNER,Host ribosomal protein in SARS-CoV-2 translation/ribosome complex; not viral target
+SARS_CoV_2,Ribosomal protein S15a,,Ribosomal protein S15a,,HOST_PARTNER,Host ribosomal protein in SARS-CoV-2 translation/ribosome complex; not viral target
+SARS_CoV_2,60S ribosomal protein L40,,60S ribosomal protein L40,,HOST_PARTNER,Host ribosomal protein in SARS-CoV-2 translation/ribosome complex; not viral target
+SARS_CoV_2,uS9,,uS9,,HOST_PARTNER,Host ribosomal protein in SARS-CoV-2 translation/ribosome complex; not viral target
+SARS_CoV_2,Ribosomal protein L26,,Ribosomal protein L26,,HOST_PARTNER,Host ribosomal protein in SARS-CoV-2 translation/ribosome complex; not viral target
+SARS_CoV_2,Ribosomal protein L37,,Ribosomal protein L37,,HOST_PARTNER,Host ribosomal protein in SARS-CoV-2 translation/ribosome complex; not viral target
+SARS_CoV_2,Ribosomal protein uS5,,Ribosomal protein uS5,,HOST_PARTNER,Host ribosomal protein in SARS-CoV-2 translation/ribosome complex; not viral target
+SARS_CoV_2,eL32,,eL32,,HOST_PARTNER,Host ribosomal protein in SARS-CoV-2 translation/ribosome complex; not viral target
+SARS_CoV_2,40S ribosomal protein uS11,,40S ribosomal protein uS11,,HOST_PARTNER,Host ribosomal protein in SARS-CoV-2 translation/ribosome complex; not viral target
+SARS_CoV_2,Ribosomal protein S27a,,Ribosomal protein S27a,,HOST_PARTNER,Host ribosomal protein in SARS-CoV-2 translation/ribosome complex; not viral target
+SARS_CoV_2,40S ribosomal protein S3,,40S ribosomal protein S3,,HOST_PARTNER,Host ribosomal protein in SARS-CoV-2 translation/ribosome complex; not viral target
+SARS_CoV_2,Ribosomal protein eS21,,Ribosomal protein eS21,,HOST_PARTNER,Host ribosomal protein in SARS-CoV-2 translation/ribosome complex; not viral target
+SARS_CoV_2,eL31,,eL31,,HOST_PARTNER,Host ribosomal protein in SARS-CoV-2 translation/ribosome complex; not viral target
+SARS_CoV_2,eL43,,eL43,,HOST_PARTNER,Host ribosomal protein in SARS-CoV-2 translation/ribosome complex; not viral target
+SARS_CoV_2,uS14,,uS14,,HOST_PARTNER,Host ribosomal protein in SARS-CoV-2 translation/ribosome complex; not viral target
+SARS_CoV_2,Ribosomal Protein eL18,,Ribosomal Protein eL18,,HOST_PARTNER,Host ribosomal protein in SARS-CoV-2 translation/ribosome complex; not viral target
+SARS_CoV_2,40S ribosomal protein S3a,,40S ribosomal protein S3a,,HOST_PARTNER,Host ribosomal protein in SARS-CoV-2 translation/ribosome complex; not viral target
+SARS_CoV_2,uS15,,uS15,,HOST_PARTNER,Host ribosomal protein in SARS-CoV-2 translation/ribosome complex; not viral target
+SARS_CoV_2,40S ribosomal protein uS19,,40S ribosomal protein uS19,,HOST_PARTNER,Host ribosomal protein in SARS-CoV-2 translation/ribosome complex; not viral target
+SARS_CoV_2,Ribosomal protein eS19,,Ribosomal protein eS19,,HOST_PARTNER,Host ribosomal protein in SARS-CoV-2 translation/ribosome complex; not viral target
+SARS_CoV_2,40S ribosomal protein S24,,40S ribosomal protein S24,,HOST_PARTNER,Host ribosomal protein in SARS-CoV-2 translation/ribosome complex; not viral target
+SARS_CoV_2,40S ribosomal protein S30,,40S ribosomal protein S30,,HOST_PARTNER,Host ribosomal protein in SARS-CoV-2 translation/ribosome complex; not viral target
+SARS_CoV_2,40S ribosomal protein S25,,40S ribosomal protein S25,,HOST_PARTNER,Host ribosomal protein in SARS-CoV-2 translation/ribosome complex; not viral target

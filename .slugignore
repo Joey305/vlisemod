@@ -1,0 +1,30 @@
+# Defense in depth for Heroku slug builds. The Procfile starts only app:app;
+# these development/reviewer trees are not imported by the production app.
+PDB_FILES/
+CIF_DATABASE_REBUILD/
+REVIEWER_REPRODUCIBILITY/
+outputs/
+output_csvs/
+backups/
+reviewer_audit_*/
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.7z
+*.db-*
+viral_data*.db
+CIF_DATABASE_REBUILD/*.db
+REVIEWER_REPRODUCIBILITY/outputs/*.db
+*_checkpoint*.db
+*_CHECKPOINT*.db
+*_backup*.db
+*_BACKUP*.db
+*.log
+__pycache__/
+.pytest_cache/
+tests/
+static/charts/
+static/coordinate_cache/
+static/ligand_sdf_cache/
+static/ligand_images/

@@ -1,0 +1,6 @@
+cff-version: 1.2.0
+message: "If you use this V-LiSEMOD reviewer reproducibility package, please cite the associated manuscript and software release."
+title: "V-LiSEMOD CIF-native reviewer reproducibility package"
+version: "1.0"
+date-released: 2026-08-30
+license: MIT

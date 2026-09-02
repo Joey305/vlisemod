@@ -1,7 +1,10 @@
-# Public GitHub hygiene for V-LiSEMOD
-# Keep source, templates, docs, and small curated examples under version control.
+# Public Git hygiene for V-LiSEMOD.
+# Keep application source, templates, static assets, reviewer source, frozen
+# manifests/inputs/references, and the deliberately small fixture coordinates.
 
-# Secrets and local config
+# ------------------------------
+# Secrets and local configuration
+# ------------------------------
 .env
 .env.*
 !.env.example
@@ -24,7 +27,119 @@ credentials/
 *.cfg.local
 *.ini.local
 
-# Python / runtime artifacts
+# ------------------------------
+# V-LiSEMOD downloaded PDB corpus
+# ------------------------------
+# Do not use a global *.cif rule: the reviewer 3EKY fixture is source data.
+/PDB_FILES/
+/CIF_DATABASE_REBUILD/PDB_FILES/
+/CIF_DATABASE_REBUILD/inputs/PDB_FILES/
+/REVIEWER_REPRODUCIBILITY/PDB_FILES/
+.download_cache/
+**/.download_cache/
+*.part
+
+# ------------------------------
+# CIF rebuild runtime outputs
+# ------------------------------
+/CIF_DATABASE_REBUILD/outputs/
+/CIF_DATABASE_REBUILD/logs/
+/CIF_DATABASE_REBUILD/temp/
+/CIF_DATABASE_REBUILD/tmp/
+/CIF_DATABASE_REBUILD/scratch/
+/CIF_DATABASE_REBUILD/arpeggio/
+/CIF_DATABASE_REBUILD/*.zip
+/CIF_DATABASE_REBUILD/*.tar
+/CIF_DATABASE_REBUILD/*.tar.gz
+
+# ------------------------------
+# Reviewer reproduction runtime
+# ------------------------------
+/REVIEWER_REPRODUCIBILITY/outputs/*
+!/REVIEWER_REPRODUCIBILITY/outputs/.gitkeep
+/VLiSEMOD_Reviewer_Reproducibility_*.zip
+/reviewer_audit_*/
+
+# ------------------------------
+# SQLite transient files and generated checkpoints
+# ------------------------------
+*.db-wal
+*.db-shm
+*.db-journal
+/viral_data*.db
+/CIF_DATABASE_REBUILD/*.db
+/REVIEWER_REPRODUCIBILITY/outputs/*.db
+*_checkpoint*.db
+*_CHECKPOINT*.db
+*_backup*.db
+*_BACKUP*.db
+*_PRE_*.db
+*_POST_*.db
+*_WEB_*.db
+
+# ------------------------------
+# Generated application data, logs, and archives
+# ------------------------------
+/outputs/
+/output_csvs/
+/pml_sessions/
+/temp/
+/tmp/
+/scratch/
+/users_info/
+/exports/
+/downloads/
+/reports/
+/generated_exports/
+/generated_zip_bundles/
+/generated_data/
+/generated_training_data/
+/training_runs/
+/tokenized_datasets/
+/static/charts/
+/static/coordinate_cache/
+/static/ligand_sdf_cache/
+/static/ligand_images/
+*.log
+/logs/
+server.out
+nohup.out
+*.pid
+/backups/
+/app_PRE_*.py
+/templates/*_PRE_*.html
+/*.zip
+/*.tar
+/*.tar.gz
+/*.tgz
+/*.7z
+
+# ------------------------------
+# Local model / checkpoint artifacts
+# ------------------------------
+/models/
+/checkpoints/
+/model_cache/
+/hf_cache/
+/runs/
+/wandb/
+*.safetensors
+*.bin
+*.pt
+*.pth
+*.onnx
+*.gguf
+*.joblib
+*.pkl
+*.pickle
+*.npy
+*.npz
+*.parquet
+*.feather
+
+# ------------------------------
+# Python / local development / editor artifacts
+# ------------------------------
 __pycache__/
 *.py[cod]
 *.pyo
@@ -41,86 +156,6 @@ venv/
 env/
 .ipynb_checkpoints/
 .cache/
-
-# Local databases and backups
-viral_data.db
-users.db
-*.sqlite
-*.sqlite3
-*.db
-*.db-*
-instance/
-*.bak
-*.backup
-*.dump
-
-# Generated V-LiSEMOD outputs and caches
-PDB_FILES/
-output_csvs/
-pml_sessions/
-temp/
-tmp/
-scratch/
-users_info/
-exports/
-downloads/
-reports/
-generated_exports/
-generated_zip_bundles/
-generated_data/
-generated_training_data/
-training_runs/
-tokenized_datasets/
-static/charts/
-static/coordinate_cache/
-static/ligand_sdf_cache/
-static/ligand_images/
-
-# Logs and process artifacts
-*.log
-logs/
-server.out
-nohup.out
-*.pid
-
-# Local model / checkpoint artifacts
-models/
-checkpoints/
-model_cache/
-hf_cache/
-.cache/huggingface/
-runs/
-wandb/
-*.safetensors
-*.bin
-*.pt
-*.pth
-*.onnx
-*.gguf
-*.joblib
-*.pkl
-*.pickle
-*.npy
-*.npz
-*.parquet
-*.feather
-
-# Scientific runtime downloads and temporary structures
-*.smi
-*.pdb
-*.cif
-*.mmcif
-*.sdf
-*.mol2
-
-# Large generated archives unless intentionally curated elsewhere
-*.zip
-*.tar
-*.tar.gz
-*.tgz
-*.7z
-
-# OS / editor files
 .DS_Store
 ._*
 Thumbs.db
@@ -130,9 +165,9 @@ Thumbs.db
 *.swo
 *~
 
-# Optional local backups
-backups/
-
-# Project-specific generated or local reference files
+# ------------------------------
+# Large local scientific source artifacts not required by the web/reviewer bundle
+# ------------------------------
+/Components-smiles-stereo-oe.smi
 failed_protac_candidates.csv
-training_text.txt
+/training_text.txt

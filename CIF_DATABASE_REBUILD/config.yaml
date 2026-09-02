@@ -1,0 +1,6 @@
+# Paths may be overridden with runner flags.  No network source is configured.
+source_cif_root: ../PDB_FILES
+database: ./viral_data_cif_v2.db
+parser: gemmi
+curation_rule_version: legacy_2_PDBSORT_2_cif_v2
+pipeline_version: 0.1.0

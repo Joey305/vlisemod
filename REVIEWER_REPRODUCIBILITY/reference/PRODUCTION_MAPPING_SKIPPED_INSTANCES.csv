@@ -1,0 +1,720 @@
+ligand_instance_id,pdb_id,component_id,virus_normalized,target_context_normalized,mapping_reason_class,algorithm_queue,heavy_atom_mapping_fraction,remediation_status,notes
+26178,2AVM,2NC,HIV-1,"Capsid protein,Protease",P3_SMALL_ATOMSET_DIFFERENCE,QUEUE_LOCAL_RECOVERY,0.981481,pending,Stage 2I QC-controlled mapping deferral
+26799,2AVQ,2NC,HIV-1,"Capsid protein,Protease",P3_SMALL_ATOMSET_DIFFERENCE,QUEUE_LOCAL_RECOVERY,0.981481,pending,Stage 2I QC-controlled mapping deferral
+27925,2BB9,AKC,HIV-1,"Capsid protein,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.608696,pending,Stage 2I QC-controlled mapping deferral
+28231,2BBB,HH1,HIV-1,"Capsid protein,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.608696,pending,Stage 2I QC-controlled mapping deferral
+32346,2HNZ,PC0,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.956522,pending,Stage 2I QC-controlled mapping deferral
+33891,2I5J,K05,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase,Rnase h",P11_OTHER,QUEUE_BOND_TEMPLATE,0.52,pending,Stage 2I QC-controlled mapping deferral
+34728,2JLE,I15,HIV-1,"Capsid protein,Nucleoprotein,Polymerase,Protease,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.909091,pending,Stage 2I QC-controlled mapping deferral
+36430,2O4L,TPV,HIV-1,"Capsid protein,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.571429,pending,Stage 2I QC-controlled mapping deferral
+36814,2O4N,TPV,HIV-1,"Capsid protein,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.571429,pending,Stage 2I QC-controlled mapping deferral
+37007,2O4P,TPV,HIV-1,"Capsid protein,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.571429,pending,Stage 2I QC-controlled mapping deferral
+43319,2VG5,NNC,HIV-1,"Capsid protein,Integrase,Nucleoprotein,Polymerase,Protease,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.958333,pending,Stage 2I QC-controlled mapping deferral
+43375,2VG6,NNB,HIV-1,"Capsid protein,Integrase,Nucleoprotein,Polymerase,Protease,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.958333,pending,Stage 2I QC-controlled mapping deferral
+43422,2VG7,NNI,HIV-1,"Capsid protein,Integrase,Nucleoprotein,Polymerase,Protease,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.958333,pending,Stage 2I QC-controlled mapping deferral
+43469,2WOM,ZZE,HIV-1,"Capsid protein,Integrase,Protease,Reverse transcriptase,Rnase h",P11_OTHER,QUEUE_BOND_TEMPLATE,0.913043,pending,Stage 2I QC-controlled mapping deferral
+43470,2WON,ZZE,HIV-1,"Capsid protein,Integrase,Protease,Reverse transcriptase,Rnase h",P11_OTHER,QUEUE_BOND_TEMPLATE,0.913043,pending,Stage 2I QC-controlled mapping deferral
+46175,2YNF,WHU,HIV-1,"Capsid protein,Integrase,Protease,Reverse transcriptase,Rnase h",P11_OTHER,QUEUE_BOND_TEMPLATE,0.965517,pending,Stage 2I QC-controlled mapping deferral
+46614,2YNG,WHU,HIV-1,"Capsid protein,Integrase,Protease,Reverse transcriptase,Rnase h",P11_OTHER,QUEUE_BOND_TEMPLATE,0.965517,pending,Stage 2I QC-controlled mapping deferral
+47276,2YNH,EUR,HIV-1,"Capsid protein,Integrase,Protease,Reverse transcriptase,Rnase h",P11_OTHER,QUEUE_BOND_TEMPLATE,0.966667,pending,Stage 2I QC-controlled mapping deferral
+47376,2YNI,CXD,HIV-1,"Capsid protein,Integrase,Protease,Reverse transcriptase,Rnase h",P11_OTHER,QUEUE_BOND_TEMPLATE,0.964286,pending,Stage 2I QC-controlled mapping deferral
+47816,2ZD1,T27,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.857143,pending,Stage 2I QC-controlled mapping deferral
+48444,2ZE2,T27,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.857143,pending,Stage 2I QC-controlled mapping deferral
+51270,3BGR,T27,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.857143,pending,Stage 2I QC-controlled mapping deferral
+51828,3BVA,2NC,HIV-1,"Capsid protein,Protease",P3_SMALL_ATOMSET_DIFFERENCE,QUEUE_LOCAL_RECOVERY,0.981481,pending,Stage 2I QC-controlled mapping deferral
+52691,3C6T,M14,HIV-1,"Capsid protein,Nucleoprotein,Polymerase,Protease,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.969697,pending,Stage 2I QC-controlled mapping deferral
+53058,3C6U,M22,HIV-1,"Capsid protein,Nucleoprotein,Polymerase,Protease,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.964286,pending,Stage 2I QC-controlled mapping deferral
+53435,3CKT,YDP,HIV-1,"Capsid protein,Protease",P5_LARGE_GRAPH_DIFFERENCE,QUEUE_CURATION_REVIEW,0.853659,pending,Stage 2I QC-controlled mapping deferral
+56051,3DOK,GWJ,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.970588,pending,Stage 2I QC-controlled mapping deferral
+56063,3DOL,GWI,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.973684,pending,Stage 2I QC-controlled mapping deferral
+56456,3DRP,R8E,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.965517,pending,Stage 2I QC-controlled mapping deferral
+56882,3DRR,R8E,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.965517,pending,Stage 2I QC-controlled mapping deferral
+57229,3DRS,R8D,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.964286,pending,Stage 2I QC-controlled mapping deferral
+58017,3DYA,PZL,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.964286,pending,Stage 2I QC-controlled mapping deferral
+58329,3E01,PZ2,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.962963,pending,Stage 2I QC-controlled mapping deferral
+60719,3FFI,3OB,HIV-1,"Capsid protein,Nucleoprotein,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.969697,pending,Stage 2I QC-controlled mapping deferral
+61350,3I6O,GR6,HIV-1,"Capsid protein,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.545455,pending,Stage 2I QC-controlled mapping deferral
+61724,3IRX,UDR,HIV-1,"Capsid protein,Nucleoprotein,Polymerase,Protease,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.722222,pending,Stage 2I QC-controlled mapping deferral
+61725,3IS9,AC7,HIV-1,"Capsid protein,Nucleoprotein,Polymerase,Protease,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.72973,pending,Stage 2I QC-controlled mapping deferral
+61850,3ISN,EDM,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.933333,pending,Stage 2I QC-controlled mapping deferral
+62055,3ITH,EDM,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.933333,pending,Stage 2I QC-controlled mapping deferral
+62056,3ITH,EDM,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.933333,pending,Stage 2I QC-controlled mapping deferral
+63587,3KK1,914,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.366667,pending,Stage 2I QC-controlled mapping deferral
+63874,3KLE,ZP4,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.962264,pending,Stage 2I QC-controlled mapping deferral
+63878,3KLE,ZP4,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.962264,pending,Stage 2I QC-controlled mapping deferral
+63882,3KLE,ZP4,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.962264,pending,Stage 2I QC-controlled mapping deferral
+63885,3KLE,ZP4,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.962264,pending,Stage 2I QC-controlled mapping deferral
+63989,3KLF,ZP4,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.962264,pending,Stage 2I QC-controlled mapping deferral
+63993,3KLF,ZP4,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.962264,pending,Stage 2I QC-controlled mapping deferral
+63997,3KLF,ZP4,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.962264,pending,Stage 2I QC-controlled mapping deferral
+64000,3KLF,ZP4,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.962264,pending,Stage 2I QC-controlled mapping deferral
+65427,3M8P,65B,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.928571,pending,Stage 2I QC-controlled mapping deferral
+65733,3M8Q,DJZ,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.971429,pending,Stage 2I QC-controlled mapping deferral
+66422,3NBP,JGZ,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.970588,pending,Stage 2I QC-controlled mapping deferral
+71695,3QLH,T27,HIV-1,"Capsid protein,Reverse transcriptase,Rnase h",P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.857143,pending,Stage 2I QC-controlled mapping deferral
+71803,3QO9,QO9,HIV-1,"Capsid protein,Nucleoprotein,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.815789,pending,Stage 2I QC-controlled mapping deferral
+74186,3TAM,M06,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.964286,pending,Stage 2I QC-controlled mapping deferral
+77469,4B3O,EFZ,HIV-1,"Capsid protein,Integrase,Protease,Reverse transcriptase,Rnase h",P11_OTHER,QUEUE_BOND_TEMPLATE,0.809524,pending,Stage 2I QC-controlled mapping deferral
+79959,4DQG,HGU,HIV-1,"Capsid protein,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.8,pending,Stage 2I QC-controlled mapping deferral
+81404,4FE6,0TQ,HIV-1,"Capsid protein,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.911111,pending,Stage 2I QC-controlled mapping deferral
+84122,4H4M,494,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.9,pending,Stage 2I QC-controlled mapping deferral
+84169,4H4O,506,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.9,pending,Stage 2I QC-controlled mapping deferral
+85464,4I2P,G73,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.903226,pending,Stage 2I QC-controlled mapping deferral
+85765,4I2Q,1BT,HIV-1,"Capsid protein,Integrase,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.90625,pending,Stage 2I QC-controlled mapping deferral
+86780,4ID5,T27,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase,Rnase h",P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.857143,pending,Stage 2I QC-controlled mapping deferral
+87689,4IDK,T27,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.857143,pending,Stage 2I QC-controlled mapping deferral
+88358,4IFV,T27,HIV-1,"Capsid protein,Integrase,Matrix protein,Nucleocapsid protein,Polymerase,Protease,Reverse transcriptase",P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.857143,pending,Stage 2I QC-controlled mapping deferral
+88989,4IFY,T27,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.857143,pending,Stage 2I QC-controlled mapping deferral
+89742,4IG3,T27,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.857143,pending,Stage 2I QC-controlled mapping deferral
+90670,4INB,1F6,HIV-1,Capsid protein,P11_OTHER,QUEUE_BOND_TEMPLATE,0.8,pending,Stage 2I QC-controlled mapping deferral
+91680,4KFB,T27,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.857143,pending,Stage 2I QC-controlled mapping deferral
+92345,4KKO,1RE,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.96875,pending,Stage 2I QC-controlled mapping deferral
+92346,4KO0,JLJ,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.826087,pending,Stage 2I QC-controlled mapping deferral
+93126,4LSL,1YQ,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.896552,pending,Stage 2I QC-controlled mapping deferral
+93162,4LSN,1YR,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.9,pending,Stage 2I QC-controlled mapping deferral
+94104,4MFB,29T,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.965517,pending,Stage 2I QC-controlled mapping deferral
+94493,4O44,2RS,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.971429,pending,Stage 2I QC-controlled mapping deferral
+94512,4O4G,2RT,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.96,pending,Stage 2I QC-controlled mapping deferral
+98693,4RW4,494,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.9,pending,Stage 2I QC-controlled mapping deferral
+98706,4RW6,494,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.9,pending,Stage 2I QC-controlled mapping deferral
+98736,4RW7,3X6,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.896552,pending,Stage 2I QC-controlled mapping deferral
+98737,4RW8,3X6,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.896552,pending,Stage 2I QC-controlled mapping deferral
+98757,4RW9,3X6,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.896552,pending,Stage 2I QC-controlled mapping deferral
+100504,4WE1,3LQ,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.966667,pending,Stage 2I QC-controlled mapping deferral
+102017,5C24,4XO,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.931034,pending,Stage 2I QC-controlled mapping deferral
+102040,5C25,639,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.933333,pending,Stage 2I QC-controlled mapping deferral
+102071,5C42,29T,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.965517,pending,Stage 2I QC-controlled mapping deferral
+102881,5FDL,5DV,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.964286,pending,Stage 2I QC-controlled mapping deferral
+104349,5J2M,6FN,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.969697,pending,Stage 2I QC-controlled mapping deferral
+105578,5K14,IB1,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.962963,pending,Stage 2I QC-controlled mapping deferral
+106864,5TER,7AY,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.96875,pending,Stage 2I QC-controlled mapping deferral
+109191,5TW3,7N1,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.96875,pending,Stage 2I QC-controlled mapping deferral
+110736,5VQQ,9JP,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.972973,pending,Stage 2I QC-controlled mapping deferral
+110772,5VQR,9KG,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.945946,pending,Stage 2I QC-controlled mapping deferral
+110814,5VQS,9KD,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.944444,pending,Stage 2I QC-controlled mapping deferral
+110962,5VQT,9K7,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.972973,pending,Stage 2I QC-controlled mapping deferral
+110990,5VQU,9JP,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.972973,pending,Stage 2I QC-controlled mapping deferral
+111100,5VQV,9J1,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.972973,pending,Stage 2I QC-controlled mapping deferral
+111196,5VQW,9KD,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.944444,pending,Stage 2I QC-controlled mapping deferral
+111259,5VQX,9HY,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.972222,pending,Stage 2I QC-controlled mapping deferral
+111413,5VQY,9J1,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.972973,pending,Stage 2I QC-controlled mapping deferral
+111606,5VQZ,9HY,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.972222,pending,Stage 2I QC-controlled mapping deferral
+112480,6AMO,D4T,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.535714,pending,Stage 2I QC-controlled mapping deferral
+112489,6AMO,D4T,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.535714,pending,Stage 2I QC-controlled mapping deferral
+113154,6AN2,D4T,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.535714,pending,Stage 2I QC-controlled mapping deferral
+113165,6AN2,D4T,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.535714,pending,Stage 2I QC-controlled mapping deferral
+113791,6AN8,D4T,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.535714,pending,Stage 2I QC-controlled mapping deferral
+113801,6AN8,D4T,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.535714,pending,Stage 2I QC-controlled mapping deferral
+114507,6ANQ,D4T,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.535714,pending,Stage 2I QC-controlled mapping deferral
+114517,6ANQ,D4T,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.535714,pending,Stage 2I QC-controlled mapping deferral
+116401,6ASW,D4T,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.535714,pending,Stage 2I QC-controlled mapping deferral
+116411,6ASW,D4T,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.535714,pending,Stage 2I QC-controlled mapping deferral
+117064,6AVM,D4T,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.535714,pending,Stage 2I QC-controlled mapping deferral
+117074,6AVM,D4T,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.535714,pending,Stage 2I QC-controlled mapping deferral
+117745,6AVT,D4T,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.535714,pending,Stage 2I QC-controlled mapping deferral
+117755,6AVT,D4T,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.535714,pending,Stage 2I QC-controlled mapping deferral
+120734,6BSH,EFZ,HIV-1,"Capsid protein,Reverse transcriptase,Rnase h",P11_OTHER,QUEUE_BOND_TEMPLATE,0.809524,pending,Stage 2I QC-controlled mapping deferral
+120859,6C0J,K5A,HIV-1,"Capsid protein,Reverse transcriptase",P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.973684,pending,Stage 2I QC-controlled mapping deferral
+121621,6C0K,K5A,HIV-1,"Capsid protein,Reverse transcriptase",P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.973684,pending,Stage 2I QC-controlled mapping deferral
+122417,6C0L,K5A,HIV-1,"Capsid protein,Reverse transcriptase",P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.973684,pending,Stage 2I QC-controlled mapping deferral
+123200,6C0N,K5C,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.925,pending,Stage 2I QC-controlled mapping deferral
+123925,6C0O,K5C,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.925,pending,Stage 2I QC-controlled mapping deferral
+124670,6C0P,K5C,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.925,pending,Stage 2I QC-controlled mapping deferral
+125342,6C0R,K5C,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.925,pending,Stage 2I QC-controlled mapping deferral
+128515,6DTW,H9Y,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.967742,pending,Stage 2I QC-controlled mapping deferral
+128547,6DTX,H9Y,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.967742,pending,Stage 2I QC-controlled mapping deferral
+128549,6DUF,K5C,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.925,pending,Stage 2I QC-controlled mapping deferral
+129143,6DUG,K5C,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.925,pending,Stage 2I QC-controlled mapping deferral
+129567,6DUH,K5C,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.925,pending,Stage 2I QC-controlled mapping deferral
+130225,6ELI,T27,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase,Rnase h",P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.857143,pending,Stage 2I QC-controlled mapping deferral
+131222,6OE3,M9A,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.967742,pending,Stage 2I QC-controlled mapping deferral
+133166,6V2F,QNG,HIV-1,Capsid protein,P7_MCS_TIMEOUT,QUEUE_COMPLEX_GRAPH,,pending,Stage 2I QC-controlled mapping deferral
+133167,6V2F,QNG,HIV-1,Capsid protein,P7_MCS_TIMEOUT,QUEUE_COMPLEX_GRAPH,,pending,Stage 2I QC-controlled mapping deferral
+133168,6V2F,QNG,HIV-1,Capsid protein,P7_MCS_TIMEOUT,QUEUE_COMPLEX_GRAPH,,pending,Stage 2I QC-controlled mapping deferral
+133169,6V2F,QNG,HIV-1,Capsid protein,P7_MCS_TIMEOUT,QUEUE_COMPLEX_GRAPH,,pending,Stage 2I QC-controlled mapping deferral
+133170,6V2F,QNG,HIV-1,Capsid protein,P7_MCS_TIMEOUT,QUEUE_COMPLEX_GRAPH,,pending,Stage 2I QC-controlled mapping deferral
+133171,6V2F,QNG,HIV-1,Capsid protein,P7_MCS_TIMEOUT,QUEUE_COMPLEX_GRAPH,,pending,Stage 2I QC-controlled mapping deferral
+134023,6VKV,QNG,HIV-1,Capsid protein,P7_MCS_TIMEOUT,QUEUE_COMPLEX_GRAPH,,pending,Stage 2I QC-controlled mapping deferral
+134031,6VKV,QNG,HIV-1,Capsid protein,P7_MCS_TIMEOUT,QUEUE_COMPLEX_GRAPH,,pending,Stage 2I QC-controlled mapping deferral
+134037,6VKV,QNG,HIV-1,Capsid protein,P7_MCS_TIMEOUT,QUEUE_COMPLEX_GRAPH,,pending,Stage 2I QC-controlled mapping deferral
+134303,6WPF,D4T,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.535714,pending,Stage 2I QC-controlled mapping deferral
+134477,6WPJ,D4T,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.535714,pending,Stage 2I QC-controlled mapping deferral
+134487,6X47,7AX,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.966667,pending,Stage 2I QC-controlled mapping deferral
+134488,6X49,7AX,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.966667,pending,Stage 2I QC-controlled mapping deferral
+134497,6X4A,7AY,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.96875,pending,Stage 2I QC-controlled mapping deferral
+134544,6X4B,UMY,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.96875,pending,Stage 2I QC-controlled mapping deferral
+134594,6X4C,UNS,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.969697,pending,Stage 2I QC-controlled mapping deferral
+134595,6X4D,UO4,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.971429,pending,Stage 2I QC-controlled mapping deferral
+134669,6X4E,UMV,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.972222,pending,Stage 2I QC-controlled mapping deferral
+134700,6X4F,UMV,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.972222,pending,Stage 2I QC-controlled mapping deferral
+136474,7KJW,EFZ,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.809524,pending,Stage 2I QC-controlled mapping deferral
+136480,7KRE,X2V,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.971429,pending,Stage 2I QC-controlled mapping deferral
+149496,7RHN,QNG,HIV-1,Capsid protein,P7_MCS_TIMEOUT,QUEUE_COMPLEX_GRAPH,,pending,Stage 2I QC-controlled mapping deferral
+149551,7RJ2,QNG,HIV-1,Capsid protein,P7_MCS_TIMEOUT,QUEUE_COMPLEX_GRAPH,,pending,Stage 2I QC-controlled mapping deferral
+149746,7RJ4,QNG,HIV-1,Capsid protein,P7_MCS_TIMEOUT,QUEUE_COMPLEX_GRAPH,,pending,Stage 2I QC-controlled mapping deferral
+149754,7RJ4,QNG,HIV-1,Capsid protein,P7_MCS_TIMEOUT,QUEUE_COMPLEX_GRAPH,,pending,Stage 2I QC-controlled mapping deferral
+149762,7RJ4,QNG,HIV-1,Capsid protein,P7_MCS_TIMEOUT,QUEUE_COMPLEX_GRAPH,,pending,Stage 2I QC-controlled mapping deferral
+149902,7RMJ,61F,HIV-1,Capsid protein,P11_OTHER,QUEUE_BOND_TEMPLATE,0.870968,pending,Stage 2I QC-controlled mapping deferral
+149909,7RMJ,61F,HIV-1,Capsid protein,P11_OTHER,QUEUE_BOND_TEMPLATE,0.870968,pending,Stage 2I QC-controlled mapping deferral
+149917,7RMJ,61F,HIV-1,Capsid protein,P11_OTHER,QUEUE_BOND_TEMPLATE,0.870968,pending,Stage 2I QC-controlled mapping deferral
+150736,7SLR,9QI,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.971429,pending,Stage 2I QC-controlled mapping deferral
+150993,7SLS,9PJ,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.75,pending,Stage 2I QC-controlled mapping deferral
+151316,7SNL,9VI,HIV-1,Capsid protein,P7_MCS_TIMEOUT,QUEUE_COMPLEX_GRAPH,,pending,Stage 2I QC-controlled mapping deferral
+151576,7SNP,9UV,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.921053,pending,Stage 2I QC-controlled mapping deferral
+151789,7SNZ,9WI,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.931034,pending,Stage 2I QC-controlled mapping deferral
+151939,7SO1,9W3,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.894737,pending,Stage 2I QC-controlled mapping deferral
+151940,7SO2,9W3,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.894737,pending,Stage 2I QC-controlled mapping deferral
+151941,7SO3,9W3,HIV-1,"Capsid protein,Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.894737,pending,Stage 2I QC-controlled mapping deferral
+151947,7SO4,M9A,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.967742,pending,Stage 2I QC-controlled mapping deferral
+151952,7SO6,M9A,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.967742,pending,Stage 2I QC-controlled mapping deferral
+152493,7Z2D,T27,HIV-1,"Capsid protein,Reverse transcriptase",P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.857143,pending,Stage 2I QC-controlled mapping deferral
+152496,7Z2E,T27,HIV-1,"Capsid protein,Reverse transcriptase",P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.857143,pending,Stage 2I QC-controlled mapping deferral
+152499,7Z2G,2KW,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.965517,pending,Stage 2I QC-controlled mapping deferral
+152502,7Z2H,2KW,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.965517,pending,Stage 2I QC-controlled mapping deferral
+154435,8DX2,T27,HIV-1,"Capsid protein,Reverse transcriptase",P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.857143,pending,Stage 2I QC-controlled mapping deferral
+154820,8DX3,T27,HIV-1,"Capsid protein,Reverse transcriptase",P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.857143,pending,Stage 2I QC-controlled mapping deferral
+155195,8DX8,T27,HIV-1,"Capsid protein,Reverse transcriptase",P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.857143,pending,Stage 2I QC-controlled mapping deferral
+155797,8DXB,T27,HIV-1,"Capsid protein,Reverse transcriptase",P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.857143,pending,Stage 2I QC-controlled mapping deferral
+156002,8DXE,0IF,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.9,pending,Stage 2I QC-controlled mapping deferral
+156003,8DXE,T27,HIV-1,"Capsid protein,Reverse transcriptase",P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.857143,pending,Stage 2I QC-controlled mapping deferral
+156670,8DXG,T27,HIV-1,"Capsid protein,Reverse transcriptase",P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.857143,pending,Stage 2I QC-controlled mapping deferral
+157118,8DXH,JBQ,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.583333,pending,Stage 2I QC-controlled mapping deferral
+157119,8DXH,T27,HIV-1,"Capsid protein,Reverse transcriptase",P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.857143,pending,Stage 2I QC-controlled mapping deferral
+157842,8DXI,T27,HIV-1,"Capsid protein,Reverse transcriptase",P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.857143,pending,Stage 2I QC-controlled mapping deferral
+158379,8DXJ,T27,HIV-1,"Capsid protein,Reverse transcriptase",P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.857143,pending,Stage 2I QC-controlled mapping deferral
+158955,8DXK,T27,HIV-1,"Capsid protein,Reverse transcriptase",P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.857143,pending,Stage 2I QC-controlled mapping deferral
+159637,8DXL,T27,HIV-1,"Capsid protein,Reverse transcriptase",P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.857143,pending,Stage 2I QC-controlled mapping deferral
+160413,8DXM,T27,HIV-1,"Capsid protein,Reverse transcriptase",P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.857143,pending,Stage 2I QC-controlled mapping deferral
+161848,8FFX,XU9,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.789474,pending,Stage 2I QC-controlled mapping deferral
+170434,8QUK,WVU,HIV-1,Capsid protein,P11_OTHER,QUEUE_BOND_TEMPLATE,0.941176,pending,Stage 2I QC-controlled mapping deferral
+172069,8STP,29T,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.965517,pending,Stage 2I QC-controlled mapping deferral
+172070,8STQ,3LQ,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.966667,pending,Stage 2I QC-controlled mapping deferral
+172073,8STR,7N1,HIV-1,"Capsid protein,Reverse transcriptase",P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.96875,pending,Stage 2I QC-controlled mapping deferral
+172113,8STT,29T,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.965517,pending,Stage 2I QC-controlled mapping deferral
+172115,8STT,29T,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.965517,pending,Stage 2I QC-controlled mapping deferral
+172181,8STU,H9Y,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.967742,pending,Stage 2I QC-controlled mapping deferral
+172212,8STV,3LQ,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.966667,pending,Stage 2I QC-controlled mapping deferral
+172215,8STV,3LQ,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.966667,pending,Stage 2I QC-controlled mapping deferral
+172373,8TOV,J6U,HIV-1,"Capsid protein,Matrix protein",P11_OTHER,QUEUE_BOND_TEMPLATE,0.982456,pending,Stage 2I QC-controlled mapping deferral
+172374,8TOV,J6U,HIV-1,"Capsid protein,Matrix protein",P11_OTHER,QUEUE_BOND_TEMPLATE,0.982456,pending,Stage 2I QC-controlled mapping deferral
+172375,8TOV,J6U,HIV-1,"Capsid protein,Matrix protein",P11_OTHER,QUEUE_BOND_TEMPLATE,0.982456,pending,Stage 2I QC-controlled mapping deferral
+172376,8TOV,J6U,HIV-1,"Capsid protein,Matrix protein",P11_OTHER,QUEUE_BOND_TEMPLATE,0.982456,pending,Stage 2I QC-controlled mapping deferral
+172377,8TOV,J6U,HIV-1,"Capsid protein,Matrix protein",P11_OTHER,QUEUE_BOND_TEMPLATE,0.982456,pending,Stage 2I QC-controlled mapping deferral
+172378,8TOV,J6U,HIV-1,"Capsid protein,Matrix protein",P11_OTHER,QUEUE_BOND_TEMPLATE,0.982456,pending,Stage 2I QC-controlled mapping deferral
+172379,8TOV,J6U,HIV-1,"Capsid protein,Matrix protein",P11_OTHER,QUEUE_BOND_TEMPLATE,0.982456,pending,Stage 2I QC-controlled mapping deferral
+172380,8TOV,J6U,HIV-1,"Capsid protein,Matrix protein",P11_OTHER,QUEUE_BOND_TEMPLATE,0.982456,pending,Stage 2I QC-controlled mapping deferral
+172381,8TOV,J6U,HIV-1,"Capsid protein,Matrix protein",P11_OTHER,QUEUE_BOND_TEMPLATE,0.982456,pending,Stage 2I QC-controlled mapping deferral
+172382,8TOV,J6U,HIV-1,"Capsid protein,Matrix protein",P11_OTHER,QUEUE_BOND_TEMPLATE,0.982456,pending,Stage 2I QC-controlled mapping deferral
+172383,8TOV,J6U,HIV-1,"Capsid protein,Matrix protein",P11_OTHER,QUEUE_BOND_TEMPLATE,0.982456,pending,Stage 2I QC-controlled mapping deferral
+172384,8TOV,J6U,HIV-1,"Capsid protein,Matrix protein",P11_OTHER,QUEUE_BOND_TEMPLATE,0.982456,pending,Stage 2I QC-controlled mapping deferral
+172696,8TQP,K3L,HIV-1,Capsid protein,P11_OTHER,QUEUE_BOND_TEMPLATE,0.98,pending,Stage 2I QC-controlled mapping deferral
+172697,8TQP,K3L,HIV-1,Capsid protein,P11_OTHER,QUEUE_BOND_TEMPLATE,0.98,pending,Stage 2I QC-controlled mapping deferral
+172698,8TQP,K3L,HIV-1,Capsid protein,P11_OTHER,QUEUE_BOND_TEMPLATE,0.98,pending,Stage 2I QC-controlled mapping deferral
+172699,8TQP,K3L,HIV-1,Capsid protein,P11_OTHER,QUEUE_BOND_TEMPLATE,0.98,pending,Stage 2I QC-controlled mapping deferral
+172700,8TQP,K3L,HIV-1,Capsid protein,P11_OTHER,QUEUE_BOND_TEMPLATE,0.98,pending,Stage 2I QC-controlled mapping deferral
+172701,8TQP,K3L,HIV-1,Capsid protein,P11_OTHER,QUEUE_BOND_TEMPLATE,0.98,pending,Stage 2I QC-controlled mapping deferral
+172702,8TQP,K3L,HIV-1,Capsid protein,P11_OTHER,QUEUE_BOND_TEMPLATE,0.98,pending,Stage 2I QC-controlled mapping deferral
+172703,8TQP,K3L,HIV-1,Capsid protein,P11_OTHER,QUEUE_BOND_TEMPLATE,0.98,pending,Stage 2I QC-controlled mapping deferral
+172704,8TQP,K3L,HIV-1,Capsid protein,P11_OTHER,QUEUE_BOND_TEMPLATE,0.98,pending,Stage 2I QC-controlled mapping deferral
+172705,8TQP,K3L,HIV-1,Capsid protein,P11_OTHER,QUEUE_BOND_TEMPLATE,0.98,pending,Stage 2I QC-controlled mapping deferral
+172706,8TQP,K3L,HIV-1,Capsid protein,P11_OTHER,QUEUE_BOND_TEMPLATE,0.98,pending,Stage 2I QC-controlled mapping deferral
+172707,8TQP,K3L,HIV-1,Capsid protein,P11_OTHER,QUEUE_BOND_TEMPLATE,0.98,pending,Stage 2I QC-controlled mapping deferral
+172890,8U69,VQ0,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.965517,pending,Stage 2I QC-controlled mapping deferral
+172938,8U6A,VQK,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.935484,pending,Stage 2I QC-controlled mapping deferral
+172994,8U6B,VTN,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.916667,pending,Stage 2I QC-controlled mapping deferral
+173043,8U6C,VWU,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.958333,pending,Stage 2I QC-controlled mapping deferral
+173075,8U6D,VTS,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.923077,pending,Stage 2I QC-controlled mapping deferral
+173224,8U6F,VU8,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.923077,pending,Stage 2I QC-controlled mapping deferral
+173242,8U6G,VVE,HIV-1,"Capsid protein,Reverse transcriptase",P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.970588,pending,Stage 2I QC-controlled mapping deferral
+173255,8U6H,VVE,HIV-1,"Capsid protein,Reverse transcriptase",P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.970588,pending,Stage 2I QC-controlled mapping deferral
+173392,8U6N,VWK,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.962963,pending,Stage 2I QC-controlled mapping deferral
+173401,8U6O,VWB,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.965517,pending,Stage 2I QC-controlled mapping deferral
+173418,8U6P,VOI,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.961538,pending,Stage 2I QC-controlled mapping deferral
+173448,8U6Q,VOU,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.964286,pending,Stage 2I QC-controlled mapping deferral
+173467,8U6R,VP2,HIV-1,"Capsid protein,Reverse transcriptase,Vp proteins",P11_OTHER,QUEUE_BOND_TEMPLATE,0.964286,pending,Stage 2I QC-controlled mapping deferral
+173484,8U6S,VPB,HIV-1,"Capsid protein,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.965517,pending,Stage 2I QC-controlled mapping deferral
+177352,1K5M,SPH,HIV-1,"Envelope glycoprotein,Vp proteins",P11_OTHER,QUEUE_BOND_TEMPLATE,0.666667,pending,Stage 2I QC-controlled mapping deferral
+213813,4I53,1C1,HIV-1,Envelope glycoprotein,P11_OTHER,QUEUE_BOND_TEMPLATE,0.964286,pending,Stage 2I QC-controlled mapping deferral
+213821,4I53,1C1,HIV-1,Envelope glycoprotein,P11_OTHER,QUEUE_BOND_TEMPLATE,0.964286,pending,Stage 2I QC-controlled mapping deferral
+214088,4I54,1C1,HIV-1,Envelope glycoprotein,P11_OTHER,QUEUE_BOND_TEMPLATE,0.964286,pending,Stage 2I QC-controlled mapping deferral
+214098,4I54,1C1,HIV-1,Envelope glycoprotein,P11_OTHER,QUEUE_BOND_TEMPLATE,0.964286,pending,Stage 2I QC-controlled mapping deferral
+238853,5FA2,SCN,HIV-1,Envelope glycoprotein,P11_OTHER,QUEUE_BOND_TEMPLATE,0.666667,pending,Stage 2I QC-controlled mapping deferral
+261256,6MU6,JYV,HIV-1,Envelope glycoprotein,P11_OTHER,QUEUE_BOND_TEMPLATE,0.977273,pending,Stage 2I QC-controlled mapping deferral
+261304,6MU7,JYY,HIV-1,Envelope glycoprotein,P11_OTHER,QUEUE_BOND_TEMPLATE,0.97561,pending,Stage 2I QC-controlled mapping deferral
+312875,1QS4,100,HIV-1,"Integrase,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.65,pending,Stage 2I QC-controlled mapping deferral
+318121,3VQA,MWP,HIV-1,Integrase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.583333,pending,Stage 2I QC-controlled mapping deferral
+318625,4CE9,O3N,HIV-1,Integrase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.975,pending,Stage 2I QC-controlled mapping deferral
+318630,4CE9,O3N,HIV-1,Integrase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.975,pending,Stage 2I QC-controlled mapping deferral
+318733,4CEA,ZSW,HIV-1,Integrase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.972973,pending,Stage 2I QC-controlled mapping deferral
+318739,4CEA,ZSW,HIV-1,Integrase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.972973,pending,Stage 2I QC-controlled mapping deferral
+318873,4CEB,ZSV,HIV-1,Integrase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.97619,pending,Stage 2I QC-controlled mapping deferral
+318874,4CEB,ZSV,HIV-1,Integrase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.97619,pending,Stage 2I QC-controlled mapping deferral
+319024,4CEC,2SS,HIV-1,Integrase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.973684,pending,Stage 2I QC-controlled mapping deferral
+319031,4CEC,2SS,HIV-1,Integrase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.973684,pending,Stage 2I QC-controlled mapping deferral
+319221,4CED,9NS,HIV-1,Integrase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.974359,pending,Stage 2I QC-controlled mapping deferral
+319222,4CED,9NS,HIV-1,Integrase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.974359,pending,Stage 2I QC-controlled mapping deferral
+320378,4CEZ,O3N,HIV-1,Integrase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.975,pending,Stage 2I QC-controlled mapping deferral
+320384,4CEZ,O3N,HIV-1,Integrase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.975,pending,Stage 2I QC-controlled mapping deferral
+321079,4CF9,5EY,HIV-1,Integrase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.655172,pending,Stage 2I QC-controlled mapping deferral
+321080,4CF9,EE2,HIV-1,Integrase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.655172,pending,Stage 2I QC-controlled mapping deferral
+321085,4CF9,5EY,HIV-1,Integrase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.655172,pending,Stage 2I QC-controlled mapping deferral
+321086,4CF9,EE2,HIV-1,Integrase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.655172,pending,Stage 2I QC-controlled mapping deferral
+321897,4CGG,K5Q,HIV-1,Integrase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.633333,pending,Stage 2I QC-controlled mapping deferral
+321898,4CGG,K5Q,HIV-1,Integrase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.633333,pending,Stage 2I QC-controlled mapping deferral
+323141,4CIE,Y7N,HIV-1,Integrase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.580645,pending,Stage 2I QC-controlled mapping deferral
+323150,4CIE,Y7N,HIV-1,Integrase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.580645,pending,Stage 2I QC-controlled mapping deferral
+324203,4CJF,RVN,HIV-1,Integrase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.565217,pending,Stage 2I QC-controlled mapping deferral
+324211,4CJF,RVN,HIV-1,Integrase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.565217,pending,Stage 2I QC-controlled mapping deferral
+325321,4CJU,JNS,HIV-1,Integrase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.65,pending,Stage 2I QC-controlled mapping deferral
+325326,4CJU,JNS,HIV-1,Integrase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.65,pending,Stage 2I QC-controlled mapping deferral
+326484,4OVL,1TD,HIV-1,Integrase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.5,pending,Stage 2I QC-controlled mapping deferral
+326493,4OVL,1TD,HIV-1,Integrase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.5,pending,Stage 2I QC-controlled mapping deferral
+327158,5OI2,9VN,HIV-1,Integrase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.758621,pending,Stage 2I QC-controlled mapping deferral
+327340,5OI5,9VK,HIV-1,Integrase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.758621,pending,Stage 2I QC-controlled mapping deferral
+327395,5OI8,9VN,HIV-1,Integrase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.758621,pending,Stage 2I QC-controlled mapping deferral
+327490,5OIA,9VK,HIV-1,Integrase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.758621,pending,Stage 2I QC-controlled mapping deferral
+329580,6W0U,S0Y,HIV-1,Integrase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.9375,pending,Stage 2I QC-controlled mapping deferral
+329621,6W42,SJY,HIV-1,Integrase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.714286,pending,Stage 2I QC-controlled mapping deferral
+329647,6WC8,TQM,HIV-1,Integrase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.777778,pending,Stage 2I QC-controlled mapping deferral
+329863,7L23,XFS,HIV-1,Integrase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.6,pending,Stage 2I QC-controlled mapping deferral
+329891,7L2Y,XHY,HIV-1,Integrase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.04,pending,Stage 2I QC-controlled mapping deferral
+329955,7LQP,YAV,HIV-1,Integrase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.482759,pending,Stage 2I QC-controlled mapping deferral
+330040,7RQ0,6I2,HIV-1,Integrase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.454545,pending,Stage 2I QC-controlled mapping deferral
+334067,6VKE,R0S,HIV-1,Other peptides rna complexes,P11_OTHER,QUEUE_BOND_TEMPLATE,0.972222,pending,Stage 2I QC-controlled mapping deferral
+338238,8FYM,1HC,HIV-1,Other peptides rna complexes,P11_OTHER,QUEUE_BOND_TEMPLATE,0.8,pending,Stage 2I QC-controlled mapping deferral
+338246,8FYM,1HC,HIV-1,Other peptides rna complexes,P11_OTHER,QUEUE_BOND_TEMPLATE,0.8,pending,Stage 2I QC-controlled mapping deferral
+338247,8FYM,1HC,HIV-1,Other peptides rna complexes,P11_OTHER,QUEUE_BOND_TEMPLATE,0.8,pending,Stage 2I QC-controlled mapping deferral
+345369,1BQM,HBY,HIV-1,"Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.954545,pending,Stage 2I QC-controlled mapping deferral
+345370,1BQN,HBY,HIV-1,"Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.954545,pending,Stage 2I QC-controlled mapping deferral
+345613,1S6P,IET,HIV-1,"Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.869565,pending,Stage 2I QC-controlled mapping deferral
+345765,1S6Q,TPB,HIV-1,"Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.96,pending,Stage 2I QC-controlled mapping deferral
+345766,1S9E,ADB,HIV-1,"Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.96,pending,Stage 2I QC-controlled mapping deferral
+345946,1S9G,ABZ,HIV-1,"Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.962963,pending,Stage 2I QC-controlled mapping deferral
+346090,1SUQ,185,HIV-1,"Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.931034,pending,Stage 2I QC-controlled mapping deferral
+346091,1SV5,65B,HIV-1,"Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.928571,pending,Stage 2I QC-controlled mapping deferral
+346130,1TVR,TB9,HIV-1,"Polymerase,Protease,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.809524,pending,Stage 2I QC-controlled mapping deferral
+346131,1UWB,TBO,HIV-1,"Polymerase,Protease,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.809524,pending,Stage 2I QC-controlled mapping deferral
+346206,2B5J,3AC,HIV-1,"Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.863636,pending,Stage 2I QC-controlled mapping deferral
+349069,7TAZ,VM5,HIV-1,"Polymerase,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.969697,pending,Stage 2I QC-controlled mapping deferral
+349780,1A9M,U0E,HIV-1,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.97619,pending,Stage 2I QC-controlled mapping deferral
+350109,1AXA,U0E,HIV-1,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.97619,pending,Stage 2I QC-controlled mapping deferral
+350110,1AXA,U0E,HIV-1,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.97619,pending,Stage 2I QC-controlled mapping deferral
+351053,1BWB,146,HIV-1,Protease,P7_MCS_TIMEOUT,QUEUE_COMPLEX_GRAPH,,pending,Stage 2I QC-controlled mapping deferral
+351573,1D4K,PI8,HIV-1,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.019608,pending,Stage 2I QC-controlled mapping deferral
+351669,1D4L,PI9,HIV-1,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.023256,pending,Stage 2I QC-controlled mapping deferral
+351792,1D4S,TPV,HIV-1,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.571429,pending,Stage 2I QC-controlled mapping deferral
+351926,1D4Y,TPV,HIV-1,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.571429,pending,Stage 2I QC-controlled mapping deferral
+352134,1DAZ,0Q4,HIV-1,Protease,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.983051,pending,Stage 2I QC-controlled mapping deferral
+352436,1DW6,0Q4,HIV-1,Protease,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.983051,pending,Stage 2I QC-controlled mapping deferral
+352473,1EBK,0Q4,HIV-1,Protease,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.983051,pending,Stage 2I QC-controlled mapping deferral
+352474,1EBK,0Q4,HIV-1,Protease,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.983051,pending,Stage 2I QC-controlled mapping deferral
+353403,1FEJ,2NC,HIV-1,Protease,P3_SMALL_ATOMSET_DIFFERENCE,QUEUE_LOCAL_RECOVERY,0.981481,pending,Stage 2I QC-controlled mapping deferral
+353552,1FF0,2NC,HIV-1,Protease,P3_SMALL_ATOMSET_DIFFERENCE,QUEUE_LOCAL_RECOVERY,0.981481,pending,Stage 2I QC-controlled mapping deferral
+353675,1FFF,0Q4,HIV-1,Protease,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.983051,pending,Stage 2I QC-controlled mapping deferral
+353781,1FFI,2NC,HIV-1,Protease,P3_SMALL_ATOMSET_DIFFERENCE,QUEUE_LOCAL_RECOVERY,0.981481,pending,Stage 2I QC-controlled mapping deferral
+353899,1FG6,2NC,HIV-1,Protease,P3_SMALL_ATOMSET_DIFFERENCE,QUEUE_LOCAL_RECOVERY,0.981481,pending,Stage 2I QC-controlled mapping deferral
+354011,1FG8,0Q4,HIV-1,Protease,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.983051,pending,Stage 2I QC-controlled mapping deferral
+354093,1FGC,2NC,HIV-1,Protease,P3_SMALL_ATOMSET_DIFFERENCE,QUEUE_LOCAL_RECOVERY,0.981481,pending,Stage 2I QC-controlled mapping deferral
+354539,1GNM,U0E,HIV-1,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.97619,pending,Stage 2I QC-controlled mapping deferral
+354540,1GNM,U0E,HIV-1,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.97619,pending,Stage 2I QC-controlled mapping deferral
+354641,1GNN,U0E,HIV-1,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.97619,pending,Stage 2I QC-controlled mapping deferral
+354642,1GNN,U0E,HIV-1,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.97619,pending,Stage 2I QC-controlled mapping deferral
+354730,1GNO,U0E,HIV-1,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.97619,pending,Stage 2I QC-controlled mapping deferral
+354731,1GNO,U0E,HIV-1,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.97619,pending,Stage 2I QC-controlled mapping deferral
+354805,1HBV,GAN,HIV-1,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.5,pending,Stage 2I QC-controlled mapping deferral
+355167,1HPO,UNI,HIV-1,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.972222,pending,Stage 2I QC-controlled mapping deferral
+355978,1HVH,Q82,HIV-1,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.931818,pending,Stage 2I QC-controlled mapping deferral
+356106,1HWR,216,HIV-1,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.933333,pending,Stage 2I QC-controlled mapping deferral
+356884,1K1T,0Q4,HIV-1,Protease,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.983051,pending,Stage 2I QC-controlled mapping deferral
+357059,1K1U,0Q4,HIV-1,Protease,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.983051,pending,Stage 2I QC-controlled mapping deferral
+357205,1K2B,0Q4,HIV-1,Protease,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.983051,pending,Stage 2I QC-controlled mapping deferral
+357334,1K2C,0Q4,HIV-1,Protease,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.983051,pending,Stage 2I QC-controlled mapping deferral
+358524,1MTR,PI6,HIV-1,Protease,P5_LARGE_GRAPH_DIFFERENCE,QUEUE_CURATION_REVIEW,0.023256,pending,Stage 2I QC-controlled mapping deferral
+359008,1NPV,L27,HIV-1,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.636364,pending,Stage 2I QC-controlled mapping deferral
+359102,1NPW,LGZ,HIV-1,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.608696,pending,Stage 2I QC-controlled mapping deferral
+359436,1QBT,146,HIV-1,Protease,P7_MCS_TIMEOUT,QUEUE_COMPLEX_GRAPH,,pending,Stage 2I QC-controlled mapping deferral
+359440,1REV,TB9,HIV-1,"Protease,Reverse transcriptase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.809524,pending,Stage 2I QC-controlled mapping deferral
+360435,1T7K,BH0,HIV-1,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.976744,pending,Stage 2I QC-controlled mapping deferral
+361446,1YT9,OIS,HIV-1,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.958333,pending,Stage 2I QC-controlled mapping deferral
+362942,2AOC,2NC,HIV-1,Protease,P3_SMALL_ATOMSET_DIFFERENCE,QUEUE_LOCAL_RECOVERY,0.981481,pending,Stage 2I QC-controlled mapping deferral
+363187,2AOD,2NC,HIV-1,Protease,P3_SMALL_ATOMSET_DIFFERENCE,QUEUE_LOCAL_RECOVERY,0.981481,pending,Stage 2I QC-controlled mapping deferral
+363396,2AOE,0Q4,HIV-1,Protease,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.983051,pending,Stage 2I QC-controlled mapping deferral
+363897,2AOG,2NC,HIV-1,Protease,P3_SMALL_ATOMSET_DIFFERENCE,QUEUE_LOCAL_RECOVERY,0.981481,pending,Stage 2I QC-controlled mapping deferral
+367938,2J9K,2NC,HIV-1,Protease,P3_SMALL_ATOMSET_DIFFERENCE,QUEUE_LOCAL_RECOVERY,0.981481,pending,Stage 2I QC-controlled mapping deferral
+369388,2O40,2NC,HIV-1,Protease,P3_SMALL_ATOMSET_DIFFERENCE,QUEUE_LOCAL_RECOVERY,0.981481,pending,Stage 2I QC-controlled mapping deferral
+371780,2QHZ,MZ2,HIV-1,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.85,pending,Stage 2I QC-controlled mapping deferral
+373252,2UPJ,U02,HIV-1,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.95122,pending,Stage 2I QC-controlled mapping deferral
+374569,3FSM,2NC,HIV-1,Protease,P3_SMALL_ATOMSET_DIFFERENCE,QUEUE_LOCAL_RECOVERY,0.981481,pending,Stage 2I QC-controlled mapping deferral
+375746,3HAU,2NC,HIV-1,Protease,P3_SMALL_ATOMSET_DIFFERENCE,QUEUE_LOCAL_RECOVERY,0.981481,pending,Stage 2I QC-controlled mapping deferral
+375848,3HAW,2NC,HIV-1,Protease,P3_SMALL_ATOMSET_DIFFERENCE,QUEUE_LOCAL_RECOVERY,0.981481,pending,Stage 2I QC-controlled mapping deferral
+375979,3HBO,2NC,HIV-1,Protease,P3_SMALL_ATOMSET_DIFFERENCE,QUEUE_LOCAL_RECOVERY,0.981481,pending,Stage 2I QC-controlled mapping deferral
+376081,3HDK,2NC,HIV-1,Protease,P3_SMALL_ATOMSET_DIFFERENCE,QUEUE_LOCAL_RECOVERY,0.981481,pending,Stage 2I QC-controlled mapping deferral
+376353,3HZC,2NC,HIV-1,Protease,P3_SMALL_ATOMSET_DIFFERENCE,QUEUE_LOCAL_RECOVERY,0.981481,pending,Stage 2I QC-controlled mapping deferral
+376458,3I2L,2NC,HIV-1,Protease,P3_SMALL_ATOMSET_DIFFERENCE,QUEUE_LOCAL_RECOVERY,0.981481,pending,Stage 2I QC-controlled mapping deferral
+376665,3IA9,2NC,HIV-1,Protease,P3_SMALL_ATOMSET_DIFFERENCE,QUEUE_LOCAL_RECOVERY,0.981481,pending,Stage 2I QC-controlled mapping deferral
+376803,3IAW,2NC,HIV-1,Protease,P3_SMALL_ATOMSET_DIFFERENCE,QUEUE_LOCAL_RECOVERY,0.981481,pending,Stage 2I QC-controlled mapping deferral
+376902,3KA2,2NC,HIV-1,Protease,P3_SMALL_ATOMSET_DIFFERENCE,QUEUE_LOCAL_RECOVERY,0.981481,pending,Stage 2I QC-controlled mapping deferral
+379080,3NWQ,2NC,HIV-1,Protease,P3_SMALL_ATOMSET_DIFFERENCE,QUEUE_LOCAL_RECOVERY,0.981481,pending,Stage 2I QC-controlled mapping deferral
+379371,3NXE,2NC,HIV-1,Protease,P3_SMALL_ATOMSET_DIFFERENCE,QUEUE_LOCAL_RECOVERY,0.981481,pending,Stage 2I QC-controlled mapping deferral
+379613,3NYG,2NC,HIV-1,Protease,P3_SMALL_ATOMSET_DIFFERENCE,QUEUE_LOCAL_RECOVERY,0.981481,pending,Stage 2I QC-controlled mapping deferral
+385850,3R0Y,RSZ,HIV-1,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.977273,pending,Stage 2I QC-controlled mapping deferral
+386743,3SPK,TPV,HIV-1,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.571429,pending,Stage 2I QC-controlled mapping deferral
+386744,3SPK,TPV,HIV-1,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.571429,pending,Stage 2I QC-controlled mapping deferral
+387660,3UHL,2NC,HIV-1,Protease,P3_SMALL_ATOMSET_DIFFERENCE,QUEUE_LOCAL_RECOVERY,0.981481,pending,Stage 2I QC-controlled mapping deferral
+387772,3ZPS,EQM,HIV-1,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.979167,pending,Stage 2I QC-controlled mapping deferral
+388057,3ZPT,M8Y,HIV-1,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.5625,pending,Stage 2I QC-controlled mapping deferral
+388342,3ZPU,M8B,HIV-1,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.55102,pending,Stage 2I QC-controlled mapping deferral
+390246,4HVP,2NC,HIV-1,Protease,P3_SMALL_ATOMSET_DIFFERENCE,QUEUE_LOCAL_RECOVERY,0.981481,pending,Stage 2I QC-controlled mapping deferral
+392562,4NJU,TPV,HIV-1,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.571429,pending,Stage 2I QC-controlled mapping deferral
+392563,4NJU,TPV,HIV-1,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.571429,pending,Stage 2I QC-controlled mapping deferral
+395849,5AGZ,QHA,HIV-1,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.978723,pending,Stage 2I QC-controlled mapping deferral
+397268,5AHA,ZLP,HIV-1,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.957447,pending,Stage 2I QC-controlled mapping deferral
+397553,5AHB,J5L,HIV-1,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.958333,pending,Stage 2I QC-controlled mapping deferral
+401263,5KQZ,0Q4,HIV-1,Protease,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.983051,pending,Stage 2I QC-controlled mapping deferral
+403878,5WLO,GR7,HIV-1,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.545455,pending,Stage 2I QC-controlled mapping deferral
+408678,6DIF,TPV,HIV-1,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.571429,pending,Stage 2I QC-controlled mapping deferral
+408895,6DIL,TPV,HIV-1,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.571429,pending,Stage 2I QC-controlled mapping deferral
+410681,6IXD,B0F,HIV-1,Protease,P7_MCS_TIMEOUT,QUEUE_COMPLEX_GRAPH,,pending,Stage 2I QC-controlled mapping deferral
+411957,6O48,0Q4,HIV-1,Protease,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.983051,pending,Stage 2I QC-controlled mapping deferral
+412178,6O57,2NC,HIV-1,Protease,P3_SMALL_ATOMSET_DIFFERENCE,QUEUE_LOCAL_RECOVERY,0.981481,pending,Stage 2I QC-controlled mapping deferral
+412260,6O5A,2NC,HIV-1,Protease,P3_SMALL_ATOMSET_DIFFERENCE,QUEUE_LOCAL_RECOVERY,0.981481,pending,Stage 2I QC-controlled mapping deferral
+412391,6O5X,0Q4,HIV-1,Protease,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.983051,pending,Stage 2I QC-controlled mapping deferral
+412400,6O5X,0Q4,HIV-1,Protease,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.983051,pending,Stage 2I QC-controlled mapping deferral
+429090,1DTQ,FPT,HIV-1,Reverse transcriptase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.916667,pending,Stage 2I QC-controlled mapping deferral
+429118,1DTT,FTC,HIV-1,Reverse transcriptase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.956522,pending,Stage 2I QC-controlled mapping deferral
+429354,1FK9,EFZ,HIV-1,Reverse transcriptase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.809524,pending,Stage 2I QC-controlled mapping deferral
+429469,1FKO,EFZ,HIV-1,Reverse transcriptase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.809524,pending,Stage 2I QC-controlled mapping deferral
+429473,1HNV,TBO,HIV-1,Reverse transcriptase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.809524,pending,Stage 2I QC-controlled mapping deferral
+429657,1HQU,HBY,HIV-1,Reverse transcriptase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.954545,pending,Stage 2I QC-controlled mapping deferral
+429658,1IKV,EFZ,HIV-1,Reverse transcriptase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.809524,pending,Stage 2I QC-controlled mapping deferral
+429659,1IKW,EFZ,HIV-1,Reverse transcriptase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.809524,pending,Stage 2I QC-controlled mapping deferral
+429722,1IKY,MSD,HIV-1,Reverse transcriptase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.925926,pending,Stage 2I QC-controlled mapping deferral
+429748,1JKH,EFZ,HIV-1,Reverse transcriptase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.809524,pending,Stage 2I QC-controlled mapping deferral
+429923,1JLC,FTC,HIV-1,Reverse transcriptase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.956522,pending,Stage 2I QC-controlled mapping deferral
+430014,1JLG,UC1,HIV-1,Reverse transcriptase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.818182,pending,Stage 2I QC-controlled mapping deferral
+430059,1JLQ,SBN,HIV-1,Reverse transcriptase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.95,pending,Stage 2I QC-controlled mapping deferral
+430879,1RT4,UC1,HIV-1,Reverse transcriptase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.818182,pending,Stage 2I QC-controlled mapping deferral
+430885,1RT5,UC2,HIV-1,Reverse transcriptase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.695652,pending,Stage 2I QC-controlled mapping deferral
+430893,1RT6,UC3,HIV-1,Reverse transcriptase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.95,pending,Stage 2I QC-controlled mapping deferral
+430992,1RT7,UC4,HIV-1,Reverse transcriptase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.73913,pending,Stage 2I QC-controlled mapping deferral
+431517,1S1T,UC1,HIV-1,Reverse transcriptase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.818182,pending,Stage 2I QC-controlled mapping deferral
+431775,1S1W,UC1,HIV-1,Reverse transcriptase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.818182,pending,Stage 2I QC-controlled mapping deferral
+431943,1TKX,GWB,HIV-1,Reverse transcriptase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.809524,pending,Stage 2I QC-controlled mapping deferral
+432889,2IC3,HBY,HIV-1,Reverse transcriptase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.954545,pending,Stage 2I QC-controlled mapping deferral
+432892,3LAK,KR1,HIV-1,Reverse transcriptase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.967742,pending,Stage 2I QC-controlled mapping deferral
+433105,3LAL,KRV,HIV-1,Reverse transcriptase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.958333,pending,Stage 2I QC-controlled mapping deferral
+433233,3LAM,KRP,HIV-1,Reverse transcriptase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.96,pending,Stage 2I QC-controlled mapping deferral
+433342,3LAN,KBT,HIV-1,Reverse transcriptase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.961538,pending,Stage 2I QC-controlled mapping deferral
+433453,3MEC,65B,HIV-1,Reverse transcriptase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.928571,pending,Stage 2I QC-controlled mapping deferral
+433674,3MED,65B,HIV-1,Reverse transcriptase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.928571,pending,Stage 2I QC-controlled mapping deferral
+433772,3MEE,T27,HIV-1,Reverse transcriptase,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.857143,pending,Stage 2I QC-controlled mapping deferral
+434030,3MEG,T27,HIV-1,Reverse transcriptase,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.857143,pending,Stage 2I QC-controlled mapping deferral
+434052,4NCG,2KW,HIV-1,Reverse transcriptase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.965517,pending,Stage 2I QC-controlled mapping deferral
+435128,5XN1,ET9,HIV-1,Reverse transcriptase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.96875,pending,Stage 2I QC-controlled mapping deferral
+435132,5XN1,ET9,HIV-1,Reverse transcriptase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.96875,pending,Stage 2I QC-controlled mapping deferral
+436269,6BSG,EFZ,HIV-1,Reverse transcriptase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.809524,pending,Stage 2I QC-controlled mapping deferral
+436410,6BSI,EFZ,HIV-1,"Reverse transcriptase,Rnase h",P11_OTHER,QUEUE_BOND_TEMPLATE,0.809524,pending,Stage 2I QC-controlled mapping deferral
+436421,6BSJ,EFZ,HIV-1,"Reverse transcriptase,Rnase h",P11_OTHER,QUEUE_BOND_TEMPLATE,0.809524,pending,Stage 2I QC-controlled mapping deferral
+436952,6IKA,ET9,HIV-1,Reverse transcriptase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.96875,pending,Stage 2I QC-controlled mapping deferral
+436956,6IKA,ET9,HIV-1,Reverse transcriptase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.96875,pending,Stage 2I QC-controlled mapping deferral
+437624,6KDM,ET9,HIV-1,Reverse transcriptase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.96875,pending,Stage 2I QC-controlled mapping deferral
+437628,6KDM,ET9,HIV-1,Reverse transcriptase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.96875,pending,Stage 2I QC-controlled mapping deferral
+438790,6O9E,IY1,HIV-1,Reverse transcriptase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.961538,pending,Stage 2I QC-controlled mapping deferral
+438792,6O9E,IY1,HIV-1,Reverse transcriptase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.961538,pending,Stage 2I QC-controlled mapping deferral
+438904,6UL5,QAG,HIV-1,Reverse transcriptase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.875,pending,Stage 2I QC-controlled mapping deferral
+439243,7KWU,K7F,HIV-1,Reverse transcriptase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.975,pending,Stage 2I QC-controlled mapping deferral
+441966,7XJ4,E9B,HIV-1,"Reverse transcriptase,Rnase h",P11_OTHER,QUEUE_BOND_TEMPLATE,0.708333,pending,Stage 2I QC-controlled mapping deferral
+442075,8FE8,XRB,HIV-1,Reverse transcriptase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.894737,pending,Stage 2I QC-controlled mapping deferral
+442261,8X1Z,XTE,HIV-1,Reverse transcriptase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.914286,pending,Stage 2I QC-controlled mapping deferral
+442264,8X1Z,XTE,HIV-1,Reverse transcriptase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.914286,pending,Stage 2I QC-controlled mapping deferral
+442525,8X20,XTE,HIV-1,Reverse transcriptase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.914286,pending,Stage 2I QC-controlled mapping deferral
+442528,8X20,XTE,HIV-1,Reverse transcriptase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.914286,pending,Stage 2I QC-controlled mapping deferral
+442785,8X21,ET9,HIV-1,Reverse transcriptase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.96875,pending,Stage 2I QC-controlled mapping deferral
+442790,8X21,ET9,HIV-1,Reverse transcriptase,P11_OTHER,QUEUE_BOND_TEMPLATE,0.96875,pending,Stage 2I QC-controlled mapping deferral
+450340,6ZFG,FSC,Human papillomavirus type 18,Envelope glycoprotein,P7_MCS_TIMEOUT,QUEUE_COMPLEX_GRAPH,,pending,Stage 2I QC-controlled mapping deferral
+450341,6ZFG,FSC,Human papillomavirus type 18,Envelope glycoprotein,P7_MCS_TIMEOUT,QUEUE_COMPLEX_GRAPH,,pending,Stage 2I QC-controlled mapping deferral
+459271,7GF7,O3U,SARS-CoV-2,"Accessory proteins,Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.285714,pending,Stage 2I QC-controlled mapping deferral
+462260,8F2C,X9Z,SARS-CoV-2,"Accessory proteins,Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.97561,pending,Stage 2I QC-controlled mapping deferral
+462358,8F2D,XA8,SARS-CoV-2,"Accessory proteins,Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.97619,pending,Stage 2I QC-controlled mapping deferral
+476562,7UXZ,GKP,SARS-CoV-2,"Capsid protein,Nucleocapsid protein,Nucleoprotein",P11_OTHER,QUEUE_BOND_TEMPLATE,0.470588,pending,Stage 2I QC-controlled mapping deferral
+478976,7XXK,SCN,SARS-CoV-2,"Capsid protein,Nucleocapsid protein,Nucleoprotein",P11_OTHER,QUEUE_BOND_TEMPLATE,0.666667,pending,Stage 2I QC-controlled mapping deferral
+516052,5RLG,VW1,SARS-CoV-2,"Helicase,Nsp proteins",P11_OTHER,QUEUE_BOND_TEMPLATE,0.928571,pending,Stage 2I QC-controlled mapping deferral
+531416,5RME,RYM,SARS-CoV-2,"Helicase,Nsp proteins",P11_OTHER,QUEUE_BOND_TEMPLATE,0.944444,pending,Stage 2I QC-controlled mapping deferral
+539077,5R82,RZS,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.909091,pending,Stage 2I QC-controlled mapping deferral
+549109,5REU,T4D,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.95,pending,Stage 2I QC-controlled mapping deferral
+551802,5RF2,HVB,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.8,pending,Stage 2I QC-controlled mapping deferral
+553159,5RF6,NTG,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.933333,pending,Stage 2I QC-controlled mapping deferral
+555881,5RFE,JGG,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.944444,pending,Stage 2I QC-controlled mapping deferral
+556544,5RFG,T6V,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.647059,pending,Stage 2I QC-controlled mapping deferral
+558572,5RFM,T7J,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.666667,pending,Stage 2I QC-controlled mapping deferral
+558907,5RFN,T7P,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.666667,pending,Stage 2I QC-controlled mapping deferral
+563662,5RG1,T9J,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.9,pending,Stage 2I QC-controlled mapping deferral
+563998,5RG2,T9M,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.928571,pending,Stage 2I QC-controlled mapping deferral
+564341,5RG3,T9P,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.933333,pending,Stage 2I QC-controlled mapping deferral
+565010,5RGH,U0M,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.571429,pending,Stage 2I QC-controlled mapping deferral
+630505,5S1A,WPS,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.888889,pending,Stage 2I QC-controlled mapping deferral
+630506,5S1A,WPS,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.888889,pending,Stage 2I QC-controlled mapping deferral
+632045,5S1I,WQ4,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.888889,pending,Stage 2I QC-controlled mapping deferral
+632465,5S1K,WQ7,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.9,pending,Stage 2I QC-controlled mapping deferral
+634384,5S1U,WQM,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.454545,pending,Stage 2I QC-controlled mapping deferral
+642088,5S2J,JGG,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.944444,pending,Stage 2I QC-controlled mapping deferral
+658677,5S3I,W1P,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.538462,pending,Stage 2I QC-controlled mapping deferral
+659623,5S3K,RZS,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.909091,pending,Stage 2I QC-controlled mapping deferral
+662446,5S3Q,W2A,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.923077,pending,Stage 2I QC-controlled mapping deferral
+662447,5S3Q,W2A,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.923077,pending,Stage 2I QC-controlled mapping deferral
+662448,5S3Q,W2A,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.923077,pending,Stage 2I QC-controlled mapping deferral
+667277,5S40,HHQ,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.25,pending,Stage 2I QC-controlled mapping deferral
+667724,5S41,HGQ,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.875,pending,Stage 2I QC-controlled mapping deferral
+668674,5S43,UUJ,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.9,pending,Stage 2I QC-controlled mapping deferral
+670057,5S46,HYN,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.857143,pending,Stage 2I QC-controlled mapping deferral
+670509,5S47,BAQ,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.833333,pending,Stage 2I QC-controlled mapping deferral
+670510,5S47,BAQ,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.833333,pending,Stage 2I QC-controlled mapping deferral
+672805,5S4C,W3J,SARS-CoV-2,"Nsp proteins,Protease",P8_NO_MCS_MAPPING,QUEUE_FRAGMENT_REVIEW,,pending,Stage 2I QC-controlled mapping deferral
+672806,5S4C,W3J,SARS-CoV-2,"Nsp proteins,Protease",P8_NO_MCS_MAPPING,QUEUE_FRAGMENT_REVIEW,,pending,Stage 2I QC-controlled mapping deferral
+672807,5S4C,W3J,SARS-CoV-2,"Nsp proteins,Protease",P8_NO_MCS_MAPPING,QUEUE_FRAGMENT_REVIEW,,pending,Stage 2I QC-controlled mapping deferral
+672810,5S4C,W3J,SARS-CoV-2,"Nsp proteins,Protease",P8_NO_MCS_MAPPING,QUEUE_FRAGMENT_REVIEW,,pending,Stage 2I QC-controlled mapping deferral
+672811,5S4C,W3J,SARS-CoV-2,"Nsp proteins,Protease",P8_NO_MCS_MAPPING,QUEUE_FRAGMENT_REVIEW,,pending,Stage 2I QC-controlled mapping deferral
+673737,5S4E,W3M,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.857143,pending,Stage 2I QC-controlled mapping deferral
+673738,5S4E,W3M,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.857143,pending,Stage 2I QC-controlled mapping deferral
+673739,5S4E,W3M,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.857143,pending,Stage 2I QC-controlled mapping deferral
+693591,5SKW,LF6,SARS-CoV-2,Nsp proteins,P11_OTHER,QUEUE_BOND_TEMPLATE,0.571429,pending,Stage 2I QC-controlled mapping deferral
+707440,5SLS,SZE,SARS-CoV-2,Nsp proteins,P11_OTHER,QUEUE_BOND_TEMPLATE,0.933333,pending,Stage 2I QC-controlled mapping deferral
+711759,5SM2,LQ3,SARS-CoV-2,Nsp proteins,P11_OTHER,QUEUE_BOND_TEMPLATE,0.454545,pending,Stage 2I QC-controlled mapping deferral
+711760,5SM2,LQ3,SARS-CoV-2,Nsp proteins,P11_OTHER,QUEUE_BOND_TEMPLATE,0.454545,pending,Stage 2I QC-controlled mapping deferral
+713063,5SM5,S5J,SARS-CoV-2,Nsp proteins,P11_OTHER,QUEUE_BOND_TEMPLATE,0.941176,pending,Stage 2I QC-controlled mapping deferral
+716094,5SMC,LRF,SARS-CoV-2,Nsp proteins,P11_OTHER,QUEUE_BOND_TEMPLATE,0.928571,pending,Stage 2I QC-controlled mapping deferral
+716095,5SMC,LRF,SARS-CoV-2,Nsp proteins,P11_OTHER,QUEUE_BOND_TEMPLATE,0.928571,pending,Stage 2I QC-controlled mapping deferral
+720094,5SMN,O4F,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.952381,pending,Stage 2I QC-controlled mapping deferral
+809034,6XA9,AYE,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.75,pending,Stage 2I QC-controlled mapping deferral
+809035,6XA9,AYE,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.75,pending,Stage 2I QC-controlled mapping deferral
+809036,6XA9,AYE,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.75,pending,Stage 2I QC-controlled mapping deferral
+809078,6XAA,AYE,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.75,pending,Stage 2I QC-controlled mapping deferral
+814890,6Z2E,Q5T,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.880597,pending,Stage 2I QC-controlled mapping deferral
+827147,7B5Z,SYH,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.947368,pending,Stage 2I QC-controlled mapping deferral
+830312,7BF6,U08,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.952381,pending,Stage 2I QC-controlled mapping deferral
+830316,7BF6,U08,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.952381,pending,Stage 2I QC-controlled mapping deferral
+830317,7BF6,U08,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.952381,pending,Stage 2I QC-controlled mapping deferral
+841099,7E6K,HYR,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.916667,pending,Stage 2I QC-controlled mapping deferral
+841100,7E6K,HYR,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.916667,pending,Stage 2I QC-controlled mapping deferral
+841101,7E6K,HYR,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.916667,pending,Stage 2I QC-controlled mapping deferral
+851033,7GAW,KG9,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.969697,pending,Stage 2I QC-controlled mapping deferral
+851036,7GAW,KG9,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.969697,pending,Stage 2I QC-controlled mapping deferral
+851696,7GAY,KJO,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.941176,pending,Stage 2I QC-controlled mapping deferral
+852361,7GB0,KLR,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.96,pending,Stage 2I QC-controlled mapping deferral
+853741,7GB4,KO9,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.944444,pending,Stage 2I QC-controlled mapping deferral
+856172,7GBC,KSX,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.947368,pending,Stage 2I QC-controlled mapping deferral
+867568,7GCF,LKX,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.941176,pending,Stage 2I QC-controlled mapping deferral
+868077,7GCI,LJO,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.941176,pending,Stage 2I QC-controlled mapping deferral
+869200,7GCM,LQU,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.952381,pending,Stage 2I QC-controlled mapping deferral
+869757,7GCO,LO0,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.714286,pending,Stage 2I QC-controlled mapping deferral
+883808,7GE4,N6X,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.95,pending,Stage 2I QC-controlled mapping deferral
+888263,7GEJ,NO0,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.954545,pending,Stage 2I QC-controlled mapping deferral
+901213,7GFW,OK9,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.521739,pending,Stage 2I QC-controlled mapping deferral
+905481,7GGB,OT6,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.96,pending,Stage 2I QC-controlled mapping deferral
+906836,7GGG,OVX,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.961538,pending,Stage 2I QC-controlled mapping deferral
+908423,7GGN,P0X,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.962963,pending,Stage 2I QC-controlled mapping deferral
+913073,7GH7,Q36,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.95,pending,Stage 2I QC-controlled mapping deferral
+916032,7GHH,Q6U,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.833333,pending,Stage 2I QC-controlled mapping deferral
+920473,7GHS,OVX,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.961538,pending,Stage 2I QC-controlled mapping deferral
+920481,7GHS,OVX,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.961538,pending,Stage 2I QC-controlled mapping deferral
+929783,7GIE,QF9,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.956522,pending,Stage 2I QC-controlled mapping deferral
+930485,7GIG,QFU,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.954545,pending,Stage 2I QC-controlled mapping deferral
+957817,7GKT,QZU,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.966667,pending,Stage 2I QC-controlled mapping deferral
+961129,7GL2,R43,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.969697,pending,Stage 2I QC-controlled mapping deferral
+961135,7GL2,R43,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.969697,pending,Stage 2I QC-controlled mapping deferral
+963959,7GL8,KG9,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.969697,pending,Stage 2I QC-controlled mapping deferral
+963962,7GL8,KG9,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.969697,pending,Stage 2I QC-controlled mapping deferral
+966057,7GLD,R8I,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.967742,pending,Stage 2I QC-controlled mapping deferral
+967132,7GLG,R95,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.96875,pending,Stage 2I QC-controlled mapping deferral
+967136,7GLG,R95,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.96875,pending,Stage 2I QC-controlled mapping deferral
+969311,7GLM,RBM,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.969697,pending,Stage 2I QC-controlled mapping deferral
+969315,7GLM,RBM,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.969697,pending,Stage 2I QC-controlled mapping deferral
+971795,7GLT,RC9,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.970588,pending,Stage 2I QC-controlled mapping deferral
+971800,7GLT,RC9,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.970588,pending,Stage 2I QC-controlled mapping deferral
+974425,7GM0,RFF,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.969697,pending,Stage 2I QC-controlled mapping deferral
+974430,7GM0,RFF,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.969697,pending,Stage 2I QC-controlled mapping deferral
+985115,7GMS,RNI,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.973684,pending,Stage 2I QC-controlled mapping deferral
+988720,7GN1,RRU,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.971429,pending,Stage 2I QC-controlled mapping deferral
+994752,7GNH,RYB,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.97561,pending,Stage 2I QC-controlled mapping deferral
+994757,7GNH,RYB,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.97561,pending,Stage 2I QC-controlled mapping deferral
+1001241,7GNS,S6K,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.972222,pending,Stage 2I QC-controlled mapping deferral
+1001248,7GNS,S6K,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.972222,pending,Stage 2I QC-controlled mapping deferral
+1001685,7GNT,S7C,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.972973,pending,Stage 2I QC-controlled mapping deferral
+1001690,7GNT,S7C,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.972973,pending,Stage 2I QC-controlled mapping deferral
+1002243,7GNU,S7U,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.972222,pending,Stage 2I QC-controlled mapping deferral
+1002249,7GNU,S7U,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.972222,pending,Stage 2I QC-controlled mapping deferral
+1007120,7GRO,Y3N,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.9375,pending,Stage 2I QC-controlled mapping deferral
+1008797,7GRR,Y0O,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.555556,pending,Stage 2I QC-controlled mapping deferral
+1013275,7GS1,GT7,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.916667,pending,Stage 2I QC-controlled mapping deferral
+1029923,7GZY,A1AK6,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.970588,pending,Stage 2I QC-controlled mapping deferral
+1030487,7H00,A1ALQ,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.969697,pending,Stage 2I QC-controlled mapping deferral
+1031029,7H02,A1ALS,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.789474,pending,Stage 2I QC-controlled mapping deferral
+1032494,7H09,A1AL6,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.969697,pending,Stage 2I QC-controlled mapping deferral
+1032495,7H09,A1AL6,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.969697,pending,Stage 2I QC-controlled mapping deferral
+1033470,7H0B,A1AMD,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.96875,pending,Stage 2I QC-controlled mapping deferral
+1033471,7H0B,A1AMD,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.96875,pending,Stage 2I QC-controlled mapping deferral
+1039581,7H0R,A1AMW,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.970588,pending,Stage 2I QC-controlled mapping deferral
+1041126,7H0X,A1ANQ,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.969697,pending,Stage 2I QC-controlled mapping deferral
+1041127,7H0X,A1ANQ,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.969697,pending,Stage 2I QC-controlled mapping deferral
+1042638,7H11,A1ANW,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.870968,pending,Stage 2I QC-controlled mapping deferral
+1047925,7JIV,VBY,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.962963,pending,Stage 2I QC-controlled mapping deferral
+1048092,7JIW,VBY,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.962963,pending,Stage 2I QC-controlled mapping deferral
+1053106,7KOJ,Y94,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.965517,pending,Stage 2I QC-controlled mapping deferral
+1053306,7KOK,Y96,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.92,pending,Stage 2I QC-controlled mapping deferral
+1053534,7KOL,Y96,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.92,pending,Stage 2I QC-controlled mapping deferral
+1056367,7KXB,XB1,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.965517,pending,Stage 2I QC-controlled mapping deferral
+1101453,7MPB,ASC,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.416667,pending,Stage 2I QC-controlled mapping deferral
+1101455,7MPB,ASC,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.416667,pending,Stage 2I QC-controlled mapping deferral
+1108784,7NT1,UQW,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.954545,pending,Stage 2I QC-controlled mapping deferral
+1108845,7NT2,URK,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.965517,pending,Stage 2I QC-controlled mapping deferral
+1109030,7NT3,UQZ,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.965517,pending,Stage 2I QC-controlled mapping deferral
+1115437,7QG7,U08,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.952381,pending,Stage 2I QC-controlled mapping deferral
+1115440,7QG7,U08,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.952381,pending,Stage 2I QC-controlled mapping deferral
+1116038,7QIF,GTG,SARS-CoV-2,Nsp proteins,P7_MCS_TIMEOUT,QUEUE_COMPLEX_GRAPH,,pending,Stage 2I QC-controlled mapping deferral
+1116525,7R1T,6NR,SARS-CoV-2,Nsp proteins,P11_OTHER,QUEUE_BOND_TEMPLATE,0.964286,pending,Stage 2I QC-controlled mapping deferral
+1117031,7RBZ,4IJ,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.578947,pending,Stage 2I QC-controlled mapping deferral
+1118992,7RMT,5ZN,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.72,pending,Stage 2I QC-controlled mapping deferral
+1119555,7RNK,5ZT,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.72,pending,Stage 2I QC-controlled mapping deferral
+1132850,7TIA,SCN,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.666667,pending,Stage 2I QC-controlled mapping deferral
+1133841,7TIZ,SCN,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.666667,pending,Stage 2I QC-controlled mapping deferral
+1150214,7UO4,NWX,SARS-CoV-2,"Nsp proteins,Polymerase",P11_OTHER,QUEUE_BOND_TEMPLATE,0.969697,pending,Stage 2I QC-controlled mapping deferral
+1152730,7UUB,7VB,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.972222,pending,Stage 2I QC-controlled mapping deferral
+1159514,7Z59,IFO,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.6,pending,Stage 2I QC-controlled mapping deferral
+1159998,7ZQV,XNV,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.973684,pending,Stage 2I QC-controlled mapping deferral
+1159999,7ZQV,XNV,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.973684,pending,Stage 2I QC-controlled mapping deferral
+1160781,8A23,KW6,SARS-CoV-2,Nsp proteins,P11_OTHER,QUEUE_BOND_TEMPLATE,0.645161,pending,Stage 2I QC-controlled mapping deferral
+1164441,8B2T,OW1,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.971429,pending,Stage 2I QC-controlled mapping deferral
+1165624,8BWU,6NR,SARS-CoV-2,Nsp proteins,P11_OTHER,QUEUE_BOND_TEMPLATE,0.964286,pending,Stage 2I QC-controlled mapping deferral
+1166224,8C1A,T6O,SARS-CoV-2,Nsp proteins,P11_OTHER,QUEUE_BOND_TEMPLATE,0.714286,pending,Stage 2I QC-controlled mapping deferral
+1176185,8DLB,SRU,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.458333,pending,Stage 2I QC-controlled mapping deferral
+1176700,8DPR,T43,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.977778,pending,Stage 2I QC-controlled mapping deferral
+1189209,8F4S,XDU,SARS-CoV-2,Nsp proteins,P11_OTHER,QUEUE_BOND_TEMPLATE,0.571429,pending,Stage 2I QC-controlled mapping deferral
+1189425,8F4Y,XDU,SARS-CoV-2,Nsp proteins,P11_OTHER,QUEUE_BOND_TEMPLATE,0.571429,pending,Stage 2I QC-controlled mapping deferral
+1189887,8FIV,Y0I,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.972222,pending,Stage 2I QC-controlled mapping deferral
+1189888,8FIW,Y0E,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.971429,pending,Stage 2I QC-controlled mapping deferral
+1189889,8FIW,Y0E,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.971429,pending,Stage 2I QC-controlled mapping deferral
+1189890,8FIW,Y1E,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.971429,pending,Stage 2I QC-controlled mapping deferral
+1192246,8GFR,ZGO,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.978261,pending,Stage 2I QC-controlled mapping deferral
+1192341,8GFU,ZGW,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.971429,pending,Stage 2I QC-controlled mapping deferral
+1202900,8IFR,P0O,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.897436,pending,Stage 2I QC-controlled mapping deferral
+1203123,8IFS,OZL,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.972973,pending,Stage 2I QC-controlled mapping deferral
+1203124,8IFS,OZL,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.972973,pending,Stage 2I QC-controlled mapping deferral
+1203134,8IFT,OZB,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.972222,pending,Stage 2I QC-controlled mapping deferral
+1204560,8IGX,PQL,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.972222,pending,Stage 2I QC-controlled mapping deferral
+1210234,8OKC,VQN,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.5625,pending,Stage 2I QC-controlled mapping deferral
+1221015,8PH4,YQN,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.810811,pending,Stage 2I QC-controlled mapping deferral
+1221016,8PH4,YQN,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.810811,pending,Stage 2I QC-controlled mapping deferral
+1221018,8PH4,YQN,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.810811,pending,Stage 2I QC-controlled mapping deferral
+1221019,8PH4,YQN,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.810811,pending,Stage 2I QC-controlled mapping deferral
+1221961,8R12,XH9,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.96,pending,Stage 2I QC-controlled mapping deferral
+1221963,8R12,XH9,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.96,pending,Stage 2I QC-controlled mapping deferral
+1233597,8TV6,V83,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.692308,pending,Stage 2I QC-controlled mapping deferral
+1239429,8VDJ,SCN,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.666667,pending,Stage 2I QC-controlled mapping deferral
+1241863,8YRH,ROA,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.653846,pending,Stage 2I QC-controlled mapping deferral
+1248305,9BPF,YDL,SARS-CoV-2,"Nsp proteins,Protease",P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.970588,pending,Stage 2I QC-controlled mapping deferral
+1248306,9BPF,YDL,SARS-CoV-2,"Nsp proteins,Protease",P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.970588,pending,Stage 2I QC-controlled mapping deferral
+1248453,9BRV,A1ASK,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.9375,pending,Stage 2I QC-controlled mapping deferral
+1248455,9BRV,A1ASK,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.9375,pending,Stage 2I QC-controlled mapping deferral
+1251889,9FEH,A1IB6,SARS-CoV-2,Nsp proteins,P11_OTHER,QUEUE_BOND_TEMPLATE,0.809524,pending,Stage 2I QC-controlled mapping deferral
+1252023,9FQ9,A1IF1,SARS-CoV-2,"Nsp proteins,Protease",P11_OTHER,QUEUE_BOND_TEMPLATE,0.6,pending,Stage 2I QC-controlled mapping deferral
+1256863,5RGW,UGM,SARS-CoV-2,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.944444,pending,Stage 2I QC-controlled mapping deferral
+1257158,5RGX,UGP,SARS-CoV-2,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.947368,pending,Stage 2I QC-controlled mapping deferral
+1257596,5RGZ,UH1,SARS-CoV-2,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.944444,pending,Stage 2I QC-controlled mapping deferral
+1260012,5RH8,UHM,SARS-CoV-2,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.947368,pending,Stage 2I QC-controlled mapping deferral
+1270073,7CA8,FNO,SARS-CoV-2,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.380952,pending,Stage 2I QC-controlled mapping deferral
+1272990,7DGB,EOF,SARS-CoV-2,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.758621,pending,Stage 2I QC-controlled mapping deferral
+1273180,7DGF,H60,SARS-CoV-2,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.766667,pending,Stage 2I QC-controlled mapping deferral
+1273427,7DGG,H63,SARS-CoV-2,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.758621,pending,Stage 2I QC-controlled mapping deferral
+1273428,7DGG,H63,SARS-CoV-2,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.758621,pending,Stage 2I QC-controlled mapping deferral
+1274605,7DHJ,H6R,SARS-CoV-2,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.714286,pending,Stage 2I QC-controlled mapping deferral
+1286571,7L10,XEY,SARS-CoV-2,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.965517,pending,Stage 2I QC-controlled mapping deferral
+1286811,7L11,XF1,SARS-CoV-2,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.96875,pending,Stage 2I QC-controlled mapping deferral
+1286812,7L11,XF1,SARS-CoV-2,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.96875,pending,Stage 2I QC-controlled mapping deferral
+1287855,7L14,XFD,SARS-CoV-2,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.969697,pending,Stage 2I QC-controlled mapping deferral
+1287856,7L14,XFD,SARS-CoV-2,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.969697,pending,Stage 2I QC-controlled mapping deferral
+1293349,7RVN,7VB,SARS-CoV-2,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.972222,pending,Stage 2I QC-controlled mapping deferral
+1302697,7WO3,59S,SARS-CoV-2,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.769231,pending,Stage 2I QC-controlled mapping deferral
+1302830,7WOF,5IZ,SARS-CoV-2,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.766667,pending,Stage 2I QC-controlled mapping deferral
+1303088,7WOH,5IW,SARS-CoV-2,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.829268,pending,Stage 2I QC-controlled mapping deferral
+1303089,7WOH,5IW,SARS-CoV-2,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.829268,pending,Stage 2I QC-controlled mapping deferral
+1303972,7WYP,G7O,SARS-CoV-2,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.944444,pending,Stage 2I QC-controlled mapping deferral
+1303973,7WYP,G7O,SARS-CoV-2,Protease,P11_OTHER,QUEUE_BOND_TEMPLATE,0.944444,pending,Stage 2I QC-controlled mapping deferral
+1312450,6ZB4,EIC,SARS-CoV-2,Spike protein,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.55,pending,Stage 2I QC-controlled mapping deferral
+1312461,6ZB4,EIC,SARS-CoV-2,Spike protein,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.55,pending,Stage 2I QC-controlled mapping deferral
+1312471,6ZB4,EIC,SARS-CoV-2,Spike protein,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.55,pending,Stage 2I QC-controlled mapping deferral
+1312484,6ZB5,EIC,SARS-CoV-2,Spike protein,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.55,pending,Stage 2I QC-controlled mapping deferral
+1312493,6ZB5,EIC,SARS-CoV-2,Spike protein,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.55,pending,Stage 2I QC-controlled mapping deferral
+1312494,6ZB5,EIC,SARS-CoV-2,Spike protein,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.55,pending,Stage 2I QC-controlled mapping deferral
+1313083,6ZOZ,BLA,SARS-CoV-2,Spike protein,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.302326,pending,Stage 2I QC-controlled mapping deferral
+1313097,6ZOZ,BLA,SARS-CoV-2,Spike protein,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.302326,pending,Stage 2I QC-controlled mapping deferral
+1313111,6ZOZ,BLA,SARS-CoV-2,Spike protein,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.302326,pending,Stage 2I QC-controlled mapping deferral
+1313142,6ZP2,BLA,SARS-CoV-2,Spike protein,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.302326,pending,Stage 2I QC-controlled mapping deferral
+1313153,6ZP2,EIC,SARS-CoV-2,Spike protein,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.55,pending,Stage 2I QC-controlled mapping deferral
+1313157,6ZP2,EIC,SARS-CoV-2,Spike protein,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.55,pending,Stage 2I QC-controlled mapping deferral
+1313158,6ZP2,BLA,SARS-CoV-2,Spike protein,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.302326,pending,Stage 2I QC-controlled mapping deferral
+1313169,6ZP2,EIC,SARS-CoV-2,Spike protein,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.55,pending,Stage 2I QC-controlled mapping deferral
+1313173,6ZP2,BLA,SARS-CoV-2,Spike protein,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.302326,pending,Stage 2I QC-controlled mapping deferral
+1314183,7B62,BLA,SARS-CoV-2,Spike protein,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.302326,pending,Stage 2I QC-controlled mapping deferral
+1322217,7DWY,EIC,SARS-CoV-2,Spike protein,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.55,pending,Stage 2I QC-controlled mapping deferral
+1322239,7DWY,EIC,SARS-CoV-2,Spike protein,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.55,pending,Stage 2I QC-controlled mapping deferral
+1322259,7DWY,EIC,SARS-CoV-2,Spike protein,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.55,pending,Stage 2I QC-controlled mapping deferral
+1322882,7E7B,ELA,SARS-CoV-2,Spike protein,P11_OTHER,QUEUE_BOND_TEMPLATE,0.55,pending,Stage 2I QC-controlled mapping deferral
+1322883,7E7B,ELA,SARS-CoV-2,Spike protein,P11_OTHER,QUEUE_BOND_TEMPLATE,0.55,pending,Stage 2I QC-controlled mapping deferral
+1322884,7E7B,VCG,SARS-CoV-2,Spike protein,P11_OTHER,QUEUE_BOND_TEMPLATE,0.785714,pending,Stage 2I QC-controlled mapping deferral
+1322885,7E7B,VCG,SARS-CoV-2,Spike protein,P11_OTHER,QUEUE_BOND_TEMPLATE,0.785714,pending,Stage 2I QC-controlled mapping deferral
+1322891,7E7B,ELA,SARS-CoV-2,Spike protein,P11_OTHER,QUEUE_BOND_TEMPLATE,0.55,pending,Stage 2I QC-controlled mapping deferral
+1322892,7E7B,VCG,SARS-CoV-2,Spike protein,P11_OTHER,QUEUE_BOND_TEMPLATE,0.785714,pending,Stage 2I QC-controlled mapping deferral
+1323003,7E7D,ELA,SARS-CoV-2,Spike protein,P11_OTHER,QUEUE_BOND_TEMPLATE,0.55,pending,Stage 2I QC-controlled mapping deferral
+1323004,7E7D,ELA,SARS-CoV-2,Spike protein,P11_OTHER,QUEUE_BOND_TEMPLATE,0.55,pending,Stage 2I QC-controlled mapping deferral
+1323006,7E7D,ELA,SARS-CoV-2,Spike protein,P11_OTHER,QUEUE_BOND_TEMPLATE,0.55,pending,Stage 2I QC-controlled mapping deferral
+1330744,7JJI,VCG,SARS-CoV-2,Spike protein,P11_OTHER,QUEUE_BOND_TEMPLATE,0.785714,pending,Stage 2I QC-controlled mapping deferral
+1330745,7JJI,EIC,SARS-CoV-2,Spike protein,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.55,pending,Stage 2I QC-controlled mapping deferral
+1330746,7JJI,EIC,SARS-CoV-2,Spike protein,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.55,pending,Stage 2I QC-controlled mapping deferral
+1330748,7JJI,VCG,SARS-CoV-2,Spike protein,P11_OTHER,QUEUE_BOND_TEMPLATE,0.785714,pending,Stage 2I QC-controlled mapping deferral
+1330749,7JJI,EIC,SARS-CoV-2,Spike protein,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.55,pending,Stage 2I QC-controlled mapping deferral
+1330751,7JJI,VCG,SARS-CoV-2,Spike protein,P11_OTHER,QUEUE_BOND_TEMPLATE,0.785714,pending,Stage 2I QC-controlled mapping deferral
+1347544,7MSQ,SCN,SARS-CoV-2,Spike protein,P11_OTHER,QUEUE_BOND_TEMPLATE,0.666667,pending,Stage 2I QC-controlled mapping deferral
+1347550,7MSQ,SCN,SARS-CoV-2,Spike protein,P11_OTHER,QUEUE_BOND_TEMPLATE,0.666667,pending,Stage 2I QC-controlled mapping deferral
+1347552,7MSQ,SCN,SARS-CoV-2,Spike protein,P11_OTHER,QUEUE_BOND_TEMPLATE,0.666667,pending,Stage 2I QC-controlled mapping deferral
+1347553,7MSQ,SCN,SARS-CoV-2,Spike protein,P11_OTHER,QUEUE_BOND_TEMPLATE,0.666667,pending,Stage 2I QC-controlled mapping deferral
+1347554,7MSQ,SCN,SARS-CoV-2,Spike protein,P11_OTHER,QUEUE_BOND_TEMPLATE,0.666667,pending,Stage 2I QC-controlled mapping deferral
+1356768,7NT9,BLA,SARS-CoV-2,Spike protein,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.302326,pending,Stage 2I QC-controlled mapping deferral
+1356777,7NT9,BLA,SARS-CoV-2,Spike protein,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.302326,pending,Stage 2I QC-controlled mapping deferral
+1356786,7NT9,BLA,SARS-CoV-2,Spike protein,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.302326,pending,Stage 2I QC-controlled mapping deferral
+1356977,7NTA,BLA,SARS-CoV-2,Spike protein,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.302326,pending,Stage 2I QC-controlled mapping deferral
+1356985,7NTA,BLA,SARS-CoV-2,Spike protein,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.302326,pending,Stage 2I QC-controlled mapping deferral
+1356996,7NTA,BLA,SARS-CoV-2,Spike protein,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.302326,pending,Stage 2I QC-controlled mapping deferral
+1357146,7NTC,BLA,SARS-CoV-2,Spike protein,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.302326,pending,Stage 2I QC-controlled mapping deferral
+1357156,7NTC,BLA,SARS-CoV-2,Spike protein,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.302326,pending,Stage 2I QC-controlled mapping deferral
+1360347,7OD3,EIC,SARS-CoV-2,Spike protein,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.55,pending,Stage 2I QC-controlled mapping deferral
+1360360,7OD3,EIC,SARS-CoV-2,Spike protein,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.55,pending,Stage 2I QC-controlled mapping deferral
+1360371,7OD3,EIC,SARS-CoV-2,Spike protein,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.55,pending,Stage 2I QC-controlled mapping deferral
+1360383,7ODL,EIC,SARS-CoV-2,Spike protein,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.55,pending,Stage 2I QC-controlled mapping deferral
+1360394,7ODL,EIC,SARS-CoV-2,Spike protein,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.55,pending,Stage 2I QC-controlled mapping deferral
+1360405,7ODL,EIC,SARS-CoV-2,Spike protein,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.55,pending,Stage 2I QC-controlled mapping deferral
+1365347,7QUR,EIC,SARS-CoV-2,Spike protein,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.55,pending,Stage 2I QC-controlled mapping deferral
+1365362,7QUR,EIC,SARS-CoV-2,Spike protein,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.55,pending,Stage 2I QC-controlled mapping deferral
+1365363,7QUR,EIC,SARS-CoV-2,Spike protein,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.55,pending,Stage 2I QC-controlled mapping deferral
+1365702,7QUS,EIC,SARS-CoV-2,Spike protein,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.55,pending,Stage 2I QC-controlled mapping deferral
+1365715,7QUS,EIC,SARS-CoV-2,Spike protein,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.55,pending,Stage 2I QC-controlled mapping deferral
+1365716,7QUS,EIC,SARS-CoV-2,Spike protein,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.55,pending,Stage 2I QC-controlled mapping deferral
+1389376,7WGV,EIC,SARS-CoV-2,Spike protein,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.55,pending,Stage 2I QC-controlled mapping deferral
+1389380,7WGV,BLR,SARS-CoV-2,Spike protein,P11_OTHER,QUEUE_BOND_TEMPLATE,0.581395,pending,Stage 2I QC-controlled mapping deferral
+1389389,7WGV,EIC,SARS-CoV-2,Spike protein,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.55,pending,Stage 2I QC-controlled mapping deferral
+1389393,7WGV,BLR,SARS-CoV-2,Spike protein,P11_OTHER,QUEUE_BOND_TEMPLATE,0.581395,pending,Stage 2I QC-controlled mapping deferral
+1389402,7WGV,EIC,SARS-CoV-2,Spike protein,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.55,pending,Stage 2I QC-controlled mapping deferral
+1389406,7WGV,BLR,SARS-CoV-2,Spike protein,P11_OTHER,QUEUE_BOND_TEMPLATE,0.581395,pending,Stage 2I QC-controlled mapping deferral
+1389446,7WGX,BLR,SARS-CoV-2,Spike protein,P11_OTHER,QUEUE_BOND_TEMPLATE,0.581395,pending,Stage 2I QC-controlled mapping deferral
+1389456,7WGX,BLR,SARS-CoV-2,Spike protein,P11_OTHER,QUEUE_BOND_TEMPLATE,0.581395,pending,Stage 2I QC-controlled mapping deferral
+1389466,7WGX,BLR,SARS-CoV-2,Spike protein,P11_OTHER,QUEUE_BOND_TEMPLATE,0.581395,pending,Stage 2I QC-controlled mapping deferral
+1397129,7Y42,REA,SARS-CoV-2,Spike protein,P11_OTHER,QUEUE_BOND_TEMPLATE,0.136364,pending,Stage 2I QC-controlled mapping deferral
+1397139,7Y42,REA,SARS-CoV-2,Spike protein,P11_OTHER,QUEUE_BOND_TEMPLATE,0.136364,pending,Stage 2I QC-controlled mapping deferral
+1397149,7Y42,REA,SARS-CoV-2,Spike protein,P11_OTHER,QUEUE_BOND_TEMPLATE,0.136364,pending,Stage 2I QC-controlled mapping deferral
+1402782,7ZBU,3Q9,SARS-CoV-2,Spike protein,P11_OTHER,QUEUE_BOND_TEMPLATE,0.627907,pending,Stage 2I QC-controlled mapping deferral
+1420286,8GB5,BCN,SARS-CoV-2,Spike protein,P11_OTHER,QUEUE_BOND_TEMPLATE,0.909091,pending,Stage 2I QC-controlled mapping deferral
+1420290,8GB5,BCN,SARS-CoV-2,Spike protein,P11_OTHER,QUEUE_BOND_TEMPLATE,0.909091,pending,Stage 2I QC-controlled mapping deferral
+1420291,8GB5,BCN,SARS-CoV-2,Spike protein,P11_OTHER,QUEUE_BOND_TEMPLATE,0.909091,pending,Stage 2I QC-controlled mapping deferral
+1424309,8HLC,EIC,SARS-CoV-2,Spike protein,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.55,pending,Stage 2I QC-controlled mapping deferral
+1424324,8HLC,EIC,SARS-CoV-2,Spike protein,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.55,pending,Stage 2I QC-controlled mapping deferral
+1424339,8HLC,EIC,SARS-CoV-2,Spike protein,P1_EXACT_HEAVY_TOPOLOGY_MCS_PARTIAL,QUEUE_EXACT_GRAPH,0.55,pending,Stage 2I QC-controlled mapping deferral
+1427745,8P9Y,XIO,SARS-CoV-2,Spike protein,P7_MCS_TIMEOUT,QUEUE_COMPLEX_GRAPH,,pending,Stage 2I QC-controlled mapping deferral

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "components/workspace_region.html" import region %}
 
 {% block title %}V-LiSEMOD | Home{% endblock %}
 
@@ -333,6 +334,7 @@
             <input type="hidden" name="ligand" id="ligand_hidden" />
             <input type="hidden" name="chain" id="chain_hidden" />
         </form>
+        {{ region('structure-workspace-region') }}
     </section>
 
     <section class="page-card page-section landing-card-shell resource-cluster-section">
@@ -372,6 +374,27 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-beta.1/js/select2.min.js"></script>
     <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+
+    <script>
+        (function () {
+            function updateStructureContext() {
+                const virus = document.getElementById('virus')?.value || '';
+                const pdb = document.getElementById('pdb_code')?.value || '';
+                const ligand = document.getElementById('ligand')?.value || '';
+                const chain = document.getElementById('chain')?.value || '';
+                if (!pdb || !ligand) { VLiSEMODWorkspace.render('structure-workspace-region', null); return; }
+                VLiSEMODWorkspace.render('structure-workspace-region', {
+                    context: { chips: [virus, ligand, pdb, chain && `Chain ${chain}`] },
+                    summary: { title: 'Selected structure', metrics: [], note: 'Generate an output to inspect the selected structural evidence.' },
+                    actions: [
+                        { label: 'Inspect ligand interactions', href: VLiSEMODWorkspace.paramsUrl('/ligand_indexer', { ligand }) },
+                        { label: 'Assess in PROTACability', href: VLiSEMODWorkspace.paramsUrl('/protacability_page', { ligand, pdb_code: pdb }) }
+                    ], methods: ['sasa', 'functionalGroups']
+                });
+            }
+            document.addEventListener('change', event => { if (['virus', 'pdb_code', 'ligand', 'chain'].includes(event.target.id)) updateStructureContext(); });
+        })();
+    </script>
 
     <script>
         (function () {

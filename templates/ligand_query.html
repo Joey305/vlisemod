@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "components/workspace_region.html" import region %}
 
 {% block title %}V-LiSEMOD | Ligand Indexer{% endblock %}
 
@@ -17,6 +18,8 @@
         <p>This page keeps the original ligand indexing workflow intact while bringing the layout, navigation, and support tools in line with the rest of V-LiSEMOD.</p>
     </section>
 
+    {{ region('ligand-workspace-region') }}
+
     <section class="form-container form-card page-section">
         <form id="ligandQueryForm">
             <label for="ligand">Select Ligand (3-letter code):</label>
@@ -30,7 +33,16 @@
             </select>
 
             <button type="button" id="showInteractionButton" disabled>Show Interactions</button>
+            <p id="interactionStatus" role="status" aria-live="polite" style="display: none; margin-top: 12px;"></p>
         </form>
+        <section id="protacabilityFollowup" class="page-card hidden" aria-live="polite" style="margin-top: 20px;">
+            <h2 class="page-title">Explore PROTACability</h2>
+            <p>Review ligand-side attachment evidence and target-side degrader-readiness context for this structure.</p>
+            <div class="action-row">
+                <a id="protacabilityExactLink" class="button-primary" target="_blank" rel="noopener noreferrer">Assess this structure in PROTACability ↗</a>
+                <a id="protacabilityLigandLink" class="button-secondary" target="_blank" rel="noopener noreferrer">View all ligand structures in PROTACability ↗</a>
+            </div>
+        </section>
         <div class="action-row centered-row">
             <a class="button-secondary" href="{{ url_for('compare_ligands') }}">Demo the Dynamic Ligand Multi PDB Plots</a>
             <a class="button-secondary" href="{{ url_for('index') }}">Back to Main Page</a>
@@ -152,6 +164,77 @@
     <script>
         $(document).ready(function() {
             $('.searchable-select').select2();
+            const showInteractionButton = $('#showInteractionButton');
+
+            function setInteractionStatus(message, isError) {
+                $('#interactionStatus')
+                    .text(message)
+                    .css('color', isError ? '#a32626' : '')
+                    .toggle(Boolean(message));
+            }
+
+            function clearCharts() {
+                $('#carouselModal').hide();
+                $('#carouselGraphs').empty();
+                $('#protacabilityFollowup').addClass('hidden');
+                $('#protacabilityExactLink, #protacabilityLigandLink').removeAttr('href aria-label');
+                VLiSEMODWorkspace.render('ligand-workspace-region', null);
+            }
+
+            function showProtacabilityFollowup(selectedLigand, selectedOccurrence) {
+                const baseUrl = '/protacability_page';
+                const allStructuresParams = new URLSearchParams({ ligand: selectedLigand });
+                const exactValues = {
+                    ligand: selectedLigand,
+                    pdb_code: selectedOccurrence.attr('data-pdb-id'),
+                    ligand_instance_id: selectedOccurrence.val(),
+                    ligand_chain: selectedOccurrence.attr('data-chain'),
+                    ligand_residue_id: selectedOccurrence.attr('data-ligand-id'),
+                };
+                const modelId = selectedOccurrence.attr('data-model-id');
+                if (modelId) exactValues.model_id = modelId;
+                const exactParams = new URLSearchParams(exactValues);
+                $('#protacabilityExactLink')
+                    .attr('href', `${baseUrl}?${exactParams.toString()}`)
+                    .attr('aria-label', `Assess ${selectedLigand} occurrence ${selectedOccurrence.val()} in PROTACability`);
+                $('#protacabilityLigandLink')
+                    .attr('href', `${baseUrl}?${allStructuresParams.toString()}`)
+                    .text(`View all ${selectedLigand} structures in PROTACability ↗`)
+                    .attr('aria-label', `View all ${selectedLigand} structures in PROTACability`);
+                $('#protacabilityFollowup').removeClass('hidden');
+            }
+
+            function renderLigandWorkspace(selectedLigand, selectedOccurrence, payload) {
+                const occurrenceId = selectedOccurrence.val();
+                const pdbCode = selectedOccurrence.attr('data-pdb-id');
+                const chain = selectedOccurrence.attr('data-chain');
+                const residueId = selectedOccurrence.attr('data-ligand-id');
+                const canonicalUrl = VLiSEMODWorkspace.paramsUrl('/ligand_indexer', {
+                    ligand: selectedLigand, ligand_instance_id: occurrenceId
+                });
+                history.replaceState({}, '', canonicalUrl);
+                const protacUrl = VLiSEMODWorkspace.paramsUrl('/protacability_page', {
+                    ligand: selectedLigand, pdb_code: pdbCode, ligand_instance_id: occurrenceId,
+                    ligand_chain: chain, ligand_residue_id: residueId, model_id: selectedOccurrence.attr('data-model-id') || ''
+                });
+                const comparisonUrl = VLiSEMODWorkspace.paramsUrl('/compare_ligands', { ligand: selectedLigand, instances: occurrenceId });
+                VLiSEMODWorkspace.render('ligand-workspace-region', {
+                    url: canonicalUrl,
+                    clearHref: '/ligand_indexer',
+                    context: { chips: [selectedLigand, pdbCode, chain && `Chain ${chain}`, residueId && `Residue ${residueId}`], occurrence: {
+                        ligand: selectedLigand, ligandInstanceId: occurrenceId, pdbCode, chain, residueId, modelId: selectedOccurrence.attr('data-model-id') || ''
+                    }},
+                    summary: { title: `${selectedLigand} interaction evidence`, metrics: [
+                        { value: payload.interaction_label_count, label: 'interaction labels' },
+                        { value: payload.unique_partner_count, label: 'interaction partners' }
+                    ], note: 'Occurrence-resolved non-proximal protein–ligand interactions.' },
+                    actions: [
+                        { label: 'Assess in PROTACability ↗', href: protacUrl, newTab: true },
+                        { label: 'Compare across structures', href: comparisonUrl },
+                        { label: 'Open structure', href: `/view_ligand_3d/${encodeURIComponent(selectedLigand)}/${encodeURIComponent(pdbCode)}`, newTab: true }
+                    ], methods: ['mapping', 'interactions']
+                });
+            }
 
             fetch('/get_ligands_with_synonyms')
                 .then(response => response.json())
@@ -172,64 +255,108 @@
                             ligandSelect.append(`<option value="${item.ligand_code}">${item.synonym} (Synonym for ${item.ligand_code})</option>`);
                         }
                     });
+                    $(document).trigger('ligands-loaded');
                 });
 
             $('#ligand').on('change', function() {
                 const selectedCode = $(this).val();
                 const pdbResidueSelect = $('#pdb_residue');
+                clearCharts();
+                setInteractionStatus('');
+                showInteractionButton.prop('disabled', true);
                 if (selectedCode) {
                     fetch(`/get_pdb_residue_by_ligand/${selectedCode}`)
-                        .then(response => response.json())
+                        .then(response => {
+                            if (!response.ok) throw new Error('Could not load ligand occurrences.');
+                            return response.json();
+                        })
                         .then(data => {
                             pdbResidueSelect.empty();
                             pdbResidueSelect.append('<option value="">--Select PDB/Residue--</option>');
 
                             data.pairs.forEach(pair => {
-                                const option = `${pair.pdb_id}, Chain: ${pair.chain}, Residue: ${pair.ligand_id}`;
-                                pdbResidueSelect.append(`<option value="${pair.pdb_id},${pair.chain},${pair.ligand_id}">${option}</option>`);
+                                const insertion = pair.insertion_code ? `, Insertion: ${pair.insertion_code}` : '';
+                                const model = pair.model_id ? `, Model: ${pair.model_id}` : '';
+                                const option = `${pair.pdb_id}, Chain: ${pair.chain}, Residue: ${pair.ligand_id}${insertion}${model}`;
+                                pdbResidueSelect.append(
+                                    $('<option>')
+                                        .val(pair.ligand_instance_id)
+                                        .text(option)
+                                        .attr({
+                                            'data-pdb-id': pair.pdb_id,
+                                            'data-chain': pair.chain,
+                                            'data-ligand-id': pair.ligand_id,
+                                            'data-model-id': pair.model_id || '',
+                                        })
+                                );
                             });
-
-                            $('#showInteractionButton').prop('disabled', false);
-                        });
+                            const requested = new URLSearchParams(window.location.search).get('ligand_instance_id');
+                            if (requested && pdbResidueSelect.find(`option[value="${CSS.escape(requested)}"]`).length) {
+                                pdbResidueSelect.val(requested).trigger('change');
+                            }
+                            if (!data.pairs.length) {
+                                setInteractionStatus('No retained ligand occurrences with recorded interactions are available for this component.', true);
+                            }
+                            pdbResidueSelect.trigger('change.select2');
+                        })
+                        .catch(error => setInteractionStatus(error.message, true));
                 } else {
                     $('#pdb_residue').empty().append('<option value="">--Select PDB/Residue--</option>');
-                    $('#showInteractionButton').prop('disabled', true);
+                    $('#pdb_residue').trigger('change.select2');
                 }
             });
 
-            $('#showInteractionButton').on('click', function() {
-                const selectedPair = $('#pdb_residue').val();
+            $('#pdb_residue').on('change', function() {
+                showInteractionButton.prop('disabled', !$(this).val());
+            });
+
+            showInteractionButton.on('click', async function() {
+                const selectedOccurrence = $('#pdb_residue option:selected');
                 const selectedLigand = $('#ligand').val();
 
-                if (selectedPair && selectedLigand) {
-                    const [pdb_id, chain, ligand_id] = selectedPair.split(',');
+                if (!selectedOccurrence.val() || !selectedLigand) return;
 
-                    fetch('/generate_charts', {
+                clearCharts();
+                showInteractionButton.prop('disabled', true).text('Generating charts…');
+                setInteractionStatus('Retrieving occurrence-resolved interaction data and generating charts…');
+                try {
+                    const response = await fetch('/generate_charts', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                         },
                         body: JSON.stringify({
-                            pdb_id: pdb_id.trim(),
-                            chain: chain.trim(),
-                            ligand_id: ligand_id.trim(),
-                            ligand: selectedLigand.trim()
+                            pdb_id: selectedOccurrence.attr('data-pdb-id'),
+                            chain: selectedOccurrence.attr('data-chain'),
+                            ligand_id: selectedOccurrence.attr('data-ligand-id'),
+                            ligand: selectedLigand,
+                            ligand_instance_id: selectedOccurrence.val(),
                         }),
-                    })
-                    .then(response => response.json())
-                    .then(chartPaths => {
-                        displayCarouselModal(chartPaths.chart_paths);
                     });
+                    const payload = await response.json();
+                    if (!response.ok) throw new Error(payload.message || payload.error || 'Unable to generate interaction charts.');
+                    displayCarouselModal(payload.chart_urls);
+                    showProtacabilityFollowup(selectedLigand, selectedOccurrence);
+                    renderLigandWorkspace(selectedLigand, selectedOccurrence, payload);
+                    setInteractionStatus(`Showing ${payload.interaction_label_count} interaction labels across ${payload.unique_partner_count} partner atoms/residues.`);
+                } catch (error) {
+                    setInteractionStatus(error.message || 'Unable to generate interaction charts.', true);
+                    if (error && /No (recorded|non-proximal)/.test(error.message || '')) {
+                        VLiSEMODWorkspace.noData('ligand-workspace-region', 'Interaction evidence unavailable', error.message, { label: `View other ${selectedLigand} structures`, href: `/ligand_indexer?ligand=${encodeURIComponent(selectedLigand)}` });
+                    }
+                } finally {
+                    showInteractionButton.text('Show Interactions');
+                    showInteractionButton.prop('disabled', !$('#pdb_residue').val());
                 }
             });
 
-            function displayCarouselModal(chartPaths) {
+            function displayCarouselModal(chartUrls) {
                 const modal = $('#carouselModal');
                 const carouselContainer = $('#carouselGraphs');
                 carouselContainer.empty();
 
-                chartPaths.forEach((chartPath, index) => {
-                    const img = $('<img>').attr('src', `/${chartPath}`).addClass(index === 0 ? 'active' : '');
+                chartUrls.forEach((chartUrl, index) => {
+                    const img = $('<img>').attr('src', chartUrl).addClass(index === 0 ? 'active' : '');
                     carouselContainer.append(img);
                 });
 
@@ -237,12 +364,12 @@
                 modal.show();
 
                 $('#nextSlide').off('click').on('click', function() {
-                    currentSlide = (currentSlide + 1) % chartPaths.length;
+                    currentSlide = (currentSlide + 1) % chartUrls.length;
                     updateSlide(currentSlide);
                 });
 
                 $('#prevSlide').off('click').on('click', function() {
-                    currentSlide = (currentSlide - 1 + chartPaths.length) % chartPaths.length;
+                    currentSlide = (currentSlide - 1 + chartUrls.length) % chartUrls.length;
                     updateSlide(currentSlide);
                 });
 
@@ -275,6 +402,11 @@
                     link.click();
                 }
             });
+
+            const requestedLigand = new URLSearchParams(window.location.search).get('ligand');
+            if (requestedLigand) {
+                $(document).one('ligands-loaded', function() { $('#ligand').val(requestedLigand).trigger('change'); });
+            }
         });
     </script>
 {% endblock %}
