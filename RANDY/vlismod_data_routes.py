@@ -215,10 +215,9 @@ def _protacability_source_payload_local(
 
         readiness_rows = _load_optional_rows("protacability_degrader_readiness")
         warhead_rows = _load_optional_rows("protacability_warhead_linkability")
-        attachment_rows = [
-            row for row in _load_optional_rows("protacability_attachment_analysis")
-            if row.get("method_version") == ATTACHMENT_METHOD_VERSION
-        ]
+        attachment_rows = _load_attachment_analysis_rows(conn)
+        if pdb_code:
+            attachment_rows = [row for row in attachment_rows if row.get("pdb_code") == pdb_code]
         lysine_rows = _load_optional_rows("protacability_lysine_proximity") if include_lysine else []
         ligand_inventory = _load_optional_rows("protacability_ligand_inventory") if include_inventory else []
 
@@ -266,16 +265,15 @@ PROTACABILITY_REQUIRED_TABLES = (
 PROTACABILITY_OPTIONAL_TABLES = (
     "protacability_warhead_linkability",
     "protacability_degrader_readiness",
-    "protacability_attachment_analysis",
-    "protacability_attachment_atoms",
-    "protacability_attachment_regions",
+    "v2_attachment_site_summary",
+    "v2_attachment_site_candidates",
+    "v2_attachment_site_high_priority",
 )
 
-ATTACHMENT_METHOD_VERSION = "attachment_v1_1"
+ATTACHMENT_METHOD_VERSION = "attachment-sites-cif-v2.6"
 PROTACABILITY_ATTACHMENT_TABLES = (
-    "protacability_attachment_analysis",
-    "protacability_attachment_atoms",
-    "protacability_attachment_regions",
+    "v2_attachment_site_summary",
+    "v2_attachment_site_candidates",
 )
 
 PROTACABILITY_SORT_COLUMNS = {
@@ -402,7 +400,7 @@ def protacability_tables_available(conn=None):
 
 def _table_exists(conn, table_name):
     row = conn.execute(
-        "SELECT 1 FROM sqlite_master WHERE type='table' AND name = ?",
+        "SELECT 1 FROM sqlite_master WHERE type IN ('table', 'view') AND name = ?",
         (table_name,),
     ).fetchone()
     return row is not None
@@ -1042,6 +1040,12 @@ def _attachment_defaults():
         "has_candidate_attachment_regions": 0,
         "attachment_instance_resolution_status": None,
         "attachment_instance_ambiguity_flag": 0,
+        "attachment_display_site_count": 0,
+        "mapped_atom_count": 0,
+        "attachment_exposed_mapped_atom_count": 0,
+        "attachment_chemically_supported_candidate_count": 0,
+        "attachment_high_priority_atom_count": 0,
+        "best_attachment_priority_tier": None,
     }
 
 
@@ -1049,23 +1053,33 @@ def _attachment_summary_from_match(attachment_match):
     summary = _attachment_defaults()
     if not attachment_match:
         return summary
-    region_count = int(_numeric_value(attachment_match.get("attachment_region_count")))
-    candidate_count = int(_numeric_value(attachment_match.get("candidate_atom_count") or attachment_match.get("attachment_candidate_atom_count")))
-    has_evidence = int(_has_positive_value(attachment_match.get("has_attachment_site_evidence")) or region_count > 0 or candidate_count > 0)
+    candidate_count = int(_numeric_value(
+        attachment_match.get("candidate_attachment_atom_count")
+        or attachment_match.get("attachment_candidate_atom_count")
+    ))
+    best_tier = attachment_match.get("top_attachment_priority_tier")
+    best_score = attachment_match.get("top_attachment_site_score")
+    has_evidence = int(candidate_count > 0)
     summary.update({
-        "attachment_analysis_id": attachment_match.get("analysis_id"),
-        "attachment_method_version": attachment_match.get("method_version") or attachment_match.get("attachment_method_version"),
-        "attachment_analysis_status": attachment_match.get("analysis_status"),
-        "attachment_eligibility_status": attachment_match.get("eligibility_status"),
-        "attachment_mapping_status": attachment_match.get("mapping_status"),
-        "attachment_region_count": region_count,
+        "attachment_analysis_id": attachment_match.get("attachment_summary_id"),
+        "attachment_method_version": attachment_match.get("method_version"),
+        "attachment_analysis_status": attachment_match.get("status"),
+        "attachment_eligibility_status": "candidate_atoms_present" if has_evidence else "no_candidate_atoms",
+        "attachment_mapping_status": "mapped_atoms_present" if _has_positive_value(attachment_match.get("mapped_atom_count")) else "no_mapped_atoms",
         "attachment_candidate_atom_count": candidate_count,
-        "best_attachment_score": attachment_match.get("best_attachment_score"),
-        "best_attachment_confidence": attachment_match.get("best_attachment_confidence"),
+        "best_attachment_score": best_score,
+        "best_attachment_confidence": _short_attachment_tier(best_tier),
         "has_attachment_site_evidence": has_evidence,
-        "has_candidate_attachment_regions": int(has_evidence and region_count > 0),
-        "attachment_instance_resolution_status": attachment_match.get("instance_resolution_status"),
-        "attachment_instance_ambiguity_flag": int(_has_positive_value(attachment_match.get("instance_ambiguity_flag"))),
+        "has_candidate_attachment_regions": 0,
+        "attachment_instance_resolution_status": "ligand_instance_id",
+        # Randy summarizes the atom-level payload into one presentation group;
+        # this is a UI label only and does not change atom-specific evidence.
+        "attachment_display_site_count": int(has_evidence),
+        "mapped_atom_count": int(_numeric_value(attachment_match.get("mapped_atom_count"))),
+        "attachment_exposed_mapped_atom_count": int(_numeric_value(attachment_match.get("exposed_mapped_atom_count"))),
+        "attachment_chemically_supported_candidate_count": int(_numeric_value(attachment_match.get("chemically_supported_candidate_count"))),
+        "attachment_high_priority_atom_count": int(_numeric_value(attachment_match.get("high_priority_attachment_atom_count"))),
+        "best_attachment_priority_tier": best_tier,
     })
     return summary
 
@@ -1095,17 +1109,42 @@ def _json_dict(value):
 
 
 def _load_attachment_analysis_rows(conn):
-    if not _table_exists(conn, "protacability_attachment_analysis"):
+    if not _table_exists(conn, "protacability_attachment_site_summary"):
         return []
     return [
         dict(row)
         for row in conn.execute(
             """
-            SELECT *
-            FROM protacability_attachment_analysis
-            WHERE method_version=?
+            WITH current_candidate_tiers AS (
+                SELECT
+                    a.ligand_instance_id,
+                    a.run_id,
+                    a.method_version,
+                    a.attachment_priority_tier,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY a.ligand_instance_id, a.run_id
+                        ORDER BY a.attachment_priority_score DESC,
+                                 a.chemical_support DESC, a.exact_atom,
+                                 a.attachment_site_id
+                    ) AS candidate_rank
+                FROM protacability_attachment_sites a
+                WHERE a.method_version=? AND a.candidate_attachment_atom=1
+            )
+            SELECT DISTINCT
+                s.*, i.model_id, i.ligand_chain, i.ligand_residue_id,
+                i.ligand_insertion_code, c.attachment_priority_tier
+                    AS top_attachment_priority_tier
+            FROM protacability_attachment_site_summary s
+            JOIN protacability_ligand_inventory i
+              ON i.ligand_instance_id=s.ligand_instance_id
+            LEFT JOIN current_candidate_tiers c
+              ON c.ligand_instance_id=s.ligand_instance_id
+             AND c.run_id=s.run_id
+             AND c.method_version=s.method_version
+             AND c.candidate_rank=1
+            WHERE s.method_version=? AND s.status='complete'
             """,
-            (ATTACHMENT_METHOD_VERSION,),
+            (ATTACHMENT_METHOD_VERSION, ATTACHMENT_METHOD_VERSION),
         ).fetchall()
     ]
 
@@ -1319,6 +1358,118 @@ def _attachment_detail_payload(conn, row):
         "candidate_atom_serials": candidate_atom_serials,
         "surface_atom_serials": surface_atom_serials,
         "graph": _attachment_graph_payload(conn, analysis_dict, atoms),
+    }
+
+
+def _short_attachment_tier(value):
+    value = str(value or "").strip()
+    for tier in ("High", "Moderate", "Exploratory", "Low"):
+        if value.lower().startswith(tier.lower()):
+            return tier
+    return value or None
+
+
+def _resolve_attachment_ligand_instance_id(conn, row):
+    """Resolve the current v2.6 atom-level record without legacy analysis tables."""
+    try:
+        value = row.get("ligand_instance_id")
+        if value not in (None, ""):
+            return int(value)
+    except (AttributeError, TypeError, ValueError):
+        pass
+    if not row:
+        return None
+    pdb_code = str(row.get("pdb_code") or "").strip().upper()
+    resname = str(row.get("ligand_resname") or row.get("best_ligand_resname") or "").strip().upper()
+    chain = str(row.get("ligand_chain") or row.get("best_ligand_chain") or "").strip().upper()
+    residue = row.get("ligand_residue_id") or row.get("best_ligand_residue_id")
+    if not (pdb_code and resname and chain and residue not in (None, "")):
+        return None
+    matches = conn.execute(
+        """
+        SELECT DISTINCT ligand_instance_id FROM protacability_ligand_inventory
+        WHERE UPPER(TRIM(pdb_code))=? AND UPPER(TRIM(ligand_resname))=?
+          AND UPPER(TRIM(ligand_chain))=? AND CAST(ligand_residue_id AS TEXT)=?
+        ORDER BY ligand_instance_id LIMIT 2
+        """,
+        (pdb_code, resname, chain, str(residue)),
+    ).fetchall()
+    return int(matches[0][0]) if len(matches) == 1 else None
+
+
+def _attachment_detail_payload(conn, row):
+    """Serialize the current Stage-13 atom-level v2.6 data for the public UI."""
+    empty = {
+        "summary": _attachment_defaults(), "regions": [], "display_site_clusters": [],
+        "atoms": [], "candidate_atom_serials": [], "chemically_supported_atom_serials": [],
+        "priority_atom_serials": [], "high_priority_atom_serials": [], "surface_atom_serials": [],
+        "graph": _empty_attachment_graph_payload(), "site_model": "atom-level-v2.6",
+        "region_semantics_available": False,
+    }
+    if not _attachment_tables_available(conn):
+        return {"data_available": False, **empty, "message": "Current attachment-site compatibility views are unavailable."}
+    ligand_instance_id = _resolve_attachment_ligand_instance_id(conn, row)
+    if ligand_instance_id is None:
+        return {"data_available": True, **empty, "message": "No unique ligand occurrence could be resolved for attachment-site lookup."}
+    summary_row = conn.execute(
+        """
+        SELECT * FROM protacability_attachment_site_summary
+        WHERE ligand_instance_id=? AND method_version=? AND status='complete'
+        ORDER BY run_id DESC LIMIT 1
+        """, (ligand_instance_id, ATTACHMENT_METHOD_VERSION),
+    ).fetchone()
+    if not summary_row:
+        return {"data_available": True, **empty, "ligand_instance_id": ligand_instance_id}
+    summary_dict = dict(summary_row)
+    sites = [dict(site) for site in conn.execute(
+        """
+        SELECT s.* FROM protacability_attachment_sites s
+        WHERE s.ligand_instance_id=? AND s.method_version=? AND s.run_id=?
+          AND s.candidate_attachment_atom=1
+        ORDER BY s.attachment_priority_score DESC, s.chemical_support DESC, s.exact_atom, s.attachment_site_id
+        """, (ligand_instance_id, ATTACHMENT_METHOD_VERSION, summary_dict["run_id"])
+    ).fetchall()]
+    summary_dict["top_attachment_priority_tier"] = sites[0].get("attachment_priority_tier") if sites else None
+    summary = _attachment_summary_from_match(summary_dict)
+    atoms, candidate_serials, chemical_serials, priority_serials, high_serials, surface_serials = [], [], [], [], [], []
+    for site in sites:
+        try:
+            serial = int(site.get("atom_site_id"))
+        except (TypeError, ValueError):
+            serial = None
+        tier = _short_attachment_tier(site.get("attachment_priority_tier"))
+        supported = bool(site.get("direct_attachment_support") or site.get("conditional_substitution_support") or site.get("chemical_support"))
+        atom = {
+            **site, "pdb_atom_serial": serial, "pdb_atom_name": site.get("exact_atom"),
+            "candidate_attachment_flag": 1, "surface_defining_flag": int(bool(site.get("solvent_exposed"))),
+            "attachment_score": site.get("attachment_priority_score"), "confidence": tier,
+            "priority_tier_short": tier, "chemically_supported": int(supported), "display_site_id": "Site 1",
+        }
+        atoms.append(atom)
+        if serial is not None:
+            candidate_serials.append(serial)
+            if supported: chemical_serials.append(serial)
+            if tier in {"High", "Moderate"}: priority_serials.append(serial)
+            if site.get("high_priority_attachment_atom"): high_serials.append(serial)
+            if site.get("solvent_exposed"): surface_serials.append(serial)
+    summary["attachment_display_site_count"] = int(bool(atoms))
+    clusters = []
+    if atoms:
+        clusters.append({
+            "display_site_id": "Site 1", "candidate_atom_serials": candidate_serials,
+            "candidate_atom_names": [atom["pdb_atom_name"] for atom in atoms],
+            "surface_atom_serials": surface_serials,
+            "chemically_supported_candidate_count": len(chemical_serials),
+            "high_priority_atom_count": len(high_serials),
+            "best_attachment_score": atoms[0]["attachment_score"],
+            "best_attachment_priority_tier": atoms[0]["priority_tier_short"],
+        })
+    return {
+        "data_available": True, **empty, "summary": summary, "display_site_clusters": clusters,
+        "atoms": atoms, "candidate_atom_serials": candidate_serials,
+        "chemically_supported_atom_serials": chemical_serials, "priority_atom_serials": priority_serials,
+        "high_priority_atom_serials": high_serials, "surface_atom_serials": surface_serials,
+        "ligand_instance_id": ligand_instance_id, "method_version": ATTACHMENT_METHOD_VERSION,
     }
 
 
@@ -1706,6 +1857,7 @@ def _protacability_enrichment_snapshot(row):
         "attachment_eligibility_status",
         "attachment_mapping_status",
         "attachment_region_count",
+        "attachment_display_site_count",
         "attachment_candidate_atom_count",
         "best_attachment_score",
         "best_attachment_confidence",
@@ -2058,7 +2210,7 @@ def _load_protacability_enrichment_tables(conn):
     optional_tables = _protacability_optional_table_names(conn)
     readiness_rows = _load_optional_table_rows(conn, "protacability_degrader_readiness") if "protacability_degrader_readiness" in optional_tables else []
     warhead_rows = _load_optional_table_rows(conn, "protacability_warhead_linkability") if "protacability_warhead_linkability" in optional_tables else []
-    attachment_rows = _load_attachment_analysis_rows(conn) if "protacability_attachment_analysis" in optional_tables else []
+    attachment_rows = _load_attachment_analysis_rows(conn) if "v2_attachment_site_summary" in optional_tables else []
     return readiness_rows, warhead_rows, attachment_rows
 
 
