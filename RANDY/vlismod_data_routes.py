@@ -477,6 +477,7 @@ def _build_protacability_filters(args):
     filters = {}
     filters["virus_names"] = _normalize_multi_values(args.getlist("virus_name"))
     filters["protein_types"] = _normalize_multi_values(args.getlist("protein_type"))
+    filters["canonical_target_ids"] = _normalize_multi_values(args.getlist("canonical_target_id"))
     filters["tiers"] = _normalize_multi_values(args.getlist("tier"))
     filters["warhead_tiers"] = _normalize_multi_values(args.getlist("warhead_tier"))
     filters["readiness_tiers"] = _normalize_multi_values(args.getlist("readiness_tier"))
@@ -505,6 +506,7 @@ def _copy_protacability_filters(filters):
     return {
         "virus_names": list(filters.get("virus_names") or []),
         "protein_types": list(filters.get("protein_types") or []),
+        "canonical_target_ids": list(filters.get("canonical_target_ids") or []),
         "tiers": list(filters.get("tiers") or []),
         "warhead_tiers": list(filters.get("warhead_tiers") or []),
         "readiness_tiers": list(filters.get("readiness_tiers") or []),
@@ -1684,6 +1686,7 @@ def _filter_protacability_rows(rows, filters, collapse_labels=True):
     protein_field = "display_protein_type" if collapse_labels else "protein_type"
     virus_filter = set(filters["virus_names"])
     protein_filter = set(filters["protein_types"])
+    canonical_target_filter = set(filters.get("canonical_target_ids") or [])
     tier_filter = set(filters["tiers"])
     warhead_tier_filter = set(filters["warhead_tiers"])
     readiness_tier_filter = set(filters["readiness_tiers"])
@@ -1697,6 +1700,8 @@ def _filter_protacability_rows(rows, filters, collapse_labels=True):
         if virus_filter and row.get("virus_name") not in virus_filter:
             continue
         if protein_filter and row.get(protein_field) not in protein_filter:
+            continue
+        if canonical_target_filter and row.get("canonical_target_id") not in canonical_target_filter:
             continue
         if tier_filter and row.get("protacability_tier") not in tier_filter:
             continue
