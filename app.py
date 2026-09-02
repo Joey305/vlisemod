@@ -7064,8 +7064,9 @@ def protacability_filters():
 def protacability_filter_options():
     mode = _normalized_backend_mode()
     started_at = time.perf_counter()
-    target_browser = _protacability_view_mode(request.args.get("view")) == "targets"
-    if not target_browser and mode == "randy":
+    # The normal browser must be served by Randy's aggregated endpoint.  Do
+    # not special-case target mode into a local/raw source-data path.
+    if mode == "randy":
         try:
             payload = _remote_protacability_get("protacability/filter-options", params=request.args, max_bytes=2 * 1024 * 1024)
             logging.info(
@@ -7079,7 +7080,7 @@ def protacability_filter_options():
             return jsonify(payload)
         except RandyBackendError as exc:
             return jsonify({"data_available": False, "message": str(exc)}), exc.status_code
-    if not target_browser and mode == "auto" and randy_available():
+    if mode == "auto" and randy_available():
         try:
             payload = _remote_protacability_get("protacability/filter-options", params=request.args, max_bytes=2 * 1024 * 1024)
             logging.info(
@@ -7134,37 +7135,6 @@ def protacability_filter_options():
 def protacability_search():
     mode = _normalized_backend_mode()
     started_at = time.perf_counter()
-    target_browser = _protacability_view_mode(request.args.get("view")) == "targets"
-    if target_browser:
-        # The public Target Browser is an authority-view product, not a proxy
-        # for the legacy remote raw-protein endpoint.
-        try:
-            conn = connect_db_row()
-            try:
-                prepared = _prepare_protacability_result_set(conn, request.args)
-            finally:
-                conn.close()
-        except sqlite3.Error as exc:
-            return jsonify({"data_available": False, "message": str(exc), "rows": [], "summary": {}}), 500
-        response_payload = {
-            "data_available": True,
-            "view": prepared["view"],
-            "collapse_labels": prepared["collapse_labels"],
-            "rows": prepared["rows"],
-            "summary": prepared["summary"],
-            "limit": prepared["limit"],
-            "offset": prepared["offset"],
-            "total_rows": prepared["total_rows"],
-            "has_more": prepared["has_more"],
-            "sort": prepared["sort"],
-            "deep_link_context": None,
-        }
-        logging.info(
-            "PROTAC search backend=local-canonical-targets offset=%s limit=%s total_rows=%s elapsed_ms=%.1f",
-            response_payload["offset"], response_payload["limit"], response_payload["total_rows"],
-            (time.perf_counter() - started_at) * 1000,
-        )
-        return jsonify(response_payload)
     if mode == "randy":
         try:
             payload = _remote_protacability_get("protacability/search", params=request.args)
