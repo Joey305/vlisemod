@@ -1811,6 +1811,12 @@ body.display-images-page #poseviewModal .poseview-modal-content {
     min-width: 140px;
 }
 
+.ligand-query-page .carousel-controls a {
+    width: auto;
+    min-width: 190px;
+    text-align: center;
+}
+
 .comparison-page #chooseWarheadButton,
 .comparison-page #floatingChooseWarheadButton {
     background: linear-gradient(135deg, #e46718, #ff9856);
@@ -3194,7 +3200,8 @@ html[data-theme="dark"] .protacability-page .attachment-atom-pill.surface:not(.c
     .comparison-page .chart-carousel-controls button,
     .display-images-page .viewer-actions a,
     .display-images-page .viewer-actions button,
-    .ligand-query-page .carousel-controls button {
+    .ligand-query-page .carousel-controls button,
+    .ligand-query-page .carousel-controls a {
         width: 100%;
     }
 }

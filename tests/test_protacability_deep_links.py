@@ -130,6 +130,12 @@ class ProtacabilityDeepLinkTests(unittest.TestCase):
         self.assertIn("ligand_instance_id: occurrenceId", comparison)
         self.assertIn("noopener noreferrer", comparison)
 
+    def test_ligand_indexer_chart_modal_keeps_exact_occurrence_link(self):
+        template = (ROOT / "templates" / "ligand_query.html").read_text()
+        self.assertIn('id="carouselProtacabilityLink"', template)
+        self.assertIn("ligand_instance_id: selectedOccurrence.val()", template)
+        self.assertIn("displayCarouselModal(payload.chart_urls, selectedLigand, selectedOccurrence)", template)
+
     def test_ligand_comparison_protacability_all_ligand_link(self):
         comparison = (ROOT / "templates" / "compare_ligands.html").read_text()
         self.assertIn("Explore ${ligand} across PROTACability", comparison)

@@ -87,6 +87,7 @@
             <div class="carousel-controls">
                 <button id="prevSlide" type="button">&#10094;</button>
                 <button id="saveImageButton" type="button">Save Image</button>
+                <a id="carouselProtacabilityLink" class="button-secondary" target="_blank" rel="noopener noreferrer">Assess in PROTACability ↗</a>
                 <button id="nextSlide" type="button">&#10095;</button>
             </div>
         </div>
@@ -335,7 +336,7 @@
                     });
                     const payload = await response.json();
                     if (!response.ok) throw new Error(payload.message || payload.error || 'Unable to generate interaction charts.');
-                    displayCarouselModal(payload.chart_urls);
+                    displayCarouselModal(payload.chart_urls, selectedLigand, selectedOccurrence);
                     showProtacabilityFollowup(selectedLigand, selectedOccurrence);
                     renderLigandWorkspace(selectedLigand, selectedOccurrence, payload);
                     setInteractionStatus(`Showing ${payload.interaction_label_count} interaction labels across ${payload.unique_partner_count} partner atoms/residues.`);
@@ -350,10 +351,21 @@
                 }
             });
 
-            function displayCarouselModal(chartUrls) {
+            function displayCarouselModal(chartUrls, selectedLigand, selectedOccurrence) {
                 const modal = $('#carouselModal');
                 const carouselContainer = $('#carouselGraphs');
                 carouselContainer.empty();
+                const exactParams = new URLSearchParams({
+                    ligand: selectedLigand,
+                    pdb_code: selectedOccurrence.attr('data-pdb-id'),
+                    ligand_instance_id: selectedOccurrence.val(),
+                    ligand_chain: selectedOccurrence.attr('data-chain'),
+                    ligand_residue_id: selectedOccurrence.attr('data-ligand-id'),
+                    model_id: selectedOccurrence.attr('data-model-id') || '',
+                });
+                $('#carouselProtacabilityLink')
+                    .attr('href', `/protacability_page?${exactParams.toString()}`)
+                    .attr('aria-label', `Assess ${selectedLigand} occurrence ${selectedOccurrence.val()} in PROTACability`);
 
                 chartUrls.forEach((chartUrl, index) => {
                     const img = $('<img>').attr('src', chartUrl).addClass(index === 0 ? 'active' : '');
