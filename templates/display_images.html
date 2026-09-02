@@ -83,13 +83,6 @@
             </div>
 
             <aside class="viewer-panel-side">
-                <section id="sasa-attachment-panel" class="sasa-attachment-panel" aria-live="polite">
-                    <h3 class="secondary-panel-title">SASA &amp; attachment sites</h3>
-                    <p id="sasa-attachment-summary">Loading occurrence-resolved SASA evidence…</p>
-                    <div id="sasa-attachment-legend" class="attachment-map-legend" hidden></div>
-                    <button id="highlight-sasa-attachment-button" type="button" disabled>Highlight SASA / attachment sites in 3D</button>
-                    <p class="attachment-region-note">Colors match the PROTACability attachment-site groups. Transparent markers indicate exposed surface atoms; stronger markers indicate candidate attachment atoms.</p>
-                </section>
                 <h3 class="secondary-panel-title">Interaction diagram selection</h3>
                 <div id="chain-residue-selection">
                     <h3>Select Chain and Residue</h3>
@@ -103,6 +96,13 @@
                     </form>
                 </div>
                 <button type="button" onclick="generateLigandInteractionDiagram()">Display Ligand Interaction Diagram</button>
+                <section id="sasa-attachment-panel" class="sasa-attachment-panel" aria-live="polite">
+                    <h3 class="secondary-panel-title">SASA &amp; attachment sites</h3>
+                    <p id="sasa-attachment-summary">Loading occurrence-resolved SASA evidence…</p>
+                    <div id="sasa-attachment-sites-table" class="attachment-site-table" hidden></div>
+                    <button id="highlight-sasa-attachment-button" type="button" disabled>Highlight SASA / attachment sites in 3D</button>
+                    <p class="attachment-region-note">Colors match the PROTACability attachment-site groups. Transparent markers indicate exposed surface atoms; stronger markers indicate candidate attachment atoms.</p>
+                </section>
             </aside>
         </div>
     </div>
@@ -231,6 +231,12 @@ let currentAttachmentSites = null;
 let pendingAttachmentHighlight = false;
 const attachmentSiteColors = ['#22c55e', '#ef4444', '#3b82f6', '#eab308', '#a855f7', '#14b8a6'];
 
+function escapeAttachmentHtml(value) {
+    const node = document.createElement('span');
+    node.textContent = value === null || value === undefined || value === '' ? '—' : String(value);
+    return node.innerHTML;
+}
+
 function selectedAttachmentOccurrenceId() {
     const selected = document.querySelector('input[name="chain_residue"]:checked');
     return String(selected?.dataset.ligandInstanceId || '{{ primary_image.ligand_instance_id }}').trim();
@@ -249,7 +255,7 @@ function attachmentSiteSets(attachmentSites) {
 async function loadSasaAttachmentSites() {
     const summary = document.getElementById('sasa-attachment-summary');
     const button = document.getElementById('highlight-sasa-attachment-button');
-    const legend = document.getElementById('sasa-attachment-legend');
+    const table = document.getElementById('sasa-attachment-sites-table');
     const occurrenceId = selectedAttachmentOccurrenceId();
     if (!occurrenceId) {
         summary.textContent = 'No resolved ligand occurrence is available for SASA highlighting.';
@@ -267,17 +273,24 @@ async function loadSasaAttachmentSites() {
         const candidates = Number(attachment.summary?.attachment_candidate_atom_count || attachment.candidate_atom_serials?.length || 0);
         if (!regions.length) {
             summary.textContent = exposed ? `${exposed} exposed mapped atom(s); no grouped attachment sites are available.` : 'No exposed attachment-site evidence is available for this occurrence.';
-            legend.hidden = true;
+            table.hidden = true;
             return;
         }
         summary.textContent = `${exposed} exposed mapped atom(s) · ${candidates} candidate atom(s) · ${regions.length} attachment-site group(s)`;
-        legend.innerHTML = regions.map(region => `<span class="attachment-map-legend-item"><span style="background:${region.color}"></span>${region.regionId}</span>`).join('');
-        legend.hidden = false;
+        const clusters = Array.isArray(attachment.display_site_clusters) ? attachment.display_site_clusters : [];
+        table.innerHTML = `<table><thead><tr><th>Site</th><th>Candidate atoms</th><th>Best score</th><th>Priority</th><th>Supported</th></tr></thead><tbody>${clusters.map((cluster, index) => {
+            const color = attachmentSiteColors[index % attachmentSiteColors.length];
+            const names = Array.isArray(cluster.candidate_atom_names) ? cluster.candidate_atom_names.join(', ') : '—';
+            const score = Number(cluster.best_attachment_score);
+            const scoreText = Number.isFinite(score) ? score.toFixed(0) : '—';
+            return `<tr><td><span class="attachment-site-swatch" style="background:${color}"></span>${escapeAttachmentHtml(cluster.display_site_id || `Site ${index + 1}`)}</td><td>${escapeAttachmentHtml(names)}</td><td>${scoreText}</td><td>${escapeAttachmentHtml(cluster.best_attachment_priority_tier)}</td><td>${Number(cluster.chemically_supported_candidate_count || 0)}</td></tr>`;
+        }).join('')}</tbody></table>`;
+        table.hidden = false;
         button.disabled = false;
     } catch (error) {
         console.warn('Unable to load SASA attachment evidence', error);
         summary.textContent = 'SASA attachment-site evidence is unavailable for this occurrence.';
-        legend.hidden = true;
+        table.hidden = true;
     }
 }
 
@@ -286,11 +299,14 @@ function highlightSasaAttachmentSites() {
     const status = document.getElementById('viewer-status');
     if (!regions.length) return;
     pendingAttachmentHighlight = true;
+    displayLigandSpinRequested = true;
+    updateDisplayLigandSpinButton(true);
     if (document.getElementById('viewport').style.display === 'none') {
         replaceWith3D('{{ primary_image.pdb_id }}', '{{ primary_image.ligand_code }}');
         return;
     }
     applySasaAttachmentHighlight();
+    VLNGLViewer.toggleLigandSpin('viewport', true);
     if (status) status.textContent = 'Highlighted exposed SASA and candidate attachment atoms in 3D.';
 }
 

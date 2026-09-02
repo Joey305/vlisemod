@@ -145,9 +145,15 @@ class ProtacabilityDeepLinkTests(unittest.TestCase):
     def test_ligand_image_workspace_can_highlight_exact_attachment_sites_in_3d(self):
         template = (ROOT / "templates" / "display_images.html").read_text()
         self.assertIn('id="highlight-sasa-attachment-button"', template)
+        self.assertIn('id="sasa-attachment-sites-table"', template)
         self.assertIn("/api/protacability/structure_detail/", template)
         self.assertIn("mapAttachmentAtomsToLigandIndices('viewport', atoms)", template)
         self.assertIn("highlightAttachmentRegionSets('viewport', regions", template)
+        self.assertIn("displayLigandSpinRequested = true", template)
+        self.assertLess(
+            template.index("Display Ligand Interaction Diagram"),
+            template.index('id="sasa-attachment-panel"'),
+        )
 
     def test_ligand_comparison_protacability_all_ligand_link(self):
         comparison = (ROOT / "templates" / "compare_ligands.html").read_text()
