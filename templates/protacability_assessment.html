@@ -2160,7 +2160,11 @@
                 const structureSummary = structures.find(item => String(item.pdb_code || '').toUpperCase() === pdbCode.toUpperCase()) || {};
                 updateSelectedContext(structureSummary, { ligand_resname: ligandResname, ligand_chain: ligandChain, ligand_residue_id: ligandResidueId });
                 attachProtacViewerControls(pdbCode, chainId, ligandResname, ligandChain, ligandResidueId, ligandResname, candidateLinkerAtomIds, {}, syncSelectedLigand);
-                $.getJSON(`/api/protacability/structure_detail/${encodeURIComponent(pdbCode)}?${new URLSearchParams({ virus_name: summary.virus_name || '', protein_type: summary.protein_type || '', collapse_labels: '1' }).toString()}`).done(function(detail) {
+                // A structure row is already an exact PDB selection.  Do not
+                // reapply the legacy protein label here: canonical protease
+                // includes source labels such as "capsid_protein,protease",
+                // which would otherwise incorrectly 404 (for example 3EKY).
+                $.getJSON(`/api/protacability/structure_detail/${encodeURIComponent(pdbCode)}?${new URLSearchParams({ collapse_labels: '1' }).toString()}`).done(function(detail) {
                     if (!detail.data_available || activePdbCode !== pdbCode.toUpperCase() || String(detail.summary?.pdb_code || '').toUpperCase() !== pdbCode.toUpperCase()) return;
                     const selectedLigand = detail.representative_ligand || { ligand_resname: ligandResname, ligand_chain: ligandChain, ligand_residue_id: ligandResidueId };
                     activeLigandInstanceId = String(selectedLigand.ligand_instance_id || '');

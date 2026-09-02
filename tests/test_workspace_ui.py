@@ -57,6 +57,9 @@ class WorkspaceUiTests(unittest.TestCase):
         self.assertIn("ligand_instance_id: activeLigandInstanceId", PROTAC)
         self.assertIn("done(renderStructureDetail)", PROTAC)
 
+    def test_selected_target_structure_uses_its_pdb_not_a_legacy_label_filter(self):
+        self.assertIn('new URLSearchParams({ collapse_labels: \'1\' })', PROTAC)
+
 
 if __name__ == "__main__":
     unittest.main()
