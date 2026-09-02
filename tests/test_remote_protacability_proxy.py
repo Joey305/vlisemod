@@ -22,6 +22,8 @@ class RemoteProtacabilityProxyTests(unittest.TestCase):
             return {"data_available": True, "virus_names": ["HIV_1"], "protein_types": ["protease"], "ligands": []}
         if path == "protacability/search":
             return {"data_available": True, "view": "targets", "rows": [], "summary": {}, "limit": 50, "offset": 0, "total_rows": 0, "has_more": False, "sort": "ligand_priority_desc"}
+        if path == "protacability/target-detail":
+            return {"data_available": True, "target_summary": {"canonical_target_id": "protease"}, "structure_rows": []}
         raise AssertionError(path)
 
     def test_filter_options_never_fetches_unfiltered_source_in_randy_mode(self):
@@ -41,3 +43,10 @@ class RemoteProtacabilityProxyTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(remote.call_args.args[0], "protacability/search")
 
+    def test_canonical_target_detail_proxies_randy_not_local_database(self):
+        with patch.object(app_module, "_normalized_backend_mode", return_value="randy"), \
+             patch.object(app_module, "_remote_protacability_get", side_effect=self._remote_payload) as remote, \
+             patch.object(app_module, "connect_db_row", side_effect=AssertionError("detail must proxy Randy")):
+            response = self.client.get("/api/protacability/target_detail?virus_name=HIV_1&protein_type=protease&canonical_target_id=protease")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(remote.call_args.args[0], "protacability/target-detail")

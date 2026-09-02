@@ -7536,15 +7536,15 @@ def protacability_target_detail():
         return jsonify({"error": "virus_name and canonical_target_id or protein_type are required"}), 400
 
     mode = _normalized_backend_mode()
-    # Canonical Target Browser detail must be derived from the local authority
-    # views.  Remote/legacy endpoints accept raw protein_type and can silently
-    # reintroduce historical classification labels.
-    if not canonical_target_id and mode == "randy":
+    # Randy owns the canonical occurrence authority and accepts both the
+    # stable canonical_target_id and the legacy display parameter.  Heroku
+    # must not attempt a local database read for canonical detail views.
+    if mode == "randy":
         try:
             return jsonify(_remote_protacability_get("protacability/target-detail", params=request.args, max_bytes=2 * 1024 * 1024))
         except RandyBackendError as exc:
             return jsonify({"data_available": False, "message": str(exc)}), exc.status_code
-    if not canonical_target_id and mode == "auto" and randy_available():
+    if mode == "auto" and randy_available():
         try:
             return jsonify(_remote_protacability_get("protacability/target-detail", params=request.args, max_bytes=2 * 1024 * 1024))
         except RandyBackendError:
