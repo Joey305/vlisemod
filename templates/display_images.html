@@ -542,9 +542,11 @@ function getSelectedLigandContext() {
         const spinner = document.getElementById("spinner-container");
         const errorMessage = document.getElementById("error-message");
 
+        // The promo is the only loading surface. Keep the legacy modal hidden
+        // unless the request fails, when it becomes the error message surface.
         spinner.style.display = "block";
         errorMessage.style.display = "none";
-        loadingModal.style.display = "block";
+        loadingModal.style.display = "none";
         showLigandLoadingPromo({
             kicker: 'Preparing interaction diagram',
             title: 'Generating ligand interactions',
@@ -577,6 +579,7 @@ function getSelectedLigandContext() {
             spinner.style.display = "none";
             errorMessage.style.display = "block";
             hideLigandLoadingPromo();
+            loadingModal.style.display = "block";
         });
     }
 
