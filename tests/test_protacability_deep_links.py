@@ -150,6 +150,7 @@ class ProtacabilityDeepLinkTests(unittest.TestCase):
         self.assertIn("mapAttachmentAtomsToLigandIndices('viewport', atoms)", template)
         self.assertIn("highlightAttachmentRegionSets('viewport', regions", template)
         self.assertIn("displayLigandSpinRequested = true", template)
+        self.assertIn("const hasLoaded3DViewer = viewport", template)
         self.assertLess(
             template.index("Display Ligand Interaction Diagram"),
             template.index('id="sasa-attachment-panel"'),

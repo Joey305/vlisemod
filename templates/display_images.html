@@ -301,7 +301,9 @@ function highlightSasaAttachmentSites() {
     pendingAttachmentHighlight = true;
     displayLigandSpinRequested = true;
     updateDisplayLigandSpinButton(true);
-    if (document.getElementById('viewport').style.display === 'none') {
+    const viewport = document.getElementById('viewport');
+    const hasLoaded3DViewer = viewport && viewport.style.display !== 'none' && viewport.innerHTML.trim();
+    if (!hasLoaded3DViewer) {
         replaceWith3D('{{ primary_image.pdb_id }}', '{{ primary_image.ligand_code }}');
         return;
     }
