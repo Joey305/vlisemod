@@ -291,6 +291,10 @@
             <div class="protac-spinner" aria-hidden="true"></div>
             <div id="protac-loading-message" class="protac-loading-message">Preparing target summaries…</div>
             <div class="protac-loading-subtext">V-LiSEMOD is querying the server and assembling the current PROTACability view.</div>
+            <div id="protac-loading-promo" class="protac-loading-promo" hidden>
+                <span id="protac-loading-promo-tag" class="protac-loading-promo-tag"></span>
+                <a id="protac-loading-promo-link" class="protac-loading-promo-link" target="_blank" rel="noopener noreferrer"></a>
+            </div>
         </div>
     </div>
 
@@ -328,12 +332,18 @@
         let protacLoadingMessageTimer = null;
         let protacLoadingVisibleSince = 0;
         const useDirectRcsbPdb = (new URLSearchParams(window.location.search).get('useDirectRcsbPdb') === 'true');
-        const protacLoadingMessages = [
-            'Preparing target summaries…',
-            'Parsing your search…',
-            'Scoring structural priorities…',
-            'Mapping degrader-readiness evidence…',
-            'Rendering results…'
+        const protacLoadingSteps = [
+            { message: 'Preparing target summaries…', subtext: 'V-LiSEMOD is gathering the target and ligand contexts needed for this PROTACability view.' },
+            { message: 'Explore PROTAC Builder', subtext: 'Move selected ligands into an interactive PROTAC design workflow.', tag: 'PROTAC design', href: 'https://protacbuilder.com', linkLabel: 'Visit protacbuilder.com ↗' },
+            { message: 'Parsing your search…', subtext: 'Filtering viral structures, ligand occurrences, and evidence according to your selected criteria.' },
+            { message: 'Explore Warhead Hunter', subtext: 'Find and review warhead-focused opportunities for targeted protein degradation.', tag: 'Warhead discovery', href: 'https://warheadhunter.com', linkLabel: 'Visit warheadhunter.com ↗' },
+            { message: 'Scoring structural priorities…', subtext: 'Combining ligand exposure, attachment-site, and target-context evidence.' },
+            { message: 'Explore E3 Ligandalyzer', subtext: 'Explore E3-ligase and ligand context for degrader design decisions.', tag: 'E3 ligase insight', href: 'https://e3ligandalyzer.com', linkLabel: 'Visit e3ligandalyzer.com ↗' },
+            { message: 'Mapping degrader-readiness evidence…', subtext: 'Assessing warhead linkability, exposed residues, and structure-backed readiness.' },
+            { message: 'Explore PyMacs', subtext: 'Explore Python-powered molecular visualization workflows and PyMOL integrations.', tag: 'PyMOL companion', href: 'https://pymacs.com', linkLabel: 'Visit pymacs.com ↗' },
+            { message: 'Rendering results…', subtext: 'Preparing the current PROTACability results for review.' },
+            { message: 'Explore AutoDock Vina', subtext: 'Plan docking workflows with the widely used molecular-docking platform.', tag: 'Docking', href: 'https://autodockvina.com', linkLabel: 'Visit autodockvina.com ↗' },
+            { message: 'Explore PyMacs on GitHub', subtext: 'Review the source, documentation, and installation guidance for the Schürer Lab project.', tag: 'Open source', href: 'https://github.com/schurerlab/Pymacs', linkLabel: 'Open schurerlab/Pymacs ↗' }
         ];
 
         function renderLigandDebugPanel() {
@@ -433,7 +443,7 @@
         function setProtacLoadingMessage(message, immediate = false) {
             const $message = $('#protac-loading-message');
             if (!$message.length) return;
-            const nextMessage = message || protacLoadingMessages[0];
+            const nextMessage = message || protacLoadingSteps[0].message;
             if (immediate) {
                 $message.removeClass('is-fading').text(nextMessage);
                 return;
@@ -444,12 +454,28 @@
             }, 180);
         }
 
+        function setProtacLoadingStep(step, immediate = false) {
+            const $subtext = $('.protac-loading-subtext');
+            const $promo = $('#protac-loading-promo');
+            const $promoTag = $('#protac-loading-promo-tag');
+            const $promoLink = $('#protac-loading-promo-link');
+            setProtacLoadingMessage(step.message, immediate);
+            $subtext.text(step.subtext || 'V-LiSEMOD is assembling the current PROTACability view.');
+            if (step.href) {
+                $promoTag.text(step.tag || 'Related tool');
+                $promoLink.attr('href', step.href).text(step.linkLabel || 'Explore tool ↗');
+                $promo.prop('hidden', false);
+            } else {
+                $promo.prop('hidden', true);
+            }
+        }
+
         function startProtacLoadingMessages() {
             if (protacLoadingMessageTimer) return;
-            let messageIndex = 0;
+            let stepIndex = 0;
             protacLoadingMessageTimer = window.setInterval(function() {
-                messageIndex = (messageIndex + 1) % protacLoadingMessages.length;
-                setProtacLoadingMessage(protacLoadingMessages[messageIndex]);
+                setProtacLoadingStep(protacLoadingSteps[stepIndex], false);
+                stepIndex = (stepIndex + 1) % protacLoadingSteps.length;
             }, 4000);
         }
 
@@ -472,7 +498,7 @@
             };
 
             window.clearTimeout(protacLoadingHideTimer);
-            setProtacLoadingMessage(message, true);
+            setProtacLoadingStep({ message: message || protacLoadingSteps[0].message, subtext: 'V-LiSEMOD is querying the server and assembling the current PROTACability view.' }, true);
 
             if ($overlay.hasClass('is-visible')) {
                 $overlay.attr('aria-hidden', 'false');

@@ -2204,6 +2204,41 @@ body.protacability-page .status-card.status-warning.protacability-callout strong
     line-height: 1.45;
 }
 
+.protac-loading-promo {
+    display: grid;
+    justify-items: center;
+    gap: 8px;
+    margin-top: 18px;
+}
+
+.protac-loading-promo[hidden] {
+    display: none;
+}
+
+.protac-loading-promo-tag {
+    color: var(--accent-orange, #f4a261);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.protac-loading-promo-link {
+    padding: 9px 13px;
+    border-radius: 10px;
+    background: var(--accent-green, #0b5335);
+    color: #fff;
+    font-size: 0.88rem;
+    font-weight: 750;
+    text-decoration: none;
+}
+
+.protac-loading-promo-link:hover,
+.protac-loading-promo-link:focus-visible {
+    background: var(--accent-green-dark, #083a25);
+    color: #fff;
+}
+
 @keyframes protac-spin {
     to {
         transform: rotate(360deg);
