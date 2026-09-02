@@ -1875,7 +1875,7 @@
             });
         }
 
-        function attachProtacViewerControls(pdbCode, chainId, ligandResname, ligandChain, ligandResidueId, warheadLigandCode, candidateLinkerAtomIds = [], attachmentSites = {}) {
+        function attachProtacViewerControls(pdbCode, chainId, ligandResname, ligandChain, ligandResidueId, warheadLigandCode, candidateLinkerAtomIds = [], attachmentSites = {}, onLigandChange = null) {
             const containerId = 'protac-ngl-viewer';
             const status = $('#protac-ngl-status');
             const rotateButton = $('#protac-rotate-ligand');
@@ -1991,13 +1991,25 @@
                             ligandResidueId: nextResid || ''
                         });
                     }
+                    if (typeof onLigandChange === 'function') {
+                        onLigandChange({
+                            pdbCode,
+                            chainId,
+                            ligandResname: nextResname || '',
+                            ligandChain: nextChain || '',
+                            ligandResidueId: nextResid || ''
+                        });
+                    }
                     attachProtacViewerControls(
                         pdbCode,
                         chainId,
                         nextResname || '',
                         nextChain || '',
                         nextResid || '',
-                        nextResname || ''
+                        nextResname || '',
+                        [],
+                        attachmentSites,
+                        onLigandChange
                     );
                 });
             }
@@ -2012,6 +2024,23 @@
             const ligandContexts = data.ligand_contexts || [];
             const attachmentSites = data.attachment_sites || {};
             const best = contexts.best_candidate_small_molecule_context || contexts.best_candidate_plus_glycan_context || contexts.best_glycan_only_context || {};
+            const bestStructure = structures.find(row => String(row.pdb_code || '').toUpperCase() === String(best.pdb_code || summary.best_pdb_code || '').toUpperCase()) || best;
+            const selectedContextMarkup = function(structure, ligand) {
+                const selectedStructure = structure || {};
+                const selectedLigand = ligand || {};
+                const selectedPdb = selectedStructure.pdb_code || best.pdb_code || summary.best_pdb_code || '—';
+                const selectedChain = selectedLigand.ligand_chain || selectedStructure.representative_chain_id || selectedStructure.best_ligand_chain || summary.best_chain_id || '—';
+                const selectedLigandLabel = [selectedLigand.ligand_resname || selectedStructure.best_ligand_resname, selectedLigand.ligand_chain || selectedStructure.best_ligand_chain, selectedLigand.ligand_residue_id || selectedStructure.best_ligand_residue_id].filter(Boolean).join(' ') || 'No explicit ligand';
+                return `
+                    <h3 class="protac-selected-context-heading">Selected 3D context</h3>
+                    <p><strong>PDB / chain:</strong> ${escapeHtml(selectedPdb)} / ${escapeHtml(selectedChain)}</p>
+                    <p><strong>Ligand:</strong> ${escapeHtml(selectedLigandLabel)}</p>
+                    <p><strong>Structure score:</strong> ${formatValue(selectedStructure.best_score, 2)} · ${escapeHtml(selectedStructure.best_tier || '—')}</p>
+                    <p><strong>Ligand context:</strong> ${escapeHtml(selectedStructure.ligand_context_label || selectedStructure.best_annotation || '—')}</p>
+                    <p><strong>pI:</strong> ${formatValue(selectedStructure.best_pI, 2)} · <strong>Exposed lysines:</strong> ${selectedStructure.total_exposed_lys_count ?? '—'} | fraction ${formatValue(selectedStructure.best_exposed_lys_fraction, 3)}</p>
+                    <p><strong>Candidate ligands in this structure:</strong> ${escapeHtml(selectedStructure.candidate_ligand_resnames || 'None')}</p>
+                `;
+            };
             const structureRows = structures.length ? structures.map(row => {
                 const pdbCode = row.pdb_code || '';
                 const chainId = row.representative_chain_id || row.best_ligand_chain || '';
@@ -2043,15 +2072,9 @@
                         </div>
                     </div>
                     <div class="page-card protacability-detail-card">
-                        <p><strong>Best representative:</strong> ${escapeHtml(summary.best_pdb_code || '—')} / ${escapeHtml(summary.best_chain_id || '—')}</p>
-                        <p><strong>Canonical target:</strong> ${escapeHtml(summary.canonical_target_id || '—')}</p>
-                        <p><strong>Source label provenance:</strong> ${escapeHtml(summary.source_protein_type || '—')}</p>
-                        <p><strong>Best score:</strong> ${formatValue(summary.best_score, 2)}</p>
-                        <p><strong>PDBs:</strong> ${summary.pdb_count ?? 0} | <strong>Chains:</strong> ${summary.chain_count ?? 0}</p>
-                        <p><strong>Top ligands:</strong> ${escapeHtml(summary.top_candidate_ligands_preview || 'None')}</p>
-                        <p><strong>pI range:</strong> ${formatValue(summary.pI_min, 2)}–${formatValue(summary.pI_max, 2)}</p>
-                        <p><strong>Exposed lys summary:</strong> ${summary.exposed_lys_total ?? 0} | best fraction ${formatValue(summary.best_exposed_lys_fraction, 3)}</p>
-                        ${renderLigandContextSelector(ligandContexts, representativeLigand)}
+                        <div id="protac-selected-context" aria-live="polite">${selectedContextMarkup(bestStructure, representativeLigand)}</div>
+                        <div id="protac-ligand-context-selector">${renderLigandContextSelector(ligandContexts, representativeLigand)}</div>
+                        <p class="protac-target-overview"><strong>Target overview:</strong> ${summary.pdb_count ?? 0} PDBs · ${summary.chain_count ?? 0} chains · canonical target ${escapeHtml(summary.canonical_target_id || '—')}</p>
                     </div>
                 </div>
                 ${renderAttachmentSitesPanel(attachmentSites, summary)}
@@ -2063,6 +2086,19 @@
                 console.log('[protacability] ligand_contexts', ligandContexts);
                 console.log('[protacability] selected ligand context', representativeLigand);
             }
+            let activeStructureSummary = bestStructure;
+            let activePdbCode = String(best.pdb_code || summary.best_pdb_code || '').toUpperCase();
+            const updateSelectedContext = function(structure, ligand) {
+                activeStructureSummary = structure || activeStructureSummary;
+                $('#protac-selected-context').html(selectedContextMarkup(activeStructureSummary, ligand));
+            };
+            const syncSelectedLigand = function(selection) {
+                updateSelectedContext(activeStructureSummary, {
+                    ligand_resname: selection.ligandResname,
+                    ligand_chain: selection.ligandChain,
+                    ligand_residue_id: selection.ligandResidueId
+                });
+            };
             attachProtacViewerControls(
                 best.pdb_code || summary.best_pdb_code,
                 best.chain_id || summary.best_chain_id,
@@ -2071,11 +2107,13 @@
                 representativeLigand.ligand_residue_id || best.ligand_residue_id || '',
                 representativeLigand.ligand_resname || best.ligand_resname || '',
                 [],
-                attachmentSites
+                attachmentSites,
+                syncSelectedLigand
             );
             const loadStructureModel = function(row) {
                 const pdbCode = String(row.data('pdb-code') || '').trim();
                 if (!pdbCode) return;
+                activePdbCode = pdbCode.toUpperCase();
                 const chainId = String(row.data('chain-id') || '').trim();
                 const ligandResname = String(row.data('ligand-resname') || '').trim();
                 const ligandChain = String(row.data('ligand-chain') || '').trim();
@@ -2084,7 +2122,18 @@
                 $('.protac-target-structure-row').removeClass('is-selected').attr('aria-pressed', 'false');
                 row.addClass('is-selected').attr('aria-pressed', 'true');
                 $('#protac-selected-structure').text(`Showing PDB ${pdbCode.toUpperCase()}${chainId ? ` · chain ${chainId}` : ''}.`);
-                attachProtacViewerControls(pdbCode, chainId, ligandResname, ligandChain, ligandResidueId, ligandResname, candidateLinkerAtomIds);
+                const structureSummary = structures.find(item => String(item.pdb_code || '').toUpperCase() === pdbCode.toUpperCase()) || {};
+                updateSelectedContext(structureSummary, { ligand_resname: ligandResname, ligand_chain: ligandChain, ligand_residue_id: ligandResidueId });
+                attachProtacViewerControls(pdbCode, chainId, ligandResname, ligandChain, ligandResidueId, ligandResname, candidateLinkerAtomIds, {}, syncSelectedLigand);
+                $.getJSON(`/api/protacability/structure_detail/${encodeURIComponent(pdbCode)}?${new URLSearchParams({ virus_name: summary.virus_name || '', protein_type: summary.protein_type || '', collapse_labels: '1' }).toString()}`).done(function(detail) {
+                    if (!detail.data_available || activePdbCode !== pdbCode.toUpperCase() || String(detail.summary?.pdb_code || '').toUpperCase() !== pdbCode.toUpperCase()) return;
+                    const selectedLigand = detail.representative_ligand || { ligand_resname: ligandResname, ligand_chain: ligandChain, ligand_residue_id: ligandResidueId };
+                    updateSelectedContext(detail.summary || structureSummary, selectedLigand);
+                    $('#protac-ligand-context-selector').html(renderLigandContextSelector(detail.ligand_contexts || [], selectedLigand));
+                    attachProtacViewerControls(pdbCode, detail.representative_chain_id || chainId, selectedLigand.ligand_resname || '', selectedLigand.ligand_chain || '', selectedLigand.ligand_residue_id || '', selectedLigand.ligand_resname || '', candidateLinkerAtomIds, detail.attachment_sites || {}, syncSelectedLigand);
+                }).fail(function(xhr) {
+                    console.warn('[protacability] selected structure detail failed', { pdbCode, status: xhr.status });
+                });
             };
             $('.protac-target-structure-row').off('click').on('click', function() {
                 loadStructureModel($(this));
