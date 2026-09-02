@@ -7541,12 +7541,12 @@ def protacability_target_detail():
     # must not attempt a local database read for canonical detail views.
     if mode == "randy":
         try:
-            return jsonify(_remote_protacability_get("protacability/target-detail", params=request.args, max_bytes=2 * 1024 * 1024))
+            return jsonify(_remote_protacability_get("protacability/target-detail", params=request.args, max_bytes=10 * 1024 * 1024))
         except RandyBackendError as exc:
             return jsonify({"data_available": False, "message": str(exc)}), exc.status_code
     if mode == "auto" and randy_available():
         try:
-            return jsonify(_remote_protacability_get("protacability/target-detail", params=request.args, max_bytes=2 * 1024 * 1024))
+            return jsonify(_remote_protacability_get("protacability/target-detail", params=request.args, max_bytes=10 * 1024 * 1024))
         except RandyBackendError:
             logging.warning("Falling back to local PROTACability target detail payload for %s / %s", virus_name, protein_type)
 
