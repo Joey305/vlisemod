@@ -61,3 +61,26 @@ class RandyProteinQueryTests(unittest.TestCase):
         self.assertTrue(records)
         self.assertTrue(all(record.get("ligand_instance_id") for record in records))
         self.assertTrue(all(record.get("legacy_key") for record in records))
+
+    def test_ligand_indexer_pairs_are_occurrence_resolved(self):
+        headers = {"Authorization": "Bearer test-token"}
+        response = self.client.get("/api/vlismod/pdb-residues/by-ligand?ligand_code=DR7", headers=headers)
+        self.assertEqual(response.status_code, 200)
+        pairs = response.get_json()["pairs"]
+        self.assertTrue(pairs)
+        self.assertEqual(len({pair["ligand_instance_id"] for pair in pairs}), len(pairs))
+        self.assertTrue(all(pair["ligand_instance_id"] for pair in pairs))
+        self.assertTrue(all(pair.get("ligand_id") for pair in pairs))
+        exact = next(pair for pair in pairs if pair["pdb_id"] == "3EM4" and pair["chain"] == "V" and str(pair["ligand_id"]) == "100")
+        self.assertEqual(exact["ligand_instance_id"], 60443)
+
+    def test_ligand_indexer_interactions_honor_selected_occurrence(self):
+        headers = {"Authorization": "Bearer test-token"}
+        response = self.client.get(
+            "/api/vlismod/interaction-records?pdb_id=3EM4&ligand=DR7&ligand_id=100&chain=V&ligand_instance_id=60443",
+            headers=headers,
+        )
+        self.assertEqual(response.status_code, 200)
+        records = response.get_json()["records"]
+        self.assertTrue(records)
+        self.assertEqual({record["ligand_instance_id"] for record in records}, {60443})

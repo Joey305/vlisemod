@@ -2802,17 +2802,44 @@ def create_vlismod_blueprint(blueprint_name: str, url_prefix: str) -> Blueprint:
     @require_token
     def get_pdb_residue_by_ligand():
         ligand_code = _required_arg("ligand_code")
+        # Select from the occurrence authority, never from the legacy
+        # presentation view that collapses stable ligand identities.
         rows = _fetch_rows(
             """
-            SELECT DISTINCT pdb_id, chain, ligand_id
-            FROM Ligand_Arp_Diagram
-            WHERE ligand = ?
-            ORDER BY pdb_id, chain, ligand_id
+            SELECT i.ligand_instance_id, s.entry_id AS pdb_id,
+                   i.label_comp_id AS ligand, i.auth_asym_id AS chain,
+                   i.auth_seq_id AS ligand_id, i.deposited_model_num AS model_id,
+                   i.insertion_code_normalized AS insertion_code
+            FROM ligand_instances i
+            JOIN structures s ON s.structure_id=i.structure_id
+            WHERE i.label_comp_id=? AND i.curation_status='included'
+              AND EXISTS (
+                  SELECT 1 FROM arpeggio_raw_contact_labels r
+                  WHERE r.ligand_instance_id=i.ligand_instance_id
+                    AND r.filter_class='raw_environment'
+                    AND r.run_id=(SELECT MAX(ar.run_id) FROM ligand_arpeggio_runs ar
+                                  WHERE ar.ligand_instance_id=i.ligand_instance_id
+                                    AND ar.status='completed')
+              )
+            ORDER BY s.entry_id, i.deposited_model_num, i.auth_asym_id,
+                     i.auth_seq_id, i.insertion_code_normalized, i.ligand_instance_id
             """,
             (ligand_code,),
         )
         pairs = [
-            {"pdb_id": row["pdb_id"], "chain": row["chain"], "ligand_id": row["ligand_id"]}
+            {
+                "ligand_instance_id": row["ligand_instance_id"],
+                "pdb_id": row["pdb_id"],
+                "ligand": row["ligand"],
+                "chain": row["chain"],
+                # Preserve the historical name while making its coordinate
+                # meaning explicit for occurrence-aware clients.
+                "ligand_id": row["ligand_id"],
+                "ligand_residue_id": row["ligand_id"],
+                "model_id": row["model_id"],
+                "insertion_code": row["insertion_code"],
+                "ligand_insertion_code": row["insertion_code"],
+            }
             for row in rows
         ]
         return jsonify(pairs=pairs)
@@ -2981,6 +3008,47 @@ def create_vlismod_blueprint(blueprint_name: str, url_prefix: str) -> Blueprint:
         ligand = _required_arg("ligand")
         ligand_id = _required_arg("ligand_id")
         chain = _required_arg("chain")
+        requested_instance_id = str(request.args.get("ligand_instance_id", "")).strip()
+        if requested_instance_id:
+            try:
+                occurrence_id = int(requested_instance_id)
+            except ValueError:
+                return _json_error("The selected ligand occurrence is invalid. Refresh the available structures and try again.", 400)
+            rows = _fetch_rows(
+                """
+                SELECT s.entry_id AS pdb_id, i.label_comp_id AS ligand, i.auth_asym_id AS chain,
+                       r.interaction_label AS Contact, r.distance AS Distance,
+                       COALESCE(a.auth_atom_id, a.label_atom_id) AS exact_atom,
+                       a.atom_site_id AS atom_id,
+                       json_extract(r.partner_identity_json, '$.label_comp_id') AS residue,
+                       json_extract(r.partner_identity_json, '$.auth_seq_id') AS residue_number,
+                       COALESCE(json_extract(r.partner_identity_json, '$.auth_atom_id'), json_extract(r.partner_identity_json, '$.label_atom_id')) AS residue_atom,
+                       json_extract(r.partner_identity_json, '$.auth_asym_id') AS residue_chain,
+                       m.smiles_atom_index, COALESCE(sc.virus_label, 'Unknown') AS virus_name,
+                       i.auth_seq_id AS ligand_id, i.ligand_instance_id, i.deposited_model_num AS model_id
+                FROM ligand_instances i
+                JOIN structures s ON s.structure_id=i.structure_id
+                LEFT JOIN structure_classifications sc ON sc.structure_id=i.structure_id
+                JOIN ligand_arpeggio_runs ar ON ar.ligand_instance_id=i.ligand_instance_id
+                  AND ar.status='completed'
+                  AND ar.run_id=(SELECT MAX(ar2.run_id) FROM ligand_arpeggio_runs ar2
+                                 WHERE ar2.ligand_instance_id=i.ligand_instance_id AND ar2.status='completed')
+                JOIN arpeggio_raw_contact_labels r ON r.ligand_instance_id=i.ligand_instance_id
+                  AND r.run_id=ar.run_id AND r.filter_class='raw_environment'
+                LEFT JOIN ligand_instance_atoms a ON a.ligand_instance_atom_id=r.ligand_instance_atom_id
+                LEFT JOIN ligand_smiles_atom_mapping m ON m.ligand_instance_id=i.ligand_instance_id
+                  AND m.ligand_instance_atom_id=r.ligand_instance_atom_id
+                  AND m.run_id=(SELECT MAX(m2.run_id) FROM ligand_smiles_atom_mapping m2
+                                WHERE m2.ligand_instance_id=i.ligand_instance_id
+                                  AND m2.method_version='legacy_mcs_etkdg_uff_cif_v2.5')
+                WHERE i.ligand_instance_id=? AND s.entry_id=? AND i.label_comp_id=?
+                  AND i.auth_seq_id=? AND i.auth_asym_id=? AND i.curation_status='included'
+                """,
+                (occurrence_id, pdb_id, ligand, ligand_id, chain),
+            )
+            if not rows:
+                return _json_error("The selected ligand occurrence is no longer valid. Refresh the available structures and try again.", 400)
+            return jsonify({"records": [dict(row) for row in rows]})
         rows = _fetch_rows(
             """
             SELECT A.pdb_id, A.ligand, A.chain, A.Contact, A.Distance, A.exact_atom, A.atom_id,
