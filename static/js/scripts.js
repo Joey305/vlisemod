@@ -94,13 +94,18 @@ function loadLigands() {
         fetch(`/get_ligands/${pdbCode}`)
             .then(response => response.json())
             .then(data => {
+                const occurrenceLigands = [];
                 const uniqueLigands = [];
                 const seenLigands = new Set();
                 (data.ligands || []).forEach(ligand => {
                     const code = String((ligand && ligand.ligand) || '').trim().toUpperCase();
-                    if (!code || seenLigands.has(code)) return;
-                    seenLigands.add(code);
-                    uniqueLigands.push(Object.assign({}, ligand, { ligand: code }));
+                    if (!code) return;
+                    const normalized = Object.assign({}, ligand, { ligand: code });
+                    occurrenceLigands.push(normalized);
+                    if (!seenLigands.has(code)) {
+                        seenLigands.add(code);
+                        uniqueLigands.push(normalized);
+                    }
                 });
 
                 uniqueLigands.forEach(ligand => {
@@ -109,7 +114,7 @@ function loadLigands() {
 
                 // Re-initialize select2
                 ligandSelect.select2();
-                ligandSelect.prop('disabled', false).data('ligands', uniqueLigands);
+                ligandSelect.prop('disabled', false).data('ligands', occurrenceLigands);
             });
     }
 }
@@ -122,14 +127,19 @@ function handleLigandChange() {
     const selectedLigand = $(this).val();
     const ligands = $(this).data('ligands');
     const chainSelect = $('#chain');
+    $('#ligand_instance_id').val('');
     chainSelect.empty().append('<option value="">--Select Chain--</option>');
 
     if (ligands) {
-        let chains = new Set(); // Use a set to avoid duplicate chain entries for the same ligand
         ligands.forEach(item => {
             if (item.ligand === selectedLigand) {
-                chainSelect.append(new Option(item.chain, item.chain));
-                chains.add(item.chain);
+                const instanceId = String(item.ligand_instance_id || '').trim();
+                const label = instanceId
+                    ? `Chain ${item.chain} · residue ${item.ligand_id || '?'} · model ${item.model_id || '1'}`
+                    : item.chain;
+                const option = new Option(label, item.chain);
+                option.dataset.ligandInstanceId = instanceId;
+                chainSelect.append(option);
             }
         });
         $('#chain-container').show();
@@ -140,6 +150,7 @@ function handleLigandChange() {
 $('#chain').on('change', function() {
     $('#chain_hidden').val($(this).val());  // Set the hidden input value to the selected chain
     const selectedChain = $(this).val();
+    $('#ligand_instance_id').val(this.options[this.selectedIndex]?.dataset.ligandInstanceId || '');
     if (selectedChain) {
         $('#generateLigandImagesButton').prop('disabled', false);
     } else {

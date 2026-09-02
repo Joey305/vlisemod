@@ -884,7 +884,35 @@ def generate_images_from_smiles(smiles_data, selected_chain, output_folder, solv
 
 
 # Function to write PyMOL script
-def write_pymol_script(pdb_code, ligand_name, ligand_chain, options):
+def _pymol_ligand_atom_selection(ligand_name, ligand_chain, ligand_residue_id, atom):
+    """Build a stable PyMOL selection for a ligand atom.
+
+    V2 data records use mmCIF atom_site IDs, while ``fetch ..., type=pdb``
+    assigns PDB serial IDs.  Atom serials therefore must never be used to
+    select a rebuilt ligand atom in PyMOL.  The author atom name together
+    with the resolved ligand residue identity is stable across the formats.
+    """
+    atom_name = str(atom.get("exact_atom") or "").strip()
+    if not atom_name:
+        return "none"
+    parts = [f"resn {ligand_name}", f"chain {ligand_chain}"]
+    if ligand_residue_id not in (None, ""):
+        parts.append(f"resi {ligand_residue_id}")
+    parts.append(f"name {atom_name}")
+    return " and ".join(parts)
+
+
+def _pymol_protein_atom_selection(atom):
+    """Select a pocket atom by residue identity, not CIF/PDB serial number."""
+    chain = str(atom.get("residue_chain") or "").strip()
+    residue_id = str(atom.get("residue_number") or "").strip()
+    atom_name = str(atom.get("residue_atom") or "").strip()
+    if not (chain and residue_id and atom_name):
+        return "none"
+    return f"polymer and chain {chain} and resi {residue_id} and name {atom_name}"
+
+
+def write_pymol_script(pdb_code, ligand_name, ligand_chain, ligand_residue_id, options):
     output_dir = './pml_sessions'
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
@@ -904,8 +932,11 @@ def write_pymol_script(pdb_code, ligand_name, ligand_chain, options):
         if options.get('functional_groups'):
             functional_groups = options['functional_groups']
             for fg_name, atoms in functional_groups.items():
-                atom_selection = " or ".join([f"id {atom[0]}" for atom in atoms])
-                script.write(f"select {fg_name}, chain {ligand_chain} and ({atom_selection})\n")
+                atom_selection = " or ".join(
+                    _pymol_ligand_atom_selection(ligand_name, ligand_chain, ligand_residue_id, atom)
+                    for atom in atoms
+                )
+                script.write(f"select {fg_name}, ({atom_selection})\n")
                 script.write(f"create {fg_name}_Object, {fg_name}\n")
                 script.write(f"show sticks, {fg_name}_Object\n")
                 script.write(f"color magenta, {fg_name}_Object\n")
@@ -915,7 +946,7 @@ def write_pymol_script(pdb_code, ligand_name, ligand_chain, options):
             binding_pocket_atoms = options['binding_pocket']
             script.write("create Binding_Pocket, none\n")
             for atom in binding_pocket_atoms:
-                script.write(f"select temp, chain {atom[0]} and id {atom[1]}\n")
+                script.write(f"select temp, {_pymol_protein_atom_selection(atom)}\n")
                 script.write("create Binding_Pocket, Binding_Pocket or temp\n")
                 script.write("delete temp\n")
             script.write("show surface, Binding_Pocket\n")
@@ -927,7 +958,7 @@ def write_pymol_script(pdb_code, ligand_name, ligand_chain, options):
             distal_atoms = options['distal_atoms']
             script.write("create Distal_Atoms, none\n")
             for atom in distal_atoms:
-                script.write(f"select temp, chain {atom[0]} and id {atom[1]}\n")
+                script.write(f"select temp, {_pymol_ligand_atom_selection(ligand_name, ligand_chain, ligand_residue_id, atom)}\n")
                 script.write("create Distal_Atoms, Distal_Atoms or temp\n")
                 script.write("delete temp\n")
             script.write("show spheres, Distal_Atoms\n")
@@ -938,8 +969,8 @@ def write_pymol_script(pdb_code, ligand_name, ligand_chain, options):
             solvent_exposed_atoms = options['solvent_exposed_atoms']
             logging.debug(f"Solvent-exposed atoms (SASA): {solvent_exposed_atoms}")
             script.write("create Solvent_Exposed_Atoms, none\n")
-            for atom_id, atom_chain in solvent_exposed_atoms:
-                script.write(f"select temp, chain {atom_chain} and id {atom_id}\n")
+            for atom in solvent_exposed_atoms:
+                script.write(f"select temp, {_pymol_ligand_atom_selection(ligand_name, ligand_chain, ligand_residue_id, atom)}\n")
                 script.write("create Solvent_Exposed_Atoms, Solvent_Exposed_Atoms or temp\n")
                 script.write("delete temp\n")
             script.write("show spheres, Solvent_Exposed_Atoms\n")
@@ -950,7 +981,7 @@ def write_pymol_script(pdb_code, ligand_name, ligand_chain, options):
             hydrated_atoms = options['hydrated_atoms']
             script.write("create Hydrated_Atoms, none\n")
             for atom in hydrated_atoms:
-                script.write(f"select temp, chain {atom[0]} and id {atom[1]}\n")
+                script.write(f"select temp, {_pymol_ligand_atom_selection(ligand_name, ligand_chain, ligand_residue_id, atom)}\n")
                 script.write("create Hydrated_Atoms, Hydrated_Atoms or temp\n")
                 script.write("delete temp\n")
             script.write("show sticks, Hydrated_Atoms\n")
@@ -961,7 +992,7 @@ def write_pymol_script(pdb_code, ligand_name, ligand_chain, options):
             rupley_sasa_atoms = options['rupley_sasa']
             script.write("create RUPLEY_SASA, none\n")
             for atom in rupley_sasa_atoms:
-                script.write(f"select temp, chain {atom[1]} and id {atom[0]}\n")
+                script.write(f"select temp, {_pymol_ligand_atom_selection(ligand_name, ligand_chain, ligand_residue_id, atom)}\n")
                 script.write("create RUPLEY_SASA, RUPLEY_SASA or temp\n")
                 script.write("delete temp\n")
             script.write("show spheres, RUPLEY_SASA\n")
@@ -989,6 +1020,7 @@ def generate_pymol_session():
     pdb_code = str(request.form.get('pdb_code') or '').strip()
     ligand_name = str(request.form.get('ligand') or '').strip()
     requested_chain = str(request.form.get('chain') or '').strip() or None
+    requested_ligand_instance_id = str(request.form.get('ligand_instance_id') or '').strip() or None
 
     if not pdb_code or not ligand_name:
         return jsonify({"error": "Missing required PyMOL session parameters."}), 400
@@ -1013,6 +1045,7 @@ def generate_pymol_session():
                     "pdb_code": pdb_code,
                     "ligand_name": ligand_name,
                     "chain": requested_chain,
+                    "ligand_instance_id": requested_ligand_instance_id,
                     "options": option_flags,
                 },
             )
@@ -1026,6 +1059,7 @@ def generate_pymol_session():
                     "pdb_code": pdb_code,
                     "ligand_name": ligand_name,
                     "chain": requested_chain,
+                    "ligand_instance_id": requested_ligand_instance_id,
                     "options": option_flags,
                 },
             )
@@ -1041,40 +1075,23 @@ def generate_pymol_session():
         if not ligand_chain:
             return jsonify({"error": "RANDY response did not include a ligand chain."}), 502
 
+        ligand_residue_id = remote_payload.get("ligand_residue_id")
         options = {}
         if option_flags['functional_groups']:
             options['functional_groups'] = {
-                group_name: [
-                    (atom.get("atom_id"), atom.get("exact_atom"), atom.get("atom_type"))
-                    for atom in atoms
-                ]
+                group_name: list(atoms)
                 for group_name, atoms in (remote_payload.get("functional_groups") or {}).items()
             }
         if option_flags['binding_pocket']:
-            options['binding_pocket'] = [
-                (row.get("residue_chain"), row.get("residue_number"))
-                for row in remote_payload.get("binding_pocket", [])
-            ]
+            options['binding_pocket'] = list(remote_payload.get("binding_pocket", []))
         if option_flags['distal_atoms']:
-            options['distal_atoms'] = [
-                (row.get("chain"), row.get("atom_id"))
-                for row in remote_payload.get("distal_atoms", [])
-            ]
+            options['distal_atoms'] = list(remote_payload.get("distal_atoms", []))
         if option_flags['solvent_exposed_atoms']:
-            options['solvent_exposed_atoms'] = [
-                (row.get("atom_id"), row.get("chain"))
-                for row in remote_payload.get("solvent_exposed_atoms", [])
-            ]
+            options['solvent_exposed_atoms'] = list(remote_payload.get("solvent_exposed_atoms", []))
         if option_flags['hydrated_atoms']:
-            options['hydrated_atoms'] = [
-                (row.get("chain"), row.get("atom_id"))
-                for row in remote_payload.get("hydrated_atoms", [])
-            ]
+            options['hydrated_atoms'] = list(remote_payload.get("hydrated_atoms", []))
         if option_flags['rupley_sasa']:
-            options['rupley_sasa'] = [
-                (row.get("atom_id"), row.get("chain"))
-                for row in remote_payload.get("rupley_sasa", [])
-            ]
+            options['rupley_sasa'] = list(remote_payload.get("rupley_sasa", []))
     else:
         try:
             with _connect_local_db(PYMOL_REQUIRED_TABLES) as conn:
@@ -1183,7 +1200,9 @@ def generate_pymol_session():
             status_code = 500 if mode == "local" else exc.status_code
             return jsonify({"error": str(exc)}), status_code
 
-    pymol_script_path = write_pymol_script(pdb_code, ligand_name, ligand_chain, options)
+    pymol_script_path = write_pymol_script(
+        pdb_code, ligand_name, ligand_chain, ligand_residue_id if remote_payload is not None else None, options
+    )
     return send_file(pymol_script_path, as_attachment=True)
 
 

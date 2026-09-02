@@ -2733,28 +2733,35 @@ def create_vlismod_blueprint(blueprint_name: str, url_prefix: str) -> Blueprint:
         pdb_code = _required_arg("pdb_code")
         rows = _fetch_rows(
             """
-            SELECT ligand, MIN(chain) AS chain,
+            SELECT i.label_comp_id AS ligand, i.auth_asym_id AS chain,
+                   i.auth_seq_id AS ligand_id, i.deposited_model_num AS model_id,
+                   i.ligand_instance_id,
                    MAX(
                        CASE
                            WHEN EXISTS (
                                SELECT 1
                                FROM Functional_GROUPED fg
-                               WHERE fg.pdb_id = ligand_atoms.pdb_id
-                                 AND fg.ligand = ligand_atoms.ligand
+                               WHERE fg.pdb_id = s.entry_id
+                                 AND fg.ligand_instance_id = i.ligand_instance_id
                                  AND fg.smiles IS NOT NULL
                                  AND fg.smiles != ''
                            ) THEN 1 ELSE 0
                        END
                    ) AS has_smiles
-            FROM ligand_atoms
-            WHERE pdb_id = ?
-            GROUP BY ligand
-            ORDER BY ligand
+            FROM ligand_instances i
+            JOIN structures s ON s.structure_id = i.structure_id
+            WHERE s.entry_id = ? AND i.curation_status = 'included'
+            GROUP BY i.ligand_instance_id
+            ORDER BY ligand, model_id, chain, ligand_id, i.ligand_instance_id
             """,
             (pdb_code,),
         )
         ligands = [
-            {"ligand": row["ligand"], "chain": row["chain"], "has_smiles": row["has_smiles"]}
+            {
+                "ligand": row["ligand"], "chain": row["chain"],
+                "ligand_id": row["ligand_id"], "model_id": row["model_id"],
+                "ligand_instance_id": row["ligand_instance_id"], "has_smiles": row["has_smiles"],
+            }
             for row in rows
         ]
         return jsonify(ligands=ligands)
@@ -4034,30 +4041,55 @@ def create_vlismod_blueprint(blueprint_name: str, url_prefix: str) -> Blueprint:
         pdb_code = _required_json_arg(payload, "pdb_code")
         ligand_name = _required_json_arg(payload, "ligand_name")
         requested_chain = str(payload.get("chain", "")).strip() or None
+        requested_instance_id = str(payload.get("ligand_instance_id", "")).strip() or None
         options = payload.get("options") or {}
 
         with _connect() as conn:
-            chain_rows = conn.execute(
-                """
-                SELECT DISTINCT chain
-                FROM ligand_atoms
-                WHERE pdb_id = ? AND ligand = ?
-                ORDER BY chain
-                """,
-                (pdb_code, ligand_name),
-            ).fetchall()
-            chains = [row["chain"] for row in chain_rows if row["chain"]]
-
-            if requested_chain:
-                if requested_chain not in chains:
-                    return _json_error("Specified ligand chain was not found.", 404)
-                ligand_chain = requested_chain
+            # Occurrence ID is the authoritative V2 identity.  The old UI
+            # supplied only a chain; retain that fallback for compatibility,
+            # but do not let it collapse model/residue occurrences when an ID
+            # is available.
+            occurrence = None
+            if requested_instance_id:
+                occurrence = conn.execute(
+                    """
+                    SELECT i.ligand_instance_id, i.auth_asym_id AS chain,
+                           i.auth_seq_id AS ligand_residue_id,
+                           i.deposited_model_num AS model_id
+                    FROM ligand_instances i
+                    JOIN structures s ON s.structure_id = i.structure_id
+                    WHERE i.ligand_instance_id = ?
+                      AND s.entry_id = ? AND i.label_comp_id = ?
+                      AND i.curation_status = 'included'
+                    """,
+                    (requested_instance_id, pdb_code, ligand_name),
+                ).fetchone()
+                if occurrence is None:
+                    return _json_error("Specified ligand occurrence was not found for this structure.", 404)
+                if requested_chain and requested_chain != occurrence["chain"]:
+                    return _json_error("Specified ligand chain does not match the selected occurrence.", 400)
+                ligand_chain = occurrence["chain"]
             else:
-                if not chains:
-                    return _json_error("No ligand chain found for the selected PDB and ligand.", 404)
-                if len(chains) > 1:
-                    return _json_error("Multiple chains found; please specify the chain.", 400)
-                ligand_chain = chains[0]
+                chain_rows = conn.execute(
+                    """
+                    SELECT DISTINCT chain
+                    FROM ligand_atoms
+                    WHERE pdb_id = ? AND ligand = ?
+                    ORDER BY chain
+                    """,
+                    (pdb_code, ligand_name),
+                ).fetchall()
+                chains = [row["chain"] for row in chain_rows if row["chain"]]
+                if requested_chain:
+                    if requested_chain not in chains:
+                        return _json_error("Specified ligand chain was not found.", 404)
+                    ligand_chain = requested_chain
+                else:
+                    if not chains:
+                        return _json_error("No ligand chain found for the selected PDB and ligand.", 404)
+                    if len(chains) > 1:
+                        return _json_error("Multiple chains found; please specify the chain.", 400)
+                    ligand_chain = chains[0]
 
             virus_row = conn.execute(
                 """
@@ -4073,6 +4105,9 @@ def create_vlismod_blueprint(blueprint_name: str, url_prefix: str) -> Blueprint:
             response_payload: dict[str, Any] = {
                 "ok": True,
                 "ligand_chain": ligand_chain,
+                "ligand_instance_id": occurrence["ligand_instance_id"] if occurrence else None,
+                "ligand_residue_id": occurrence["ligand_residue_id"] if occurrence else None,
+                "model_id": occurrence["model_id"] if occurrence else None,
                 "functional_groups": {},
                 "binding_pocket": [],
                 "distal_atoms": [],
@@ -4090,9 +4125,10 @@ def create_vlismod_blueprint(blueprint_name: str, url_prefix: str) -> Blueprint:
                       AND pdb_id = ?
                       AND ligand = ?
                       AND chain = ?
+                      AND (? IS NULL OR ligand_instance_id = ?)
                     ORDER BY functional_group, atom_id
                     """,
-                    (virus_name, pdb_code, ligand_name, ligand_chain),
+                    (virus_name, pdb_code, ligand_name, ligand_chain, requested_instance_id, requested_instance_id),
                 ).fetchall()
                 functional_groups: dict[str, list[dict[str, Any]]] = {}
                 for row in fg_rows:
@@ -4108,17 +4144,19 @@ def create_vlismod_blueprint(blueprint_name: str, url_prefix: str) -> Blueprint:
             if _json_flag(options, "binding_pocket"):
                 binding_rows = conn.execute(
                     """
-                    SELECT residue_chain, residue_number
+                    SELECT residue_chain, residue_number, residue_atom
                     FROM receptor_binding_pocket
                     WHERE pdb_id = ?
-                    ORDER BY residue_chain, residue_number
+                      AND (? IS NULL OR ligand_instance_id = ?)
+                    ORDER BY residue_chain, residue_number, residue_atom
                     """,
-                    (pdb_code,),
+                    (pdb_code, requested_instance_id, requested_instance_id),
                 ).fetchall()
                 response_payload["binding_pocket"] = [
                     {
                         "residue_chain": row["residue_chain"],
                         "residue_number": row["residue_number"],
+                        "residue_atom": row["residue_atom"],
                     }
                     for row in binding_rows
                 ]
@@ -4126,60 +4164,64 @@ def create_vlismod_blueprint(blueprint_name: str, url_prefix: str) -> Blueprint:
             if _json_flag(options, "distal_atoms"):
                 distal_rows = conn.execute(
                     """
-                    SELECT chain, atom_id
+                    SELECT chain, atom_id, exact_atom
                     FROM distal_atoms
                     WHERE pdb_id = ? AND ligand = ?
+                      AND (? IS NULL OR ligand_instance_id = ?)
                     ORDER BY chain, atom_id
                     """,
-                    (pdb_code, ligand_name),
+                    (pdb_code, ligand_name, requested_instance_id, requested_instance_id),
                 ).fetchall()
                 response_payload["distal_atoms"] = [
-                    {"chain": row["chain"], "atom_id": row["atom_id"]}
+                    {"chain": row["chain"], "atom_id": row["atom_id"], "exact_atom": row["exact_atom"]}
                     for row in distal_rows
                 ]
 
             if _json_flag(options, "solvent_exposed_atoms"):
                 solvent_rows = conn.execute(
                     """
-                    SELECT atom_id, chain
-                    FROM RUPLEY_SASA_DATA
+                    SELECT atom_id, chain, exact_atom
+                    FROM solvent_exposed_atoms
                     WHERE pdb_id = ? AND ligand = ? AND chain = ?
+                      AND (? IS NULL OR ligand_instance_id = ?)
                     ORDER BY chain, atom_id
                     """,
-                    (pdb_code, ligand_name, ligand_chain),
+                    (pdb_code, ligand_name, ligand_chain, requested_instance_id, requested_instance_id),
                 ).fetchall()
                 response_payload["solvent_exposed_atoms"] = [
-                    {"atom_id": row["atom_id"], "chain": row["chain"]}
+                    {"atom_id": row["atom_id"], "chain": row["chain"], "exact_atom": row["exact_atom"]}
                     for row in solvent_rows
                 ]
 
             if _json_flag(options, "hydrated_atoms"):
                 hydrated_rows = conn.execute(
                     """
-                    SELECT chain, atom_id
+                    SELECT chain, atom_id, exact_atom
                     FROM ligand_atoms
                     WHERE pdb_id = ? AND ligand = ? AND chain = ?
+                      AND (? IS NULL OR ligand_instance_id = ?)
                     ORDER BY chain, atom_id
                     """,
-                    (pdb_code, ligand_name, ligand_chain),
+                    (pdb_code, ligand_name, ligand_chain, requested_instance_id, requested_instance_id),
                 ).fetchall()
                 response_payload["hydrated_atoms"] = [
-                    {"chain": row["chain"], "atom_id": row["atom_id"]}
+                    {"chain": row["chain"], "atom_id": row["atom_id"], "exact_atom": row["exact_atom"]}
                     for row in hydrated_rows
                 ]
 
             if _json_flag(options, "rupley_sasa"):
                 rupley_rows = conn.execute(
                     """
-                    SELECT atom_id, chain
+                    SELECT atom_id, chain, exact_atom
                     FROM RUPLEY_SASA_DATA
                     WHERE pdb_id = ? AND ligand = ? AND chain = ?
+                      AND (? IS NULL OR ligand_instance_id = ?)
                     ORDER BY chain, atom_id
                     """,
-                    (pdb_code, ligand_name, ligand_chain),
+                    (pdb_code, ligand_name, ligand_chain, requested_instance_id, requested_instance_id),
                 ).fetchall()
                 response_payload["rupley_sasa"] = [
-                    {"atom_id": row["atom_id"], "chain": row["chain"]}
+                    {"atom_id": row["atom_id"], "chain": row["chain"], "exact_atom": row["exact_atom"]}
                     for row in rupley_rows
                 ]
 
