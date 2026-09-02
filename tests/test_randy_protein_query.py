@@ -51,3 +51,13 @@ class RandyProteinQueryTests(unittest.TestCase):
         self.assertIn("protease", payload["protein_types"])
         self.assertTrue(payload["ligands"])
 
+    def test_ligand_comparison_mapping_preserves_occurrence_identity(self):
+        response = self.client.get(
+            "/api/vlismod/pdb-mapping?ligand_code=DR7",
+            headers={"Authorization": "Bearer test-token"},
+        )
+        self.assertEqual(response.status_code, 200)
+        records = response.get_json()["pdb_mapping"].values()
+        self.assertTrue(records)
+        self.assertTrue(all(record.get("ligand_instance_id") for record in records))
+        self.assertTrue(all(record.get("legacy_key") for record in records))

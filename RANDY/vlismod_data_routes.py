@@ -2821,27 +2821,46 @@ def create_vlismod_blueprint(blueprint_name: str, url_prefix: str) -> Blueprint:
     @require_token
     def get_pdb_mapping():
         ligand_code = _required_arg("ligand_code")
-        rows = _fetch_rows(
-            """
-            SELECT DISTINCT pdb_id, chain, ligand_id, virus_name, ligand
-            FROM Ligand_Atoms_Smiles
-            WHERE ligand = ?
-            ORDER BY pdb_id, chain, ligand_id
-            """,
-            (ligand_code,),
-        )
-
+        # The comparison UI is occurrence-resolved.  The old compatibility
+        # view collapsed contexts to PDB/residue/chain, then returned no
+        # ligand_instance_id; the browser consequently posted "undefined"
+        # identifiers and comparison retrieval failed.
+        with _connect() as conn:
+            rows = conn.execute(
+                """
+                WITH selected_occurrences AS (
+                    SELECT i.ligand_instance_id, s.entry_id AS pdb_id,
+                           i.deposited_model_num AS model_id,
+                           i.auth_asym_id AS chain, i.auth_seq_id AS ligand_id,
+                           i.insertion_code_normalized AS insertion_code,
+                           COALESCE(sc.virus_label, 'Unknown') AS virus_name,
+                           i.label_comp_id AS ligand
+                    FROM ligand_instances i
+                    JOIN structures s ON s.structure_id=i.structure_id
+                    LEFT JOIN structure_classifications sc ON sc.structure_id=s.structure_id
+                    WHERE i.label_comp_id=? AND i.curation_status='included'
+                ), latest_mapping_runs AS (
+                    SELECT m.ligand_instance_id, MAX(m.run_id) AS run_id
+                    FROM ligand_smiles_atom_mapping m
+                    JOIN selected_occurrences so ON so.ligand_instance_id=m.ligand_instance_id
+                    WHERE m.method_version='legacy_mcs_etkdg_uff_cif_v2.5'
+                    GROUP BY m.ligand_instance_id
+                )
+                SELECT so.* FROM selected_occurrences so
+                JOIN latest_mapping_runs lmr ON lmr.ligand_instance_id=so.ligand_instance_id
+                ORDER BY so.pdb_id, so.model_id, so.chain, so.ligand_id,
+                         so.insertion_code, so.ligand_instance_id
+                """,
+                (ligand_code,),
+            ).fetchall()
         pdb_mapping: dict[str, dict[str, Any]] = {}
         for row in rows:
-            unique_key = f"{row['pdb_id']}-{row['ligand_id']}-{row['chain']}"
-            if unique_key not in pdb_mapping:
-                pdb_mapping[unique_key] = {
-                    "pdb_id": row["pdb_id"],
-                    "ligand_id": row["ligand_id"],
-                    "chain": row["chain"],
-                    "virus_name": row["virus_name"],
-                    "ligand": row["ligand"],
-                }
+            row = dict(row)
+            instance_id = row["ligand_instance_id"]
+            pdb_mapping[str(instance_id)] = {
+                **row,
+                "legacy_key": f"{row['pdb_id']}-{row['ligand_id']}-{row['chain']}",
+            }
 
         return jsonify(pdb_mapping=pdb_mapping)
 
