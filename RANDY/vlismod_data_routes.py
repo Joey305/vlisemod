@@ -3947,6 +3947,7 @@ def create_vlismod_blueprint(blueprint_name: str, url_prefix: str) -> Blueprint:
         pdb_code = _required_json_arg(payload, "pdb_code")
         ligand_name = _required_json_arg(payload, "ligand_name")
         requested_chain = str(payload.get("chain", "")).strip() or None
+        requested_instance_id = str(payload.get("ligand_instance_id", "")).strip() or None
 
         with _connect() as conn:
             smiles_rows = conn.execute(
@@ -3971,19 +3972,21 @@ def create_vlismod_blueprint(blueprint_name: str, url_prefix: str) -> Blueprint:
             if not smiles_rows:
                 return _json_error("No ligand image data found for the selected virus, PDB code, and ligand.", 404)
 
-            chains_to_map = [requested_chain] if requested_chain else [
-                row["chain"] for row in chain_rows if row["chain"]
-            ]
+            chains_to_map = [requested_chain] if requested_chain else [row["chain"] for row in chain_rows if row["chain"]]
             solvent_exposed_atom_map: dict[str, list[int]] = {}
 
             for chain in chains_to_map:
+                # `RUPLEY_SASA_DATA` is quantitative for *every* ligand atom.
+                # The 2D exposed view must instead use the positive, exposed
+                # subset from the occurrence-resolved compatibility view.
                 sasa_rows = conn.execute(
                     """
-                    SELECT atom_id, exact_atom
-                    FROM RUPLEY_SASA_DATA
+                    SELECT e.atom_id, e.exact_atom
+                    FROM solvent_exposed_atoms e
                     WHERE virus_name = ? AND pdb_id = ? AND ligand = ? AND chain = ?
+                      AND (? IS NULL OR e.ligand_instance_id = ?)
                     """,
-                    (virus_name, pdb_code, ligand_name, chain),
+                    (virus_name, pdb_code, ligand_name, chain, requested_instance_id, requested_instance_id),
                 ).fetchall()
 
                 smiles_indices: list[int] = []
@@ -3998,6 +4001,7 @@ def create_vlismod_blueprint(blueprint_name: str, url_prefix: str) -> Blueprint:
                           AND chain = ?
                           AND atom_id = ?
                           AND exact_atom = ?
+                          AND (? IS NULL OR ligand_instance_id = ?)
                         """,
                         (
                             virus_name,
@@ -4006,13 +4010,15 @@ def create_vlismod_blueprint(blueprint_name: str, url_prefix: str) -> Blueprint:
                             chain,
                             sasa_row["atom_id"],
                             sasa_row["exact_atom"],
+                            requested_instance_id,
+                            requested_instance_id,
                         ),
                     ).fetchone()
 
                     if mapped_row and mapped_row["smiles_atom_index"] is not None:
                         smiles_indices.append(int(mapped_row["smiles_atom_index"]))
 
-                solvent_exposed_atom_map[f"{pdb_code}|{ligand_name}|{chain}"] = sorted(set(smiles_indices))
+                solvent_exposed_atom_map[f"{pdb_code}|{ligand_name}|{chain}|{requested_instance_id or ''}"] = sorted(set(smiles_indices))
 
         return jsonify(
             {

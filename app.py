@@ -693,6 +693,7 @@ def generate_ligand_images():
     pdb_code = str(request.form.get('pdb_code') or '').strip()
     ligand_name = str(request.form.get('ligand') or '').strip()
     selected_chain = str(request.form.get('chain') or '').strip() or None
+    ligand_instance_id = str(request.form.get('ligand_instance_id') or '').strip() or None
 
     if not virus_name or not pdb_code or not ligand_name:
         return jsonify({"error": "Missing required ligand image parameters."}), 400
@@ -709,6 +710,7 @@ def generate_ligand_images():
                     "pdb_code": pdb_code,
                     "ligand_name": ligand_name,
                     "chain": selected_chain,
+                    "ligand_instance_id": ligand_instance_id,
                 },
             )
         except RandyBackendError as exc:
@@ -722,6 +724,7 @@ def generate_ligand_images():
                     "pdb_code": pdb_code,
                     "ligand_name": ligand_name,
                     "chain": selected_chain,
+                    "ligand_instance_id": ligand_instance_id,
                 },
             )
         except RandyBackendError:
@@ -787,6 +790,7 @@ def generate_ligand_images():
         effective_chain,
         "static/ligand_images",
         solvent_exposed_atom_map=solvent_exposed_atom_map,
+        ligand_instance_id=ligand_instance_id,
     )
     return render_template(
         'display_images.html',
@@ -794,6 +798,53 @@ def generate_ligand_images():
         chain_residues=chain_residue_data,
         structure_url=None
     )
+
+
+@app.route('/generate_poseview_diagram', methods=['POST'])
+def generate_poseview_diagram():
+    """Create a PoseView diagram server-side and return its completed image URL.
+
+    The former browser-only request left users with a generic error whenever
+    the third-party job took longer than a browser poll or its response was
+    interrupted.  Keeping the submit/poll sequence on our server gives the
+    page one dependable same-origin request and preserves the exact ligand
+    chain/residue selected on the image page.
+    """
+    payload = request.get_json(silent=True) or {}
+    pdb_code = str(payload.get("pdb_code") or "").strip().upper()
+    ligand = str(payload.get("ligand") or "").strip()
+    if not pdb_code or not ligand:
+        return jsonify({"error": "PDB code and ligand occurrence are required."}), 400
+
+    try:
+        response = requests.post(
+            "https://proteins.plus/api/poseview_rest",
+            json={"poseview": {"pdbCode": pdb_code, "ligand": ligand}},
+            timeout=30,
+        )
+        response.raise_for_status()
+        job = response.json()
+        location = str(job.get("location") or "").strip()
+        if not location:
+            return jsonify({"error": "PoseView did not return a job location."}), 502
+
+        deadline = time.monotonic() + 55
+        while time.monotonic() < deadline:
+            result_response = requests.get(location, timeout=20)
+            result_response.raise_for_status()
+            result = result_response.json()
+            if result.get("result_png_picture"):
+                return jsonify({
+                    "ok": True,
+                    "result_png_picture": result["result_png_picture"],
+                    "result_svg_picture": result.get("result_svg_picture"),
+                })
+            time.sleep(2)
+    except (requests.RequestException, ValueError) as exc:
+        logging.warning("PoseView diagram request failed for %s / %s: %s", pdb_code, ligand, exc)
+        return jsonify({"error": "PoseView could not generate this diagram."}), 502
+
+    return jsonify({"error": "PoseView did not finish within 55 seconds."}), 504
 
 
 
@@ -804,7 +855,7 @@ from rdkit.Chem.Draw import rdMolDraw2D
 import os
 
 
-def generate_images_from_smiles(smiles_data, selected_chain, output_folder, solvent_exposed_atom_map=None):
+def generate_images_from_smiles(smiles_data, selected_chain, output_folder, solvent_exposed_atom_map=None, ligand_instance_id=None):
     images = []
     os.makedirs(output_folder, exist_ok=True)
 
@@ -851,7 +902,7 @@ def generate_images_from_smiles(smiles_data, selected_chain, output_folder, solv
         # -------------------------
         solvent_svg_path = f"{output_folder}/{pdb_id}_{ligand_code}_solvent_exposed.svg"
         if solvent_exposed_atom_map is not None:
-            solvent_key = f"{pdb_id}|{ligand_code}|{selected_chain}"
+            solvent_key = f"{pdb_id}|{ligand_code}|{selected_chain}|{ligand_instance_id or ''}"
             highlight_solvent_exposed_atoms_from_indices(
                 mol,
                 solvent_exposed_atom_map.get(solvent_key, []),

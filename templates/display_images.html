@@ -268,12 +268,7 @@ function getSelectedLigandContext() {
         const pdbId = '{{ primary_image.pdb_id }}'; 
         const ligandCode = '{{ primary_image.ligand_code }}';
 
-        const requestData = {
-            poseview: {
-                pdbCode: pdbId,
-                ligand: `${ligandCode}_${chain}_${residue}`
-            }
-        };
+        const requestData = { pdb_code: pdbId, ligand: `${ligandCode}_${chain}_${residue}` };
 
         const loadingModal = document.getElementById("loadingModal");
         const spinner = document.getElementById("spinner-container");
@@ -283,7 +278,7 @@ function getSelectedLigandContext() {
         errorMessage.style.display = "none";
         loadingModal.style.display = "block";
 
-        fetch('https://proteins.plus/api/poseview_rest', {
+        fetch('/generate_poseview_diagram', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -292,23 +287,16 @@ function getSelectedLigandContext() {
             body: JSON.stringify(requestData),
         })
         .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.json();
+            return response.json().then(data => {
+                if (!response.ok) throw new Error(data.error || `HTTP error! status: ${response.status}`);
+                return data;
+            });
         })
         .then(data => {
-            if (data.status_code === 202 || data.status_code === 200) {
-                if (data.location) {
-                    pollPoseView(data.location);
-                } else {
-                    spinner.style.display = "none";
-                    errorMessage.style.display = "block";
-                }
-            } else {
-                spinner.style.display = "none";
-                errorMessage.style.display = "block";
-            }
+            if (!data.result_png_picture) throw new Error('PoseView did not return an image.');
+            spinner.style.display = "none";
+            loadingModal.style.display = "none";
+            openModal(data.result_png_picture);
         })
         .catch((error) => {
             console.error("Error:", error);

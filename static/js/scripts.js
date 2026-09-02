@@ -177,6 +177,7 @@ function submitLigandImagesForm() {
     $('#virus_hidden').val($('#virus').val());
     $('#pdb_code_hidden').val($('#pdb_code').val());
     $('#ligand_hidden').val($('#ligand').val());
+    $('#ligand_instance_id_hidden').val($('#ligand_instance_id').val());
     $('#ligandImagesForm').submit();
 }
 
@@ -248,6 +249,7 @@ function submitLigandImagesForm() {
     document.getElementById('virus_hidden').value = document.getElementById('virus').value;
     document.getElementById('pdb_code_hidden').value = document.getElementById('pdb_code').value;
     document.getElementById('ligand_hidden').value = document.getElementById('ligand').value;
+    document.getElementById('ligand_instance_id_hidden').value = document.getElementById('ligand_instance_id').value;
     
     document.getElementById('ligandImagesForm').submit();
 }
