@@ -331,10 +331,18 @@ function showLigandLoadingPromo(copy = {}) {
     if (kicker) kicker.textContent = promoCopy.kicker;
     if (title) title.textContent = promoCopy.title;
     if (status) status.textContent = promoCopy.status;
+    const cards = Array.from(overlay.querySelectorAll('.ligand-loading-promo-card'));
+    if (!cards.length) return;
+    const chooseNextPromo = () => {
+        if (cards.length <= 1) return 0;
+        const availableIndexes = cards.map((_, index) => index).filter((index) => index !== ligandLoadingPromoIndex);
+        return availableIndexes[Math.floor(Math.random() * availableIndexes.length)];
+    };
+
     overlay.hidden = false;
-    renderLigandLoadingPromo(ligandLoadingPromoIndex);
+    renderLigandLoadingPromo(Math.floor(Math.random() * cards.length));
     if (ligandLoadingPromoTimer) window.clearInterval(ligandLoadingPromoTimer);
-    ligandLoadingPromoTimer = window.setInterval(() => renderLigandLoadingPromo(ligandLoadingPromoIndex + 1), 4200);
+    ligandLoadingPromoTimer = window.setInterval(() => renderLigandLoadingPromo(chooseNextPromo()), 4200);
 }
 
 function hideLigandLoadingPromo() {

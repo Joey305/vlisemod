@@ -272,10 +272,16 @@ function showLigandImageGenerationPromo() {
         }
     };
 
+    const chooseNextPromo = () => {
+        if (cards.length === 1) return 0;
+        const availableIndexes = cards.map((_, index) => index).filter((index) => index !== ligandImageGenerationPromoIndex);
+        return availableIndexes[Math.floor(Math.random() * availableIndexes.length)];
+    };
+
     overlay.hidden = false;
-    renderPromo(ligandImageGenerationPromoIndex);
+    renderPromo(Math.floor(Math.random() * cards.length));
     if (ligandImageGenerationPromoTimer) window.clearInterval(ligandImageGenerationPromoTimer);
-    ligandImageGenerationPromoTimer = window.setInterval(() => renderPromo(ligandImageGenerationPromoIndex + 1), 4200);
+    ligandImageGenerationPromoTimer = window.setInterval(() => renderPromo(chooseNextPromo()), 4200);
 }
 
 
