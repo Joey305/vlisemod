@@ -128,6 +128,58 @@
     </div>
 </section>
 
+<div id="ligand-loading-promo" class="ligand-loading-promo" role="dialog" aria-modal="true" aria-labelledby="ligand-loading-promo-title" aria-describedby="ligand-loading-promo-status" hidden>
+    <div class="ligand-loading-promo-card-shell">
+        <div class="ligand-loading-promo-header">
+            <span class="ligand-loading-promo-spinner" aria-hidden="true"></span>
+            <div>
+                <p class="ligand-loading-promo-kicker">Preparing your 3D workspace</p>
+                <h2 id="ligand-loading-promo-title">Loading ligand context</h2>
+            </div>
+        </div>
+        <p id="ligand-loading-promo-status" class="ligand-loading-promo-status">Fetching the protein structure and occurrence-resolved ligand geometry.</p>
+        <div class="ligand-loading-promo-cards">
+            <article class="ligand-loading-promo-card is-active" data-promo-index="0">
+                <span class="ligand-loading-promo-tag">PyMOL companion</span>
+                <h3>PyMacs</h3>
+                <p>Explore Python-powered molecular visualization workflows and PyMOL integrations.</p>
+                <a href="https://pymacs.com" target="_blank" rel="noopener noreferrer">Visit pymacs.com ↗</a>
+            </article>
+            <article class="ligand-loading-promo-card" data-promo-index="1">
+                <span class="ligand-loading-promo-tag">Open source</span>
+                <h3>PyMacs on GitHub</h3>
+                <p>Review the source, documentation, and installation guidance for the Schürer Lab project.</p>
+                <a href="https://github.com/schurerlab/Pymacs" target="_blank" rel="noopener noreferrer">Open schurerlab/Pymacs ↗</a>
+            </article>
+            <article class="ligand-loading-promo-card" data-promo-index="2">
+                <span class="ligand-loading-promo-tag">Docking</span>
+                <h3>AutoDock Vina</h3>
+                <p>Plan docking workflows with the widely used molecular-docking platform.</p>
+                <a href="https://autodockvina.com" target="_blank" rel="noopener noreferrer">Visit autodockvina.com ↗</a>
+            </article>
+            <article class="ligand-loading-promo-card" data-promo-index="3">
+                <span class="ligand-loading-promo-tag">PROTAC design</span>
+                <h3>PROTAC Builder</h3>
+                <p>Move selected ligands into an interactive PROTAC design workflow.</p>
+                <a href="https://protacbuilder.com" target="_blank" rel="noopener noreferrer">Visit protacbuilder.com ↗</a>
+            </article>
+            <article class="ligand-loading-promo-card" data-promo-index="4">
+                <span class="ligand-loading-promo-tag">Warhead discovery</span>
+                <h3>Warhead Hunter</h3>
+                <p>Find and review warhead-focused opportunities for targeted protein degradation.</p>
+                <a href="https://warheadhunter.com" target="_blank" rel="noopener noreferrer">Visit warheadhunter.com ↗</a>
+            </article>
+            <article class="ligand-loading-promo-card" data-promo-index="5">
+                <span class="ligand-loading-promo-tag">E3 ligase insight</span>
+                <h3>E3 Ligandalyzer</h3>
+                <p>Explore E3-ligase and ligand context for degrader design decisions.</p>
+                <a href="https://e3ligandalyzer.com" target="_blank" rel="noopener noreferrer">Visit e3ligandalyzer.com ↗</a>
+            </article>
+        </div>
+        <div id="ligand-loading-promo-dots" class="ligand-loading-promo-dots" aria-hidden="true"></div>
+    </div>
+</div>
+
 <!-- Modal for displaying the diagram -->
 <div id="poseviewModal" class="modal">
   <div class="modal-content data-panel poseview-modal-content">
@@ -251,7 +303,34 @@ let currentAttachmentSites = null;
 let pendingAttachmentHighlight = false;
 let pendingAttachmentRegions = null;
 let pendingAttachmentShouldCenter = false;
+let ligandLoadingPromoTimer = null;
+let ligandLoadingPromoIndex = 0;
 const attachmentSiteColors = ['#22c55e', '#ef4444', '#3b82f6', '#eab308', '#a855f7', '#14b8a6'];
+
+function renderLigandLoadingPromo(index) {
+    const cards = Array.from(document.querySelectorAll('.ligand-loading-promo-card'));
+    if (!cards.length) return;
+    ligandLoadingPromoIndex = ((index % cards.length) + cards.length) % cards.length;
+    cards.forEach((card, cardIndex) => card.classList.toggle('is-active', cardIndex === ligandLoadingPromoIndex));
+    const dots = document.getElementById('ligand-loading-promo-dots');
+    if (dots) dots.innerHTML = cards.map((_, cardIndex) => `<span class="${cardIndex === ligandLoadingPromoIndex ? 'is-active' : ''}"></span>`).join('');
+}
+
+function showLigandLoadingPromo() {
+    const overlay = document.getElementById('ligand-loading-promo');
+    if (!overlay) return;
+    overlay.hidden = false;
+    renderLigandLoadingPromo(ligandLoadingPromoIndex);
+    if (ligandLoadingPromoTimer) window.clearInterval(ligandLoadingPromoTimer);
+    ligandLoadingPromoTimer = window.setInterval(() => renderLigandLoadingPromo(ligandLoadingPromoIndex + 1), 4200);
+}
+
+function hideLigandLoadingPromo() {
+    const overlay = document.getElementById('ligand-loading-promo');
+    if (ligandLoadingPromoTimer) window.clearInterval(ligandLoadingPromoTimer);
+    ligandLoadingPromoTimer = null;
+    if (overlay) overlay.hidden = true;
+}
 
 function escapeAttachmentHtml(value) {
     const node = document.createElement('span');
@@ -567,6 +646,7 @@ function replaceWith3D(pdb_id, ligand_code) {
     const viewerStatus = document.getElementById('viewer-status');
     const viewerButton = document.getElementById('view-3d-in-window');
     const returnButton = document.getElementById('return-2d');
+    showLigandLoadingPromo();
 
     const ligandCtx = getSelectedLigandContext();
     const selectedCheckbox = document.querySelector('input[name="chain_residue"]:checked');
@@ -635,6 +715,7 @@ function replaceWith3D(pdb_id, ligand_code) {
             if (ligandDebugEnabled()) updateLigandDebugPanel(payload, ligandCtx);
         }
     }).then(function() {
+        hideLigandLoadingPromo();
         applySasaAttachmentHighlight();
         if (displayLigandSpinRequested) {
             const spinStarted = VLNGLViewer.toggleLigandSpin('viewport', true);
@@ -647,6 +728,7 @@ function replaceWith3D(pdb_id, ligand_code) {
             updateDisplayLigandSpinButton(false);
         }
     }).catch(function() {
+        hideLigandLoadingPromo();
         displayLigandSpinRequested = false;
         updateDisplayLigandSpinButton(false);
         viewerStatus.textContent = "The 3D viewer could not load this structure from RCSB right now. Please try again later.";

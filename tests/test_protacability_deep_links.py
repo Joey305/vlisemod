@@ -158,6 +158,15 @@ class ProtacabilityDeepLinkTests(unittest.TestCase):
         self.assertIn("pendingAttachmentShouldCenter = false", template)
         helper = (ROOT / "static" / "js" / "ngl_viewer_helpers.js").read_text()
         self.assertIn("opts.autoView !== false", helper)
+        self.assertIn('id="ligand-loading-promo"', template)
+        self.assertIn("showLigandLoadingPromo()", template)
+        self.assertIn("hideLigandLoadingPromo()", template)
+        self.assertIn("https://pymacs.com", template)
+        self.assertIn("https://github.com/schurerlab/Pymacs", template)
+        self.assertIn("https://autodockvina.com", template)
+        self.assertIn("https://protacbuilder.com", template)
+        self.assertIn("https://warheadhunter.com", template)
+        self.assertIn("https://e3ligandalyzer.com", template)
         self.assertLess(
             template.index("Display Ligand Interaction Diagram"),
             template.index('id="sasa-attachment-panel"'),
