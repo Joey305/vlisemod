@@ -2998,8 +2998,10 @@ def create_vlismod_blueprint(blueprint_name: str, url_prefix: str) -> Blueprint:
         rows = _fetch_rows(
             """
             SELECT smiles
-            FROM Ligand_Atoms_Smiles
-            WHERE ligand = ?
+            FROM ligands
+            WHERE component_id = ?
+              AND smiles IS NOT NULL
+              AND TRIM(smiles) <> ''
             LIMIT 1
             """,
             (ligand_code,),

@@ -1,6 +1,7 @@
 """Regression coverage for Randy-backed Protein Query filter options."""
 
 import os
+import sqlite3
 import unittest
 from pathlib import Path
 
@@ -61,6 +62,20 @@ class RandyProteinQueryTests(unittest.TestCase):
         self.assertTrue(records)
         self.assertTrue(all(record.get("ligand_instance_id") for record in records))
         self.assertTrue(all(record.get("legacy_key") for record in records))
+
+    def test_ligand_smiles_uses_the_v2_mapping_atom_order(self):
+        response = self.client.get(
+            "/api/vlismod/ligand-smiles?ligand_id=DR7",
+            headers={"Authorization": "Bearer test-token"},
+        )
+        self.assertEqual(response.status_code, 200)
+        payload = response.get_json()
+        self.assertTrue(payload["smiles"])
+        with sqlite3.connect(DATABASE) as conn:
+            expected = conn.execute(
+                "SELECT smiles FROM ligands WHERE component_id = ?", ("DR7",)
+            ).fetchone()[0]
+        self.assertEqual(payload["smiles"], expected)
 
     def test_ligand_indexer_pairs_are_occurrence_resolved(self):
         headers = {"Authorization": "Bearer test-token"}
