@@ -250,6 +250,7 @@ let displayLigandSpinRequested = false;
 let currentAttachmentSites = null;
 let pendingAttachmentHighlight = false;
 let pendingAttachmentRegions = null;
+let pendingAttachmentShouldCenter = false;
 const attachmentSiteColors = ['#22c55e', '#ef4444', '#3b82f6', '#eab308', '#a855f7', '#14b8a6'];
 
 function escapeAttachmentHtml(value) {
@@ -320,6 +321,13 @@ async function loadSasaAttachmentSites() {
         });
         table.hidden = false;
         button.disabled = false;
+        pendingAttachmentHighlight = true;
+        pendingAttachmentRegions = regions;
+        pendingAttachmentShouldCenter = false;
+        const viewport = document.getElementById('viewport');
+        if (viewport && viewport.style.display !== 'none' && viewport.innerHTML.trim()) {
+            applySasaAttachmentHighlight();
+        }
     } catch (error) {
         console.warn('Unable to load SASA attachment evidence', error);
         summary.textContent = 'SASA attachment-site evidence is unavailable for this occurrence.';
@@ -328,20 +336,21 @@ async function loadSasaAttachmentSites() {
 }
 
 function highlightSasaAttachmentSites() {
-    activateSasaAttachmentRegions(attachmentSiteSets(currentAttachmentSites), 'Highlighted exposed SASA and candidate attachment atoms in 3D.');
+    activateSasaAttachmentRegions(attachmentSiteSets(currentAttachmentSites), 'Highlighted exposed SASA and candidate attachment atoms in 3D.', false);
 }
 
 function focusSasaAttachmentSite(regionId) {
     const region = attachmentSiteSets(currentAttachmentSites).find(item => item.regionId === String(regionId || ''));
     if (!region) return;
-    activateSasaAttachmentRegions([region], `Centered 3D view on ${region.regionId}.`);
+    activateSasaAttachmentRegions([region], `Centered 3D view on ${region.regionId}.`, true);
 }
 
-function activateSasaAttachmentRegions(regions, completionMessage) {
+function activateSasaAttachmentRegions(regions, completionMessage, shouldCenter) {
     const status = document.getElementById('viewer-status');
     if (!regions.length) return;
     pendingAttachmentHighlight = true;
     pendingAttachmentRegions = regions;
+    pendingAttachmentShouldCenter = Boolean(shouldCenter);
     displayLigandSpinRequested = true;
     updateDisplayLigandSpinButton(true);
     const viewport = document.getElementById('viewport');
@@ -361,10 +370,16 @@ function applySasaAttachmentHighlight() {
     const atoms = Array.isArray(currentAttachmentSites?.atoms) ? currentAttachmentSites.atoms : [];
     VLNGLViewer.mapAttachmentAtomsToLigandIndices('viewport', atoms);
     const highlighted = VLNGLViewer.highlightAttachmentRegionSets('viewport', regions, {
-        candidateRadiusScale: 0.50, surfaceRadiusScale: 0.38, opacity: 0.48
+        candidateRadiusScale: 0.50,
+        surfaceRadiusScale: 0.38,
+        opacity: 0.48,
+        autoView: pendingAttachmentShouldCenter
     });
     pendingAttachmentHighlight = !highlighted;
-    if (highlighted) pendingAttachmentRegions = null;
+    if (highlighted) {
+        pendingAttachmentRegions = null;
+        pendingAttachmentShouldCenter = false;
+    }
 }
 
 function getAllLigandContexts() {

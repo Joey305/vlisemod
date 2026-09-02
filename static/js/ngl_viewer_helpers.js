@@ -1055,7 +1055,9 @@
         });
       });
       if (!entry.attachmentReprs.length || !focusSele) return false;
-      targetComponent.autoView(focusSele, opts.duration || 800);
+      if (opts.autoView !== false) {
+        targetComponent.autoView(focusSele, opts.duration || 800);
+      }
       entry.lastAttachmentHighlight = {
         mode: useLigandComponent ? 'ligand-sdf-index' : 'component-atom-index',
         regions: highlightRecords

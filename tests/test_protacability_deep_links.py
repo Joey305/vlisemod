@@ -155,6 +155,9 @@ class ProtacabilityDeepLinkTests(unittest.TestCase):
         self.assertIn('class="attachment-site-row"', template)
         self.assertIn('class="viewer-control-groups"', template)
         self.assertIn("displayLigandSpinRequested = true;\n    replaceWith3D", template)
+        self.assertIn("pendingAttachmentShouldCenter = false", template)
+        helper = (ROOT / "static" / "js" / "ngl_viewer_helpers.js").read_text()
+        self.assertIn("opts.autoView !== false", helper)
         self.assertLess(
             template.index("Display Ligand Interaction Diagram"),
             template.index('id="sasa-attachment-panel"'),
