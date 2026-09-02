@@ -106,6 +106,16 @@ class RandyAttachmentV26Tests(unittest.TestCase):
         self.assertEqual(row["best_attachment_score"], 79.0)
         self.assertEqual(row["best_attachment_confidence"], "Moderate")
 
+    def test_canonical_protease_detail_retains_3eky(self):
+        response = self.client.get(
+            "/api/vlismod/protacability/target-detail?virus_name=HIV_1&protein_type=protease&canonical_target_id=protease&collapse_labels=1",
+            headers={"Authorization": "Bearer test-token"},
+        )
+        self.assertEqual(response.status_code, 200)
+        body = response.get_json()
+        self.assertEqual(body["target_summary"]["canonical_target_id"], "protease")
+        self.assertTrue(any(row.get("pdb_code") == "3EKY" for row in body["structure_rows"]))
+
     def test_missing_compatibility_views_are_explicitly_unavailable(self):
         with sqlite3.connect(":memory:") as conn:
             payload = routes._attachment_detail_payload(conn, {})

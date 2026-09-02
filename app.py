@@ -4387,6 +4387,29 @@ def _attachment_detail_payload(conn, row):
         "method_version": ATTACHMENT_METHOD_VERSION,
     }
 
+
+def _normalize_remote_attachment_site_display(payload):
+    """Apply the presentation-only bonded/SASA grouping to Randy atom payloads.
+
+    Randy is intentionally RDKit-free; it sends the deposited coordinates and
+    canonical SMILES.  The public app then uses the same ≤2-bond clustering
+    rule as local detail routes, so both paths show identical display regions.
+    """
+    attachment = (payload or {}).get("attachment_sites")
+    if not isinstance(attachment, dict) or not attachment.get("data_available"):
+        return payload
+    atoms = attachment.get("atoms") or []
+    clusters = _attachment_display_site_clusters(atoms)
+    attachment["display_site_clusters"] = clusters
+    summary = attachment.setdefault("summary", {})
+    summary["attachment_display_site_count"] = len(clusters)
+    attachment["display_site_grouping"] = {
+        "method": "candidate-coordinate-and-two-bond-neighborhood",
+        "distance_cutoff_a": ATTACHMENT_DISPLAY_SITE_DISTANCE_A,
+        "presentation_only": True,
+    }
+    return payload
+
 def _merge_optional_protacability_data(rows, readiness_rows=None, warhead_rows=None, attachment_rows=None):
     readiness_indexes = _build_readiness_indexes(readiness_rows or []) if readiness_rows else None
     warhead_indexes = _build_warhead_indexes(warhead_rows or []) if warhead_rows else None
@@ -7233,12 +7256,12 @@ def protacability_detail(pdb_code, chain_id):
     mode = _normalized_backend_mode()
     if mode == "randy":
         try:
-            return jsonify(_remote_protacability_get(f"protacability/detail/{pdb_code}/{chain_id}", max_bytes=2 * 1024 * 1024))
+            return jsonify(_normalize_remote_attachment_site_display(_remote_protacability_get(f"protacability/detail/{pdb_code}/{chain_id}", max_bytes=2 * 1024 * 1024)))
         except RandyBackendError as exc:
             return jsonify({"data_available": False, "message": str(exc)}), exc.status_code
     if mode == "auto" and randy_available():
         try:
-            return jsonify(_remote_protacability_get(f"protacability/detail/{pdb_code}/{chain_id}", max_bytes=2 * 1024 * 1024))
+            return jsonify(_normalize_remote_attachment_site_display(_remote_protacability_get(f"protacability/detail/{pdb_code}/{chain_id}", max_bytes=2 * 1024 * 1024)))
         except RandyBackendError:
             logging.warning("Falling back to local PROTACability detail payload for %s/%s", pdb_code, chain_id)
     try:
@@ -7334,12 +7357,12 @@ def protacability_structure_detail(pdb_code):
     mode = _normalized_backend_mode()
     if mode == "randy":
         try:
-            return jsonify(_remote_protacability_get(f"protacability/structure-detail/{pdb_code}", params=request.args, max_bytes=2 * 1024 * 1024))
+            return jsonify(_normalize_remote_attachment_site_display(_remote_protacability_get(f"protacability/structure-detail/{pdb_code}", params=request.args, max_bytes=2 * 1024 * 1024)))
         except RandyBackendError as exc:
             return jsonify({"data_available": False, "message": str(exc)}), exc.status_code
     if mode == "auto" and randy_available():
         try:
-            return jsonify(_remote_protacability_get(f"protacability/structure-detail/{pdb_code}", params=request.args, max_bytes=2 * 1024 * 1024))
+            return jsonify(_normalize_remote_attachment_site_display(_remote_protacability_get(f"protacability/structure-detail/{pdb_code}", params=request.args, max_bytes=2 * 1024 * 1024)))
         except RandyBackendError:
             logging.warning("Falling back to local PROTACability structure detail payload for %s", pdb_code)
     try:
@@ -7463,12 +7486,12 @@ def protacability_protein_detail():
     mode = _normalized_backend_mode()
     if mode == "randy":
         try:
-            return jsonify(_remote_protacability_get("protacability/protein-detail", params=request.args, max_bytes=2 * 1024 * 1024))
+            return jsonify(_normalize_remote_attachment_site_display(_remote_protacability_get("protacability/protein-detail", params=request.args, max_bytes=2 * 1024 * 1024)))
         except RandyBackendError as exc:
             return jsonify({"data_available": False, "message": str(exc)}), exc.status_code
     if mode == "auto" and randy_available():
         try:
-            return jsonify(_remote_protacability_get("protacability/protein-detail", params=request.args, max_bytes=2 * 1024 * 1024))
+            return jsonify(_normalize_remote_attachment_site_display(_remote_protacability_get("protacability/protein-detail", params=request.args, max_bytes=2 * 1024 * 1024)))
         except RandyBackendError:
             logging.warning("Falling back to local PROTACability protein detail payload for %s / %s", virus_name, protein_type)
     try:
@@ -7543,12 +7566,12 @@ def protacability_target_detail():
     # must not attempt a local database read for canonical detail views.
     if mode == "randy":
         try:
-            return jsonify(_remote_protacability_get("protacability/target-detail", params=request.args, max_bytes=10 * 1024 * 1024))
+            return jsonify(_normalize_remote_attachment_site_display(_remote_protacability_get("protacability/target-detail", params=request.args, max_bytes=10 * 1024 * 1024)))
         except RandyBackendError as exc:
             return jsonify({"data_available": False, "message": str(exc)}), exc.status_code
     if mode == "auto" and randy_available():
         try:
-            return jsonify(_remote_protacability_get("protacability/target-detail", params=request.args, max_bytes=10 * 1024 * 1024))
+            return jsonify(_normalize_remote_attachment_site_display(_remote_protacability_get("protacability/target-detail", params=request.args, max_bytes=10 * 1024 * 1024)))
         except RandyBackendError:
             logging.warning("Falling back to local PROTACability target detail payload for %s / %s", virus_name, protein_type)
 

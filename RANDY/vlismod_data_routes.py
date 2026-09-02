@@ -1426,7 +1426,14 @@ def _attachment_detail_payload(conn, row):
     summary_dict = dict(summary_row)
     sites = [dict(site) for site in conn.execute(
         """
-        SELECT s.* FROM protacability_attachment_sites s
+        SELECT s.*, a.x, a.y, a.z, l.canonical_smiles
+        FROM protacability_attachment_sites s
+        LEFT JOIN ligand_instance_atoms a
+          ON a.ligand_instance_atom_id=s.ligand_instance_atom_id
+        LEFT JOIN ligand_instances li
+          ON li.ligand_instance_id=s.ligand_instance_id
+        LEFT JOIN ligands l
+          ON l.ligand_id=li.ligand_id
         WHERE s.ligand_instance_id=? AND s.method_version=? AND s.run_id=?
           AND s.candidate_attachment_atom=1
         ORDER BY s.attachment_priority_score DESC, s.chemical_support DESC, s.exact_atom, s.attachment_site_id
@@ -1446,7 +1453,7 @@ def _attachment_detail_payload(conn, row):
             **site, "pdb_atom_serial": serial, "pdb_atom_name": site.get("exact_atom"),
             "candidate_attachment_flag": 1, "surface_defining_flag": int(bool(site.get("solvent_exposed"))),
             "attachment_score": site.get("attachment_priority_score"), "confidence": tier,
-            "priority_tier_short": tier, "chemically_supported": int(supported), "display_site_id": "Site 1",
+            "priority_tier_short": tier, "chemically_supported": int(supported), "display_site_id": None,
         }
         atoms.append(atom)
         if serial is not None:
@@ -1455,18 +1462,11 @@ def _attachment_detail_payload(conn, row):
             if tier in {"High", "Moderate"}: priority_serials.append(serial)
             if site.get("high_priority_attachment_atom"): high_serials.append(serial)
             if site.get("solvent_exposed"): surface_serials.append(serial)
-    summary["attachment_display_site_count"] = int(bool(atoms))
+    # Heroku owns the RDKit-backed display grouping.  Preserve coordinates and
+    # canonical SMILES here so it can restore the historic ≤2-bond/SASA regions
+    # without changing any atom-level Stage-13 result.
+    summary["attachment_display_site_count"] = 0
     clusters = []
-    if atoms:
-        clusters.append({
-            "display_site_id": "Site 1", "candidate_atom_serials": candidate_serials,
-            "candidate_atom_names": [atom["pdb_atom_name"] for atom in atoms],
-            "surface_atom_serials": surface_serials,
-            "chemically_supported_candidate_count": len(chemical_serials),
-            "high_priority_atom_count": len(high_serials),
-            "best_attachment_score": atoms[0]["attachment_score"],
-            "best_attachment_priority_tier": atoms[0]["priority_tier_short"],
-        })
     return {
         "data_available": True, **empty, "summary": summary, "display_site_clusters": clusters,
         "atoms": atoms, "candidate_atom_serials": candidate_serials,
@@ -3430,6 +3430,7 @@ def create_vlismod_blueprint(blueprint_name: str, url_prefix: str) -> Blueprint:
         collapse_labels = _protacability_collapse_labels(request.args.get("collapse_labels"))
         virus_name = str(request.args.get("virus_name", "") or "").strip()
         protein_type = str(request.args.get("protein_type", "") or "").strip()
+        canonical_target_id = str(request.args.get("canonical_target_id", "") or "").strip()
         ligand_context_class = str(request.args.get("ligand_context_class", "") or "").strip()
         min_score = request.args.get("min_score", type=float)
         if not virus_name or not protein_type:
@@ -3443,16 +3444,27 @@ def create_vlismod_blueprint(blueprint_name: str, url_prefix: str) -> Blueprint:
         if not payload.get("data_available"):
             return _json_error("PROTACability data is not available.", 404)
 
-        readiness_rows = payload.get("readiness_rows", [])
-        warhead_rows = payload.get("warhead_rows", [])
+        if canonical_target_id:
+            with _connect() as conn:
+                assessment_rows = _load_canonical_target_browser_assessment_rows(conn)
+                readiness_rows, warhead_rows, attachment_rows = _load_protacability_enrichment_tables(conn)
+        else:
+            assessment_rows = payload.get("assessment_rows", [])
+            readiness_rows = payload.get("readiness_rows", [])
+            warhead_rows = payload.get("warhead_rows", [])
+            attachment_rows = payload.get("attachment_rows", [])
         rows = _decorate_protacability_rows(
-            payload.get("assessment_rows", []),
+            assessment_rows,
             collapse_labels=collapse_labels,
             readiness_rows=readiness_rows,
             warhead_rows=warhead_rows,
-            attachment_rows=payload.get("attachment_rows", []),
+            attachment_rows=attachment_rows,
         )
-        rows = [row for row in rows if row.get("virus_name") == virus_name and (row.get("display_protein_type") or row.get("protein_type")) == protein_type]
+        rows = [
+            row for row in rows
+            if row.get("virus_name") == virus_name
+            and (row.get("canonical_target_id") == canonical_target_id if canonical_target_id else (row.get("display_protein_type") or row.get("protein_type")) == protein_type)
+        ]
         if min_score is not None:
             rows = [row for row in rows if _numeric_value(row.get("protacability_proxy_score"), -1) >= min_score]
         if ligand_context_class:
@@ -3499,6 +3511,11 @@ def create_vlismod_blueprint(blueprint_name: str, url_prefix: str) -> Blueprint:
                 for row in payload.get("ligand_inventory", [])
                 if row.get("pdb_code") == best.get("pdb_code")
             ]
+            if not ligand_rows:
+                occurrence_payload = _protacability_source_payload_local(
+                    pdb_code=best.get("pdb_code"), include_inventory=True,
+                )
+                ligand_rows = occurrence_payload.get("ligand_inventory", [])
             preferred = _split_candidate_ligands(best.get("candidate_ligand_resnames_full"))
             ligand_record = _pick_representative_ligand_record(
                 ligand_rows,
@@ -3541,6 +3558,11 @@ def create_vlismod_blueprint(blueprint_name: str, url_prefix: str) -> Blueprint:
             for row in payload.get("ligand_inventory", [])
             if row.get("pdb_code") == active_pdb_code
         ]
+        if not ligand_inventory and active_pdb_code:
+            occurrence_payload = _protacability_source_payload_local(
+                pdb_code=active_pdb_code, include_inventory=True,
+            )
+            ligand_inventory = occurrence_payload.get("ligand_inventory", [])
         attachment_lookup_row = {
             **target_summary,
             **(representative_ligand or {}),
