@@ -325,7 +325,7 @@
 
             <div class="buttons-container action-row">
                 <button type="submit">Generate PyMOL Session</button>
-                <button class="button-secondary" type="button" id="generateLigandImagesButton" disabled title="No SMILES file present in the database" onclick="submitLigandImagesForm()">Generate Ligand Images</button>
+                <button class="button-secondary" type="button" id="generateLigandImagesButton" disabled title="No SMILES file present in the database">Generate Ligand Images</button>
             </div>
         </form>
 
@@ -336,6 +336,7 @@
             <input type="hidden" name="chain" id="chain_hidden" />
             <input type="hidden" name="ligand_instance_id" id="ligand_instance_id_hidden" />
         </form>
+        {% include "components/loading_promo.html" %}
         {{ region('structure-workspace-region') }}
     </section>
 

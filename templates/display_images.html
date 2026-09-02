@@ -316,9 +316,21 @@ function renderLigandLoadingPromo(index) {
     if (dots) dots.innerHTML = cards.map((_, cardIndex) => `<span class="${cardIndex === ligandLoadingPromoIndex ? 'is-active' : ''}"></span>`).join('');
 }
 
-function showLigandLoadingPromo() {
+function showLigandLoadingPromo(copy = {}) {
     const overlay = document.getElementById('ligand-loading-promo');
     if (!overlay) return;
+    const defaults = {
+        kicker: 'Preparing your 3D workspace',
+        title: 'Loading ligand context',
+        status: 'Fetching the protein structure and occurrence-resolved ligand geometry.'
+    };
+    const promoCopy = { ...defaults, ...copy };
+    const kicker = overlay.querySelector('.ligand-loading-promo-kicker');
+    const title = overlay.querySelector('#ligand-loading-promo-title');
+    const status = overlay.querySelector('#ligand-loading-promo-status');
+    if (kicker) kicker.textContent = promoCopy.kicker;
+    if (title) title.textContent = promoCopy.title;
+    if (status) status.textContent = promoCopy.status;
     overlay.hidden = false;
     renderLigandLoadingPromo(ligandLoadingPromoIndex);
     if (ligandLoadingPromoTimer) window.clearInterval(ligandLoadingPromoTimer);
@@ -533,6 +545,11 @@ function getSelectedLigandContext() {
         spinner.style.display = "block";
         errorMessage.style.display = "none";
         loadingModal.style.display = "block";
+        showLigandLoadingPromo({
+            kicker: 'Preparing interaction diagram',
+            title: 'Generating ligand interactions',
+            status: 'Mapping the selected ligand against its protein environment. While you wait, explore more Schürer Lab tools.'
+        });
 
         fetch('/generate_poseview_diagram', {
             method: 'POST',
@@ -552,12 +569,14 @@ function getSelectedLigandContext() {
             if (!data.result_png_picture) throw new Error('PoseView did not return an image.');
             spinner.style.display = "none";
             loadingModal.style.display = "none";
+            hideLigandLoadingPromo();
             openModal(data.result_png_picture);
         })
         .catch((error) => {
             console.error("Error:", error);
             spinner.style.display = "none";
             errorMessage.style.display = "block";
+            hideLigandLoadingPromo();
         });
     }
 

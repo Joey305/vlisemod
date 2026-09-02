@@ -11,9 +11,6 @@ $(document).ready(function() {
     // Set up event handlers for selections
     setupEventHandlers();
 
-    // Submit images form
-    $('#generateLigandImagesButton').on('click', submitLigandImagesForm);
-
     // Animate PyMOL button if required
     checkForPyMOLAnimation();
 });
@@ -250,8 +247,35 @@ function submitLigandImagesForm() {
     document.getElementById('pdb_code_hidden').value = document.getElementById('pdb_code').value;
     document.getElementById('ligand_hidden').value = document.getElementById('ligand').value;
     document.getElementById('ligand_instance_id_hidden').value = document.getElementById('ligand_instance_id').value;
-    
+    showLigandImageGenerationPromo();
     document.getElementById('ligandImagesForm').submit();
+}
+
+let ligandImageGenerationPromoTimer = null;
+let ligandImageGenerationPromoIndex = 0;
+
+function showLigandImageGenerationPromo() {
+    const overlay = document.getElementById('ligand-image-generation-promo');
+    if (!overlay) return;
+
+    const cards = Array.from(overlay.querySelectorAll('.ligand-loading-promo-card'));
+    const dots = overlay.querySelector('.ligand-loading-promo-dots');
+    if (!cards.length) return;
+
+    const renderPromo = (index) => {
+        ligandImageGenerationPromoIndex = ((index % cards.length) + cards.length) % cards.length;
+        cards.forEach((card, cardIndex) => card.classList.toggle('is-active', cardIndex === ligandImageGenerationPromoIndex));
+        if (dots) {
+            dots.innerHTML = cards.map((_, cardIndex) =>
+                `<span class="${cardIndex === ligandImageGenerationPromoIndex ? 'is-active' : ''}"></span>`
+            ).join('');
+        }
+    };
+
+    overlay.hidden = false;
+    renderPromo(ligandImageGenerationPromoIndex);
+    if (ligandImageGenerationPromoTimer) window.clearInterval(ligandImageGenerationPromoTimer);
+    ligandImageGenerationPromoTimer = window.setInterval(() => renderPromo(ligandImageGenerationPromoIndex + 1), 4200);
 }
 
 
