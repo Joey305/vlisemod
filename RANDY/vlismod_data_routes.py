@@ -3067,6 +3067,131 @@ def create_vlismod_blueprint(blueprint_name: str, url_prefix: str) -> Blueprint:
             }
         )
 
+    def _protein_query_exportable_pdbs(conn, virus_name, protein_types, ligand_filter=""):
+        """Return retained-ligand PDBs eligible for Protein Query exports."""
+        normalized_virus = str(virus_name or "").strip()
+        normalized_proteins = [str(value).strip() for value in (protein_types or []) if str(value).strip()]
+        if not normalized_virus or not normalized_proteins:
+            return []
+        placeholders = ", ".join("?" for _ in normalized_proteins)
+        params = [normalized_virus, *normalized_proteins]
+        query = f"""
+            SELECT DISTINCT s.entry_id
+            FROM structures s
+            JOIN ligand_instances li ON li.structure_id=s.structure_id
+            JOIN ligand_instance_atoms lia
+              ON lia.ligand_instance_id=li.ligand_instance_id
+             AND lia.selected_conformer=1
+            WHERE li.curation_status='included'
+              AND s.entry_id IN (
+                  SELECT DISTINCT pdb_id FROM Virus_Proteins
+                  WHERE virus_name=? AND protein IN ({placeholders})
+              )
+        """
+        if ligand_filter:
+            query += """
+              AND (li.label_comp_id=?
+                   OR li.label_comp_id IN (SELECT synonym FROM Ligand_Synonyms WHERE ligand=?)
+                   OR li.label_comp_id IN (SELECT ligand FROM Ligand_Synonyms WHERE synonym=?))
+            """
+            params.extend([ligand_filter, ligand_filter, ligand_filter])
+        return [row[0] for row in conn.execute(query + " ORDER BY s.entry_id", tuple(params)).fetchall()]
+
+    @bp.get("/virus-proteins/filter-options")
+    @require_token
+    def get_protein_query_filter_options():
+        """Return the cascading Protein Query options from exportable records."""
+        virus_names = sorted(set(_normalize_multi_values(request.args.getlist("virus_name"))))
+        protein_types = sorted(set(_normalize_multi_values(request.args.getlist("protein_type"))))
+        with _connect() as conn:
+            if virus_names:
+                protein_scope = defaultdict(list)
+                placeholders = ", ".join("?" for _ in virus_names)
+                for virus_name, protein_type in conn.execute(
+                    f"SELECT DISTINCT virus_name, protein FROM Virus_Proteins WHERE virus_name IN ({placeholders})",
+                    tuple(virus_names),
+                ):
+                    protein_scope[virus_name].append(protein_type)
+                eligible_pdbs = []
+                for virus_name, available_proteins in protein_scope.items():
+                    for pdb_code in _protein_query_exportable_pdbs(
+                        conn, virus_name, protein_types or available_proteins
+                    ):
+                        if pdb_code not in eligible_pdbs:
+                            eligible_pdbs.append(pdb_code)
+                if not eligible_pdbs:
+                    return jsonify({"virus_names": [], "protein_types": [], "ligands": []})
+                pdb_placeholders = ", ".join("?" for _ in eligible_pdbs)
+                classification_clauses = [
+                    f"pdb_id IN ({pdb_placeholders})",
+                    f"virus_name IN ({placeholders})",
+                ]
+                classification_params = [*eligible_pdbs, *virus_names]
+                if protein_types:
+                    protein_placeholders = ", ".join("?" for _ in protein_types)
+                    classification_clauses.append(f"protein IN ({protein_placeholders})")
+                    classification_params.extend(protein_types)
+                classifications = conn.execute(
+                    f"SELECT DISTINCT virus_name, protein FROM Virus_Proteins WHERE {' AND '.join(classification_clauses)} ORDER BY virus_name, protein",
+                    tuple(classification_params),
+                ).fetchall()
+                ligand_codes = {
+                    row[0] for row in conn.execute(
+                        f"""SELECT DISTINCT li.label_comp_id FROM structures s
+                            JOIN ligand_instances li ON li.structure_id=s.structure_id
+                            JOIN ligand_instance_atoms lia ON lia.ligand_instance_id=li.ligand_instance_id
+                            WHERE s.entry_id IN ({pdb_placeholders})
+                              AND li.curation_status='included' AND lia.selected_conformer=1""",
+                        tuple(eligible_pdbs),
+                    ).fetchall()
+                }
+                virus_options = sorted({row[0] for row in classifications})
+                protein_options = sorted({row[1] for row in classifications})
+            else:
+                clauses = ["li.curation_status='included'", "lia.selected_conformer=1"]
+                params = []
+                if protein_types:
+                    placeholders = ", ".join("?" for _ in protein_types)
+                    clauses.append(f"vp.protein IN ({placeholders})")
+                    params.extend(protein_types)
+                rows = conn.execute(
+                    f"""SELECT DISTINCT vp.virus_name, vp.protein, li.label_comp_id
+                        FROM Virus_Proteins vp JOIN structures s ON s.entry_id=vp.pdb_id
+                        JOIN ligand_instances li ON li.structure_id=s.structure_id
+                        JOIN ligand_instance_atoms lia ON lia.ligand_instance_id=li.ligand_instance_id
+                        WHERE {' AND '.join(clauses)} ORDER BY vp.virus_name, vp.protein, li.label_comp_id""",
+                    tuple(params),
+                ).fetchall()
+                ligand_codes = {row[2] for row in rows}
+                virus_options = sorted({row[0] for row in rows})
+                protein_options = sorted({row[1] for row in rows})
+
+            synonyms_by_ligand = defaultdict(set)
+            canonical_for_code = {code: code for code in ligand_codes}
+            if ligand_codes:
+                placeholders = ", ".join("?" for _ in ligand_codes)
+                for ligand, synonym in conn.execute(
+                    f"SELECT ligand, synonym FROM Ligand_Synonyms WHERE ligand IN ({placeholders}) OR synonym IN ({placeholders})",
+                    tuple(ligand_codes) * 2,
+                ):
+                    if synonym in ligand_codes:
+                        canonical_for_code[synonym] = ligand
+                    if ligand in ligand_codes:
+                        canonical_for_code[ligand] = ligand
+                    synonyms_by_ligand[ligand].add(synonym)
+        available_ligands = defaultdict(set)
+        for ligand_code in ligand_codes:
+            canonical = canonical_for_code[ligand_code]
+            available_ligands[canonical].update(synonyms_by_ligand.get(canonical, set()))
+        return jsonify({
+            "virus_names": virus_options,
+            "protein_types": protein_options,
+            "ligands": [
+                {"ligand_code": code, "synonyms": sorted(value for value in synonyms if value != code)}
+                for code, synonyms in sorted(available_ligands.items())
+            ],
+        })
+
     @bp.get("/virus-proteins/virus-names")
     @require_token
     def get_virus_names():
