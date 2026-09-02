@@ -52,6 +52,11 @@ class WorkspaceUiTests(unittest.TestCase):
         self.assertGreaterEqual(PROTAC.count("renderAttachmentSitesPanel(detail.attachment_sites || {}, detail.summary || {})"), 2)
         self.assertIn("ligand_instance_id", PROTAC)
 
+    def test_target_detail_can_open_the_exact_selected_occurrence_card(self):
+        self.assertIn("Open selected occurrence card", PROTAC)
+        self.assertIn("ligand_instance_id: activeLigandInstanceId", PROTAC)
+        self.assertIn("done(renderStructureDetail)", PROTAC)
+
 
 if __name__ == "__main__":
     unittest.main()

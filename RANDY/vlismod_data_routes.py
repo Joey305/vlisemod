@@ -271,6 +271,7 @@ PROTACABILITY_OPTIONAL_TABLES = (
 )
 
 ATTACHMENT_METHOD_VERSION = "attachment-sites-cif-v2.6"
+PROTACABILITY_METHOD_VERSION = "protacability-cif-v2.8"
 PROTACABILITY_ATTACHMENT_TABLES = (
     "v2_attachment_site_summary",
     "v2_attachment_site_candidates",
@@ -2011,8 +2012,34 @@ def _target_interpretation(row):
 
 
 def _group_target_rows(rows):
-    protein_rows = _group_protein_rows(rows)
-    structure_rows = _group_structure_rows(rows)
+    # Canonical identity is owned by the target-vocabulary view.  Legacy
+    # protein labels remain provenance and must not fragment target cards.
+    canonical_mode = any(row.get("canonical_target_id") for row in rows)
+    canonical_metadata = {}
+    grouping_rows = rows
+    if canonical_mode:
+        grouping_rows = []
+        for source_row in rows:
+            row = dict(source_row)
+            canonical_target_id = row.get("canonical_target_id")
+            if not canonical_target_id:
+                continue
+            key = (row.get("virus_name"), canonical_target_id)
+            metadata = canonical_metadata.setdefault(key, {
+                "canonical_target_id": canonical_target_id,
+                "canonical_target_name": row.get("canonical_target_name") or row.get("protein_type"),
+                "target_family": row.get("target_family"),
+                "entity_role": row.get("entity_role"),
+                "source_protein_types": set(),
+            })
+            if row.get("source_protein_type"):
+                metadata["source_protein_types"].add(row["source_protein_type"])
+            row["protein_type"] = canonical_target_id
+            row["display_protein_type"] = canonical_target_id
+            grouping_rows.append(row)
+
+    protein_rows = _group_protein_rows(grouping_rows)
+    structure_rows = _group_structure_rows(grouping_rows)
     grouped = defaultdict(list)
     structures_by_target = defaultdict(list)
     for row in protein_rows:
@@ -2035,11 +2062,19 @@ def _group_target_rows(rows):
             if srow.get("best_exposed_lys_fraction") is not None:
                 exposed_fracs.append(_numeric_value(srow.get("best_exposed_lys_fraction")))
 
+        metadata = canonical_metadata.get((virus_name, protein_type), {}) if canonical_mode else {}
+        display_protein_type = metadata.get("canonical_target_name") or protein_type
         row = {
             "view_type": "targets",
             "virus_name": virus_name,
-            "protein_type": protein_type,
-            "target_key": f"{virus_name}::{protein_type}",
+            "protein_type": display_protein_type,
+            "canonical_target_id": metadata.get("canonical_target_id"),
+            "canonical_target_name": metadata.get("canonical_target_name"),
+            "target_family": metadata.get("target_family"),
+            "entity_role": metadata.get("entity_role"),
+            "source_protein_types": sorted(metadata.get("source_protein_types") or []),
+            "source_protein_type": "; ".join(sorted(metadata.get("source_protein_types") or [])),
+            "target_key": f"{virus_name}::{metadata.get('canonical_target_id') or protein_type}",
             "pdb_count": int(sum(_numeric_value(r.get("pdb_count")) for r in group_rows)),
             "chain_count": int(sum(_numeric_value(r.get("chain_count")) for r in group_rows)),
             "best_score": representative.get("best_score"),
@@ -2204,6 +2239,36 @@ def _load_protacability_assessment_rows(conn, pdb_code=None):
         query += " WHERE pdb_code = ?"
         params.append(pdb_code)
     return conn.execute(query, params).fetchall()
+
+
+def _load_canonical_target_browser_assessment_rows(conn):
+    """Return one current assessment per vocabulary-approved ligand occurrence."""
+    if not _table_exists(conn, "v2_target_browser_ligand_context"):
+        return []
+    rows = conn.execute(
+        """
+        SELECT a.*, v.canonical_target_id, v.canonical_target_name,
+               v.source_protein_type, v.target_family, v.entity_role
+        FROM protacability_assessment AS a
+        JOIN v2_target_browser_ligand_context AS v
+          ON v.ligand_instance_id = a.ligand_instance_id
+        WHERE a.method_version = ?
+        ORDER BY a.ligand_instance_id,
+                 a.protacability_proxy_score DESC,
+                 a.assessment_id ASC
+        """,
+        (PROTACABILITY_METHOD_VERSION,),
+    ).fetchall()
+    selected, seen = [], set()
+    for raw_row in rows:
+        row = dict(raw_row)
+        occurrence_id = row.get("ligand_instance_id")
+        if occurrence_id in seen:
+            continue
+        seen.add(occurrence_id)
+        row["protein_type"] = row.get("canonical_target_name") or row.get("protein_type")
+        selected.append(row)
+    return selected
 
 
 def _load_protacability_enrichment_tables(conn):
@@ -3086,6 +3151,8 @@ def create_vlismod_blueprint(blueprint_name: str, url_prefix: str) -> Blueprint:
     @bp.get("/protacability/search")
     @require_token
     def get_protacability_search():
+        view = _protacability_view_mode(request.args.get("view"))
+        canonical_requested = view == "targets" or bool(str(request.args.get("canonical_target_id", "") or "").strip())
         payload = _protacability_source_payload_local()
         if not payload.get("data_available"):
             return jsonify({
@@ -3094,12 +3161,21 @@ def create_vlismod_blueprint(blueprint_name: str, url_prefix: str) -> Blueprint:
                 "rows": [],
                 "summary": {},
             })
+        assessment_rows = payload.get("assessment_rows", [])
+        if canonical_requested:
+            with _connect() as conn:
+                assessment_rows = _load_canonical_target_browser_assessment_rows(conn)
+                readiness_rows, warhead_rows, attachment_rows = _load_protacability_enrichment_tables(conn)
+        else:
+            readiness_rows = payload.get("readiness_rows", [])
+            warhead_rows = payload.get("warhead_rows", [])
+            attachment_rows = payload.get("attachment_rows", [])
         result = _prepare_protacability_result_set_from_rows(
-            payload.get("assessment_rows", []),
-            payload.get("readiness_rows", []),
-            payload.get("warhead_rows", []),
+            assessment_rows,
+            readiness_rows,
+            warhead_rows,
             request.args,
-            attachment_rows=payload.get("attachment_rows", []),
+            attachment_rows=attachment_rows,
         )
         return jsonify({
             "data_available": True,
