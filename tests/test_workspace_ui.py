@@ -47,6 +47,11 @@ class WorkspaceUiTests(unittest.TestCase):
         self.assertIn("Attachment-site map", PROTAC)
         self.assertIn("Download PROTACability evidence", PROTAC)
 
+    def test_attachment_site_selection_is_occurrence_resolved(self):
+        self.assertIn("ligand_instance_id: nextInstanceId", PROTAC)
+        self.assertIn("renderAttachmentSitesPanel(detail.attachment_sites || {}, detail.summary || {})", PROTAC)
+        self.assertIn("ligand_instance_id", PROTAC)
+
 
 if __name__ == "__main__":
     unittest.main()

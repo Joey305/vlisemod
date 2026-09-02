@@ -2419,6 +2419,8 @@ def _serialize_ligand_contexts(ligand_inventory):
     contexts = []
     for row in ligand_inventory or []:
         contexts.append({
+            "ligand_instance_id": row.get("ligand_instance_id"),
+            "model_id": row.get("model_id"),
             "label": " ".join(part for part in [
                 str(row.get("ligand_resname") or "").strip(),
                 str(row.get("ligand_chain") or "").strip(),
@@ -3204,6 +3206,7 @@ def create_vlismod_blueprint(blueprint_name: str, url_prefix: str) -> Blueprint:
         collapse_labels = _protacability_collapse_labels(request.args.get("collapse_labels"))
         virus_name = str(request.args.get("virus_name", "") or "").strip()
         protein_type = str(request.args.get("protein_type", "") or "").strip()
+        requested_ligand_instance_id = str(request.args.get("ligand_instance_id", "") or "").strip()
         readiness_rows = payload.get("readiness_rows", [])
         warhead_rows = payload.get("warhead_rows", [])
         decorated_rows = _decorate_protacability_rows(
@@ -3240,6 +3243,8 @@ def create_vlismod_blueprint(blueprint_name: str, url_prefix: str) -> Blueprint:
         ]
         ligand_inventory = [
             {
+                "ligand_instance_id": row.get("ligand_instance_id"),
+                "model_id": row.get("model_id"),
                 "ligand_resname": row.get("ligand_resname"),
                 "ligand_chain": row.get("ligand_chain"),
                 "ligand_residue_id": row.get("ligand_residue_id"),
@@ -3252,8 +3257,13 @@ def create_vlismod_blueprint(blueprint_name: str, url_prefix: str) -> Blueprint:
             for row in payload.get("ligand_inventory", [])
             if row.get("pdb_code") == pdb_code
         ]
+        selected_ligand_instance = None
+        if requested_ligand_instance_id:
+            selected_ligand_instance = next((record for record in ligand_inventory if str(record.get("ligand_instance_id") or "") == requested_ligand_instance_id), None)
+            if selected_ligand_instance is None:
+                return _json_error("Ligand occurrence was not found for this structure", 404)
         preferred_ligands = _split_candidate_ligands(summary_row.get("candidate_ligand_resnames_full"))
-        representative_ligand = _pick_representative_ligand_record(
+        representative_ligand = selected_ligand_instance or _pick_representative_ligand_record(
             ligand_inventory,
             preferred_ligands=preferred_ligands,
             allow_glycan=summary_row.get("ligand_context_class") == "glycan_only",
@@ -3273,6 +3283,7 @@ def create_vlismod_blueprint(blueprint_name: str, url_prefix: str) -> Blueprint:
             "chain_rows": chain_rows,
             "representative_chain_id": representative_chain,
             "representative_ligand": representative_ligand,
+            "selected_ligand_instance": selected_ligand_instance,
             "representative_ligand_resname": (representative_ligand or {}).get("ligand_resname"),
             "representative_ligand_chain": (representative_ligand or {}).get("ligand_chain"),
             "representative_ligand_residue_id": (representative_ligand or {}).get("ligand_residue_id"),
@@ -3413,6 +3424,8 @@ def create_vlismod_blueprint(blueprint_name: str, url_prefix: str) -> Blueprint:
                 preferred_chain=best.get("representative_chain_id"),
             )
             return {
+                "ligand_instance_id": (ligand_record or {}).get("ligand_instance_id"),
+                "model_id": (ligand_record or {}).get("model_id"),
                 "pdb_code": best.get("pdb_code"),
                 "chain_id": best.get("representative_chain_id"),
                 "ligand_resname": (ligand_record or {}).get("ligand_resname"),
@@ -3434,6 +3447,8 @@ def create_vlismod_blueprint(blueprint_name: str, url_prefix: str) -> Blueprint:
         active_pdb_code = (representative_ligand or {}).get("pdb_code") or target_summary.get("best_pdb_code")
         ligand_inventory = [
             {
+                "ligand_instance_id": row.get("ligand_instance_id"),
+                "model_id": row.get("model_id"),
                 "ligand_resname": row.get("ligand_resname"),
                 "ligand_chain": row.get("ligand_chain"),
                 "ligand_residue_id": row.get("ligand_residue_id"),

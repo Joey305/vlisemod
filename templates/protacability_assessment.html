@@ -1046,9 +1046,11 @@
             if (!rows.length) {
                 return '<p class="page-subtitle">No explicit ligand inventory context available for 3D highlighting.</p>';
             }
-            const selectedKey = `${selected?.ligand_resname || ''}|${selected?.ligand_chain || ''}|${selected?.ligand_residue_id || ''}`;
+            const selectedKey = String(selected?.ligand_instance_id || '') || `${selected?.ligand_resname || ''}|${selected?.ligand_chain || ''}|${selected?.ligand_residue_id || ''}`;
             const options = rows.map(row => {
-                const key = `${row.ligand_resname || ''}|${row.ligand_chain || ''}|${row.ligand_residue_id || ''}`;
+                // An atom serial is meaningful only for one deposited ligand occurrence.
+                // Prefer its immutable instance id so duplicate residue labels cannot collide.
+                const key = String(row.ligand_instance_id || '') || `${row.ligand_resname || ''}|${row.ligand_chain || ''}|${row.ligand_residue_id || ''}`;
                 const label = row.label || [row.ligand_resname, row.ligand_chain, row.ligand_residue_id].filter(Boolean).join(' ');
                 return `<option value="${escapeHtml(key)}" ${key === selectedKey ? 'selected' : ''}>${escapeHtml(label || 'Unknown ligand context')}</option>`;
             }).join('');
@@ -1983,7 +1985,9 @@
             const ligandSelect = $('#protac-ligand-context-select');
             if (ligandSelect.length) {
                 ligandSelect.off('change').on('change', function() {
-                    const [nextResname, nextChain, nextResid] = String($(this).val() || '').split('|');
+                    const selectedValue = String($(this).val() || '');
+                    const nextInstanceId = selectedValue.includes('|') ? '' : selectedValue;
+                    const [nextResname, nextChain, nextResid] = selectedValue.split('|');
                     if (ligandDebugEnabled()) {
                         console.log('[protacability] 3D ligand context changed', {
                             ligandResname: nextResname || '',
@@ -1991,26 +1995,42 @@
                             ligandResidueId: nextResid || ''
                         });
                     }
-                    if (typeof onLigandChange === 'function') {
-                        onLigandChange({
+                    if (!nextInstanceId) return;
+                    $('#protac-ngl-status').text('Loading attachment-site evidence for the selected ligand occurrence…');
+                    const params = new URLSearchParams({
+                        collapse_labels: $('#toggle-collapse-labels').is(':checked') ? '1' : '0',
+                        ligand_instance_id: nextInstanceId
+                    });
+                    $.getJSON(`/api/protacability/structure_detail/${encodeURIComponent(pdbCode)}?${params.toString()}`).done(function(detail) {
+                        // Ignore a delayed response after the user selected another ligand.
+                        if (String(ligandSelect.val() || '') !== nextInstanceId || !detail.data_available) return;
+                        const nextLigand = detail.representative_ligand || {};
+                        if (typeof onLigandChange === 'function') {
+                            onLigandChange({
+                                pdbCode,
+                                chainId: detail.representative_chain_id || chainId,
+                                ligandInstanceId: nextInstanceId,
+                                ligandResname: nextLigand.ligand_resname || nextResname || '',
+                                ligandChain: nextLigand.ligand_chain || nextChain || '',
+                                ligandResidueId: nextLigand.ligand_residue_id || nextResid || ''
+                            });
+                        }
+                        $('.protac-attachment-sites-card').replaceWith(renderAttachmentSitesPanel(detail.attachment_sites || {}, detail.summary || {}));
+                        attachProtacViewerControls(
                             pdbCode,
-                            chainId,
-                            ligandResname: nextResname || '',
-                            ligandChain: nextChain || '',
-                            ligandResidueId: nextResid || ''
-                        });
-                    }
-                    attachProtacViewerControls(
-                        pdbCode,
-                        chainId,
-                        nextResname || '',
-                        nextChain || '',
-                        nextResid || '',
-                        nextResname || '',
-                        [],
-                        attachmentSites,
-                        onLigandChange
-                    );
+                            detail.representative_chain_id || chainId,
+                            nextLigand.ligand_resname || nextResname || '',
+                            nextLigand.ligand_chain || nextChain || '',
+                            nextLigand.ligand_residue_id || nextResid || '',
+                            nextLigand.ligand_resname || nextResname || '',
+                            [],
+                            detail.attachment_sites || {},
+                            onLigandChange
+                        );
+                    }).fail(function(xhr) {
+                        console.warn('[protacability] ligand occurrence detail failed', { pdbCode, ligandInstanceId: nextInstanceId, status: xhr.status });
+                        $('#protac-ngl-status').text('Unable to load attachment-site evidence for the selected ligand occurrence.');
+                    });
                 });
             }
         }

@@ -81,6 +81,18 @@ class RandyAttachmentV26Tests(unittest.TestCase):
         self.assertEqual(attachment["summary"]["best_attachment_confidence"], "Moderate")
         self.assertEqual(len(attachment["atoms"]), 17)
 
+    def test_structure_detail_honors_exact_ligand_occurrence_identity(self):
+        response = self.client.get(
+            "/api/vlismod/protacability/structure-detail/3TKG?collapse_labels=1&ligand_instance_id=74791",
+            headers={"Authorization": "Bearer test-token"},
+        )
+        self.assertEqual(response.status_code, 200)
+        body = response.get_json()
+        self.assertEqual(body["representative_ligand"]["ligand_instance_id"], 74791)
+        self.assertEqual(body["attachment_sites"]["ligand_instance_id"], 74791)
+        self.assertEqual(body["attachment_sites"]["summary"]["attachment_candidate_atom_count"], 18)
+        self.assertTrue(all(context.get("ligand_instance_id") for context in body["ligand_contexts"]))
+
     def test_search_summary_preserves_attachment_evidence(self):
         response = self.client.get(
             "/api/vlismod/protacability/search?pdb_code=3TKG&collapse_labels=1",

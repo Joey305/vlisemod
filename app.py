@@ -5672,6 +5672,8 @@ def _serialize_ligand_contexts(ligand_inventory):
     contexts = []
     for row in ligand_inventory or []:
         contexts.append({
+            "ligand_instance_id": row.get("ligand_instance_id"),
+            "model_id": row.get("model_id"),
             "label": " ".join(part for part in [
                 str(row.get("ligand_resname") or "").strip(),
                 str(row.get("ligand_chain") or "").strip(),
@@ -7637,6 +7639,8 @@ def protacability_target_detail():
         )
         ligand_resname = (ligand_record or {}).get("ligand_resname")
         return {
+            "ligand_instance_id": (ligand_record or {}).get("ligand_instance_id"),
+            "model_id": (ligand_record or {}).get("model_id"),
             "pdb_code": best.get("pdb_code"),
             "chain_id": best.get("representative_chain_id"),
             "ligand_resname": ligand_resname,
@@ -7662,6 +7666,8 @@ def protacability_target_detail():
             ligand_payload = _load_protacability_source_payload(pdb_code=active_pdb_code, include_inventory=True)
             ligand_inventory = [
                 {
+                    "ligand_instance_id": row.get("ligand_instance_id"),
+                    "model_id": row.get("model_id"),
                     "ligand_resname": row.get("ligand_resname"),
                     "ligand_chain": row.get("ligand_chain"),
                     "ligand_residue_id": row.get("ligand_residue_id"),
