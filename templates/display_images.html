@@ -83,6 +83,13 @@
             </div>
 
             <aside class="viewer-panel-side">
+                <section id="sasa-attachment-panel" class="sasa-attachment-panel" aria-live="polite">
+                    <h3 class="secondary-panel-title">SASA &amp; attachment sites</h3>
+                    <p id="sasa-attachment-summary">Loading occurrence-resolved SASA evidence…</p>
+                    <div id="sasa-attachment-legend" class="attachment-map-legend" hidden></div>
+                    <button id="highlight-sasa-attachment-button" type="button" disabled>Highlight SASA / attachment sites in 3D</button>
+                    <p class="attachment-region-note">Colors match the PROTACability attachment-site groups. Transparent markers indicate exposed surface atoms; stronger markers indicate candidate attachment atoms.</p>
+                </section>
                 <h3 class="secondary-panel-title">Interaction diagram selection</h3>
                 <div id="chain-residue-selection">
                     <h3>Select Chain and Residue</h3>
@@ -220,6 +227,83 @@ let isSolventExposedView = false;
 let latestDisplayViewerPayload = null;
 let latestLoadedSourceUrl = null;
 let displayLigandSpinRequested = false;
+let currentAttachmentSites = null;
+let pendingAttachmentHighlight = false;
+const attachmentSiteColors = ['#22c55e', '#ef4444', '#3b82f6', '#eab308', '#a855f7', '#14b8a6'];
+
+function selectedAttachmentOccurrenceId() {
+    const selected = document.querySelector('input[name="chain_residue"]:checked');
+    return String(selected?.dataset.ligandInstanceId || '{{ primary_image.ligand_instance_id }}').trim();
+}
+
+function attachmentSiteSets(attachmentSites) {
+    const clusters = Array.isArray(attachmentSites?.display_site_clusters) ? attachmentSites.display_site_clusters : [];
+    return clusters.map((cluster, index) => ({
+        regionId: String(cluster.display_site_id || `Site ${index + 1}`),
+        color: attachmentSiteColors[index % attachmentSiteColors.length],
+        candidateSerials: Array.isArray(cluster.candidate_atom_serials) ? cluster.candidate_atom_serials : [],
+        surfaceSerials: Array.isArray(cluster.surface_atom_serials) ? cluster.surface_atom_serials : []
+    })).filter(region => region.candidateSerials.length || region.surfaceSerials.length);
+}
+
+async function loadSasaAttachmentSites() {
+    const summary = document.getElementById('sasa-attachment-summary');
+    const button = document.getElementById('highlight-sasa-attachment-button');
+    const legend = document.getElementById('sasa-attachment-legend');
+    const occurrenceId = selectedAttachmentOccurrenceId();
+    if (!occurrenceId) {
+        summary.textContent = 'No resolved ligand occurrence is available for SASA highlighting.';
+        return;
+    }
+    summary.textContent = 'Loading occurrence-resolved SASA evidence…';
+    button.disabled = true;
+    try {
+        const response = await fetch(`/api/protacability/structure_detail/{{ primary_image.pdb_id }}?ligand_instance_id=${encodeURIComponent(occurrenceId)}`);
+        const payload = await response.json();
+        const attachment = payload.attachment_sites || {};
+        const regions = attachmentSiteSets(attachment);
+        currentAttachmentSites = attachment;
+        const exposed = Number(attachment.summary?.attachment_exposed_mapped_atom_count || attachment.surface_atom_serials?.length || 0);
+        const candidates = Number(attachment.summary?.attachment_candidate_atom_count || attachment.candidate_atom_serials?.length || 0);
+        if (!regions.length) {
+            summary.textContent = exposed ? `${exposed} exposed mapped atom(s); no grouped attachment sites are available.` : 'No exposed attachment-site evidence is available for this occurrence.';
+            legend.hidden = true;
+            return;
+        }
+        summary.textContent = `${exposed} exposed mapped atom(s) · ${candidates} candidate atom(s) · ${regions.length} attachment-site group(s)`;
+        legend.innerHTML = regions.map(region => `<span class="attachment-map-legend-item"><span style="background:${region.color}"></span>${region.regionId}</span>`).join('');
+        legend.hidden = false;
+        button.disabled = false;
+    } catch (error) {
+        console.warn('Unable to load SASA attachment evidence', error);
+        summary.textContent = 'SASA attachment-site evidence is unavailable for this occurrence.';
+        legend.hidden = true;
+    }
+}
+
+function highlightSasaAttachmentSites() {
+    const regions = attachmentSiteSets(currentAttachmentSites);
+    const status = document.getElementById('viewer-status');
+    if (!regions.length) return;
+    pendingAttachmentHighlight = true;
+    if (document.getElementById('viewport').style.display === 'none') {
+        replaceWith3D('{{ primary_image.pdb_id }}', '{{ primary_image.ligand_code }}');
+        return;
+    }
+    applySasaAttachmentHighlight();
+    if (status) status.textContent = 'Highlighted exposed SASA and candidate attachment atoms in 3D.';
+}
+
+function applySasaAttachmentHighlight() {
+    const regions = attachmentSiteSets(currentAttachmentSites);
+    if (!pendingAttachmentHighlight || !regions.length || !window.VLNGLViewer) return;
+    const atoms = Array.isArray(currentAttachmentSites?.atoms) ? currentAttachmentSites.atoms : [];
+    VLNGLViewer.mapAttachmentAtomsToLigandIndices('viewport', atoms);
+    const highlighted = VLNGLViewer.highlightAttachmentRegionSets('viewport', regions, {
+        candidateRadiusScale: 0.50, surfaceRadiusScale: 0.38, opacity: 0.48
+    });
+    pendingAttachmentHighlight = !highlighted;
+}
 
 function getAllLigandContexts() {
     return Array.from(document.querySelectorAll('input[name="chain_residue"]')).map(function(input) {
@@ -473,6 +557,7 @@ function replaceWith3D(pdb_id, ligand_code) {
             if (ligandDebugEnabled()) updateLigandDebugPanel(payload, ligandCtx);
         }
     }).then(function() {
+        applySasaAttachmentHighlight();
         if (displayLigandSpinRequested) {
             const spinStarted = VLNGLViewer.toggleLigandSpin('viewport', true);
             updateDisplayLigandSpinButton(spinStarted);
@@ -651,8 +736,14 @@ document.addEventListener('DOMContentLoaded', function() {
     if (first && !document.querySelector('input[name="chain_residue"]:checked')) {
         first.checked = true;
     }
+    loadSasaAttachmentSites();
+    const attachmentButton = document.getElementById('highlight-sasa-attachment-button');
+    if (attachmentButton) attachmentButton.addEventListener('click', highlightSasaAttachmentSites);
     document.querySelectorAll('input[name="chain_residue"]').forEach(function(input) {
         input.addEventListener('change', function() {
+            pendingAttachmentHighlight = false;
+            currentAttachmentSites = null;
+            loadSasaAttachmentSites();
             if (document.getElementById('viewport').style.display !== 'none') {
                 replaceWith3D('{{ primary_image.pdb_id }}', '{{ primary_image.ligand_code }}');
             }
