@@ -2120,7 +2120,10 @@
                     <div class="page-card protacability-detail-card">
                         <div id="protac-selected-context" aria-live="polite">${selectedContextMarkup(bestStructure, representativeLigand)}</div>
                         <div id="protac-ligand-context-selector">${renderLigandContextSelector(ligandContexts, representativeLigand)}</div>
-                        <div class="action-row"><button id="protac-open-occurrence-detail" type="button" class="button-secondary">Open selected occurrence card</button></div>
+                        <div class="action-row">
+                            <button type="button" class="button-secondary" data-analysis-context data-analysis-virus="${escapeHtml(summary.virus_name || '')}" data-analysis-pdb-code="${escapeHtml(best.pdb_code || summary.best_pdb_code || '')}" data-analysis-ligand="${escapeHtml(representativeLigand.ligand_resname || best.ligand_resname || '')}" data-analysis-chain="${escapeHtml(representativeLigand.ligand_chain || best.ligand_chain || '')}" data-analysis-ligand-instance-id="${escapeHtml(representativeLigand.ligand_instance_id || '')}">Start analysis</button>
+                            <button id="protac-open-occurrence-detail" type="button" class="button-secondary">Open selected occurrence card</button>
+                        </div>
                         <p class="protac-target-overview"><strong>Target overview:</strong> ${summary.pdb_count ?? 0} PDBs · ${summary.chain_count ?? 0} chains · canonical target ${escapeHtml(summary.canonical_target_id || '—')}</p>
                     </div>
                 </div>

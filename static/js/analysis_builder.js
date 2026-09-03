@@ -54,7 +54,85 @@
         if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') lastFocusedElement.focus({ preventScroll: true });
     };
 
+    const requestJson = (url) => fetch(url).then((response) => {
+        if (!response.ok) throw new Error(`Request failed (${response.status})`);
+        return response.json();
+    });
+
+    const resolveVirusForPdb = async (pdbCode) => {
+        if (!pdbCode) return '';
+        const data = await requestJson('/get_viruses');
+        for (const candidate of data.viruses || []) {
+            const pdbs = await requestJson(`/get_pdb_codes/${encodeURIComponent(candidate)}`);
+            if ((pdbs.pdb_codes || []).some((value) => String(value).toUpperCase() === String(pdbCode).toUpperCase())) return candidate;
+        }
+        return '';
+    };
+
+    window.openAnalysisBuilderWithContext = async (context = {}) => {
+        open();
+        const normalized = {
+            virus: String(context.virus || '').trim(),
+            pdbCode: String(context.pdbCode || '').trim().toUpperCase(),
+            ligand: String(context.ligand || '').trim().toUpperCase(),
+            chain: String(context.chain || '').trim(),
+            ligandInstanceId: String(context.ligandInstanceId || '').trim()
+        };
+        try {
+            const virusName = normalized.virus || await resolveVirusForPdb(normalized.pdbCode);
+            if (!virusName) return;
+            virus.value = virusName;
+            resetSelect(pdb, '--Select PDB Code--', true);
+            const pdbData = await requestJson(`/get_pdb_codes/${encodeURIComponent(virusName)}`);
+            (pdbData.pdb_codes || []).forEach((value) => pdb.add(new Option(value, value)));
+            pdb.disabled = false;
+            if (!normalized.pdbCode || ![...pdb.options].some((option) => option.value.toUpperCase() === normalized.pdbCode)) return;
+            pdb.value = [...pdb.options].find((option) => option.value.toUpperCase() === normalized.pdbCode).value;
+
+            const ligandData = await requestJson(`/get_ligands/${encodeURIComponent(pdb.value)}`);
+            ligandOccurrences = ligandData.ligands || [];
+            resetSelect(ligand, '--Select Ligand--', true);
+            [...new Set(ligandOccurrences.map((item) => String(item.ligand || '').trim().toUpperCase()).filter(Boolean))]
+                .forEach((value) => ligand.add(new Option(value, value)));
+            ligand.disabled = false;
+            if (!normalized.ligand || ![...ligand.options].some((option) => option.value === normalized.ligand)) return;
+            ligand.value = normalized.ligand;
+
+            resetSelect(chain, '--Select Chain--', true);
+            ligandOccurrences.filter((item) => String(item.ligand || '').trim().toUpperCase() === normalized.ligand).forEach((item) => {
+                const occurrence = String(item.ligand_instance_id || '').trim();
+                const label = occurrence ? `Chain ${item.chain} · residue ${item.ligand_id || '?'} · model ${item.model_id || '1'}` : `Chain ${item.chain}`;
+                const option = new Option(label, item.chain);
+                option.dataset.ligandInstanceId = occurrence;
+                chain.add(option);
+            });
+            chainContainer.hidden = false;
+            chain.disabled = false;
+            const requestedOption = [...chain.options].find((option) => option.dataset.ligandInstanceId === normalized.ligandInstanceId)
+                || [...chain.options].find((option) => option.value === normalized.chain);
+            if (requestedOption) {
+                chain.value = requestedOption.value;
+                instanceId.value = requestedOption.dataset.ligandInstanceId || normalized.ligandInstanceId;
+                imageButton.disabled = false;
+            }
+        } catch (error) {
+            console.warn('[analysis-builder] unable to prefill context', error);
+        }
+    };
+
     document.querySelectorAll('[data-analysis-builder-open]').forEach((button) => button.addEventListener('click', open));
+    document.addEventListener('click', (event) => {
+        const trigger = event.target.closest('[data-analysis-context]');
+        if (!trigger) return;
+        event.preventDefault();
+        window.openAnalysisBuilderWithContext({
+            virus: trigger.dataset.analysisVirus,
+            pdbCode: trigger.dataset.analysisPdbCode,
+            ligand: trigger.dataset.analysisLigand,
+            chain: trigger.dataset.analysisChain,
+            ligandInstanceId: trigger.dataset.analysisLigandInstanceId
+        });
+    });
     modal.querySelector('.analysis-builder-close').addEventListener('click', close);
     modal.addEventListener('click', (event) => { if (event.target === modal) close(); });
     document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && !modal.hidden) close(); });

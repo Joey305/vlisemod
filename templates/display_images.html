@@ -87,6 +87,7 @@
                     <section class="viewer-control-group viewer-control-group--explore">
                         <h3>Explore</h3>
                         <div class="viewer-control-buttons">
+                            <button type="button" class="button-secondary" data-analysis-context data-analysis-virus="{{ primary_image.virus_name }}" data-analysis-pdb-code="{{ primary_image.pdb_id }}" data-analysis-ligand="{{ primary_image.ligand_code }}" data-analysis-chain="{{ primary_image.chain }}" data-analysis-ligand-instance-id="{{ primary_image.ligand_instance_id }}">Start analysis</button>
                             <button id="use-as-warhead-btn" type="button" onclick="useAsWarhead('{{ primary_image.ligand_code }}')">Use as Warhead</button>
                             <a id="assess-protacability-link" class="button-primary" href="/protacability_page?ligand={{ primary_image.ligand_code|urlencode }}&amp;pdb_code={{ primary_image.pdb_id|urlencode }}&amp;ligand_instance_id={{ primary_image.ligand_instance_id|urlencode }}&amp;ligand_chain={{ primary_image.chain|urlencode }}" target="_blank" rel="noopener noreferrer">Assess in PROTACability ↗</a>
                         </div>

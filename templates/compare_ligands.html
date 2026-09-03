@@ -585,7 +585,10 @@
                     return `<article class="comparison-occurrence-card" data-ligand-instance-id="${escapeHtml(occurrenceId)}">
                         <div><strong>${escapeHtml(occurrence.pdb_id || '—')}</strong><span>${escapeHtml(`${modelLabel} · Chain ${chainLabel} · Residue ${residueLabel}`)}</span></div>
                         <small>${escapeHtml(`${mappedAtoms} mapped atoms · ${exposedAtoms} solvent-exposed atoms`)}</small>
-                        <a class="button-secondary" target="_blank" rel="noopener noreferrer" href="${escapeHtml(occurrenceUrl)}" aria-label="Assess ${escapeHtml(ligand)} occurrence ${escapeHtml(occurrenceId || '—')} in PROTACability">Assess in PROTACability ↗</a>
+                        <div class="comparison-occurrence-actions">
+                            <button type="button" class="button-secondary" data-analysis-context data-analysis-virus="${escapeHtml(occurrence.virus_name || '')}" data-analysis-pdb-code="${escapeHtml(occurrence.pdb_id || '')}" data-analysis-ligand="${escapeHtml(ligand)}" data-analysis-chain="${escapeHtml(occurrence.chain || '')}" data-analysis-ligand-instance-id="${escapeHtml(occurrenceId)}">Start analysis</button>
+                            <a class="button-secondary" target="_blank" rel="noopener noreferrer" href="${escapeHtml(occurrenceUrl)}" aria-label="Assess ${escapeHtml(ligand)} occurrence ${escapeHtml(occurrenceId || '—')} in PROTACability">Assess in PROTACability ↗</a>
+                        </div>
                     </article>`;
                 }).join('');
                 const rail = document.getElementById('comparison-rail-content');

@@ -39,6 +39,7 @@
             <h2 class="page-title">Explore PROTACability</h2>
             <p>Review ligand-side attachment evidence and target-side degrader-readiness context for this structure.</p>
             <div class="action-row">
+                <button id="start-analysis-from-ligand" class="button-secondary" type="button">Start analysis with this ligand</button>
                 <a id="protacabilityExactLink" class="button-primary" target="_blank" rel="noopener noreferrer">Assess this structure in PROTACability ↗</a>
                 <a id="protacabilityLigandLink" class="button-secondary" target="_blank" rel="noopener noreferrer">View all ligand structures in PROTACability ↗</a>
             </div>
@@ -203,6 +204,15 @@
                     .text(`View all ${selectedLigand} structures in PROTACability ↗`)
                     .attr('aria-label', `View all ${selectedLigand} structures in PROTACability`);
                 $('#protacabilityFollowup').removeClass('hidden');
+                $('#start-analysis-from-ligand').off('click').on('click', function() {
+                    if (typeof window.openAnalysisBuilderWithContext !== 'function') return;
+                    window.openAnalysisBuilderWithContext({
+                        pdbCode: selectedOccurrence.attr('data-pdb-id'),
+                        ligand: selectedLigand,
+                        chain: selectedOccurrence.attr('data-chain'),
+                        ligandInstanceId: selectedOccurrence.val()
+                    });
+                });
             }
 
             function renderLigandWorkspace(selectedLigand, selectedOccurrence, payload) {

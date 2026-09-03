@@ -2307,6 +2307,17 @@ body.protacability-page .status-card.status-warning.protacability-callout strong
     color: #fff;
 }
 
+.comparison-occurrence-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.comparison-occurrence-actions > * {
+    flex: 1 1 145px;
+    text-align: center;
+}
+
 @keyframes protac-spin {
     to {
         transform: rotate(360deg);
