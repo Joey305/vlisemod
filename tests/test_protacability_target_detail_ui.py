@@ -26,6 +26,15 @@ class TargetDetailStructureViewerTests(unittest.TestCase):
         self.assertIn("'data-analysis-ligand-instance-id': String(selection.ligandInstanceId || activeLigandInstanceId || '')", template)
         self.assertIn('updateAnalysisContext(selection);', template)
 
+    def test_exit_vector_cue_replaces_obsolete_ternary_linker_claims(self):
+        template = Path("templates/protacability_assessment.html").read_text()
+        self.assertEqual(template.count("<h3>Ligand Exit-Vector Cue</h3>"), 2)
+        self.assertNotIn("<h3>Ternary Geometry Cue</h3>", template)
+        self.assertIn("ligand_exit_geometry_score", template)
+        self.assertIn("outward_supported_candidate_count", template)
+        self.assertIn("clear_exit_candidate_count", template)
+        self.assertIn("It does not predict linker length, E3-ligase compatibility", template)
+
 
 if __name__ == '__main__':
     unittest.main()

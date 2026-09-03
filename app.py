@@ -4530,6 +4530,8 @@ def _merge_optional_protacability_data(rows, readiness_rows=None, warhead_rows=N
                     "degrader_design_readiness_score",
                     "degrader_design_readiness_tier",
                     "evidence_level",
+                    "ligand_exit_geometry_score",
+                    "clear_exit_candidate_count",
                     "best_linker_geometry_class",
                     "short_linker_geometry_feasible",
                     "medium_linker_geometry_feasible",
@@ -4576,6 +4578,9 @@ def _merge_optional_protacability_data(rows, readiness_rows=None, warhead_rows=N
                     "warhead_notes",
                     "warhead_linkability_tier",
                     "warhead_linkability_label",
+                    "ligand_exit_geometry_score",
+                    "clear_exit_candidate_count",
+                    "outward_supported_candidate_count",
                 }:
                     current[key] = value
 
@@ -4862,6 +4867,8 @@ def _protacability_enrichment_snapshot(row):
         "degrader_design_readiness_score",
         "degrader_design_readiness_tier",
         "evidence_level",
+        "ligand_exit_geometry_score",
+        "clear_exit_candidate_count",
         "readiness_flags",
         "readiness_notes",
         "best_ligand_resname",
@@ -4880,6 +4887,7 @@ def _protacability_enrichment_snapshot(row):
         "rdkit_valid_smiles",
         "warhead_flags",
         "warhead_notes",
+        "outward_supported_candidate_count",
         "best_linker_geometry_class",
         "short_linker_geometry_feasible",
         "medium_linker_geometry_feasible",

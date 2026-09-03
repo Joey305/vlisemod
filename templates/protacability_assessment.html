@@ -1357,14 +1357,14 @@
                     <p><strong>Lysine surface fraction:</strong> ${formatValue(assessment.lysine_surface_fraction, 3)}</p>
                 </div>
                 <div class="page-card protacability-detail-card">
-                    <h3>Ternary Geometry Cue</h3>
-                    <p><strong>Minimum lysine-ligand distance:</strong> ${formatValue(assessment.min_lys_ligand_distance_a, 2)} Å</p>
-                    <p><strong>Near-ligand exposed lysines:</strong> ${formatValue(assessment.near_ligand_exposed_lys_count, 0)}</p>
-                    <p><strong>Short linker feasible:</strong> ${boolText(assessment.short_linker_geometry_feasible)}</p>
-                    <p><strong>Medium linker feasible:</strong> ${boolText(assessment.medium_linker_geometry_feasible)}</p>
-                    <p><strong>Long linker feasible:</strong> ${boolText(assessment.long_linker_geometry_feasible)}</p>
-                    <p><strong>Best linker geometry class:</strong> ${escapeHtml(assessment.best_linker_geometry_class || '—')}</p>
-                    <p><strong>Warning:</strong> Ternary geometry cues are hypothesis-generating only and should not be interpreted as proof of productive degradation.</p>
+                    <h3>Ligand Exit-Vector Cue</h3>
+                    <p><strong>Cue:</strong> ${escapeHtml(assessment.best_linker_geometry_class || '—')}</p>
+                    <p><strong>Exit-vector score:</strong> ${formatValue(assessment.ligand_exit_geometry_score, 2)} / 100</p>
+                    <p><strong>Screened attachment atoms:</strong> ${formatValue(assessment.candidate_linker_atom_count, 0)}</p>
+                    <p><strong>Outward candidate atoms:</strong> ${formatValue(assessment.outward_supported_candidate_count, 0)}</p>
+                    <p><strong>Locally clear outward atoms:</strong> ${formatValue(assessment.clear_exit_candidate_count, 0)}</p>
+                    <p><strong>Local clearance sample:</strong> 8 Å forward in a 2 Å-radius corridor; a clear result reaches this sampled cap, not an exact clearance beyond it.</p>
+                    <p><strong>Interpretation:</strong> This is a ligand-side local modification-site cue. It does not predict linker length, E3-ligase compatibility, ternary-complex formation, or degradation.</p>
                 </div>
                 <div class="page-card protacability-detail-card">
                     <h3>Ligand Context</h3>
@@ -1498,12 +1498,14 @@
                     <p><strong>Lysine surface fraction:</strong> ${formatValue(summary.max_lysine_surface_fraction, 3)}</p>
                 </div>
                 <div class="page-card protacability-detail-card">
-                    <h3>Ternary Geometry Cue</h3>
-                    <p><strong>Minimum lysine-ligand distance:</strong> ${formatValue(summary.min_lys_ligand_distance_a, 2)} Å</p>
-                    <p><strong>Near-ligand exposed lysines:</strong> ${formatValue(summary.near_ligand_exposed_lys_count, 0)}</p>
-                    <p><strong>Short / medium / long linker feasible:</strong> ${boolText(summary.short_linker_geometry_feasible)} / ${boolText(summary.medium_linker_geometry_feasible)} / ${boolText(summary.long_linker_geometry_feasible)}</p>
-                    <p><strong>Best linker geometry class:</strong> ${escapeHtml(summary.best_linker_geometry_class || '—')}</p>
-                    <p><strong>Warning:</strong> Ternary geometry cues are hypothesis-generating only and should not be interpreted as proof of productive degradation.</p>
+                    <h3>Ligand Exit-Vector Cue</h3>
+                    <p><strong>Cue:</strong> ${escapeHtml(summary.best_linker_geometry_class || '—')}</p>
+                    <p><strong>Exit-vector score:</strong> ${formatValue(summary.ligand_exit_geometry_score, 2)} / 100</p>
+                    <p><strong>Screened attachment atoms:</strong> ${formatValue(summary.candidate_linker_atom_count, 0)}</p>
+                    <p><strong>Outward candidate atoms:</strong> ${formatValue(summary.outward_supported_candidate_count, 0)}</p>
+                    <p><strong>Locally clear outward atoms:</strong> ${formatValue(summary.clear_exit_candidate_count, 0)}</p>
+                    <p><strong>Local clearance sample:</strong> 8 Å forward in a 2 Å-radius corridor; a clear result reaches this sampled cap, not an exact clearance beyond it.</p>
+                    <p><strong>Interpretation:</strong> This is a ligand-side local modification-site cue. It does not predict linker length, E3-ligase compatibility, ternary-complex formation, or degradation.</p>
                 </div>
                 <div class="page-card protacability-detail-card">
                     <h3>Ligand context</h3>
