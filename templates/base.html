@@ -24,7 +24,7 @@
 <body class="{% block body_class %}app-shell{% endblock %}">
     <header class="site-header">
         <div class="site-header-inner">
-            <a class="brand-lockup" href="{{ url_for('index') }}">
+                <a class="brand-lockup" href="{{ url_for('index') }}">
                 <span class="brand-mark">
                     <svg viewBox="0 0 24 24" aria-hidden="true" class="brand-mark-icon">
                         <path d="M5 7.5 12 3l7 4.5v9L12 21l-7-4.5Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
@@ -33,8 +33,9 @@
                     <span>V-LiSEMOD</span>
                 </span>
                 <span class="brand-subtitle">Viral Ligand Solvent-Exposed Moiety Database</span>
-            </a>
-            <nav class="site-nav" aria-label="Primary">
+                </a>
+                <button class="site-analysis-trigger" type="button" data-analysis-builder-open>Start analysis</button>
+                <nav class="site-nav" aria-label="Primary">
                 <a class="{% if request.endpoint == 'index' %}is-active{% endif %}" href="{{ url_for('index') }}">Home</a>
                 <a class="{% if request.endpoint == 'about_page' %}is-active{% endif %}" href="{{ url_for('about_page') }}">About</a>
                 <a class="{% if request.endpoint == 'query_protein_virus_page' %}is-active{% endif %}" href="{{ url_for('query_protein_virus_page') }}">Protein Query</a>
@@ -58,6 +59,8 @@
             {% block content %}{% endblock %}
         </div>
     </main>
+
+    {% include "components/analysis_builder_modal.html" %}
 
     <footer class="site-footer">
         <div class="site-footer-inner">
@@ -158,5 +161,6 @@
     </footer>
 
     {% block scripts %}{% endblock %}
+    <script src="{{ url_for('static', filename='js/analysis_builder.js') }}"></script>
 </body>
 </html>

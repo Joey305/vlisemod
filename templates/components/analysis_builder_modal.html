@@ -1,0 +1,50 @@
+<div id="analysis-builder-modal" class="analysis-builder-modal" role="dialog" aria-modal="true" aria-labelledby="analysis-builder-title" hidden>
+    <div class="analysis-builder-modal-card">
+        <button type="button" class="modal-close-button analysis-builder-close" aria-label="Close analysis builder">&times;</button>
+        <div class="analysis-builder-modal-heading">
+            <span class="page-kicker">Analysis Builder</span>
+            <h2 id="analysis-builder-title">Generate a V-LiSEMOD analysis session</h2>
+            <p>Choose a virus, structure, and ligand to create a PyMOL session or inspect ligand-focused visuals.</p>
+        </div>
+        <div class="workflow-steps">
+            <span class="workflow-step">1. Virus</span>
+            <span class="workflow-step">2. PDB</span>
+            <span class="workflow-step">3. Ligand</span>
+            <span class="workflow-step">4. Output</span>
+        </div>
+        <form id="analysis-builder-form" class="form-grid" action="/generate_pymol_session" method="POST">
+            <div class="form-row-grid">
+                <div class="form-group">
+                    <label for="analysis-virus">Select Virus:</label>
+                    <select id="analysis-virus" name="virus" required><option value="">--Select Virus--</option></select>
+                </div>
+                <div class="form-group">
+                    <label for="analysis-pdb-code">Select PDB Code:</label>
+                    <select id="analysis-pdb-code" name="pdb_code" required disabled><option value="">--Select PDB Code--</option></select>
+                </div>
+                <div class="form-group">
+                    <label for="analysis-ligand">Select Ligand:</label>
+                    <select id="analysis-ligand" name="ligand" required disabled><option value="">--Select Ligand--</option></select>
+                </div>
+            </div>
+            <div id="analysis-chain-container" class="form-group chain-group" hidden>
+                <label for="analysis-chain">Select Chain:</label>
+                <select id="analysis-chain" name="chain" disabled><option value="">--Select Chain--</option></select>
+            </div>
+            <input type="hidden" id="analysis-ligand-instance-id" name="ligand_instance_id" value="">
+            <div class="checkbox-container option-card-grid">
+                <label class="checkbox-label"><input type="checkbox" name="binding_pocket" value="1"><span class="checkbox-copy"><span class="checkbox-title">Binding Pocket</span><span class="checkbox-meta">Capture residues within 5 Angstroms of the selected ligand for structure review.</span></span></label>
+                <label class="checkbox-label"><input type="checkbox" name="solvent_exposed_atoms" value="1"><span class="checkbox-copy"><span class="checkbox-title">Shrake-Rupley SASA</span><span class="checkbox-meta">Highlight solvent-exposed ligand atoms using a 1.4 Angstrom probe radius.</span></span></label>
+                <label id="analysis-functional-group-label" class="checkbox-label disabled"><input id="analysis-functional-groups" type="checkbox" name="functional_groups" value="1" disabled><span class="checkbox-copy"><span class="checkbox-title">Functional Group Atoms</span><span class="checkbox-meta">Expose functional-group level objects when ligand annotations are available.</span></span></label>
+            </div>
+            <div class="buttons-container action-row">
+                <button type="submit" class="button-primary">Generate PyMOL Session</button>
+                <button id="analysis-generate-images" class="button-secondary" type="button" disabled>Generate Ligand Images</button>
+            </div>
+        </form>
+        <form id="analysis-ligand-images-form" action="/generate_ligand_images" method="POST" hidden>
+            <input type="hidden" name="virus"><input type="hidden" name="pdb_code"><input type="hidden" name="ligand"><input type="hidden" name="chain"><input type="hidden" name="ligand_instance_id">
+        </form>
+    </div>
+</div>
+{% include "components/loading_promo.html" %}

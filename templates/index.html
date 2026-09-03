@@ -144,7 +144,7 @@
             <span>Generate visual and query outputs</span>
         </div>
         <div class="action-row hero-actions">
-            <a class="button-primary" href="#pymol-session-builder">Start a ligand analysis session</a>
+            <button class="button-primary" type="button" data-analysis-builder-open>Start a ligand analysis session</button>
             <a class="button-secondary" href="{{ url_for('query_protein_virus_page') }}">Browse by protein target</a>
             <a class="button-ghost" href="/about">Learn about V-LiSEMOD</a>
         </div>
@@ -232,6 +232,7 @@
         </div>
     </section>
 
+    {% if false %}
     <section id="pymol-session-builder" class="form-container form-card page-section workflow-card">
         <div class="section-heading">
             <span class="page-kicker">Primary Workflow</span>
@@ -339,6 +340,9 @@
         {% include "components/loading_promo.html" %}
         {{ region('structure-workspace-region') }}
     </section>
+    {% endif %}
+
+    {{ region('structure-workspace-region') }}
 
     <section class="page-card page-section landing-card-shell resource-cluster-section">
         <div class="section-heading">
@@ -381,10 +385,10 @@
     <script>
         (function () {
             function updateStructureContext() {
-                const virus = document.getElementById('virus')?.value || '';
-                const pdb = document.getElementById('pdb_code')?.value || '';
-                const ligand = document.getElementById('ligand')?.value || '';
-                const chain = document.getElementById('chain')?.value || '';
+                const virus = document.getElementById('analysis-virus')?.value || '';
+                const pdb = document.getElementById('analysis-pdb-code')?.value || '';
+                const ligand = document.getElementById('analysis-ligand')?.value || '';
+                const chain = document.getElementById('analysis-chain')?.value || '';
                 if (!pdb || !ligand) { VLiSEMODWorkspace.render('structure-workspace-region', null); return; }
                 VLiSEMODWorkspace.render('structure-workspace-region', {
                     context: { chips: [virus, ligand, pdb, chain && `Chain ${chain}`] },
@@ -395,7 +399,7 @@
                     ], methods: ['sasa', 'functionalGroups']
                 });
             }
-            document.addEventListener('change', event => { if (['virus', 'pdb_code', 'ligand', 'chain'].includes(event.target.id)) updateStructureContext(); });
+            document.addEventListener('change', event => { if (['analysis-virus', 'analysis-pdb-code', 'analysis-ligand', 'analysis-chain'].includes(event.target.id)) updateStructureContext(); });
         })();
     </script>
 
@@ -454,16 +458,7 @@
 
             function scrollToMainBuilder() {
                 closeQuickStart();
-                const target = document.getElementById("pymol-session-builder") || document.getElementById("pymolForm");
-                if (target) {
-                    target.scrollIntoView({ behavior: "smooth", block: "start" });
-                    window.setTimeout(() => {
-                        const firstSelect = document.getElementById("virus");
-                        if (firstSelect && typeof firstSelect.focus === "function") {
-                            firstSelect.focus({ preventScroll: true });
-                        }
-                    }, 500);
-                }
+                document.querySelector('[data-analysis-builder-open]')?.click();
             }
 
             function goTo(path) {
