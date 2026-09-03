@@ -3317,6 +3317,13 @@ html[data-theme="dark"] .protacability-page .attachment-atom-pill.surface:not(.c
     cursor: pointer;
 }
 
+/* The embedded Drug GPT launcher is intentionally disabled site-wide. */
+#chatbot-container,
+#chatbot-icon,
+#chatbot-popup {
+    display: none !important;
+}
+
 #chatbot-popup {
     display: none;
     position: fixed;
