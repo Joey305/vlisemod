@@ -2185,7 +2185,11 @@
                 $('#protac-selected-structure').text(`Showing PDB ${pdbCode.toUpperCase()}${chainId ? ` · chain ${chainId}` : ''}.`);
                 const structureSummary = structures.find(item => String(item.pdb_code || '').toUpperCase() === pdbCode.toUpperCase()) || {};
                 updateSelectedContext(structureSummary, { ligand_resname: ligandResname, ligand_chain: ligandChain, ligand_residue_id: ligandResidueId });
-                attachProtacViewerControls(pdbCode, chainId, ligandResname, ligandChain, ligandResidueId, ligandResname, candidateLinkerAtomIds, {}, syncSelectedLigand);
+                // Wait for the occurrence-resolved payload before initializing the
+                // viewer. Previously it loaded once from this summary row and a
+                // second time when the exact ligand occurrence returned below.
+                if (window.VLNGLViewer && VLNGLViewer.disposeViewer) VLNGLViewer.disposeViewer('protac-ngl-viewer');
+                $('#protac-ngl-status').text('Loading selected 3D context…');
                 // A structure row is already an exact PDB selection.  Do not
                 // reapply the legacy protein label here: canonical protease
                 // includes source labels such as "capsid_protein,protease",
@@ -2201,6 +2205,9 @@
                     attachProtacViewerControls(pdbCode, detail.representative_chain_id || chainId, selectedLigand.ligand_resname || '', selectedLigand.ligand_chain || '', selectedLigand.ligand_residue_id || '', selectedLigand.ligand_resname || '', candidateLinkerAtomIds, detail.attachment_sites || {}, syncSelectedLigand);
                 }).fail(function(xhr) {
                     console.warn('[protacability] selected structure detail failed', { pdbCode, status: xhr.status });
+                    // Keep the structure browser usable if the enriched
+                    // occurrence endpoint is temporarily unavailable.
+                    attachProtacViewerControls(pdbCode, chainId, ligandResname, ligandChain, ligandResidueId, ligandResname, candidateLinkerAtomIds, {}, syncSelectedLigand);
                 });
             };
             $('.protac-target-structure-row').off('click').on('click', function() {
