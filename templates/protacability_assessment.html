@@ -2126,7 +2126,7 @@
                         <div id="protac-selected-context" aria-live="polite">${selectedContextMarkup(bestStructure, representativeLigand)}</div>
                         <div id="protac-ligand-context-selector">${renderLigandContextSelector(ligandContexts, representativeLigand)}</div>
                         <div class="action-row">
-                            <button type="button" class="button-secondary" data-analysis-context data-analysis-virus="${escapeHtml(summary.virus_name || '')}" data-analysis-pdb-code="${escapeHtml(best.pdb_code || summary.best_pdb_code || '')}" data-analysis-ligand="${escapeHtml(representativeLigand.ligand_resname || best.ligand_resname || '')}" data-analysis-chain="${escapeHtml(representativeLigand.ligand_chain || best.ligand_chain || '')}" data-analysis-ligand-instance-id="${escapeHtml(representativeLigand.ligand_instance_id || '')}">Start analysis</button>
+                            <button id="protac-start-analysis" type="button" class="button-secondary" data-analysis-context data-analysis-virus="${escapeHtml(summary.virus_name || '')}" data-analysis-pdb-code="${escapeHtml(best.pdb_code || summary.best_pdb_code || '')}" data-analysis-ligand="${escapeHtml(representativeLigand.ligand_resname || best.ligand_resname || '')}" data-analysis-chain="${escapeHtml(representativeLigand.ligand_chain || best.ligand_chain || '')}" data-analysis-ligand-instance-id="${escapeHtml(representativeLigand.ligand_instance_id || '')}">Start analysis</button>
                             <button id="protac-open-occurrence-detail" type="button" class="button-secondary">Open selected occurrence card</button>
                         </div>
                         <p class="protac-target-overview"><strong>Target overview:</strong> ${summary.pdb_count ?? 0} PDBs · ${summary.chain_count ?? 0} chains · canonical target ${escapeHtml(summary.canonical_target_id || '—')}</p>
@@ -2144,17 +2144,29 @@
             let activeStructureSummary = bestStructure;
             let activePdbCode = String(best.pdb_code || summary.best_pdb_code || '').toUpperCase();
             let activeLigandInstanceId = String(representativeLigand.ligand_instance_id || '');
+            const updateAnalysisContext = function(selection = {}) {
+                const trigger = $('#protac-start-analysis');
+                if (!trigger.length) return;
+                trigger.attr({
+                    'data-analysis-pdb-code': String(selection.pdbCode || activePdbCode || ''),
+                    'data-analysis-ligand': String(selection.ligandResname || ''),
+                    'data-analysis-chain': String(selection.ligandChain || selection.chainId || ''),
+                    'data-analysis-ligand-instance-id': String(selection.ligandInstanceId || activeLigandInstanceId || '')
+                });
+            };
             const updateSelectedContext = function(structure, ligand) {
                 activeStructureSummary = structure || activeStructureSummary;
                 $('#protac-selected-context').html(selectedContextMarkup(activeStructureSummary, ligand));
             };
             const syncSelectedLigand = function(selection) {
+                activePdbCode = String(selection.pdbCode || activePdbCode || '').toUpperCase();
                 activeLigandInstanceId = String(selection.ligandInstanceId || activeLigandInstanceId || '');
                 updateSelectedContext(activeStructureSummary, {
                     ligand_resname: selection.ligandResname,
                     ligand_chain: selection.ligandChain,
                     ligand_residue_id: selection.ligandResidueId
                 });
+                updateAnalysisContext(selection);
             };
             $('#protac-open-occurrence-detail').off('click').on('click', function() {
                 if (!activePdbCode || !activeLigandInstanceId) return;
@@ -2205,7 +2217,14 @@
                 $.getJSON(`/api/protacability/structure_detail/${encodeURIComponent(pdbCode)}?${new URLSearchParams({ collapse_labels: '1' }).toString()}`).done(function(detail) {
                     if (!detail.data_available || activePdbCode !== pdbCode.toUpperCase() || String(detail.summary?.pdb_code || '').toUpperCase() !== pdbCode.toUpperCase()) return;
                     const selectedLigand = detail.representative_ligand || { ligand_resname: ligandResname, ligand_chain: ligandChain, ligand_residue_id: ligandResidueId };
-                    activeLigandInstanceId = String(selectedLigand.ligand_instance_id || '');
+                    syncSelectedLigand({
+                        pdbCode,
+                        chainId: detail.representative_chain_id || chainId,
+                        ligandInstanceId: selectedLigand.ligand_instance_id || '',
+                        ligandResname: selectedLigand.ligand_resname || ligandResname,
+                        ligandChain: selectedLigand.ligand_chain || ligandChain,
+                        ligandResidueId: selectedLigand.ligand_residue_id || ligandResidueId
+                    });
                     updateSelectedContext(detail.summary || structureSummary, selectedLigand);
                     $('#protac-ligand-context-selector').html(renderLigandContextSelector(detail.ligand_contexts || [], selectedLigand));
                     // The table and viewer must always consume the same occurrence payload.

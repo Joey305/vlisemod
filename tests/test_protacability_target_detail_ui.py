@@ -18,6 +18,14 @@ class TargetDetailStructureViewerTests(unittest.TestCase):
         self.assertIn('role="button" tabindex="0"', template)
         self.assertIn("event.key === 'Enter' || event.key === ' '", template)
 
+    def test_start_analysis_tracks_the_selected_ligand_occurrence(self):
+        template = Path("templates/protacability_assessment.html").read_text()
+        self.assertIn('id="protac-start-analysis"', template)
+        self.assertIn("const updateAnalysisContext = function(selection = {})", template)
+        self.assertIn("'data-analysis-pdb-code': String(selection.pdbCode || activePdbCode || '')", template)
+        self.assertIn("'data-analysis-ligand-instance-id': String(selection.ligandInstanceId || activeLigandInstanceId || '')", template)
+        self.assertIn('updateAnalysisContext(selection);', template)
+
 
 if __name__ == '__main__':
     unittest.main()
