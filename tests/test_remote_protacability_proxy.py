@@ -50,3 +50,46 @@ class RemoteProtacabilityProxyTests(unittest.TestCase):
             response = self.client.get("/api/protacability/target_detail?virus_name=HIV_1&protein_type=protease&canonical_target_id=protease")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(remote.call_args.args[0], "protacability/target-detail")
+
+    def test_randy_transport_details_are_not_returned_to_the_browser(self):
+        transport_error = app_module.RandyBackendError(
+            "RANDY API request failed: HTTPSConnectionPool(host='randy.rove-vernier.ts.net')",
+            status_code=502,
+        )
+        with patch.object(app_module, "_normalized_backend_mode", return_value="randy"), \
+             patch.object(app_module, "_remote_protacability_get", side_effect=transport_error):
+            response = self.client.get("/api/protacability/search?view=targets")
+
+        self.assertEqual(response.status_code, 503)
+        payload = response.get_json()
+        self.assertFalse(payload["data_available"])
+        self.assertEqual(payload["error_code"], "data_service_unavailable")
+        self.assertNotIn("randy.rove-vernier", str(payload))
+        self.assertNotIn("HTTPSConnectionPool", str(payload))
+
+    def test_protacability_page_hides_randy_transport_details(self):
+        transport_error = app_module.RandyBackendError(
+            "RANDY API request failed: private network route missing",
+            status_code=502,
+        )
+        with patch.object(app_module, "_normalized_backend_mode", return_value="randy"), \
+             patch.object(app_module, "_remote_page_metadata", side_effect=transport_error):
+            response = self.client.get("/protacability_page")
+
+        self.assertEqual(response.status_code, 503)
+        self.assertIn(b"The V-LiSEMOD data service is temporarily unavailable.", response.data)
+        self.assertNotIn(b"private network route missing", response.data)
+
+    def test_shared_randy_lookup_hides_transport_details(self):
+        transport_error = app_module.RandyBackendError(
+            "RANDY API request failed: HTTPSConnectionPool(host='randy.rove-vernier.ts.net')",
+            status_code=502,
+        )
+        with patch.object(app_module, "_normalized_backend_mode", return_value="randy"), \
+             patch.object(app_module, "randy_get", side_effect=transport_error):
+            response = self.client.get("/get_viruses")
+
+        self.assertEqual(response.status_code, 503)
+        payload = response.get_json()
+        self.assertEqual(payload["error_code"], "data_service_unavailable")
+        self.assertNotIn("randy.rove-vernier", str(payload))

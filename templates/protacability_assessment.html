@@ -42,7 +42,12 @@
 
     {{ region('protac-workspace-region') }}
 
-    {% if not protacability_data_available %}
+    {% if backend_error %}
+    <section class="empty-state page-section" role="status">
+        <h2>PROTACability is temporarily unavailable</h2>
+        <p>{{ backend_error }}</p>
+    </section>
+    {% elif not protacability_data_available %}
     <section class="empty-state page-section">
         <h2>PROTACability data not imported yet</h2>
         <p>Run <code>python tools/import_protacability_data.py</code> after generating the expansion outputs to populate the assessment tables in <code>viral_data.db</code>.</p>

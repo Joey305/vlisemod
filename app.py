@@ -59,6 +59,23 @@ class RandyBackendError(Exception):
         self.status_code = status_code
 
 
+PUBLIC_DATA_SERVICE_UNAVAILABLE_MESSAGE = (
+    "The V-LiSEMOD data service is temporarily unavailable. Please try again shortly."
+)
+
+
+def _public_backend_error_response(exc, **payload):
+    """Log backend details privately while returning a safe browser payload."""
+    logging.warning("Backend request unavailable; withholding implementation detail from client: %s", exc)
+    response_payload = dict(payload)
+    response_payload.update({
+        "error": PUBLIC_DATA_SERVICE_UNAVAILABLE_MESSAGE,
+        "error_code": "data_service_unavailable",
+        "message": PUBLIC_DATA_SERVICE_UNAVAILABLE_MESSAGE,
+    })
+    return jsonify(response_payload), 503
+
+
 LOCAL_DB_PATH = Path(os.environ.get("VLISMOD_LOCAL_DB_PATH", "viral_data.db")).expanduser()
 LIGAND_IMAGE_REQUIRED_TABLES = (
     "Functional_GROUPED",
@@ -476,7 +493,7 @@ def _dispatch_supported_lookup(remote_path, *, params=None, local_loader):
         try:
             payload = randy_get(remote_path, params=params)
         except RandyBackendError as exc:
-            return jsonify({"error": str(exc)}), exc.status_code
+            return _public_backend_error_response(exc)
         return jsonify(payload)
 
     if randy_available():
@@ -556,12 +573,14 @@ def backend_health():
             status["randy_health"] = randy_get("health")
         except RandyBackendError as exc:
             status["ok"] = False
-            status["randy_health"] = {"error": str(exc)}
+            logging.warning("RANDY health check unavailable: %s", exc)
+            status["randy_health"] = {"error": "unavailable"}
         try:
             status["randy_db_health"] = randy_get("db-health")
         except RandyBackendError as exc:
             status["ok"] = False
-            status["randy_db_health"] = {"error": str(exc)}
+            logging.warning("RANDY database health check unavailable: %s", exc)
+            status["randy_db_health"] = {"error": "unavailable"}
     elif mode == "randy":
         status["ok"] = False
         status["randy_health"] = {"error": "RANDY API is not configured."}
@@ -714,7 +733,7 @@ def generate_ligand_images():
                 },
             )
         except RandyBackendError as exc:
-            return jsonify({"error": str(exc)}), exc.status_code
+            return _public_backend_error_response(exc)
     elif mode == "auto" and randy_available():
         try:
             remote_payload = randy_post(
@@ -774,7 +793,7 @@ def generate_ligand_images():
                 chain_residue_data = cursor.fetchall()
         except RandyBackendError as exc:
             status_code = 500 if mode == "local" else exc.status_code
-            return jsonify({"error": str(exc)}), status_code
+            return _public_backend_error_response(exc)
         solvent_exposed_atom_map = None
         chain_residue_data = [(chain, residue_id, None, None) for chain, residue_id in chain_residue_data]
 
@@ -1103,7 +1122,7 @@ def generate_pymol_session():
                 },
             )
         except RandyBackendError as exc:
-            return jsonify({"error": str(exc)}), exc.status_code
+            return _public_backend_error_response(exc)
     elif mode == "auto" and randy_available():
         try:
             remote_payload = randy_post(
@@ -1251,7 +1270,7 @@ def generate_pymol_session():
                     options['rupley_sasa'] = cursor.fetchall()
         except RandyBackendError as exc:
             status_code = 500 if mode == "local" else exc.status_code
-            return jsonify({"error": str(exc)}), status_code
+            return _public_backend_error_response(exc)
 
     pymol_script_path = write_pymol_script(
         pdb_code, ligand_name, ligand_chain, ligand_residue_id if remote_payload is not None else None, options
@@ -1826,7 +1845,7 @@ def generate_charts():
             pdb_id, ligand, ligand_id, chain, ligand_instance_id
         )
     except RandyBackendError as exc:
-        return jsonify({'error': str(exc)}), exc.status_code
+        return _public_backend_error_response(exc)
     except (TypeError, ValueError) as exc:
         return jsonify({'error': 'invalid_interaction_request', 'message': str(exc)}), 400
 
@@ -2029,7 +2048,7 @@ def compare_ligand_interactions():
                 },
             )
         except RandyBackendError as exc:
-            return jsonify({'error': str(exc)}), exc.status_code
+            return _public_backend_error_response(exc)
         return jsonify(payload)
 
     if mode == "auto" and randy_available():
@@ -2297,7 +2316,7 @@ def get_ligand_options():
         try:
             payload = randy_get('ligand-options')
         except RandyBackendError as exc:
-            return jsonify({'error': str(exc)}), exc.status_code
+            return _public_backend_error_response(exc)
         return jsonify(payload)
     if mode == "auto" and randy_available():
         try:
@@ -2307,7 +2326,7 @@ def get_ligand_options():
     try:
         payload = _local_get_ligand_options_payload()
     except RandyBackendError as exc:
-        return jsonify({'error': str(exc)}), 500
+        return _public_backend_error_response(exc)
     return jsonify(payload)
 
 
@@ -6641,7 +6660,7 @@ def get_virus_names_list_distinct():
         try:
             return jsonify(randy_get('virus-proteins/virus-names'))
         except RandyBackendError as exc:
-            return jsonify({"error": str(exc)}), exc.status_code
+            return _public_backend_error_response(exc)
     if mode == "auto" and randy_available():
         try:
             return jsonify(randy_get('virus-proteins/virus-names'))
@@ -6654,7 +6673,7 @@ def get_virus_names_list_distinct():
             virus_names = [row[0] for row in cursor.fetchall()]
         return jsonify(virus_names)
     except RandyBackendError as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _public_backend_error_response(exc)
 
 @app.route('/get_protein_types_list_distinct', methods=['GET'])
 def get_protein_types_list_distinct():
@@ -6663,7 +6682,7 @@ def get_protein_types_list_distinct():
         try:
             return jsonify(randy_get('virus-proteins/protein-types'))
         except RandyBackendError as exc:
-            return jsonify({"error": str(exc)}), exc.status_code
+            return _public_backend_error_response(exc)
     if mode == "auto" and randy_available():
         try:
             return jsonify(randy_get('virus-proteins/protein-types'))
@@ -6676,7 +6695,7 @@ def get_protein_types_list_distinct():
             protein_types = [row[0] for row in cursor.fetchall()]
         return jsonify(protein_types)
     except RandyBackendError as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _public_backend_error_response(exc)
 
 
 
@@ -6694,7 +6713,7 @@ def get_protein_query_filter_options_route():
         try:
             return jsonify(randy_get('virus-proteins/filter-options', params=remote_params))
         except RandyBackendError as exc:
-            return jsonify({"error": str(exc)}), exc.status_code
+            return _public_backend_error_response(exc)
     if mode == "auto" and randy_available():
         try:
             return jsonify(randy_get('virus-proteins/filter-options', params=remote_params))
@@ -6708,7 +6727,7 @@ def get_protein_query_filter_options_route():
                 protein_types=protein_types,
             ))
     except RandyBackendError as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _public_backend_error_response(exc)
 
 
 
@@ -6721,7 +6740,7 @@ def get_pdbs_for_virus_protein():
         try:
             return jsonify(randy_post('virus-proteins/pdbs', json=data))
         except RandyBackendError as exc:
-            return jsonify({"error": str(exc)}), exc.status_code
+            return _public_backend_error_response(exc)
     if mode == "auto" and randy_available():
         try:
             return jsonify(randy_post('virus-proteins/pdbs', json=data))
@@ -6740,7 +6759,7 @@ def get_pdbs_for_virus_protein():
             )
         return jsonify({'pdb_codes': pdb_codes})
     except RandyBackendError as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _public_backend_error_response(exc)
 
 
 
@@ -6765,7 +6784,7 @@ def export_data_to_excel():
         try:
             page_metadata = _remote_page_metadata()
         except RandyBackendError as exc:
-            return jsonify({'success': False, 'error': str(exc)}), exc.status_code
+            return _public_backend_error_response(exc, success=False)
     elif mode == "auto" and randy_available():
         try:
             page_metadata = _remote_page_metadata()
@@ -6834,7 +6853,7 @@ def export_data_to_excel():
                 if not df.empty:
                     populated_data_sets[data_set] = df
             except RandyBackendError as exc:
-                return jsonify({'success': False, 'error': str(exc)}), exc.status_code
+                return _public_backend_error_response(exc, success=False)
 
         if not populated_data_sets:
             return jsonify({
@@ -6925,7 +6944,13 @@ def query_protein_virus_page():
         try:
             metadata = _remote_page_metadata()
         except RandyBackendError as exc:
-            return render_template('query_protein_virus.html', available_export_data_sets=[], protacability_data_available=False, backend_error=str(exc)), exc.status_code
+            logging.warning("Protein-query page metadata unavailable: %s", exc)
+            return render_template(
+                'query_protein_virus.html',
+                available_export_data_sets=[],
+                protacability_data_available=False,
+                backend_error=PUBLIC_DATA_SERVICE_UNAVAILABLE_MESSAGE,
+            ), 503
     elif mode == "auto" and randy_available():
         try:
             metadata = _remote_page_metadata()
@@ -6953,7 +6978,7 @@ def get_ligands_with_synonyms():
         try:
             return jsonify(randy_get('ligands/with-synonyms'))
         except RandyBackendError as exc:
-            return jsonify({"error": str(exc)}), exc.status_code
+            return _public_backend_error_response(exc)
     if mode == "auto" and randy_available():
         try:
             return jsonify(randy_get('ligands/with-synonyms'))
@@ -6962,7 +6987,7 @@ def get_ligands_with_synonyms():
     try:
         return jsonify(_local_get_ligands_with_synonyms_payload())
     except RandyBackendError as exc:
-        return jsonify({"error": str(exc)}), 500
+        return _public_backend_error_response(exc)
 
 
 
@@ -6975,7 +7000,7 @@ def get_ligand_info(ligand_code):
         try:
             payload = randy_get('ligand-info', params={"ligand_code": ligand_code})
         except RandyBackendError as exc:
-            return jsonify({"error": str(exc)}), exc.status_code
+            return _public_backend_error_response(exc)
     elif mode == "auto" and randy_available():
         try:
             payload = randy_get('ligand-info', params={"ligand_code": ligand_code})
@@ -7107,7 +7132,12 @@ def protacability_page():
         try:
             metadata = _remote_page_metadata()
         except RandyBackendError as exc:
-            return render_template('protacability_assessment.html', protacability_data_available=False, backend_error=str(exc)), exc.status_code
+            logging.warning("PROTACability page metadata unavailable: %s", exc)
+            return render_template(
+                'protacability_assessment.html',
+                protacability_data_available=False,
+                backend_error=PUBLIC_DATA_SERVICE_UNAVAILABLE_MESSAGE,
+            ), 503
     elif mode == "auto" and randy_available():
         try:
             metadata = _remote_page_metadata()
@@ -7129,7 +7159,7 @@ def protacability_filters():
         try:
             return jsonify(_remote_protacability_get("protacability/filter-options", params=request.args, max_bytes=2 * 1024 * 1024))
         except RandyBackendError as exc:
-            return jsonify({"data_available": False, "message": str(exc)}), exc.status_code
+            return _public_backend_error_response(exc, data_available=False)
     if mode == "auto" and randy_available():
         try:
             return jsonify(_remote_protacability_get("protacability/filter-options", params=request.args, max_bytes=2 * 1024 * 1024))
@@ -7138,7 +7168,7 @@ def protacability_filters():
     try:
         payload = _load_protacability_source_payload()
     except RandyBackendError as exc:
-        return jsonify({"data_available": False, "message": str(exc)}), exc.status_code
+        return _public_backend_error_response(exc, data_available=False)
 
     if not payload.get("data_available"):
         return jsonify({
@@ -7184,7 +7214,7 @@ def protacability_filter_options():
             )
             return jsonify(payload)
         except RandyBackendError as exc:
-            return jsonify({"data_available": False, "message": str(exc)}), exc.status_code
+            return _public_backend_error_response(exc, data_available=False)
     if mode == "auto" and randy_available():
         try:
             payload = _remote_protacability_get("protacability/filter-options", params=request.args, max_bytes=2 * 1024 * 1024)
@@ -7202,7 +7232,7 @@ def protacability_filter_options():
     try:
         payload = _load_protacability_source_payload()
     except RandyBackendError as exc:
-        return jsonify({"data_available": False, "message": str(exc)}), exc.status_code
+        return _public_backend_error_response(exc, data_available=False)
 
     if not payload.get("data_available"):
         return jsonify({
@@ -7255,7 +7285,7 @@ def protacability_search():
             )
             return jsonify(payload)
         except RandyBackendError as exc:
-            return jsonify({"data_available": False, "message": str(exc), "rows": [], "summary": {}}), exc.status_code
+            return _public_backend_error_response(exc, data_available=False, rows=[], summary={})
     if mode == "auto" and randy_available():
         try:
             payload = _remote_protacability_get("protacability/search", params=request.args)
@@ -7280,7 +7310,7 @@ def protacability_search():
             request_args=request.args,
         )
     except RandyBackendError as exc:
-        return jsonify({"data_available": False, "message": str(exc), "rows": [], "summary": {}}), exc.status_code
+        return _public_backend_error_response(exc, data_available=False, rows=[], summary={})
 
     if not source_payload.get("data_available"):
         return jsonify({
@@ -7338,7 +7368,7 @@ def protacability_detail(pdb_code, chain_id):
         try:
             return jsonify(_normalize_remote_attachment_site_display(_remote_protacability_get(f"protacability/detail/{pdb_code}/{chain_id}", max_bytes=2 * 1024 * 1024)))
         except RandyBackendError as exc:
-            return jsonify({"data_available": False, "message": str(exc)}), exc.status_code
+            return _public_backend_error_response(exc, data_available=False)
     if mode == "auto" and randy_available():
         try:
             return jsonify(_normalize_remote_attachment_site_display(_remote_protacability_get(f"protacability/detail/{pdb_code}/{chain_id}", max_bytes=2 * 1024 * 1024)))
@@ -7347,7 +7377,7 @@ def protacability_detail(pdb_code, chain_id):
     try:
         source_payload = _load_protacability_source_payload(pdb_code=pdb_code, include_lysine=True, include_inventory=True)
     except RandyBackendError as exc:
-        return jsonify({"data_available": False, "message": str(exc)}), exc.status_code
+        return _public_backend_error_response(exc, data_available=False)
 
     if not source_payload.get("data_available"):
         return jsonify({
@@ -7439,7 +7469,7 @@ def protacability_structure_detail(pdb_code):
         try:
             return jsonify(_normalize_remote_attachment_site_display(_remote_protacability_get(f"protacability/structure-detail/{pdb_code}", params=request.args, max_bytes=2 * 1024 * 1024)))
         except RandyBackendError as exc:
-            return jsonify({"data_available": False, "message": str(exc)}), exc.status_code
+            return _public_backend_error_response(exc, data_available=False)
     if mode == "auto" and randy_available():
         try:
             return jsonify(_normalize_remote_attachment_site_display(_remote_protacability_get(f"protacability/structure-detail/{pdb_code}", params=request.args, max_bytes=2 * 1024 * 1024)))
@@ -7448,7 +7478,7 @@ def protacability_structure_detail(pdb_code):
     try:
         source_payload = _load_protacability_source_payload(pdb_code=pdb_code, include_lysine=True, include_inventory=True)
     except RandyBackendError as exc:
-        return jsonify({"data_available": False, "message": str(exc)}), exc.status_code
+        return _public_backend_error_response(exc, data_available=False)
 
     if not source_payload.get("data_available"):
         return jsonify({
@@ -7568,7 +7598,7 @@ def protacability_protein_detail():
         try:
             return jsonify(_normalize_remote_attachment_site_display(_remote_protacability_get("protacability/protein-detail", params=request.args, max_bytes=2 * 1024 * 1024)))
         except RandyBackendError as exc:
-            return jsonify({"data_available": False, "message": str(exc)}), exc.status_code
+            return _public_backend_error_response(exc, data_available=False)
     if mode == "auto" and randy_available():
         try:
             return jsonify(_normalize_remote_attachment_site_display(_remote_protacability_get("protacability/protein-detail", params=request.args, max_bytes=2 * 1024 * 1024)))
@@ -7577,7 +7607,7 @@ def protacability_protein_detail():
     try:
         source_payload = _load_protacability_source_payload(virus_name=virus_name, protein_type=protein_type)
     except RandyBackendError as exc:
-        return jsonify({"data_available": False, "message": str(exc)}), exc.status_code
+        return _public_backend_error_response(exc, data_available=False)
 
     if not source_payload.get("data_available"):
         return jsonify({
@@ -7648,7 +7678,7 @@ def protacability_target_detail():
         try:
             return jsonify(_normalize_remote_attachment_site_display(_remote_protacability_get("protacability/target-detail", params=request.args, max_bytes=10 * 1024 * 1024)))
         except RandyBackendError as exc:
-            return jsonify({"data_available": False, "message": str(exc)}), exc.status_code
+            return _public_backend_error_response(exc, data_available=False)
     if mode == "auto" and randy_available():
         try:
             return jsonify(_normalize_remote_attachment_site_display(_remote_protacability_get("protacability/target-detail", params=request.args, max_bytes=10 * 1024 * 1024)))
@@ -7664,7 +7694,7 @@ def protacability_target_detail():
             finally:
                 conn.close()
         except sqlite3.Error as exc:
-            return jsonify({"data_available": False, "message": str(exc)}), 500
+            return _public_backend_error_response(exc, data_available=False)
         rows = _decorate_protacability_rows(
             assessment_rows,
             collapse_labels=collapse_labels,
@@ -7681,7 +7711,7 @@ def protacability_target_detail():
         try:
             source_payload = _load_protacability_source_payload(virus_name=virus_name, protein_type=protein_type)
         except RandyBackendError as exc:
-            return jsonify({"data_available": False, "message": str(exc)}), exc.status_code
+            return _public_backend_error_response(exc, data_available=False)
 
         if not source_payload.get("data_available"):
             return jsonify({"data_available": False, "message": "PROTACability data is not available."}), 404
@@ -7811,7 +7841,7 @@ def protacability_export():
             try:
                 raw_payload = randy_get("protacability/raw-table", params={"raw_export": raw_export}, max_bytes=None)
             except RandyBackendError as exc:
-                return jsonify({"success": False, "message": str(exc)}), exc.status_code
+                return _public_backend_error_response(exc, success=False)
             table_name = raw_payload.get("table_name")
             df = pd.DataFrame(raw_payload.get("rows", []))
         elif mode == "auto" and randy_available():
@@ -7843,7 +7873,7 @@ def protacability_export():
         try:
             payload = _remote_protacability_get("protacability/export-filtered", params=request.args, max_bytes=None)
         except RandyBackendError as exc:
-            return jsonify({"success": False, "message": str(exc)}), exc.status_code
+            return _public_backend_error_response(exc, success=False)
     elif mode == "auto" and randy_available():
         try:
             payload = _remote_protacability_get("protacability/export-filtered", params=request.args, max_bytes=None)
@@ -7857,7 +7887,7 @@ def protacability_export():
         try:
             source_payload = _load_protacability_source_payload()
         except RandyBackendError as exc:
-            return jsonify({"success": False, "message": str(exc)}), exc.status_code
+            return _public_backend_error_response(exc, success=False)
 
         if not source_payload.get("data_available"):
             return jsonify({

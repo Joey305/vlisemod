@@ -171,11 +171,22 @@ def validate_fixture(database: Path) -> None:
         instance_id = dr7[0]
         mapped = db.execute("SELECT count(*) FROM ligand_smiles_atom_mapping WHERE ligand_instance_id=? AND method_version='legacy_mcs_etkdg_uff_cif_v2.5' AND mapping_status IN ('mapped_element_validated','complete')", (instance_id,)).fetchone()[0]
         exposed = db.execute("SELECT count(*) FROM ligand_sasa_atoms WHERE ligand_instance_id=? AND method_version='biopython-shrake_rupley-1.40-cif-v2.1' AND legacy_exposed=1", (instance_id,)).fetchone()[0]
+        arpeggio = db.execute("""SELECT run_id, status, provenance_validation_status,
+            output_validation_status FROM ligand_arpeggio_runs
+            WHERE ligand_instance_id=? ORDER BY arpeggio_run_id DESC LIMIT 1""", (instance_id,)).fetchone()
+        assert arpeggio, "3EKY/DR7 Arpeggio run is absent"
+        raw_labels = db.execute("SELECT count(*) FROM arpeggio_raw_contact_labels WHERE run_id=?", (arpeggio[0],)).fetchone()[0]
+        unique_pairs = db.execute("SELECT count(*) FROM arpeggio_unique_atom_pairs WHERE run_id=?", (arpeggio[0],)).fetchone()[0]
+        unreconciled_pairs = db.execute("SELECT count(*) FROM arpeggio_unique_atom_pairs WHERE run_id=? AND ligand_instance_atom_id IS NULL", (arpeggio[0],)).fetchone()[0]
         scores = dict(db.execute("SELECT chain_id, protacability_proxy_score FROM protacability_assessment WHERE ligand_instance_id=? AND method_version='protacability-cif-v2.8'", (instance_id,)).fetchall())
         high = db.execute("SELECT count(*) FROM protacability_attachment_sites WHERE ligand_instance_id=? AND method_version='attachment-sites-cif-v2.6' AND high_priority_attachment_atom=1", (instance_id,)).fetchone()[0]
         moderate = {row[0] for row in db.execute("SELECT exact_atom FROM protacability_attachment_sites WHERE ligand_instance_id=? AND method_version='attachment-sites-cif-v2.6' AND attachment_priority_score=79 AND atom_chemical_role='conditional_substitution_site'", (instance_id,))}
     assert mapped == 51, f"mapping {mapped}/51"
     assert exposed == 12, f"exposed atoms {exposed}/12"
+    assert arpeggio[1:] == ("completed", "authoritative_source_input", "valid_parseable_ligand_selected"), arpeggio
+    assert raw_labels == 1364, f"Arpeggio raw labels {raw_labels}/1364"
+    assert unique_pairs == 455, f"Arpeggio unique pairs {unique_pairs}/455"
+    assert unreconciled_pairs == 0, f"Arpeggio unreconciled pairs {unreconciled_pairs}/0"
     assert scores == {"A": 52.86, "B": 81.43}, scores
     assert high == 0, f"high sites {high}"
     assert moderate == {"CAO", "CAR", "CAS", "NBD"}, moderate
