@@ -120,7 +120,14 @@
         }
     };
 
-    document.querySelectorAll('[data-analysis-builder-open]').forEach((button) => button.addEventListener('click', open));
+    document.querySelectorAll('[data-analysis-builder-open]').forEach((trigger) => {
+        trigger.addEventListener('click', (event) => {
+            // Explorer links remain usable without JavaScript, but open the shared
+            // in-page builder whenever the popup runtime is available.
+            event.preventDefault();
+            open();
+        });
+    });
     document.addEventListener('click', (event) => {
         const trigger = event.target.closest('[data-analysis-context]');
         if (!trigger) return;

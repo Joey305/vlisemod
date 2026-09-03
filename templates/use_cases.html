@@ -17,7 +17,7 @@
             a viral target, ligand, or structural question toward clearer evidence, interpretable design logic, and review-ready outputs.
         </p>
         <div class="action-row resource-hero-actions">
-            <a class="button-primary" href="{{ url_for('index') }}">Open Structure Explorer</a>
+            <a class="button-primary" href="{{ url_for('index') }}" data-analysis-builder-open>Open Structure Explorer</a>
             <a class="button-secondary" href="#workflow-starts">Choose a workflow</a>
             <a class="button-ghost" href="#research-workflows">See use cases</a>
         </div>
@@ -97,7 +97,7 @@
         <p class="page-subtitle">V-LiSEMOD is flexible. Start with the tool that matches the question you are trying to answer.</p>
     </div>
     <div class="resource-grid usecases-start-grid">
-        <a class="resource-card resource-card-link usecases-link-card" href="{{ url_for('index') }}">
+        <a class="resource-card resource-card-link usecases-link-card" href="{{ url_for('index') }}" data-analysis-builder-open>
             <h3>Start with Structure Explorer</h3>
             <p>Open the main workspace and build a PyMOL-ready structure review session.</p>
             <span class="resource-card-cta">Open Structure Explorer →</span>
@@ -173,7 +173,7 @@
         your current question, then use the outputs to support follow-up discussion, comparison, and design thinking.
     </p>
     <div class="action-row">
-        <a class="button-primary" href="{{ url_for('index') }}">Open Structure Explorer</a>
+        <a class="button-primary" href="{{ url_for('index') }}" data-analysis-builder-open>Open Structure Explorer</a>
         <a class="button-secondary" href="{{ url_for('compare_ligands') }}">Compare Ligands</a>
         <a class="button-secondary" href="{{ url_for('protacability_page') }}">Review PROTACability</a>
     </div>

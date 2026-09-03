@@ -70,7 +70,7 @@
                     <p>Structure-guided viral protein-ligand analysis, solvent-exposed atom review, PyMOL exports, ligand comparison, and PROTACability-style structural triage in one workspace.</p>
                 </div>
                 <div class="footer-action-row">
-                    <a class="footer-button footer-button-primary" href="{{ url_for('index') }}">Open Structure Explorer</a>
+                    <a class="footer-button footer-button-primary" href="{{ url_for('index') }}" data-analysis-builder-open>Open Structure Explorer</a>
                     <a class="footer-button footer-button-secondary" href="{{ url_for('about_page') }}">About the Project</a>
                     <a class="footer-button footer-button-secondary" href="{{ url_for('contact_page') }}">Contact</a>
                 </div>
@@ -84,7 +84,7 @@
                         <span>Explore V-LiSEMOD</span>
                     </h3>
                     <div class="footer-link-list">
-                        <a href="{{ url_for('index') }}">Structure Explorer</a>
+                        <a href="{{ url_for('index') }}" data-analysis-builder-open>Structure Explorer</a>
                         <a href="{{ url_for('query_protein_virus_page') }}">Protein Query</a>
                         <a href="{{ url_for('ligand_indexer') }}">Ligand Indexer</a>
                         <a href="{{ url_for('compare_ligands') }}">Ligand Comparison</a>
