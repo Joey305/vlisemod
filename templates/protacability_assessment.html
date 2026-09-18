@@ -1174,6 +1174,15 @@
                 tableWrap.hide();
                 targetBrowser.show();
                 rows.forEach(row => {
+                    // When the Target Browser is filtered by a PDB code, the
+                    // aggregate target card should retain that exact structure
+                    // as its direct viewer destination.  Without this action,
+                    // every button only opened the target aggregate and users
+                    // had to select the searched structure a second time.
+                    const requestedPdbCode = String($('#protac-pdb-code').val() || '').trim().toUpperCase();
+                    const directPdbCode = requestedPdbCode || String(row.best_pdb_code || '').trim().toUpperCase();
+                    const directStructureAction = directPdbCode ? `
+                                <button type="button" class="button-secondary protac-target-action" data-action="structure-card" data-pdb="${escapeHtml(directPdbCode)}">Open ${escapeHtml(directPdbCode)} structure card</button>` : '';
                     targetBrowser.append(`
                         <article class="page-card protac-target-card">
                             <div class="protac-target-card-head">
@@ -1198,6 +1207,7 @@
                             <p><strong>Interpretation:</strong> ${escapeHtml(row.interpretation_note || '—')}</p>
                             ${renderConcernBadges(row)}
                             <div class="action-row">
+                                ${directStructureAction}
                                 <button type="button" class="button-secondary protac-target-action" data-action="structures" data-virus="${escapeHtml(row.virus_name)}" data-protein="${escapeHtml(row.protein_type)}" data-target-id="${escapeHtml(row.canonical_target_id)}">View structures</button>
                                 <button type="button" class="button-secondary protac-target-action" data-action="ligands" data-virus="${escapeHtml(row.virus_name)}" data-protein="${escapeHtml(row.protein_type)}" data-target-id="${escapeHtml(row.canonical_target_id)}">View ligands</button>
                                 <button type="button" class="button-secondary protac-target-action" data-action="best3d" data-virus="${escapeHtml(row.virus_name)}" data-protein="${escapeHtml(row.protein_type)}" data-target-id="${escapeHtml(row.canonical_target_id)}">View best 3D context</button>
@@ -2731,6 +2741,21 @@
                 const virus = button.data('virus');
                 const protein = button.data('protein');
                 const targetId = button.data('target-id');
+                const pdbCode = String(button.data('pdb') || '').trim().toUpperCase();
+                if (action === 'structure-card' && pdbCode) {
+                    $('#protac-detail-content').html('<h2 class="page-title">Opening structure card...</h2>');
+                    $('#protacability-detail-modal').show();
+                    const params = new URLSearchParams({
+                        collapse_labels: $('#toggle-collapse-labels').is(':checked') ? '1' : '0'
+                    });
+                    withProtacLoading(function() {
+                        return $.getJSON(`/api/protacability/structure_detail/${encodeURIComponent(pdbCode)}?${params.toString()}`, renderStructureDetail).fail(function(xhr) {
+                            console.error('[protacability] direct structure card failed', { pdbCode, status: xhr.status, responseText: xhr.responseText });
+                            $('#protac-detail-content').html(`<h2 class="page-title">Unable to open the ${escapeHtml(pdbCode)} structure card.</h2>`);
+                        });
+                    }, `Opening ${pdbCode} structure card…`);
+                    return;
+                }
                 if (action === 'best3d' || action === 'structures' || action === 'ligands') {
                     $('#protac-detail-content').html('<h2 class="page-title">Loading detail...</h2>');
                     $('#protacability-detail-modal').show();

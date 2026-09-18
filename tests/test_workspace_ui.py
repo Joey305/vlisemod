@@ -60,6 +60,12 @@ class WorkspaceUiTests(unittest.TestCase):
     def test_selected_target_structure_uses_its_pdb_not_a_legacy_label_filter(self):
         self.assertIn('new URLSearchParams({ collapse_labels: \'1\' })', PROTAC)
 
+    def test_target_card_can_open_the_searched_pdb_structure_card_directly(self):
+        self.assertIn('data-action="structure-card"', PROTAC)
+        self.assertIn('Open ${escapeHtml(directPdbCode)} structure card', PROTAC)
+        self.assertIn("action === 'structure-card' && pdbCode", PROTAC)
+        self.assertIn('api/protacability/structure_detail/${encodeURIComponent(pdbCode)}', PROTAC)
+
 
 if __name__ == "__main__":
     unittest.main()
