@@ -51,6 +51,8 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %
 
 # Initialize the Flask app
 app = Flask(__name__)
+app.secret_key = os.environ.get("WARHEAD_SECRET_KEY") or os.environ.get("FLASK_SECRET_KEY") or os.urandom(32)
+app.config.update(SESSION_COOKIE_HTTPONLY=True, SESSION_COOKIE_SAMESITE="Lax")
 
 
 class RandyBackendError(Exception):
@@ -286,6 +288,15 @@ def randy_post(path, json=None, *, max_bytes=10 * 1024 * 1024):
         raise RandyBackendError("RANDY API returned non-JSON response.", status_code=502)
 
     return payload
+
+
+# Analytics is a separate blueprint and uses the same authenticated V-LiSEMOD
+# receiver configuration as the established data/backup connection.
+from vlismod_analytics import bp as vlismod_analytics_bp, track_page_view
+app.config["RANDY_GET"] = randy_get
+app.config["RANDY_POST"] = randy_post
+app.register_blueprint(vlismod_analytics_bp)
+app.after_request(track_page_view)
 
 
 def local_tables_available(required_tables):

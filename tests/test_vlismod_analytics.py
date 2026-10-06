@@ -1,0 +1,37 @@
+import os
+
+from flask import Flask
+
+os.environ.setdefault("ADMIN_EMAIL", "admin@example.test")
+os.environ.setdefault("ADMIN_PASSWORD", "correct-password")
+
+from vlismod_analytics import bp, track_page_view
+
+
+def make_app(events):
+    app = Flask(__name__)
+    app.secret_key = "test-secret"
+    app.config.update(RANDY_ANALYTICS_ENABLED=True, RANDY_POST=lambda *args, **kwargs: events.append(kwargs["json"]) or {"ok": True}, RANDY_GET=lambda *args, **kwargs: {"summary": {"unique_visitors": 1, "sessions": 1, "page_views": 1}, "referrers": [], "devices": [], "pages": [], "countries": [], "funnel": [], "operations": {"submitted": 0, "completed": 0, "failed": 0, "success_rate": None, "failures": []}, "legacy": {"note": "Unavailable"}})
+    app.register_blueprint(bp)
+    app.after_request(track_page_view)
+    @app.get("/")
+    def home(): return "<html>public</html>"
+    return app
+
+
+def test_anonymous_visitor_and_session_are_deduplicated():
+    events = []; client = make_app(events).test_client()
+    client.get("/"); client.get("/")
+    assert len(events) == 2
+    assert events[0]["visitor_id"] == events[1]["visitor_id"]
+    assert events[0]["session_id"] == events[1]["session_id"]
+    assert all(e["event_type"] == "page_view" for e in events)
+
+
+def test_admin_login_protection_and_dashboard_rendering():
+    events = []; client = make_app(events).test_client()
+    assert client.get("/admin/analytics").status_code == 302
+    assert client.post("/admin/login", data={"email": "admin@example.test", "password": "wrong"}).status_code == 200
+    response = client.post("/admin/login", data={"email": "admin@example.test", "password": "correct-password"}, follow_redirects=True)
+    assert response.status_code == 200
+    assert b"Product analytics" in response.data
