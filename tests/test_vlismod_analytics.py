@@ -35,3 +35,16 @@ def test_admin_login_protection_and_dashboard_rendering():
     response = client.post("/admin/login", data={"email": "admin@example.test", "password": "correct-password"}, follow_redirects=True)
     assert response.status_code == 200
     assert b"Product analytics" in response.data
+
+
+def test_geoip_uses_forwarded_browser_address(monkeypatch):
+    from vlismod_analytics import _geoip
+    captured = {}
+    class Reply:
+        def json(self): return {"country_code": "US", "country": "United States", "latitude": 38, "longitude": -97}
+    monkeypatch.setenv("VLISMOD_USAGE_GEOIP", "1")
+    monkeypatch.setattr("vlismod_analytics.requests.get", lambda url, timeout: captured.setdefault("url", url) and Reply())
+    app = Flask(__name__)
+    with app.test_request_context("/", headers={"X-Forwarded-For": "203.0.113.8, 10.0.0.1"}):
+        assert _geoip()["country_code"] == "US"
+    assert captured["url"].endswith("/203.0.113.8")

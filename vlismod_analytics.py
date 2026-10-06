@@ -36,7 +36,10 @@ def _geoip() -> dict:
     if os.environ.get("VLISMOD_USAGE_GEOIP", "0") != "1": return {}
     # The address exists only in this outbound lookup and is never persisted or logged.
     try:
-        reply = requests.get(f"https://ipwho.is/{request.remote_addr}", timeout=1.5).json()
+        # Heroku terminates TLS before Flask, so remote_addr is its private router
+        # address.  The left-most forwarded value is the original browser address.
+        client_ip = (request.headers.get("X-Forwarded-For", "").split(",", 1)[0].strip() or request.remote_addr)
+        reply = requests.get(f"https://ipwho.is/{client_ip}", timeout=1.5).json()
         if reply.get("success") is False: return {}
         return {"country_code": str(reply.get("country_code") or "")[:3], "country_name": str(reply.get("country") or "")[:80], "latitude": reply.get("latitude"), "longitude": reply.get("longitude")}
     except (requests.RequestException, ValueError):
