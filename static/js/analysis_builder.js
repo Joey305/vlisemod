@@ -204,6 +204,7 @@
 
     imageButton.addEventListener('click', () => {
         if (!virus.value || !pdb.value || !ligand.value || !chain.value) return;
+        if (window.vlismodAnalytics) window.vlismodAnalytics.send('analysis_submitted', 'ligand_images');
         const fields = imageForm.elements;
         fields.virus.value = virus.value;
         fields.pdb_code.value = pdb.value;

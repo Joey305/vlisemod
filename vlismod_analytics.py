@@ -1,7 +1,6 @@
 """V-LiSEMOD client-side analytics plumbing with privacy-safe server enrichment."""
 from __future__ import annotations
 
-import hashlib
 import os
 import secrets
 from datetime import datetime, timezone
@@ -15,6 +14,26 @@ from flask import Blueprint, current_app, jsonify, redirect, render_template, re
 bp = Blueprint("vlismod_analytics_ui", __name__)
 COOKIE_VISITOR, COOKIE_SESSION = "vlismod_vid", "vlismod_sid"
 EVENTS = {"workflow_started", "upload_started", "analysis_submitted", "analysis_completed", "analysis_failed", "results_viewed", "export_generated", "companion_handoff"}
+FEATURES = {
+    "analysis_builder", "protein_query", "ligand_query", "ligand_comparison", "protacability",
+    "ligand_interactions", "protacability_search", "pymol_session", "ligand_images",
+    "protein_query_results", "ligand_interaction_results", "ligand_comparison_results",
+    "protacability_target_detail", "protacability_structure_detail", "protacability_ligand_detail",
+    "protein_query_export", "protacability_evidence_export", "builder_from_landing",
+    "builder_from_ligand_query", "builder_from_ligand_comparison", "builder_from_protacability",
+    "builder_from_viral_protac_design",
+}
+FAILURE_STAGES = {"selection", "input_validation", "interaction_analysis", "comparison", "protacability_search", "image_generation", "pymol_generation", "export", "handoff", "unknown"}
+SERVER_OUTCOMES = {
+    "/generate_pymol_session": ("pymol_session", "pymol_generation", True),
+    "/generate_ligand_images": ("ligand_images", "image_generation", True),
+    "/generate_charts": ("ligand_interactions", "interaction_analysis", False),
+    "/compare_ligand_interactions": ("ligand_comparison", "comparison", False),
+    "/get_pdbs_for_virus_protein": ("protein_query", "selection", False),
+    "/api/protacability/search": ("protacability_search", "protacability_search", False),
+    "/api/protacability/export": ("protacability_evidence_export", "export", False),
+    "/export_data_to_excel": ("protein_query_export", "export", False),
+}
 
 
 def _ids():
@@ -47,6 +66,10 @@ def _geoip() -> dict:
 
 
 def _emit(event_type: str, *, path: str | None = None, feature: str = "", failure_stage: str = "", event_id: str | None = None, visitor_id: str | None = None, session_id: str | None = None) -> bool:
+    if event_type not in EVENTS | {"page_view"} or (feature and feature not in FEATURES):
+        return False
+    if failure_stage and failure_stage not in FAILURE_STAGES:
+        failure_stage = "unknown"
     if not current_app.config.get("RANDY_ANALYTICS_ENABLED", True): return False
     visitor_id, session_id = visitor_id or _ids()[0], session_id or _ids()[1]
     event_id = event_id or secrets.token_urlsafe(24)
@@ -66,6 +89,30 @@ def track_page_view(response):
     _emit("page_view", visitor_id=visitor_id, session_id=session_id)
     if not request.cookies.get(COOKIE_VISITOR): response.set_cookie(COOKIE_VISITOR, visitor_id, max_age=60 * 60 * 24 * 400, secure=request.is_secure, httponly=True, samesite="Lax")
     if not request.cookies.get(COOKIE_SESSION): response.set_cookie(COOKIE_SESSION, session_id, secure=request.is_secure, httponly=True, samesite="Lax")
+    return response
+
+
+def track_server_outcome(response):
+    """Record only safe route outcomes; request payloads never enter analytics."""
+    outcome = SERVER_OUTCOMES.get(request.path)
+    if not outcome or request.method not in {"POST", "GET"}:
+        return response
+    feature, failure_stage, is_output = outcome
+    if 200 <= response.status_code < 400:
+        if is_output:
+            _emit("analysis_completed", feature=feature)
+        elif feature.endswith("_export"):
+            _emit("export_generated", feature=feature)
+        else:
+            _emit("analysis_completed", feature=feature)
+            result_feature = {
+                "protein_query": "protein_query_results", "ligand_interactions": "ligand_interaction_results",
+                "ligand_comparison": "ligand_comparison_results", "protacability_search": "protacability_target_detail",
+            }.get(feature)
+            if result_feature:
+                _emit("results_viewed", feature=result_feature)
+    elif response.status_code >= 400:
+        _emit("analysis_failed", feature=feature, failure_stage=failure_stage)
     return response
 
 
@@ -115,8 +162,9 @@ def admin_analytics():
 def browser_event():
     payload = request.get_json(silent=True) or {}
     event_type = str(payload.get("event_type") or "")
-    if event_type not in EVENTS: return jsonify({"ok": False}), 400
+    feature = str(payload.get("feature") or "")
+    if event_type not in EVENTS or feature not in FEATURES: return jsonify({"ok": False}), 400
     event_id = str(payload.get("event_id") or "")[:80]
     # Only a fixed, non-sensitive feature label and safe failure stage are accepted.
-    ok = _emit(event_type, feature=str(payload.get("feature") or "")[:80], failure_stage=str(payload.get("failure_stage") or "")[:40], event_id=event_id or None)
+    ok = _emit(event_type, feature=feature, failure_stage=str(payload.get("failure_stage") or "")[:40], event_id=event_id or None)
     return jsonify({"ok": ok})

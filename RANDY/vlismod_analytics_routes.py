@@ -19,7 +19,8 @@ from flask import Blueprint, jsonify, request
 
 bp = Blueprint("vlismod_analytics", __name__)
 _ALLOWED_EVENTS = {"page_view", "workflow_started", "upload_started", "analysis_submitted", "analysis_completed", "analysis_failed", "results_viewed", "export_generated", "companion_handoff"}
-_ALLOWED_STAGES = {"selection", "image_generation", "pymol_generation", "export", "handoff", "unknown"}
+_ALLOWED_FEATURES = {"analysis_builder", "protein_query", "ligand_query", "ligand_comparison", "protacability", "ligand_interactions", "protacability_search", "pymol_session", "ligand_images", "protein_query_results", "ligand_interaction_results", "ligand_comparison_results", "protacability_target_detail", "protacability_structure_detail", "protacability_ligand_detail", "protein_query_export", "protacability_evidence_export", "builder_from_landing", "builder_from_ligand_query", "builder_from_ligand_comparison", "builder_from_protacability", "builder_from_viral_protac_design"}
+_ALLOWED_STAGES = {"selection", "input_validation", "interaction_analysis", "comparison", "protacability_search", "image_generation", "pymol_generation", "export", "handoff", "unknown"}
 
 
 def _token() -> str:
@@ -63,6 +64,9 @@ def ingest_event():
     event_type = _safe(data.get("event_type"), 40)
     if event_type not in _ALLOWED_EVENTS:
         return jsonify({"ok": False, "error": "Unsupported analytics event."}), 400
+    feature = _safe(data.get("feature"), 80)
+    if event_type != "page_view" and feature not in _ALLOWED_FEATURES:
+        return jsonify({"ok": False, "error": "Unsupported analytics feature."}), 400
     event_id, visitor_id, session_id = (_safe(data.get(k), 80) for k in ("event_id", "visitor_id", "session_id"))
     if not event_id or not visitor_id or not session_id:
         return jsonify({"ok": False, "error": "Missing anonymous event identifier."}), 400
@@ -73,7 +77,7 @@ def ingest_event():
     stage = _safe(data.get("failure_stage"), 40)
     if stage not in _ALLOWED_STAGES:
         stage = ""
-    row = (event_id, occurred, event_type, visitor_id, session_id, path, _safe(data.get("referrer"), 100) or "direct", _safe(data.get("device_class"), 20) or "desktop", _safe(data.get("country_code"), 3), _safe(data.get("country_name"), 80), data.get("latitude"), data.get("longitude"), _safe(data.get("feature"), 80), stage)
+    row = (event_id, occurred, event_type, visitor_id, session_id, path, _safe(data.get("referrer"), 100) or "direct", _safe(data.get("device_class"), 20) or "desktop", _safe(data.get("country_code"), 3), _safe(data.get("country_name"), 80), data.get("latitude"), data.get("longitude"), feature, stage)
     with _connect() as conn:
         before = conn.total_changes
         conn.execute("INSERT OR IGNORE INTO vlismod_events VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", row)
@@ -108,12 +112,20 @@ def rollup():
         if not e["country_code"]: continue
         item = countries.setdefault(e["country_code"], {"code": e["country_code"], "name": e["country_name"] or e["country_code"], "count": 0, "latitude": e["latitude"], "longitude": e["longitude"]})
         item["count"] += 1
-    funnel_types = [("Landing page", "page_view"), ("Workflow start", "workflow_started"), ("Analysis submitted", "analysis_submitted"), ("Analysis completed", "analysis_completed"), ("Results viewed", "results_viewed"), ("Export or handoff", "export_generated")]
+    funnel_types = [("Landing page", "page_view"), ("Workflow started", "workflow_started"), ("Analysis submitted", "analysis_submitted"), ("Analysis completed", "analysis_completed"), ("Results viewed", "results_viewed"), ("Export or Builder handoff", "terminal")]
     funnel = []
     previous = None
     for label, typ in funnel_types:
-        count = len({e["session_id"] for e in events if e["event_type"] == typ})
-        funnel.append({"label": label, "count": count, "conversion": round((count / previous * 100), 1) if previous else 100.0})
+        count = len({e["session_id"] for e in events if e["event_type"] in {"export_generated", "companion_handoff"}}) if typ == "terminal" else len({e["session_id"] for e in events if e["event_type"] == typ})
+        funnel.append({"label": label, "count": count, "conversion": round((count / previous * 100), 1) if previous else None})
         previous = count
     submitted = sum(e["event_type"] == "analysis_submitted" for e in events); completed = sum(e["event_type"] == "analysis_completed" for e in events); failed = sum(e["event_type"] == "analysis_failed" for e in events)
-    return jsonify({"ok": True, "period": request.args.get("period", "30d"), "legacy": {"available": False, "note": "No inferred historical visitor, session, referrer, or location data is displayed."}, "summary": {"unique_visitors": len(visitors), "sessions": len(sessions), "page_views": len(page_views)}, "daily": [{"date": k, "views": v} for k, v in sorted(daily.items())], "referrers": by_referrer.most_common(10), "devices": by_device.most_common(), "pages": sorted(({**x, "visitors": len(x["visitors"])} for x in pages.values()), key=lambda x: x["views"], reverse=True)[:25], "countries": sorted(countries.values(), key=lambda x: x["count"], reverse=True), "funnel": funnel, "operations": {"submitted": submitted, "completed": completed, "failed": failed, "success_rate": round(completed / submitted * 100, 1) if submitted else None, "failures": [{"when": e["occurred_at"], "stage": e["failure_stage"] or "unknown", "feature": e["feature"] or "analysis"} for e in events if e["event_type"] == "analysis_failed"][:10], "top_features": Counter(e["feature"] or e["path"] for e in events if e["event_type"] != "page_view").most_common(10)}})
+    workflows = []
+    for label, feature in [("Protein Query", "protein_query"), ("Ligand Interactions", "ligand_interactions"), ("Ligand Comparison", "ligand_comparison"), ("PROTACability", "protacability_search"), ("PyMOL Session", "pymol_session"), ("Ligand Images", "ligand_images")]:
+        relevant = [e for e in events if e["feature"] == feature]
+        starts = sum(e["event_type"] in {"workflow_started", "analysis_submitted"} for e in relevant)
+        done = sum(e["event_type"] == "analysis_completed" for e in relevant)
+        failures = sum(e["event_type"] == "analysis_failed" for e in relevant)
+        workflows.append({"label": label, "starts": starts, "completed": done, "failed": failures, "completion_rate": round(done / starts * 100, 1) if starts else None, "exports": sum(e["event_type"] == "export_generated" and feature.split("_")[0] in e["feature"] for e in events), "handoffs": 0})
+    handoffs = Counter(e["feature"] for e in events if e["event_type"] == "companion_handoff")
+    return jsonify({"ok": True, "period": request.args.get("period", "30d"), "legacy": {"available": False, "note": "No inferred historical visitor, session, referrer, or location data is displayed."}, "summary": {"unique_visitors": len(visitors), "sessions": len(sessions), "page_views": len(page_views), "workflow_starts": sum(e["event_type"] == "workflow_started" for e in events), "completed_analyses": completed, "exports": sum(e["event_type"] == "export_generated" for e in events), "builder_handoffs": sum(handoffs.values())}, "daily": [{"date": k, "views": v} for k, v in sorted(daily.items())], "referrers": by_referrer.most_common(10), "devices": by_device.most_common(), "pages": sorted(({**x, "visitors": len(x["visitors"])} for x in pages.values()), key=lambda x: x["views"], reverse=True)[:25], "countries": sorted(countries.values(), key=lambda x: x["count"], reverse=True), "funnel": funnel, "workflows": workflows, "handoffs": {"total": sum(handoffs.values()), "session_rate": round(len({e["session_id"] for e in events if e["event_type"] == "companion_handoff"}) / len(sessions) * 100, 1) if sessions else None, "by_origin": handoffs.most_common()}, "operations": {"submitted": submitted, "completed": completed, "failed": failed, "success_rate": round(completed / submitted * 100, 1) if submitted else None, "failures": [{"when": e["occurred_at"], "stage": e["failure_stage"] or "unknown", "feature": e["feature"] or "analysis"} for e in events if e["event_type"] == "analysis_failed"][:10], "top_features": Counter(e["feature"] or e["path"] for e in events if e["event_type"] != "page_view").most_common(10)}})
