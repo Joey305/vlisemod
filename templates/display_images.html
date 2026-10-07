@@ -856,7 +856,8 @@ function useAsWarhead(ligandCode) {
 
     const targetUrl = `https://protacbuilder.com/builder?ligand=${encodeURIComponent(cleanCode)}`;
     console.log("[warhead handoff]", { ligandCode: cleanCode, url: targetUrl });
-    window.open(targetUrl, "_blank", "noopener,noreferrer");
+    if (window.vlismodAnalytics) window.vlismodAnalytics.openBuilderHandoff({ url: targetUrl, origin: 'builder_from_ligand_query' });
+    else window.open(targetUrl, "_blank", "noopener,noreferrer");
 }
 
 function updateLigandDebugPanel(payload, ligandCtx) {

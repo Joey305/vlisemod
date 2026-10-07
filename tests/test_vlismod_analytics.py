@@ -1,4 +1,5 @@
 import os
+import time
 
 from flask import Flask
 
@@ -11,7 +12,7 @@ from vlismod_analytics import bp, track_page_view, track_server_outcome
 def make_app(events):
     app = Flask(__name__)
     app.secret_key = "test-secret"
-    app.config.update(RANDY_ANALYTICS_ENABLED=True, RANDY_POST=lambda *args, **kwargs: events.append(kwargs["json"]) or {"ok": True}, RANDY_GET=lambda *args, **kwargs: {"summary": {"unique_visitors": 1, "sessions": 1, "page_views": 1, "workflow_starts": 0, "completed_analyses": 0, "exports": 0, "builder_handoffs": 0}, "referrers": [], "devices": [], "pages": [], "countries": [], "funnel": [], "workflows": [], "handoffs": {"session_rate": None, "by_origin": []}, "operations": {"submitted": 0, "completed": 0, "failed": 0, "success_rate": None, "failures": []}, "legacy": {"note": "Unavailable"}})
+    app.config.update(RANDY_ANALYTICS_ENABLED=True, RANDY_ANALYTICS_SYNC=True, RANDY_POST=lambda *args, **kwargs: events.append(kwargs["json"]) or {"ok": True}, RANDY_GET=lambda *args, **kwargs: {"summary": {"unique_visitors": 1, "sessions": 1, "page_views": 1, "workflow_starts": 0, "completed_analyses": 0, "exports": 0, "builder_handoffs": 0}, "referrers": [], "devices": [], "pages": [], "countries": [], "funnel": [], "workflows": [], "handoffs": {"session_rate": None, "by_origin": []}, "operations": {"submitted": 0, "completed": 0, "failed": 0, "success_rate": None, "failures": []}, "legacy": {"note": "Unavailable"}})
     app.register_blueprint(bp)
     app.after_request(track_page_view)
     app.after_request(track_server_outcome)
@@ -55,3 +56,24 @@ def test_browser_events_accept_only_safe_feature_labels():
     events = []; client = make_app(events).test_client()
     assert client.post("/analytics/event", json={"event_type": "workflow_started", "feature": "protein_query", "event_id": "safe"}).status_code == 200
     assert client.post("/analytics/event", json={"event_type": "workflow_started", "feature": "PDB-1ABC", "event_id": "unsafe"}).status_code == 400
+
+
+def test_handoff_id_is_required_to_be_a_safe_uuid_and_is_forwarded():
+    events = []; client = make_app(events).test_client()
+    handoff_id = "1b99df97-dde1-4b03-8ba7-c92af1b43da1"
+    assert client.post("/analytics/event", json={"event_type": "companion_handoff", "feature": "builder_from_landing", "event_id": "event-1", "handoff_id": handoff_id}).status_code == 200
+    assert events[-1]["handoff_id"] == handoff_id
+    assert client.post("/analytics/event", json={"event_type": "companion_handoff", "feature": "builder_from_landing", "event_id": "event-2", "handoff_id": "ligand-ABC"}).status_code == 400
+    assert len(events) == 1
+
+
+def test_async_delivery_does_not_delay_server_response():
+    from vlismod_analytics import track_server_outcome
+    app = Flask(__name__); app.secret_key = "test-secret"
+    app.config.update(RANDY_ANALYTICS_ENABLED=True, RANDY_POST=lambda *args, **kwargs: time.sleep(1))
+    app.after_request(track_server_outcome)
+    @app.post("/generate_charts")
+    def charts(): return {"ok": True}
+    started = time.monotonic()
+    assert app.test_client().post("/generate_charts").status_code == 200
+    assert time.monotonic() - started < 0.3

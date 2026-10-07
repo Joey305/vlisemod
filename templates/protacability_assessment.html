@@ -1859,7 +1859,8 @@
             $('#protac-detail-footer-context').text(context);
             $('#protac-footer-open-builder').attr('href', builderUrl);
             $('#protac-footer-use-warhead').off('click').on('click', function() {
-                window.open(builderUrl, '_blank', 'noopener,noreferrer');
+                if (window.vlismodAnalytics) window.vlismodAnalytics.openBuilderHandoff({ url: builderUrl, origin: 'builder_from_protacability' });
+                else window.open(builderUrl, '_blank', 'noopener,noreferrer');
             });
             $('#protac-footer-copy-context').off('click').on('click', function() {
                 navigator.clipboard.writeText(context).then(function() {
@@ -2022,7 +2023,8 @@
                     if (!cleanCode) return;
                     const url = `https://protacbuilder.com/builder?ligand=${encodeURIComponent(cleanCode)}`;
                     console.log('[warhead handoff]', { ligandCode: cleanCode, url: url });
-                    window.open(url, '_blank', 'noopener,noreferrer');
+                    if (window.vlismodAnalytics) window.vlismodAnalytics.openBuilderHandoff({ url, origin: 'builder_from_protacability' });
+                    else window.open(url, '_blank', 'noopener,noreferrer');
                 });
             }
             const ligandSelect = $('#protac-ligand-context-select');

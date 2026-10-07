@@ -1063,7 +1063,8 @@
             console.log("🔀 Opening in new tab:", redirectUrl);
 
             // ✅ Open the URL in a new tab
-            window.open(redirectUrl, "_blank", "noopener,noreferrer");
+            if (window.vlismodAnalytics) window.vlismodAnalytics.openBuilderHandoff({ url: redirectUrl, origin: 'builder_from_ligand_comparison' });
+            else window.open(redirectUrl, "_blank", "noopener,noreferrer");
         });
 
 
@@ -1071,7 +1072,8 @@
         // Legacy helper retained as redirect-only behavior after PROTAC decoupling.
         function sendLigandToDatabase(ligandCode) {
             const targetUrl = `${PROTAC_BUILDER_BASE_URL}?ligand=${encodeURIComponent(ligandCode)}`;
-            window.open(targetUrl, "_blank", "noopener,noreferrer");
+            if (window.vlismodAnalytics) window.vlismodAnalytics.openBuilderHandoff({ url: targetUrl, origin: 'builder_from_ligand_comparison' });
+            else window.open(targetUrl, "_blank", "noopener,noreferrer");
         }
 
 
@@ -1118,7 +1120,9 @@
                 var ligandCode = ligandElement.value.trim();
                 console.log("✅ Opening Ligand Editor for:", ligandCode);
 
-                window.open(`${PROTAC_BUILDER_BASE_URL}?ligand=${encodeURIComponent(ligandCode)}`, "_blank", "noopener,noreferrer");
+                const targetUrl = `${PROTAC_BUILDER_BASE_URL}?ligand=${encodeURIComponent(ligandCode)}`;
+                if (window.vlismodAnalytics) window.vlismodAnalytics.openBuilderHandoff({ url: targetUrl, origin: 'builder_from_ligand_comparison' });
+                else window.open(targetUrl, "_blank", "noopener,noreferrer");
             });
         });
 

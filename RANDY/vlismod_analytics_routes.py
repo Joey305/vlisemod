@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import os
 import sqlite3
+import re
 from collections import Counter
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -21,6 +22,7 @@ bp = Blueprint("vlismod_analytics", __name__)
 _ALLOWED_EVENTS = {"page_view", "workflow_started", "upload_started", "analysis_submitted", "analysis_completed", "analysis_failed", "results_viewed", "export_generated", "companion_handoff"}
 _ALLOWED_FEATURES = {"analysis_builder", "protein_query", "ligand_query", "ligand_comparison", "protacability", "ligand_interactions", "protacability_search", "pymol_session", "ligand_images", "protein_query_results", "ligand_interaction_results", "ligand_comparison_results", "protacability_target_detail", "protacability_structure_detail", "protacability_ligand_detail", "protein_query_export", "protacability_evidence_export", "builder_from_landing", "builder_from_ligand_query", "builder_from_ligand_comparison", "builder_from_protacability", "builder_from_viral_protac_design"}
 _ALLOWED_STAGES = {"selection", "input_validation", "interaction_analysis", "comparison", "protacability_search", "image_generation", "pymol_generation", "export", "handoff", "unknown"}
+_HANDOFF_ID_RE = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$", re.I)
 
 
 def _token() -> str:
@@ -45,8 +47,11 @@ def _connect() -> sqlite3.Connection:
         event_id TEXT PRIMARY KEY, occurred_at TEXT NOT NULL, event_type TEXT NOT NULL,
         visitor_id TEXT NOT NULL, session_id TEXT NOT NULL, path TEXT NOT NULL,
         referrer TEXT NOT NULL, device_class TEXT NOT NULL, country_code TEXT,
-        country_name TEXT, latitude REAL, longitude REAL, feature TEXT, failure_stage TEXT
+        country_name TEXT, latitude REAL, longitude REAL, feature TEXT, failure_stage TEXT, handoff_id TEXT
     )""")
+    columns = {row[1] for row in conn.execute("PRAGMA table_info(vlismod_events)")}
+    if "handoff_id" not in columns:
+        conn.execute("ALTER TABLE vlismod_events ADD COLUMN handoff_id TEXT")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_vlismod_events_time ON vlismod_events(occurred_at)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_vlismod_events_type ON vlismod_events(event_type)")
     return conn
@@ -67,6 +72,11 @@ def ingest_event():
     feature = _safe(data.get("feature"), 80)
     if event_type != "page_view" and feature not in _ALLOWED_FEATURES:
         return jsonify({"ok": False, "error": "Unsupported analytics feature."}), 400
+    handoff_id = _safe(data.get("handoff_id"), 64)
+    if event_type == "companion_handoff" and not _HANDOFF_ID_RE.fullmatch(handoff_id):
+        return jsonify({"ok": False, "error": "Invalid handoff identifier."}), 400
+    if handoff_id and (event_type != "companion_handoff" or not _HANDOFF_ID_RE.fullmatch(handoff_id)):
+        return jsonify({"ok": False, "error": "Invalid handoff identifier."}), 400
     event_id, visitor_id, session_id = (_safe(data.get(k), 80) for k in ("event_id", "visitor_id", "session_id"))
     if not event_id or not visitor_id or not session_id:
         return jsonify({"ok": False, "error": "Missing anonymous event identifier."}), 400
@@ -77,10 +87,13 @@ def ingest_event():
     stage = _safe(data.get("failure_stage"), 40)
     if stage not in _ALLOWED_STAGES:
         stage = ""
-    row = (event_id, occurred, event_type, visitor_id, session_id, path, _safe(data.get("referrer"), 100) or "direct", _safe(data.get("device_class"), 20) or "desktop", _safe(data.get("country_code"), 3), _safe(data.get("country_name"), 80), data.get("latitude"), data.get("longitude"), feature, stage)
+    row = (event_id, occurred, event_type, visitor_id, session_id, path, _safe(data.get("referrer"), 100) or "direct", _safe(data.get("device_class"), 20) or "desktop", _safe(data.get("country_code"), 3), _safe(data.get("country_name"), 80), data.get("latitude"), data.get("longitude"), feature, stage, handoff_id)
     with _connect() as conn:
         before = conn.total_changes
-        conn.execute("INSERT OR IGNORE INTO vlismod_events VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", row)
+        conn.execute("""INSERT OR IGNORE INTO vlismod_events
+            (event_id, occurred_at, event_type, visitor_id, session_id, path, referrer, device_class,
+             country_code, country_name, latitude, longitude, feature, failure_stage, handoff_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", row)
         inserted = conn.total_changes > before
     return jsonify({"ok": True, "inserted": inserted})
 
@@ -121,11 +134,12 @@ def rollup():
         previous = count
     submitted = sum(e["event_type"] == "analysis_submitted" for e in events); completed = sum(e["event_type"] == "analysis_completed" for e in events); failed = sum(e["event_type"] == "analysis_failed" for e in events)
     workflows = []
-    for label, feature in [("Protein Query", "protein_query"), ("Ligand Interactions", "ligand_interactions"), ("Ligand Comparison", "ligand_comparison"), ("PROTACability", "protacability_search"), ("PyMOL Session", "pymol_session"), ("Ligand Images", "ligand_images")]:
+    workflow_specs = [("Protein Query", "protein_query", "protein_query_export", ()), ("Ligand Interactions", "ligand_interactions", "", ("builder_from_ligand_query",)), ("Ligand Comparison", "ligand_comparison", "", ("builder_from_ligand_comparison",)), ("PROTACability", "protacability_search", "protacability_evidence_export", ("builder_from_protacability",)), ("PyMOL Session", "pymol_session", "", ()), ("Ligand Images", "ligand_images", "", ())]
+    for label, feature, export_feature, handoff_origins in workflow_specs:
         relevant = [e for e in events if e["feature"] == feature]
         starts = sum(e["event_type"] in {"workflow_started", "analysis_submitted"} for e in relevant)
         done = sum(e["event_type"] == "analysis_completed" for e in relevant)
         failures = sum(e["event_type"] == "analysis_failed" for e in relevant)
-        workflows.append({"label": label, "starts": starts, "completed": done, "failed": failures, "completion_rate": round(done / starts * 100, 1) if starts else None, "exports": sum(e["event_type"] == "export_generated" and feature.split("_")[0] in e["feature"] for e in events), "handoffs": 0})
+        workflows.append({"label": label, "starts": starts, "completed": done, "failed": failures, "completion_rate": round(done / starts * 100, 1) if starts else None, "exports": sum(e["event_type"] == "export_generated" and e["feature"] == export_feature for e in events), "handoffs": sum(e["event_type"] == "companion_handoff" and e["feature"] in handoff_origins for e in events)})
     handoffs = Counter(e["feature"] for e in events if e["event_type"] == "companion_handoff")
     return jsonify({"ok": True, "period": request.args.get("period", "30d"), "legacy": {"available": False, "note": "No inferred historical visitor, session, referrer, or location data is displayed."}, "summary": {"unique_visitors": len(visitors), "sessions": len(sessions), "page_views": len(page_views), "workflow_starts": sum(e["event_type"] == "workflow_started" for e in events), "completed_analyses": completed, "exports": sum(e["event_type"] == "export_generated" for e in events), "builder_handoffs": sum(handoffs.values())}, "daily": [{"date": k, "views": v} for k, v in sorted(daily.items())], "referrers": by_referrer.most_common(10), "devices": by_device.most_common(), "pages": sorted(({**x, "visitors": len(x["visitors"])} for x in pages.values()), key=lambda x: x["views"], reverse=True)[:25], "countries": sorted(countries.values(), key=lambda x: x["count"], reverse=True), "funnel": funnel, "workflows": workflows, "handoffs": {"total": sum(handoffs.values()), "session_rate": round(len({e["session_id"] for e in events if e["event_type"] == "companion_handoff"}) / len(sessions) * 100, 1) if sessions else None, "by_origin": handoffs.most_common()}, "operations": {"submitted": submitted, "completed": completed, "failed": failed, "success_rate": round(completed / submitted * 100, 1) if submitted else None, "failures": [{"when": e["occurred_at"], "stage": e["failure_stage"] or "unknown", "feature": e["feature"] or "analysis"} for e in events if e["event_type"] == "analysis_failed"][:10], "top_features": Counter(e["feature"] or e["path"] for e in events if e["event_type"] != "page_view").most_common(10)}})
