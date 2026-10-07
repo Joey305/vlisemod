@@ -47,4 +47,11 @@
     if (form.matches('#analysis-builder-form')) send('analysis_submitted', 'pymol_session');
     if (form.matches('#analysis-ligand-images-form')) send('analysis_submitted', 'ligand_images');
   });
+  document.addEventListener('change', (event) => {
+    if (!event.target.matches('#virus_name, #protein_type')) return;
+    if (sessionStorage.getItem('vlismod_protein_query_started')) return;
+    sessionStorage.setItem('vlismod_protein_query_started', '1');
+    send('workflow_started', 'protein_query');
+    send('analysis_submitted', 'protein_query');
+  });
 }());
