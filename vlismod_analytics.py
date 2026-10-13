@@ -5,12 +5,13 @@ import os
 import re
 import secrets
 import threading
+import time
 from datetime import datetime, timezone
 from functools import wraps
 from urllib.parse import urlparse
 
 import requests
-from flask import Blueprint, current_app, jsonify, redirect, render_template, request, session, url_for
+from flask import Blueprint, current_app, g, jsonify, redirect, render_template, request, session, url_for
 
 
 bp = Blueprint("vlismod_analytics_ui", __name__)
@@ -26,6 +27,7 @@ FEATURES = {
     "builder_from_viral_protac_design",
 }
 FAILURE_STAGES = {"selection", "input_validation", "interaction_analysis", "comparison", "protacability_search", "image_generation", "pymol_generation", "export", "handoff", "unknown"}
+OUTCOME_STATES = {"success", "empty", "failed", ""}
 HANDOFF_ID_RE = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$", re.I)
 SERVER_OUTCOMES = {
     "/generate_pymol_session": ("pymol_session", "pymol_generation", True),
@@ -77,7 +79,7 @@ def _deliver(payload, client_ip, sender, logger):
         logger.info("VLiSEMOD analytics receiver unavailable: %s", type(exc).__name__)
 
 
-def _emit(event_type: str, *, path: str | None = None, feature: str = "", failure_stage: str = "", event_id: str | None = None, visitor_id: str | None = None, session_id: str | None = None, handoff_id: str = "") -> bool:
+def _emit(event_type: str, *, path: str | None = None, feature: str = "", failure_stage: str = "", event_id: str | None = None, visitor_id: str | None = None, session_id: str | None = None, handoff_id: str = "", duration_ms: int | None = None, outcome_status: str = "") -> bool:
     if event_type not in EVENTS | {"page_view"} or (feature and feature not in FEATURES):
         return False
     if failure_stage and failure_stage not in FAILURE_STAGES:
@@ -86,10 +88,12 @@ def _emit(event_type: str, *, path: str | None = None, feature: str = "", failur
         return False
     if handoff_id and (event_type != "companion_handoff" or not HANDOFF_ID_RE.fullmatch(handoff_id)):
         return False
+    if outcome_status not in OUTCOME_STATES:
+        return False
     if not current_app.config.get("RANDY_ANALYTICS_ENABLED", True): return False
     visitor_id, session_id = visitor_id or _ids()[0], session_id or _ids()[1]
     event_id = event_id or secrets.token_urlsafe(24)
-    payload = {"event_id": event_id, "event_type": event_type, "occurred_at": datetime.now(timezone.utc).isoformat(), "visitor_id": visitor_id, "session_id": session_id, "path": path or request.path, "referrer": _referrer(), "device_class": _device_class(), "feature": feature[:80], "failure_stage": failure_stage[:40], "handoff_id": handoff_id}
+    payload = {"event_id": event_id, "event_type": event_type, "occurred_at": datetime.now(timezone.utc).isoformat(), "visitor_id": visitor_id, "session_id": session_id, "path": path or request.path, "referrer": _referrer(), "device_class": _device_class(), "feature": feature[:80], "failure_stage": failure_stage[:40], "handoff_id": handoff_id, "duration_ms": max(0, min(int(duration_ms), 900000)) if duration_ms is not None else None, "outcome_status": outcome_status}
     client_ip = request.headers.get("X-Forwarded-For", "").split(",", 1)[0].strip() or request.remote_addr
     sender, logger = current_app.config["RANDY_POST"], current_app.logger
     if current_app.config.get("RANDY_ANALYTICS_SYNC", False):
@@ -109,19 +113,29 @@ def track_page_view(response):
     return response
 
 
+def track_server_start():
+    """Start a coarse timer only for allow-listed scientific routes."""
+    if request.path in SERVER_OUTCOMES:
+        g.vlismod_analytics_started = time.monotonic()
+
+
 def track_server_outcome(response):
     """Record only safe route outcomes; request payloads never enter analytics."""
     outcome = SERVER_OUTCOMES.get(request.path)
     if not outcome or request.method not in {"POST", "GET"}:
         return response
     feature, failure_stage, is_output = outcome
+    started = getattr(g, "vlismod_analytics_started", None)
+    duration_ms = round((time.monotonic() - started) * 1000) if started is not None else None
+    safe_body = response.get_json(silent=True) if response.is_json else {}
+    is_empty = isinstance(safe_body, dict) and (safe_body.get("error") == "no_interaction_data" or safe_body.get("status") == "no_data")
     if 200 <= response.status_code < 400:
         if is_output:
-            _emit("analysis_completed", feature=feature)
+            _emit("analysis_completed", feature=feature, duration_ms=duration_ms, outcome_status="success")
         elif feature.endswith("_export"):
-            _emit("export_generated", feature=feature)
+            _emit("export_generated", feature=feature, duration_ms=duration_ms, outcome_status="success")
         else:
-            _emit("analysis_completed", feature=feature)
+            _emit("analysis_completed", feature=feature, duration_ms=duration_ms, outcome_status="empty" if is_empty else "success")
             result_feature = {
                 "protein_query": "protein_query_results", "ligand_interactions": "ligand_interaction_results",
                 "ligand_comparison": "ligand_comparison_results", "protacability_search": "protacability_target_detail",
@@ -129,7 +143,7 @@ def track_server_outcome(response):
             if result_feature:
                 _emit("results_viewed", feature=result_feature)
     elif response.status_code >= 400:
-        _emit("analysis_failed", feature=feature, failure_stage=failure_stage)
+        _emit("analysis_failed", feature=feature, failure_stage=failure_stage, duration_ms=duration_ms, outcome_status="empty" if is_empty else "failed")
     return response
 
 

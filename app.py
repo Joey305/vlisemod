@@ -292,10 +292,11 @@ def randy_post(path, json=None, *, max_bytes=10 * 1024 * 1024):
 
 # Analytics is a separate blueprint and uses the same authenticated V-LiSEMOD
 # receiver configuration as the established data/backup connection.
-from vlismod_analytics import bp as vlismod_analytics_bp, track_page_view, track_server_outcome
+from vlismod_analytics import bp as vlismod_analytics_bp, track_page_view, track_server_outcome, track_server_start
 app.config["RANDY_GET"] = randy_get
 app.config["RANDY_POST"] = randy_post
 app.register_blueprint(vlismod_analytics_bp)
+app.before_request(track_server_start)
 app.after_request(track_page_view)
 app.after_request(track_server_outcome)
 
