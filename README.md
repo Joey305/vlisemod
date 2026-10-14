@@ -157,11 +157,11 @@ V-LiSEMOD is an active research-oriented web platform. The public repository sup
 
 ## Citation
 
-Until the Zenodo record is issued, cite the exact tagged software release:
+Please cite the published Zenodo software release:
 
-> The Schürer Lab. (2026). *V-LiSEMOD* (Version 2026.10) [Computer software]. https://github.com/Joey305/vlisemod
+> The Schürer Lab. (2026). *V-LiSEMOD* (Version v2026.10) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.23374625
 
-The repository includes `CITATION.cff` and `.zenodo.json`. When the release DOI is available, use the version DOI instead of the GitHub URL and add it to `CITATION.cff`.
+Visit [vlisemod.com/citation](https://vlisemod.com/citation) to copy the citation or download RIS. `CITATION.cff` contains the same release metadata for GitHub.
 
 ## Practical Takeaway
 
