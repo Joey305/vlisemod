@@ -1,0 +1,13 @@
+{
+  "title": "V-LiSEMOD",
+  "description": "Viral Ligand Structure Explorer for Modification-Oriented Design: a structural bioinformatics platform for exploring viral protein-ligand co-crystals, ligand interactions, solvent exposure, and degrader-readiness triage.",
+  "creators": [
+    {
+      "name": "The Schürer Lab",
+      "affiliation": "University of Miami"
+    }
+  ],
+  "license": "PolyForm-Noncommercial-1.0.0",
+  "access_right": "open",
+  "keywords": ["viral proteins", "structural bioinformatics", "ligand design", "PROTAC", "research software"]
+}
