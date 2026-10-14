@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+message: "If you use V-LiSEMOD in academic work, please cite this software."
+title: "V-LiSEMOD"
+type: software
+authors:
+  - name: "The Schürer Lab"
+    affiliation: "University of Miami"
+license: "PolyForm-Noncommercial-1.0.0"
+repository-code: "https://github.com/Joey305/vlisemod"
+date-released: 2026-10-13
+version: "2026.10"
